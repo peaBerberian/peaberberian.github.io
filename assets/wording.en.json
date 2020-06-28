@@ -1,0 +1,106 @@
+{
+  "title": "Paul Berberian HomePage",
+
+  "about": {
+    "title": "About me",
+    "presentation": "<p>Hi, my name is Paul, I'm 29* and I'm a software engineer at Canal+ from Paris, France.</p><p>I'm the lead developer of the <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a>, an open-source polyvalent media Player for the web. The RxPlayer is a library helping various front-end applications to play live and VoD contents with adaptive streaming, multiple tracks and DRMs.<p>Both on the professional and personal level, I very much enjoy designing and creating libraries to provide specialized features to the web. On personal projects, I've been recently interested in lower-level concepts and system-oriented languages such as C, C++ and, mostly, Rust.</p>",
+    "presentation2": "",
+    "presentationMail": "To contact me, you can send an e-mail to: <a href=\"mailto:pea.berberian@gmail.com\">pea.berberian@gmail.com</a>.",
+    "asterisk": "* As long as we're still in 2020, that is."
+  },
+  "whatIWorkOn": {
+    "title": "What I've worked on",
+    "shortDescription": "I've been mostly working on media web-applications using JavaScript and TypeScript.",
+    "descriptionSTB": "I began on set-top boxes, to create front-end applications with important stability constraints and many features not usually found in web platforms.<br/>Among them: application updates (which is really important not to break!), storage management, browsing in offline contexts, records scheduling, TV remote-based navigation, multi-devices support, media player integration and TV channel scanning.",
+    "descriptionPlayer": "After multiple years working on this subject, I focused on a central part of most media web-applications: the media player.<br/>Now, I'm mostly doing development on the <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a>, an open-source media player library which targets both the web and embeded platforms (set-top boxes, SmartTVs, ChromeCast etc.).<br/>As time went on, the RxPlayer became an exciting featureful project, do not hesitate to check <a href=\"https://github.com/canalplus/rx-player\">it</a>, its <a href=\"https://developers.canal-plus.com/rx-player/\">demo</a> or its <a href=\"https://developers.canal-plus.com/rx-player/doc/pages/architecture/index.html\">internal documentation</a>!"
+  },
+  "whatILikeToDo": {
+    "title": "What I like to work on",
+    "descriptionWork": "<p>I've been progressively moving toward library development for front-end applications.<br />This is something I've been looking for, as I'm discovering more and more the appetite I have for some lower-level concepts (and languages).</p><p>A web media player is a good example of this progression. Despite running in a browser, it still provides an environment in which taking a technical approach is necessary.</br>To illustrate my point, I can enumerate some of its unusual features: a fair share of parsing logic for both textual and binary formats, tricks to support devices with restricted resources and an advanced request scheduling logic.<p>Moreover, creating a useful media player and toolbox for very different front-ends gives us what appears to be an endless stream of possible improvements, which is very satisfying for the whole team.</p>",
+    "descriptionPersonal": "<p>At home, I've been spending a lot of time learning about lower-level languages such as C, C++, Rust or x86 assembly and about low-level concepts.</p><p>To give some concrete examples of what piqued my interest, I've been reading many resources about subjects like main memory management (memory access, locality, translation of virtual memory, CPU caches...), compilers and linkers (ELF analysis, dynamic linking, lto, auto-vectorization and other optimizations/implementations) or OS concepts (IPC implementations, interrupt management...).</p><p>For the future I would personally like to explore programming languages giving me more control over those lower-level interactions like Rust, C or C++. This is something I'm already approaching by dabbling with Rust on some personal projects.</p>"
+  },
+  "experiences": {
+    "title": "Experiences",
+    "description": "I have 9 years of professional software engineering experience.",
+    "jobs": [
+      {
+        "id": "canal",
+        "dateFrom": "2017/05",
+        "dateTo": "Today",
+        "jobTitle": "Tech Lead",
+        "company": "Canal+ Group",
+        "companyDescription": "<b>Canal+ Group</b> is a french media company which broadcasts and produces contents for multiple countries.",
+        "jobDescription": "<p>Lead developer of the open-source <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a> project. A featureful media player for the web with adaptive streaming, live playback, support of multiple devices and DRMs.</p><p>The RxPlayer is an on-going project used in production for internal needs and several premium products at Canal+ as well as outside the company. I'm mainly working with two other developers from Canal+ and the occasional outside contributor.</p>"
+      },
+      {
+        "id": "davidson",
+        "dateFrom": "2014/09",
+        "dateTo": "2017/04",
+        "jobTitle": "Software developer",
+        "company": "Davidson Consulting",
+        "companyDescription": "<b>Davidson Consulting</b> is a french consulting company named 4 times in a row (between 2014 and 2017 included) at the top of the \"best place to work\" ranking for french companies.",
+        "jobDescription": "<p>Worked with Canal+ in the STB development team where we designed and developed new interfaces for various set-top boxes and other similar platforms.</p><p>In particular, I worked on several aspects of those applications like general design, media player integration, TV remote controls, GUI, porting the API abstraction layer to multiple devices and others. We did all of that with the help of multiple JavaScript libraries: mainly RxJS, React, flow, Redux and BackboneJS.</p>"
+      },
+
+      {
+        "id": "orangeIPTV",
+        "dateFrom": "2011/09",
+        "dateTo": "2014/08",
+        "jobTitle": "Software developer / Assistant Project Manager",
+        "company": "Orange",
+        "companyDescription": "<b>Orange</b> is a french telecommunications corporation. It provides mobile, landline, internet and IPTV services in multiple countries.",
+        "jobDescription": "<p>Worked as a software developer helping the project managers of the IPTV division.</p><p>Those 3 years were done in apprenticeship, as I continued to study at my engineering school at the time.</p>The programming languages I used to create these tools were varied depending on the project: PHP, javascript, Node.js, Java Android and VBA - for Microsoft Office documents.</p>"
+      },
+
+      {
+        "id": "orange",
+        "dateTo": "08/2011",
+        "dateFrom": "06/2011",
+        "jobTitle": "Telecommunications technician",
+        "company": "Orange",
+        "companyDescription": "<b>Orange</b> is a french telecommunications corporation. It provides mobile, landline, internet and IPTV services in multiple countries.",
+        "jobDescription": "<p>These 3 months in Orange were in the context of an internship. I had as a mission to help with the maintenance of Orange's local loop in Paris.</p>"
+      }
+    ]
+  },
+
+  "education": {
+    "title": "Education",
+      "description": "<p>I have a french engineering diploma (called <a href=\"https://en.wikipedia.org/wiki/Dipl%C3%B4me_d%27Ing%C3%A9nieur\">diplôme d'ingénieur\"</a>) - a 5-year diploma delivered by french engineering schools, equivalent to a master's degree in engineering.</p><p>My cursus had a specialization in telecommunications and networks engineering.</p>",
+
+    "schools": [
+      {
+        "id": "esiee",
+        "dateFrom": "2011/09",
+        "dateTo": "2014/08",
+        "schoolName": "ESIEE Paris",
+        "diploma": "Engineering Diploma",
+        "schoolDescription": "The Electronics and Electrical Engineering school (<b>ESIEE Paris</b>) is a french engineering school specialized in electronic engineering.",
+        "firstLine": "5-year engineering diploma (equivalent to a master's degree in engineering) with a specialization in Networks and Telecommunications.",
+        "shortDescription": "This cursus was done in apprenticeship (I also worked at Orange during that time) and it ended with a foreign experience: 6 month in a chinese university (Xidian University in Xi'An) where I studied Networks and Computer Science.<br />The ESIEE Paris cursus included courses in programming (mainly algorithms, Java and C), networks (tcp/ip, mobile networks, routing...) and system management (mostly linux-related administration)."
+      },
+
+      {
+        "id": "xidian",
+        "dateFrom": "2013/09",
+        "dateTo": "2014/02",
+        "schoolName": "Xidian University (Chinese: 西安电子科技大学)",
+        "diploma": "University exchange in a master's degree context",
+        "schoolDescription": "<b>Xidian</b> is a chinese university specialized in electronic engineering",
+        "firstLine": "6 months in Xidian done as an university Exchange (with ESIEE Paris).",
+        "shortDescription": "I followed several courses concerning networks engineering and computer science there, in english, while learning (trying to!) chinese and living in immersion in this country. This was definitely a good experience as well on a personal than on an educational level"
+      },
+
+      {
+        "id": "upec",
+        "dateFrom": "2009/09",
+        "dateTo": "2011/08",
+        "schoolName": "UPEC",
+        "diploma": "DUT in network and telecommunications",
+        "schoolDescription": "<b>UPEC</b>, for \"East-Paris University\", is a multi-disciplinary university located both in and close to Paris.",
+        "firstLine": "I obtained a 2-year \"DUT\" diploma in the French UPEC university where I studied networks, telecommunications and computer science.",
+        "shortDescription": ""
+      }
+    ]
+  }
+}

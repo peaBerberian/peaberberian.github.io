@@ -1,0 +1,15 @@
+{
+  "name": "peaberberian.github.io",
+  "version": "0.0.1",
+  "description": "Paul Berberian's personal homepage",
+  "main": "./index.js",
+  "scripts": {
+    "build": "node ./generate_page.js"
+  },
+  "keywords": [
+    "cv",
+    "paul berberian"
+  ],
+  "author": "PeaBerberian",
+  "license": "GPL-3.0"
+}

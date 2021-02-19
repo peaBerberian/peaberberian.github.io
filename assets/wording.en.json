@@ -3,10 +3,10 @@
 
   "about": {
     "title": "About me",
-    "presentation": "<p>Hi, my name is Paul, I'm 29* and I'm a software engineer at Canal+ from Paris, France.</p><p>I'm the lead developer of the <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a>, an open-source polyvalent media Player for the web. The RxPlayer is a library helping various front-end applications to play live and VoD contents with adaptive streaming, multiple tracks and DRMs.<p>Both on the professional and personal level, I enjoy designing and creating software for the web.</p>",
+    "presentation": "<p>Hi, my name is Paul, I'm 30* and I'm a software engineer at Canal+ from Paris, France.</p><p>I'm the lead developer of the <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a>, an open-source polyvalent media Player for the web. The RxPlayer is a library helping various front-end applications to play live and VoD contents with adaptive streaming, multiple tracks and DRMs.<p>Both on the professional and personal level, I enjoy designing and creating software for the web.</p>",
     "presentation2": "",
     "presentationMail": "To contact me, you can send an e-mail to: <a href=\"mailto:pea.berberian@gmail.com\">pea.berberian@gmail.com</a>.",
-    "asterisk": "* As long as we're still before february 2021, that is."
+    "asterisk": "* As long as we're still in 2021, that is."
   },
   "whatIWorkOn": {
     "title": "What I've worked on",

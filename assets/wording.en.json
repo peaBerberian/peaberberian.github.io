@@ -10,7 +10,7 @@
   },
   "whatIWorkOn": {
     "title": "What I've worked on",
-    "shortDescription": "I've been mostly working on media web-applications using JavaScript and TypeScript.",
+    "shortDescription": "I've been mostly working on media web-applications using TypeScript, JavaScript and most recently a little bit of Rust thanks to WebAssembly.",
     "descriptionSTB": "I began on set-top boxes, to create front-end applications with important stability constraints and many features not usually found in web platforms.<br/>Among them: application updates (which is really important not to break!), storage management, browsing in offline contexts, records scheduling, TV remote-based navigation, multi-devices support, media player integration and TV channel scanning.",
     "descriptionPlayer": "After multiple years working on this subject, I focused on a central part of most media web-applications: the media player.<br/>Now, I'm mostly doing development on the <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a>, an open-source media player library which targets both the web and embeded platforms (set-top boxes, SmartTVs, ChromeCast etc.).<br/>As time went on, the RxPlayer became an exciting featureful project, do not hesitate to check <a href=\"https://github.com/canalplus/rx-player\">it</a>, its <a href=\"https://developers.canal-plus.com/rx-player/\">demo</a> or its <a href=\"https://developers.canal-plus.com/rx-player/doc/pages/architecture/index.html\">internal documentation</a>!"
   },

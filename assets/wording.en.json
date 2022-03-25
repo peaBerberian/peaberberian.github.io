@@ -3,10 +3,10 @@
 
   "about": {
     "title": "About me",
-    "presentation": "<p>Hi, my name is Paul, I'm 30* and I'm a software engineer at Canal+ from Paris, France.</p><p>I'm the lead developer of the <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a>, an open-source polyvalent media Player for the web. The RxPlayer is a library allowing various front-end applications - among which most of Canal+ ones - to play live and VoD contents with adaptive streaming, multiple tracks and DRMs.<p>Both on the professional and personal level, I enjoy designing and creating software for the web.</p>",
+    "presentation": "<p>Hi, my name is Paul, I'm 31* and I'm a software engineer at Canal+ from Montpellier, France.</p><p>I'm the lead developer of the <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a>, an open-source polyvalent media Player for the web. The RxPlayer is a library allowing various front-end applications - among which most of Canal+ ones - to play live and VoD contents with adaptive streaming, multiple tracks and DRMs.<p>Both on the professional and personal level, I enjoy designing and creating software for the web.</p>",
     "presentation2": "",
     "presentationMail": "To contact me, you can send an e-mail to: <a href=\"mailto:pea.berberian@gmail.com\">pea.berberian@gmail.com</a>.",
-    "asterisk": "* As long as we're still in 2021, that is."
+    "asterisk": "* As long as we're still in 2022, that is."
   },
   "whatIWorkOn": {
     "title": "What I've worked on",
@@ -16,7 +16,7 @@
   },
   "whatILikeToDo": {
     "title": "What I like to work on",
-    "descriptionWork": "<p>I've been generally interested by the more lower level technical aspects of media web applications.<br /></p><p>On that matter, the RxPlayer, my current project, is a good example.</br>Despite running in a browser, it has unusual features for a web application: it has its fair share of parsing logic for both binary and textual formats (it even has a parser relying on WebAssembly for both performance and memory reasons), tricks to support devices with restricted resources and an advanced request scheduling logic.<p>Moreover, a complex media player projects allows to provide a quasi-endless stream of possible improvements - which is very satisfying for the whole team I lead.</p>",
+    "descriptionWork": "<p>I've been generally interested by the more lower level technical aspects of web applications.<br /></p><p>On that matter, the RxPlayer, my current project, is a good example.</br>Despite running in a browser, it has unusual features for a web application: it has its fair share of parsing logic for both binary and textual formats (it even has a parser relying on WebAssembly for both performance and memory reasons), tricks to support devices with restricted resources and an advanced request scheduling logic.<p>Moreover, a complex media player projects allows to provide a quasi-endless stream of possible improvements - which is very satisfying for the whole team I lead.</p>",
     "descriptionPersonal": "<p>At home, I like spending some time learning about lower-level languages such as C, C++, Rust or even some x86 assembly and other low-level concepts.</p><p>I've become fond of the Rust language, which I now use for most personal projects I start.</p><p>I'm notably looking forward and excited for possible synergies between using high-level and flexible languages like JavaScript and TypeScript for the main chunk of an application (or at least web-applications) and using lower-level languages for logic with higher performance or even memory constraints.</p>"
   },
   "experiences": {

@@ -3,15 +3,15 @@
 
   "about": {
     "title": "About me",
-    "presentation": "<p>Hi, my name is Paul, I'm 31* and I'm a software engineer at Canal+ from Montpellier, France.</p><p>I'm the lead developer of the <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a>, an open-source polyvalent media Player for the web. The RxPlayer is a library allowing various front-end applications - among which most of Canal+ ones - to play live and VoD contents with adaptive streaming, multiple tracks and DRMs.<p>Both on the professional and personal level, I enjoy designing and creating software for the web.</p>",
+    "presentation": "<p>Hi, my name is Paul, I'm 32* and I'm a software engineer at Canal+ from Montpellier, France.</p><p>I'm the lead developer of the <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a>, an open-source polyvalent media Player for the web. The RxPlayer is a library allowing various front-end applications - among which most of Canal+ ones - to play live and VoD contents with adaptive streaming, multiple tracks and DRMs.<p>Both on the professional and personal level, I enjoy designing and creating software for the web.</p>",
     "presentation2": "",
     "presentationMail": "To contact me, you can send an e-mail to: <a href=\"mailto:pea.berberian@gmail.com\">pea.berberian@gmail.com</a>.",
-    "asterisk": "* As long as we're still in 2022, that is."
+    "asterisk": "* As long as we're still in 2023, that is."
   },
   "whatIWorkOn": {
     "title": "What I've worked on",
     "shortDescription": "I've been mostly working on media web-applications using TypeScript, JavaScript and most recently Rust thanks to WebAssembly.",
-    "descriptionSTB": "I began working on set-top boxes, to create large front-end applications with important stability constraints and many features not usually found in web platforms.<br/>Among them: updates (which is really important not to break!), storage management, browsing in offline contexts, records scheduling, TV remote-based navigation, multi-devices support, media player integration and TV channel scanning.",
+    "descriptionSTB": "I began working on set-top boxes, to create large front-end applications with important stability constraints and many features not usually found in web platforms.<br/>Among them: updates, storage management, browsing in offline contexts, records scheduling, TV remote-based navigation, multi-devices support, media player integration and TV channel scanning.",
     "descriptionPlayer": "After multiple years working on this subject, I focused on a central part of most media web-applications: the media player.<br/>Now, I'm mostly doing development on the <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a>, an open-source media player library which targets both the web and embedded platforms (set-top boxes, SmartTVs, ChromeCast, game consoles etc.).<br/>Starting as a small research and development bet, the RxPlayer is now an exciting featureful project used by many Canal+ projects and beyond. Do not hesitate to check <a href=\"https://github.com/canalplus/rx-player\">it</a>, its <a href=\"https://developers.canal-plus.com/rx-player/\">demo</a> or its <a href=\"https://github.com/canalplus/rx-player/tree/master/src#rxplayer-architecture-documentation\">internal documentation</a>!"
   },
   "whatILikeToDo": {

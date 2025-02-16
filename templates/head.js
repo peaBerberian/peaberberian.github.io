@@ -1,5 +1,5 @@
 module.exports = (wording) =>
-`<head>
+  `<head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="Description" content="Paul Berberian personal homepage">
@@ -42,7 +42,7 @@ module.exports = (wording) =>
     margin-bottom: 35px;
   }
   .asterisk {
-    font-size: 0.9em;
+    font-size: 0.8em;
     font-style: italic;
   }
   .separator {
@@ -75,8 +75,11 @@ module.exports = (wording) =>
     font-size: 0.8em;
     margin-top: 0px;
   }
+  .note-ref, .note-back {
+    text-decoration: none;
+  }
   </style>
   </head>
   `;
 
-  //border-bottom: 1px dashed #aaa;
+//border-bottom: 1px dashed #aaa;

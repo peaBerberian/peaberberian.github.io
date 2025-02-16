@@ -1,8 +1,9 @@
 module.exports = (wording) =>
-`<head>
+  `<head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="Description" content="Paul Berberian personal homepage">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🙋🏻‍♂️</text></svg>">
   <title>${wording.title}</title>
   <style>
   body {
@@ -27,7 +28,6 @@ module.exports = (wording) =>
   }
   .title-block {
     text-align: center;
-    font-family: "Proxima Nova Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
   .subtitle {
     font-size: 1.6em;
@@ -42,7 +42,7 @@ module.exports = (wording) =>
     margin-bottom: 35px;
   }
   .asterisk {
-    font-size: 0.9em;
+    font-size: 0.8em;
     font-style: italic;
   }
   .separator {
@@ -75,8 +75,11 @@ module.exports = (wording) =>
     font-size: 0.8em;
     margin-top: 0px;
   }
+  .note-ref, .note-back {
+    text-decoration: none;
+  }
   </style>
   </head>
   `;
 
-  //border-bottom: 1px dashed #aaa;
+//border-bottom: 1px dashed #aaa;

@@ -1,27 +1,27 @@
 {
-  "title": "Paul Berberian HomePage",
+  "title": "Paul Berberian personal page",
 
   "about": {
     "title": "About me",
-    "presentation": "<p>Hi, my name is Paul, I'm 34* and I'm a software engineer at Canal+ from Montpellier, France.</p><p>I'm the lead developer of the <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a>, an open-source polyvalent media Player for the web. The RxPlayer is a library allowing various front-end applications - among which most of Canal+ ones - to play live and VoD contents with adaptive streaming, multiple tracks and DRMs.<p>Both on the professional and personal level, I enjoy designing and creating software for the web.</p>",
+    "presentation": "<p>Hi, my name is Paul, I'm 34<a class=\"note-ref\" id=\"note-1-ref\" href=\"#note-1\">¹</a> I'm a software engineer and tech lead at Canal+ Group living in Montpellier, France. I lead several projects linked to media streaming, including the open-source <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a> media player.</p><p>The RxPlayer is a library allowing various front-end applications - among which Canal+' flagship products - to play live and VoD contents with adaptive streaming, multiple tracks and DRMs.<br>I also lead several other projects at Canal+, both <a href=\"https://github.com/canalplus/\">open</a> and closed source<a class=\"note-ref\" id=\"note-2-ref\" href=\"#note-2\">²</a>, as well as many <a href=\"https://github.com/peaberberian/\">personal projects</a>.</p>",
     "presentation2": "",
-    "presentationMail": "To contact me, you can send an e-mail to: <a href=\"mailto:paul.berberian@proton.me\">pea.berberian@gmail.com</a>.",
-    "asterisk": "* As long as we're still in 2025, that is."
+    "presentationMail": "To contact me, you can send an e-mail to: <a href=\"mailto:paul.berberian@proton.me\">paul.berberian@proton.me</a>.",
+    "asterisk": "<span class=\"note\" id=\"note-1\">1<a class=\"note-back\" href=\"#note-1-ref\">^</a>. As long as we're still in 2025, that is.</span><br><span class=\"note\" id=\"note-2\">2<a class=\"note-back\" href=\"#note-2-ref\">^</a>. Most projects at Canal+ are closed-source, including some that I lead. The few maintained open-sourced ones (that are under the <i>\"canalplus\"</i> organization on GitHub) all gravitate around the RxPlayer library and are all under my lead.</span>" 
   },
   "whatIWorkOn": {
     "title": "What I've worked on",
-    "shortDescription": "I've been mostly working on media web-applications using TypeScript, JavaScript and most recently Rust thanks to WebAssembly.",
+    "shortDescription": "I've been mostly working on media web-applications using TypeScript, JavaScript and Rust (thanks to WebAssembly).",
     "descriptionSTB": "I began working on set-top boxes, to create large front-end applications with important stability constraints and many features not usually found in web platforms.<br/>Among them: updates, storage management, browsing in offline contexts, records scheduling, TV remote-based navigation, multi-devices support, media player integration and TV channel scanning.",
-    "descriptionPlayer": "After multiple years working on this subject, I focused on a central part of most media web-applications: the media player.<br/>Now, I'm mostly doing development on the <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a>, an open-source media player library which targets both the web and embedded platforms (set-top boxes, SmartTVs, ChromeCast, game consoles etc.).<br/>Starting as a small research and development bet, the RxPlayer is now an exciting featureful project used by many Canal+ projects and beyond. Do not hesitate to check <a href=\"https://github.com/canalplus/rx-player\">it</a>, its <a href=\"https://developers.canal-plus.com/rx-player/\">demo</a> or its <a href=\"https://github.com/canalplus/rx-player/tree/master/src#rxplayer-architecture-documentation\">internal documentation</a>!"
+    "descriptionPlayer": "After multiple years working on this subject, I focused on a core part: media playback.<br/>The main project I'm leading now is the <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a>, an open-source media player library which targets both the web and embedded platforms (set-top boxes, SmartTVs, ChromeCast, game consoles etc.).<br/>I also lead several other projects: some allowing media playback under more locked vendor-specific media APIs, but also debugging and reverse engineering tools helping front-end developpers (including I!) to maintain those applications."
   },
   "whatILikeToDo": {
     "title": "What I like to work on",
-    "descriptionWork": "<p>I've been generally interested by the more lower level technical aspects of web applications.<br /></p><p>On that matter, the RxPlayer, my current project, is a good example.</br>Despite running in a browser, it has unusual features for a web application: it has its fair share of parsing logic for both binary and textual formats (it even has a parser relying on WebAssembly for both performance and memory reasons), tricks to support devices with restricted resources and an advanced request scheduling logic.<p>Moreover, a complex media player projects allows to provide a quasi-endless stream of possible improvements - which is very satisfying for the whole team I lead.</p>",
-    "descriptionPersonal": "<p>I also like developing with Rust on my personal projects and reading about lower level considerations.</p><p>I'm notably looking forward and excited for possible synergies between using high-level and flexible languages like JavaScript and TypeScript for the main chunk of an application (or at least web-applications) and using lower-level languages for logic with higher performance or even memory constraints.</p>"
+    "descriptionWork": "<p>I've been generally interested by the more technical aspects of web applications.<br /></p><p>On that matter, the RxPlayer, my main project, is a good example.</br>Despite running in a browser, it has unusual features for a web application: it spawns a separate thread to run its main logic (so heavy media playback logic is never blocking the UI and vice-versa), it has its fair share of parsing logic for both binary and textual formats (it even has a parser relying on WebAssembly due to performance and memory constraints), tricks to support devices with restricted resources and an advanced request scheduling logic.<p>Moreover, a complex media player projects allows to provide a quasi-endless stream of possible improvements - which is very satisfying for the team I lead.</p>",
+    "descriptionPersonal": "<p>I also like developing with Rust and lately Zig on some personal projects.</p><p>I'm notably looking forward and excited for possible synergies between using high-level and flexible languages like JavaScript and TypeScript for the main chunk of an application (or at least web-applications) and using lower-level languages for logic with higher performance or even memory constraints.</p>"
   },
   "experiences": {
     "title": "Experiences",
-    "description": "I have more than 10 years of professional software engineering experience.",
+    "description": "I have more than 13 years of professional software engineering experience.",
     "jobs": [
       {
         "id": "canal",
@@ -30,7 +30,7 @@
         "jobTitle": "Tech Lead",
         "company": "Canal+ Group",
         "companyDescription": "<b>Canal+ Group</b> is a french media company which broadcasts and produces contents for multiple countries.",
-        "jobDescription": "<p>Lead developer of the open-source <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a> project. A featureful media player for the web with adaptive streaming, live playback, support of multiple devices and DRMs.</p><p>The RxPlayer is an on-going project used in production for internal needs and several premium products at Canal+ as well as outside the company. I'm mainly working with two other developers from Canal+ and the occasional outside contributor.</p>"
+        "jobDescription": "<p>Lead developer of several media-related projects, including the <a href=\"https://github.com/canalplus/rx-player\">RxPlayer</a>: A featureful media player for the web with adaptive streaming, live playback, low-latency streaming, support of multiple devices and DRMs.</p><p>The RxPlayer is an on-going project used in production for internal needs and several premium products at Canal+ as well as outside the company.</p><p>I also lead several other projects some open-source, some closed-source, to help with the development of those media products.</p>"
       },
       {
         "id": "davidson",
@@ -66,7 +66,7 @@
 
   "education": {
     "title": "Education",
-      "description": "<p>I have a french engineering diploma (called <a href=\"https://en.wikipedia.org/wiki/Dipl%C3%B4me_d%27Ing%C3%A9nieur\">diplôme d'ingénieur\"</a>) - a 5-year diploma delivered by french engineering schools, equivalent to a master's degree in engineering.</p><p>My cursus had a specialization in telecommunications and networks engineering.</p>",
+      "description": "<p>I have a french engineering diploma (called <a href=\"https://en.wikipedia.org/wiki/Dipl%C3%B4me_d%27Ing%C3%A9nieur\">\"diplôme d'ingénieur\"</a>) - a 5-year diploma delivered by french engineering schools, equivalent to a master's degree in engineering.</p><p>My cursus had a specialization in telecommunications and networks engineering.</p>",
 
     "schools": [
       {

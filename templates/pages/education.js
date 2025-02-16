@@ -7,11 +7,13 @@ ${getSchools(wording.education.schools)}
 `;
 
 const getSchools = (schools) =>
-  schools.map((schoolObj) =>
-              `<div class="edu-item item-group">
+  schools
+    .map(
+      (schoolObj) =>
+        `<div class="edu-item item-group">
   <span class= "item-group-img-container">
     <img class="edu-school-img item-group-img"
-      alt=${data.education[schoolObj.id].description}\"
+      alt="${data.education[schoolObj.id].description}"
       src="${data.education[schoolObj.id].image}" />
   </span>
   <div class="edu-title item-group-header">
@@ -24,7 +26,9 @@ const getSchools = (schools) =>
   </div>
   ${getSchool(schoolObj)}
 </div>
-`).join("");
+`,
+    )
+    .join("");
 
 const getSchool = (schoolObj) =>
   `<p>${schoolObj.firstLine}</p>

@@ -1,0 +1,793 @@
+/**
+ * settings.mjs
+ * ============
+ *
+ * This file regroups global settings, most of whom may be updated through the
+ * "Settings" app.
+ *
+ * They should then be relied on by the different components relying on the
+ * different features.
+ *
+ * This concept makes heavy use of my homemade concept of "SharedReferences"
+ * which are basically values which can be listened to for changes.
+ */
+
+import {
+  TASKBAR_MAX_HORIZONTAL_SIZE,
+  TASKBAR_MAX_VERTICAL_SIZE,
+  TASKBAR_MIN_HORIZONTAL_SIZE,
+  TASKBAR_MIN_VERTICAL_SIZE,
+  WALLPAPERS,
+} from "./constants.mjs";
+import { SharedReference } from "./utils.mjs";
+
+// Values copied from CSS:
+// TODO: read from CSS directly?
+
+const DEFAULT_FONT_SIZE = 14;
+const DEFAULT_OPACITY = 57;
+const DEFAULT_TASK_BG_COLOR = "#1a2e4b";
+const DEFAULT_TASK_TEXT_COLOR = "#ffffff";
+const DEFAULT_TASK_HOVER_COLOR = "#2196f3";
+const DEFAULT_TASK_ACTIVE_BG_COLOR = "#3498db";
+const DEFAULT_TASK_INACTIVE_BG_COLOR = "#263b59";
+const DEFAULT_START_MENU_TEXT = "#000000";
+const DEFAULT_START_MENU_BG = "#f5f5f5";
+const DEFAULT_START_MENU_ACTIVE_BG = "#e0e0e0";
+const DEFAULT_START_ICON_BG = "#e0e0e0";
+const DEFAULT_WINDOW_ACTIVE_HEADER = "#0F4774";
+const DEFAULT_WINDOW_ACTIVE_HEADER_TEXT = "#FFFFFF";
+const DEFAULT_WINDOW_INACTIVE_HEADER = "#737373";
+const DEFAULT_WINDOW_INACTIVE_HEADER_TEXT = "#FFFFFF";
+const DEFAULT_WINDOW_TEXT_COLOR = "#333333";
+const DEFAULT_WINDOW_CONTENT_BG = "#FFFFFF";
+const DEFAULT_WINDOW_BORDER_COLOR = "#000000";
+const DEFAULT_WINDOW_LINE_COLOR = "#dddddd";
+const DEFAULT_APP_PRIMARY_COLOR = "#3498db";
+const DEFAULT_APP_PRIMARY_BG_COLOR = "#efefef";
+const DEFAULT_WINDOW_SIDEBAR_BG = "#E0E0E0";
+const DEFAULT_SIDEBAR_HOVER_BG = "#c8c8c8";
+const DEFAULT_SIDEBAR_SELECTED_BG_COLOR = "#3498db";
+const DEFAULT_SIDEBAR_SELECTED_TEXT_COLOR = "#ffffff";
+const DEFAULT_WINDOW_BORDER_SIZE = 0;
+const DEFAULT_SPACE_BETWEEN_TASKS = 5;
+const DEFAULT_TASKBAR_SIZE = 35;
+const DEFAULT_WINDOW_HEADER_HEIGHT = 35;
+const DEFAULT_WINDOW_BUTTON_SIZE = 18;
+
+/**
+ * Tuples of all references defined here and their default value.
+ *
+ * Used to be able to reset all the state to 0 when/if needed.
+ */
+const allRefsAndDefaults = [];
+
+let taskbarSizeContext;
+
+/**
+ * Where the taskbar is relative to the page:
+ * - `"top"`: on top of the page, `taskbarSize` is its height.
+ * - `"bottom"`: on the bottom of the page, `taskbarSize` is its height.
+ * - `"left"`: on the left of the page, `taskbarSize` is its width.
+ * - `"right"`: on the right of the page, `taskbarSize` is its width.
+ */
+const taskbarLocation = createRefForState(
+  "taskbar-location",
+  "bottom",
+  (val) => {
+    requestAnimationFrame(() => {
+      const sizeIsCurrentlyForHorizontal = ["top", "bottom"].includes(
+        taskbarSizeContext,
+      );
+      const isCurrentlyHorizontal = ["top", "bottom"].includes(
+        SETTINGS.taskbarLocation.getValue(),
+      );
+
+      if (sizeIsCurrentlyForHorizontal !== isCurrentlyHorizontal) {
+        const currentTaskbarSize = SETTINGS.taskbarSize.getValue();
+        let newSize;
+        if (isCurrentlyHorizontal) {
+          const percent =
+            (currentTaskbarSize - TASKBAR_MIN_VERTICAL_SIZE) /
+            (TASKBAR_MAX_VERTICAL_SIZE - TASKBAR_MIN_VERTICAL_SIZE);
+          newSize =
+            percent *
+              (TASKBAR_MAX_HORIZONTAL_SIZE - TASKBAR_MIN_HORIZONTAL_SIZE) +
+            TASKBAR_MIN_HORIZONTAL_SIZE;
+        } else {
+          const percent =
+            (currentTaskbarSize - TASKBAR_MIN_HORIZONTAL_SIZE) /
+            (TASKBAR_MAX_HORIZONTAL_SIZE - TASKBAR_MIN_HORIZONTAL_SIZE);
+          newSize =
+            percent * (TASKBAR_MAX_VERTICAL_SIZE - TASKBAR_MIN_VERTICAL_SIZE) +
+            TASKBAR_MIN_VERTICAL_SIZE;
+        }
+        SETTINGS.taskbarSize.setValueIfChanged(Math.round(newSize));
+      }
+
+      switch (val) {
+        case "top":
+          document.body.classList.remove("left-taskbar");
+          document.body.classList.remove("right-taskbar");
+          document.body.classList.remove("bottom-taskbar");
+          document.body.classList.add("top-taskbar");
+          break;
+        case "left":
+          document.body.classList.add("left-taskbar");
+          document.body.classList.remove("right-taskbar");
+          document.body.classList.remove("bottom-taskbar");
+          document.body.classList.remove("top-taskbar");
+          break;
+        case "right":
+          document.body.classList.remove("left-taskbar");
+          document.body.classList.add("right-taskbar");
+          document.body.classList.remove("bottom-taskbar");
+          document.body.classList.remove("top-taskbar");
+          break;
+        default:
+          document.body.classList.remove("left-taskbar");
+          document.body.classList.remove("right-taskbar");
+          document.body.classList.add("bottom-taskbar");
+          document.body.classList.remove("top-taskbar");
+          break;
+      }
+    });
+  },
+);
+
+/** Global settings defined for the application, changing many UI parameters. */
+export const SETTINGS = {
+  /** Update the base font size to the given size in px. */
+  fontSize: createRefForState("font-size", DEFAULT_FONT_SIZE, (size) => {
+    window.requestAnimationFrame(() => {
+      document.documentElement.style.setProperty(
+        "--font-size",
+        String(size) + "px",
+      );
+    });
+  }),
+
+  /** The style the button on a header should have. */
+  buttonStyle: createRefForState("button-style", "Colorful", (style) => {
+    for (const prevClass of document.body.classList) {
+      if (prevClass.endsWith("-w-buttons")) {
+        document.body.classList.remove(prevClass);
+      }
+    }
+    if (style === "Sober") {
+      document.body.classList.add("sober-w-buttons");
+    } else {
+      document.body.classList.add("color-w-buttons");
+    }
+  }),
+
+  /** If `true`, "snapping" a window to the top of the screen make if full-screen. */
+  topWindowSnapping: createRefForState("top-window-snapping", true),
+
+  /** If `true`, "snapping" a window to a side of the screen make if half-full-screen. */
+  sideWindowSnapping: createRefForState("side-window-snapping", true),
+
+  dblClickHeaderFullScreen: createRefForState(
+    "dbl-click-header-full-screen",
+    true,
+  ),
+
+  /**
+   * If `true`, launched applications listed in the taskbar have their icons and
+   * title displayed.
+   * If `false`, they have just their icon.
+   */
+  taskbarDisplayTitle: createRefForState("taskbar-app-title", true, (val) => {
+    const taskbarElt = document.getElementById("taskbar");
+    if (val) {
+      taskbarElt.classList.remove("no-title");
+    } else {
+      taskbarElt.classList.add("no-title");
+    }
+  }),
+
+  /**
+   * If `true`, windows `left` and `top` position won't change on resize.
+   * If `false`, they will be considered relative to the current page's
+   * dimensions and as such update on resize.
+   */
+  absoluteWindowPositioning: createRefForState(
+    "absolute-window-positioning",
+    true,
+  ),
+
+  /**
+   * If `true`, windows `height` and `width` won't change on resize.
+   * If `false`, they will be considered relative to the current page's
+   * dimensions and as such update on resize.
+   */
+  absoluteWindowSize: createRefForState("absolute-window-size", true),
+
+  /**
+   * If `true`, windows can leave the viewport.
+   * If `false`, they will always be contained in the viewport.
+   */
+  oobWindows: createRefForState("oob-windows", true),
+
+  /** If set to `true`, enable the "sub-list" concept in the start menu. */
+  enableStartMenuSublists: createRefForState("start-sub-lists", true),
+
+  /** The character to show for the start menu. */
+  startMenuPic: createRefForState("start-menu-pic", "🚀", (pic) => {
+    window.requestAnimationFrame(() => {
+      document.getElementById("start-button").textContent = pic;
+    });
+  }),
+
+  /**
+   * Define the desktop background.
+   * Set as an object with two keys: `type` and `value`:
+   * -  If `type` is set to `"image"`, then `value should be an URL to the image
+   * -  If `type` is set to `"color"`, then `value should be an hex-encoded 24 bits color
+   */
+  desktopBackground: createRefForState(
+    "desktop-bg",
+    WALLPAPERS.length > 0
+      ? {
+          // Can be "image" or "color"
+          type: "image",
+          value: WALLPAPERS[0],
+        }
+      : {
+          type: "color",
+          value: "#1e88e5",
+        },
+
+    (bg) => {
+      window.requestAnimationFrame(() => {
+        if (bg.type === "image") {
+          document.body.style.backgroundImage = `url(${encodeURI(bg.value)})`;
+          document.body.style.backgroundSize = "cover";
+        } else {
+          document.body.style.backgroundImage = "";
+          document.body.style.background = bg.value;
+        }
+      });
+    },
+  ),
+
+  /** Defines the opacity of the taskbar, as a value from `0` to `1` */
+  taskbarOpacity: createRefForState(
+    "taskbar-opacity",
+    DEFAULT_OPACITY,
+    (opacityPercent) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--taskbar-bg",
+          SETTINGS.taskbarBgColor.getValue() + percentageToHex(opacityPercent),
+        );
+        document.documentElement.style.setProperty(
+          "--taskbar-active-bg",
+          SETTINGS.taskbarActiveBgColor.getValue() +
+            percentageToHex(opacityPercent),
+        );
+        document.documentElement.style.setProperty(
+          "--taskbar-inactive-bg",
+          SETTINGS.taskbarInactiveBgColor.getValue() +
+            percentageToHex(opacityPercent),
+        );
+      });
+    },
+  ),
+
+  /** Defines the background-color of the taskbar, as an hex-encoded 24 bits color */
+  taskbarBgColor: createRefForState(
+    "taskbar-bg",
+    DEFAULT_TASK_BG_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--taskbar-bg",
+          color + percentageToHex(SETTINGS.taskbarOpacity.getValue()),
+        );
+      });
+    },
+  ),
+
+  /** Defines the text color on the taskbar, as an hex-encoded 24 bits color */
+  taskbarTextColor: createRefForState(
+    "taskbar-text",
+    DEFAULT_TASK_TEXT_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty("--taskbar-text", color);
+      });
+    },
+  ),
+
+  /**
+   * Defines the background-color of the taskbar when hovering a task, as an
+   * hex-encoded 24 bits color.
+   */
+  taskbarHoverColor: createRefForState(
+    "taskbar-hover",
+    DEFAULT_TASK_HOVER_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty("--taskbar-hover", color);
+      });
+    },
+  ),
+
+  /**
+   * Defines the background-color of the taskbar for the active task, as an
+   * hex-encoded 24 bits color.
+   */
+  taskbarActiveBgColor: createRefForState(
+    "taskbar-active-bg",
+    DEFAULT_TASK_ACTIVE_BG_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--taskbar-active-bg",
+          color + percentageToHex(SETTINGS.taskbarOpacity.getValue()),
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines the background-color of the taskbar for inactive tasks, as an
+   * hex-encoded 24 bits color.
+   */
+  taskbarInactiveBgColor: createRefForState(
+    "taskbar-inactive-bg",
+    DEFAULT_TASK_INACTIVE_BG_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--taskbar-inactive-bg",
+          color + percentageToHex(SETTINGS.taskbarOpacity.getValue()),
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines the background-color of an opened start menu, as an hex-encoded
+   * 24 bits color.
+   */
+  startMenuBgColor: createRefForState(
+    "start-menu-bg",
+    DEFAULT_START_MENU_BG,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty("--start-menu-bg", color);
+      });
+    },
+  ),
+
+  /**
+   * Defines the text color of an opened start menu, as an hex-encoded 24 bits
+   * color.
+   */
+  startMenuTextColor: createRefForState(
+    "start-menu-text",
+    DEFAULT_START_MENU_TEXT,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty("--start-menu-text", color);
+      });
+    },
+  ),
+
+  /**
+   * Defines the background-color in an opened start menu for an hovered
+   * element, as an hex-encoded 24 bits color.
+   */
+  startMenuActiveBgColor: createRefForState(
+    "start-menu-active-bg",
+    DEFAULT_START_MENU_ACTIVE_BG,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--start-menu-active-bg",
+          color,
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines the background-color behind icons in an opened start menu, as an
+   * hex-encoded 24 bits color.
+   */
+  startMenuIconBgColor: createRefForState(
+    "start-menu-icon-bg",
+    DEFAULT_START_ICON_BG,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty("--start-icon-bg", color);
+      });
+    },
+  ),
+
+  /** Space in-between tasks of the taskbar, in px. */
+  taskbarTaskMargin: createRefForState(
+    "taskbar-task-margin",
+    DEFAULT_SPACE_BETWEEN_TASKS,
+    (margin) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--taskbar-task-margin",
+          String(margin) + "px",
+        );
+      });
+    },
+  ),
+
+  /**
+   * Where the taskbar is relative to the page:
+   * - `"top"`: on top of the page, `taskbarSize` is its height.
+   * - `"bottom"`: on the bottom of the page, `taskbarSize` is its height.
+   * - `"left"`: on the left of the page, `taskbarSize` is its width.
+   * - `"right"`: on the right of the page, `taskbarSize` is its width.
+   */
+  taskbarLocation,
+
+  /** Size in pixels for the taskbar. */
+  taskbarSize: createRefForState(
+    "taskbar-size",
+    DEFAULT_TASKBAR_SIZE,
+    (height) => {
+      taskbarSizeContext = taskbarLocation.getValue();
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--taskbar-size",
+          String(height) + "px",
+        );
+      });
+    },
+  ),
+
+  /** Height in pixel for a window's header element (containing text and buttons). */
+  windowHeaderHeight: createRefForState(
+    "window-header-height",
+    DEFAULT_WINDOW_HEADER_HEIGHT,
+    (height) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--window-header-height",
+          String(height) + "px",
+        );
+      });
+    },
+  ),
+
+  /** Height in pixel for a window header's buttons */
+  windowButtonSize: createRefForState(
+    "window-button-size",
+    DEFAULT_WINDOW_BUTTON_SIZE,
+    (height) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--window-button-size",
+          String(height) + "px",
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines the background-color of a window's header when it corresponds to
+   * the active window, as an hex-encoded 24 bits color.
+   */
+  windowActiveHeaderBgColor: createRefForState(
+    "window-active-header-bg-color",
+    DEFAULT_WINDOW_ACTIVE_HEADER,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--window-active-header",
+          color,
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines the text color of a window's header when it corresponds to
+   * the active window, as an hex-encoded 24 bits color.
+   */
+  windowActiveHeaderTextColor: createRefForState(
+    "window-active-header-text-color",
+    DEFAULT_WINDOW_ACTIVE_HEADER_TEXT,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--window-active-header-text",
+          color,
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines the background-color of an inactive window's header, as an
+   * hex-encoded 24 bits color.
+   */
+  windowInactiveHeaderBgColor: createRefForState(
+    "window-inactive-header-bg-color",
+    DEFAULT_WINDOW_INACTIVE_HEADER,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--window-inactive-header",
+          color,
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines the text color of an inactive window's header, as an
+   * hex-encoded 24 bits color.
+   */
+  windowIninactiveHeaderTextColor: createRefForState(
+    "window-inactive-header-text-color",
+    DEFAULT_WINDOW_INACTIVE_HEADER_TEXT,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--window-inactive-header-text",
+          color,
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines the default text color inside windows, as an hex-encoded 24 bits
+   * color.
+   */
+  windowTextColor: createRefForState(
+    "window-text-color",
+    DEFAULT_WINDOW_TEXT_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--window-text-color",
+          color,
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines the default background color inside windows, as an hex-encoded 24
+   * bits color.
+   */
+  windowContentBgColor: createRefForState(
+    "window-content-bg-color",
+    DEFAULT_WINDOW_CONTENT_BG,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--window-content-bg",
+          color,
+        );
+      });
+    },
+  ),
+
+  /** Defines the border color around windows, as an hex-encoded 24 bits color. */
+  windowBorderColor: createRefForState(
+    "window-border-color",
+    DEFAULT_WINDOW_BORDER_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--window-border-color",
+          color,
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines a color used inside windows for very thin lines, such as below
+   * the title or to the right of the sidebar, as an hex-encoded 24 bits
+   * color.
+   */
+  windowLineColor: createRefForState(
+    "window-line-color",
+    DEFAULT_WINDOW_LINE_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--window-line-color",
+          color,
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines a color used inside windows for elements we want to make evident,
+   * as an hex-encoded 24-bits color.
+   */
+  appPrimaryColorBg: createRefForState(
+    "app-primary-color",
+    DEFAULT_APP_PRIMARY_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--app-primary-color",
+          color,
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines a color used inside windows for disabled elements and colors that
+   * should be set as a background (e.g. in a button), as an hex-encoded 24 bits
+   * color.
+   */
+  appPrimaryBgColor: createRefForState(
+    "app-primary-bg",
+    DEFAULT_APP_PRIMARY_BG_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty("--app-primary-bg", color);
+      });
+    },
+  ),
+
+  /**
+   * Some windows contain a "sidebar", in which case this defines its background
+   * color, as an hex-encoded 24 bits color.
+   */
+  windowSidebarBgColor: createRefForState(
+    "window-sidebar-bg-color",
+    DEFAULT_WINDOW_SIDEBAR_BG,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--window-sidebar-bg",
+          color,
+        );
+      });
+    },
+  ),
+
+  /**
+   * Some windows contain a "sidebar", in which case this defines the background
+   * color of hovered elements in it, as an hex-encoded 24 bits color.
+   */
+  windowSidebarHoverBgColor: createRefForState(
+    "window-sidebar-hover-bg",
+    DEFAULT_SIDEBAR_HOVER_BG,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty("--sidebar-hover-bg", color);
+      });
+    },
+  ),
+
+  /**
+   * Some windows contain a "sidebar", in which case this defines the background
+   * color of the currently-selected element, as an hex-encoded 24 bits color.
+   */
+  windowSidebarSelectedBgColor: createRefForState(
+    "window-sidebar-selected-bg-color",
+    DEFAULT_SIDEBAR_SELECTED_BG_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--sidebar-selected-bg-color",
+          color,
+        );
+      });
+    },
+  ),
+
+  /**
+   * Some windows contain a "sidebar", in which case this defines the text color
+   * inside it, as an hex-encoded 24 bits color.
+   */
+  windowSidebarSelectedTextColor: createRefForState(
+    "window-sidebar-selected-text-color",
+    DEFAULT_SIDEBAR_SELECTED_TEXT_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--sidebar-selected-text-color",
+          color,
+        );
+      });
+    },
+  ),
+
+  /** Defines the height of borders around windows, in pixels. `0` to remove borders. */
+  windowBorderSize: createRefForState(
+    "window-border-size",
+    DEFAULT_WINDOW_BORDER_SIZE,
+    (size) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--window-border-size",
+          String(size) + "px",
+        );
+      });
+    },
+  ),
+};
+
+// function hexToPercentage(hex) {
+//   const decimalValue = parseInt(hex, 16);
+//   return Math.min(Math.round((decimalValue / 255) * 100), 100);
+// }
+
+/**
+ * Translate a percentage value from `0` to `100` to the corresponding hex
+ * value from `00` to `FF`.
+ *
+ * Might be used to include opacity in rgba hex values.
+ *
+ * @param {number} percent
+ * @returns {string}
+ */
+function percentageToHex(percent) {
+  const decimalValue = Math.round((percent / 100) * 255);
+  const hex = decimalValue.toString(16).padStart(2, "0");
+
+  return hex;
+}
+
+/**
+ * Create a `SharedReference` object for some given state, that will be stored
+ * in local storage and retrieved on page re-launch.
+ * @param {string} stateName - The name of the state to put in local-storage.
+ * Has to be forward-compatible (keep its name between versions), so a
+ * forward-thinking name should be chosen.
+ * @param {*} defaultVal - Initial value for that state if none is stored yet.
+ * @param {Function} onUpdate - Function to call when that value is updated.
+ */
+function createRefForState(stateName, defaultVal, onUpdate) {
+  let initialValue;
+  try {
+    const storedValue = localStorage.getItem(stateName);
+    if (storedValue) {
+      initialValue = JSON.parse(storedValue);
+    }
+  } catch (_) {}
+  if (initialValue === undefined) {
+    initialValue = defaultVal;
+  }
+  const ref = new SharedReference(initialValue);
+  ref.onUpdate(
+    (bg) => {
+      try {
+        if (onUpdate) {
+          onUpdate(bg);
+        }
+        localStorage.setItem(stateName, JSON.stringify(bg));
+      } catch (_) {}
+    },
+    { emitCurrentValue: false },
+  );
+  if (onUpdate) {
+    onUpdate(initialValue);
+  }
+  allRefsAndDefaults.push([ref, defaultVal]);
+  return ref;
+}
+
+/**
+ * Reset all "references" created through `createRefForState` to their initial
+ * value, and remove all data from local storage.
+ */
+export function resetStateToDefault() {
+  window.requestAnimationFrame(() => {
+    allRefsAndDefaults.forEach(([ref, deflt]) => {
+      ref.setValueIfChanged(deflt);
+    });
+    localStorage.clear();
+  });
+}

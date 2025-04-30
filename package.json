@@ -1,0 +1,12 @@
+{
+  "name": "paul-berberian-homepage",
+  "version": "0.1.0",
+  "description": "My personal homepage, emulating a desktop environment.",
+  "author": "peaBerberian",
+  "scripts": {
+    "build": "node bundle.mjs src/desktop.mjs --output dist/bundle.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.3"
+  }
+}

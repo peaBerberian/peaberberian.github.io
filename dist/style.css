@@ -77,13 +77,13 @@ html {
 
 .left-taskbar #desktop {
   width: calc(100% - var(--taskbar-size));
-	height: 100%;
+  height: 100%;
   left: var(--taskbar-size);
 }
 
 .right-taskbar #desktop {
   width: calc(100% - var(--taskbar-size));
-	height: 100%;
+  height: 100%;
 }
 
 .icon {
@@ -154,18 +154,18 @@ html {
 .left-taskbar #taskbar {
   top: 0;
   bottom: auto;
-	height: 100%;
-	width: var(--taskbar-size);
-	flex-direction: column;
+  height: 100%;
+  width: var(--taskbar-size);
+  flex-direction: column;
 }
 
 .right-taskbar #taskbar {
   top: 0;
-	bottom: auto;
+  bottom: auto;
   right: 0;
-	height: 100%;
-	width: var(--taskbar-size);
-	flex-direction: column;
+  height: 100%;
+  width: var(--taskbar-size);
+  flex-direction: column;
 }
 
 #taskbar-first {
@@ -177,12 +177,14 @@ html {
   display: flex;
 }
 
-.left-taskbar #taskbar-first, .right-taskbar #taskbar-first {
-	flex-direction: column;
+.left-taskbar #taskbar-first,
+.right-taskbar #taskbar-first {
+  flex-direction: column;
 }
 
-.left-taskbar #taskbar-last, .right-taskbar #taskbar-last {
-	flex-direction: column;
+.left-taskbar #taskbar-last,
+.right-taskbar #taskbar-last {
+  flex-direction: column;
 }
 
 .taskbar-item-title {
@@ -205,14 +207,15 @@ html {
   justify-content: center;
   cursor: pointer;
   transition: background-color 0.2s;
-	font-size: min(calc(var(--taskbar-size) * 0.6), 35px);
+  font-size: min(calc(var(--taskbar-size) * 0.6), 35px);
 }
 
-.left-taskbar #start-button, .right-taskbar #start-button {
-	padding: 10px 0px;
-	margin-left: auto;
-	margin-top: 10px;
-	height: auto;
+.left-taskbar #start-button,
+.right-taskbar #start-button {
+  padding: 10px 0px;
+  margin-left: auto;
+  margin-top: 10px;
+  height: auto;
   min-height: auto;
 }
 
@@ -231,8 +234,8 @@ html {
   display: none;
   z-index: 1000;
   max-height: calc(100% - var(--taskbar-size));
-	border-radius: 10px 10px 0px 0px;
-	flex-direction: column;
+  border-radius: 10px 10px 0px 0px;
+  flex-direction: column;
 }
 
 #start-menu.active {
@@ -242,44 +245,44 @@ html {
 .top-taskbar #start-menu {
   top: var(--taskbar-size);
   bottom: auto;
-	border-radius: 0px 0px 10px 10px;
+  border-radius: 0px 0px 10px 10px;
 }
 
 .left-taskbar #start-menu {
   top: 10px;
-	bottom: auto;
-	left: var(--taskbar-size);
+  bottom: auto;
+  left: var(--taskbar-size);
   max-height: 100%;
-	border-radius: 0px 10px 10px 0px;
+  border-radius: 0px 10px 10px 0px;
 }
 
 .right-taskbar #start-menu {
   top: 10px;
-	bottom: auto;
-	right: var(--taskbar-size);
+  bottom: auto;
+  right: var(--taskbar-size);
   left: auto;
   max-height: 100%;
-	border-radius: 10px 0px 0px 10px;
+  border-radius: 10px 0px 0px 10px;
 }
 
 .start-header {
-	padding: 13px 10px;
+  padding: 13px 10px;
   background-color: var(--window-active-header);
   color: var(--window-active-header-text);
   font-weight: bold;
-	border-radius: 5px 5px 0px 0px;
+  border-radius: 5px 5px 0px 0px;
 }
 
 .top-taskbar .start-header {
-	border-radius: 0px 0px 5px 5px;
+  border-radius: 0px 0px 5px 5px;
 }
 
 .left-taskbar .start-header {
-	border-radius: 0px 5px 0px 0px;
+  border-radius: 0px 5px 0px 0px;
 }
 
 .right-taskbar .start-header {
-	border-radius: 5px 0px 0px 0px;
+  border-radius: 5px 0px 0px 0px;
 }
 
 .start-item {
@@ -293,8 +296,8 @@ html {
 }
 
 .right-taskbar .start-item {
-	/* make place for s-list arrows on the left. */
-	padding: 10px 15px 10px 25px;
+  /* make place for s-list arrows on the left. */
+  padding: 10px 15px 10px 25px;
 }
 
 #start-menu.active .start-item:hover {
@@ -365,7 +368,7 @@ html {
   position: absolute;
   z-index: 300;
   top: 0px;
-	width: 100%;
+  width: 100%;
   height: 2px;
   cursor: ns-resize;
   background: transparent;
@@ -377,14 +380,14 @@ html {
 
 .left-taskbar .taskbar-resize-handle {
   left: var(--taskbar-size);
-	height: 100%;
+  height: 100%;
   width: 2px;
   cursor: ew-resize;
 }
 
 .right-taskbar .taskbar-resize-handle {
   right: var(--taskbar-size);
-	height: 100%;
+  height: 100%;
   width: 2px;
   cursor: ew-resize;
 }
@@ -614,8 +617,9 @@ ol {
   cursor: pointer;
 }
 
-.left-taskbar .clock, .right-taskbar .clock {
-	margin: 10px 5px;
+.left-taskbar .clock,
+.right-taskbar .clock {
+  margin: 10px 5px;
   text-align: center;
   text-overflow: ellipsis;
   white-space: normal;
@@ -633,12 +637,13 @@ ol {
   margin-left: 10px;
 }
 
-.left-taskbar .taskbar-items, .right-taskbar .taskbar-items {
-	flex-direction: column;
+.left-taskbar .taskbar-items,
+.right-taskbar .taskbar-items {
+  flex-direction: column;
   height: auto;
   width: var(--taskbar-size);
-	margin-left: 0;
-	margin-top: 10px;
+  margin-left: 0;
+  margin-top: 10px;
 }
 
 .taskbar-item {
@@ -656,17 +661,18 @@ ol {
   overflow: hidden;
 }
 
-.left-taskbar .taskbar-item, .right-taskbar .taskbar-item {
-	min-width: auto;
-	max-width: auto;
+.left-taskbar .taskbar-item,
+.right-taskbar .taskbar-item {
+  min-width: auto;
+  max-width: auto;
   max-height: 200px;
   margin-right: 0px;
-	padding: 15px 5px;
+  padding: 15px 5px;
   margin-bottom: var(--taskbar-task-margin);
 }
 
 .taskbar-item-icon {
-	flex-shrink: 0;
+  flex-shrink: 0;
 }
 
 .taskbar-item-text {
@@ -749,7 +755,9 @@ ol {
   text-decoration: none;
 }
 
-.top-taskbar .start-item-list::after, .left-taskbar .start-item-list::after, .bottom-taskbar .start-item-list::after {
+.top-taskbar .start-item-list::after,
+.left-taskbar .start-item-list::after,
+.bottom-taskbar .start-item-list::after {
   content: "▶";
   position: absolute;
   right: 10px;
@@ -781,7 +789,8 @@ ol {
   top: 0px;
 }
 
-.left-taskbar #start-menu .s-list, .right-taskbar #start-menu .s-list {
+.left-taskbar #start-menu .s-list,
+.right-taskbar #start-menu .s-list {
   bottom: auto;
   top: 0px;
 }
@@ -789,9 +798,8 @@ ol {
 .right-taskbar #start-menu .s-list {
   position: absolute;
   left: auto;
-	right: 100%;
+  right: 100%;
 }
-
 
 .s-list-wrapper {
   overflow: auto;
@@ -890,7 +898,9 @@ ol {
 .w-sidebar-item {
   padding: 15px;
   cursor: pointer;
-  transition: background-color 0.25s, color 0.25s;
+  transition:
+    background-color 0.25s,
+    color 0.25s;
   display: flex;
   align-items: center;
 }
@@ -974,12 +984,12 @@ ol {
   justify-content: space-between;
   width: 100%;
   max-width: 450px;
-	min-height: 56px;
-	padding: 10px 0px;
+  min-height: 56px;
+  padding: 10px 0px;
 }
 
 .w-small-opt-desc {
-	padding-right: 10px;
+  padding-right: 10px;
 }
 
 .w-small-opt .btn {
@@ -1039,8 +1049,8 @@ ol {
 
 .w-slider-container {
   width: 100%;
-	min-height: 60px;
-	padding: 10px 0px;
+  min-height: 60px;
+  padding: 10px 0px;
 }
 
 .w-slider-container label {
@@ -1061,7 +1071,7 @@ ol {
   background: var(--app-primary-bg);
   outline: none;
   border-radius: 2px;
-	cursor: pointer;
+  cursor: pointer;
 }
 
 .w-slider::-webkit-w-slider-thumb {

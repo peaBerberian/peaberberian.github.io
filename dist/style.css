@@ -223,46 +223,63 @@ html {
 #start-menu {
   position: absolute;
   bottom: var(--taskbar-size);
-  /* left: 10px; */
+  left: 10px;
   width: 250px;
   color: var(--start-menu-text);
   background-color: var(--start-menu-bg);
-  border-radius: 5px 5px 0 0;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
   display: none;
   z-index: 1000;
   max-height: calc(100% - var(--taskbar-size));
+	border-radius: 10px 10px 0px 0px;
+	flex-direction: column;
+}
+
+#start-menu.active {
+  display: flex;
 }
 
 .top-taskbar #start-menu {
   top: var(--taskbar-size);
   bottom: auto;
+	border-radius: 0px 0px 10px 10px;
 }
 
 .left-taskbar #start-menu {
-  top: 0;
+  top: 10px;
 	bottom: auto;
 	left: var(--taskbar-size);
   max-height: 100%;
+	border-radius: 0px 10px 10px 0px;
 }
 
 .right-taskbar #start-menu {
-  top: 0;
+  top: 10px;
 	bottom: auto;
 	right: var(--taskbar-size);
   left: auto;
   max-height: 100%;
-}
-
-#start-menu.active {
-  display: block;
+	border-radius: 10px 0px 0px 10px;
 }
 
 .start-header {
-  padding: 10px;
-  background-color: var(--taskbar-bg);
-  color: var(--taskbar-text);
+	padding: 13px 10px;
+  background-color: var(--window-active-header);
+  color: var(--window-active-header-text);
   font-weight: bold;
+	border-radius: 5px 5px 0px 0px;
+}
+
+.top-taskbar .start-header {
+	border-radius: 0px 0px 5px 5px;
+}
+
+.left-taskbar .start-header {
+	border-radius: 0px 5px 0px 0px;
+}
+
+.right-taskbar .start-header {
+	border-radius: 5px 0px 0px 0px;
 }
 
 .start-item {
@@ -1219,7 +1236,7 @@ input[type="range"]::-moz-range-thumb {
 @keyframes openStartAnim {
   from {
     pointer-events: none;
-    transform: translateY(20px);
+    transform: translateY(60px);
     opacity: 0;
   }
   to {
@@ -1237,7 +1254,7 @@ input[type="range"]::-moz-range-thumb {
   }
   to {
     pointer-events: auto;
-    transform: translateY(20px);
+    transform: translateY(40px);
     opacity: 0;
   }
 }
@@ -1245,7 +1262,7 @@ input[type="range"]::-moz-range-thumb {
 @keyframes openStartFromTopAnim {
   from {
     pointer-events: none;
-    transform: translateY(-20px);
+    transform: translateY(-60px);
     opacity: 0;
   }
   to {
@@ -1263,7 +1280,7 @@ input[type="range"]::-moz-range-thumb {
   }
   to {
     pointer-events: auto;
-    transform: translateY(-20px);
+    transform: translateY(-40px);
     opacity: 0;
   }
 }

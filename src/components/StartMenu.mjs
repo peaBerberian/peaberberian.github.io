@@ -87,7 +87,7 @@ function openStartMenu(startMenuElt) {
     return;
   }
   currentStartState = "opening";
-  startMenuElt.style.display = "block";
+  startMenuElt.style.display = "flex";
   switch (SETTINGS.taskbarLocation.getValue()) {
     case "bottom":
       startMenuElt.style.animation =
@@ -107,7 +107,7 @@ function openStartMenu(startMenuElt) {
       return;
     }
     currentStartState = "opened";
-    if (startMenuElt.style.display === "block") {
+    if (startMenuElt.style.display === "flex") {
       startMenuElt.classList.add("active");
     }
   };
@@ -167,6 +167,13 @@ function refreshStartMenu(
 ) {
   startMenuElt.innerHTML = "";
 
+  const startMenuHeaderElt = document.createElement("div");
+  startMenuHeaderElt.className = "start-header";
+  startMenuHeaderElt.textContent = "Paul's Web Desktop";
+
+  const startMenuItemsElt = document.createElement("div");
+  startMenuItemsElt.className = "start-menu-items";
+
   // TODO: constants?
   const doLists =
     !disableLists &&
@@ -175,9 +182,17 @@ function refreshStartMenu(
   if (doLists) {
     // TODO: still do for the y axis only, but I don't know how to do that
     // without breaking everything for now
-    startMenuElt.style.overflow = "";
+    startMenuItemsElt.style.overflow = "";
   } else {
-    startMenuElt.style.overflow = "auto";
+    startMenuItemsElt.style.overflow = "auto";
+  }
+
+  if (SETTINGS.taskbarLocation.getValue() === "top") {
+    startMenuElt.appendChild(startMenuItemsElt);
+    startMenuElt.appendChild(startMenuHeaderElt);
+  } else {
+    startMenuElt.appendChild(startMenuHeaderElt);
+    startMenuElt.appendChild(startMenuItemsElt);
   }
 
   let nbOfItems = 0;
@@ -232,7 +247,7 @@ function refreshStartMenu(
 
         startItemListElt.appendChild(listIconElt);
         startItemListElt.appendChild(listTitleElt);
-        startMenuElt.appendChild(startItemListElt);
+        startMenuItemsElt.appendChild(startItemListElt);
 
         const list = document.createElement("div");
         list.className = "s-list";
@@ -261,7 +276,7 @@ function refreshStartMenu(
         nbOfItems++;
       }
     } else {
-      startMenuElt.appendChild(startItemElt);
+      startMenuItemsElt.appendChild(startItemElt);
       nbOfItems++;
     }
 

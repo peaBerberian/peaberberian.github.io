@@ -71,7 +71,7 @@ export const MINIMIZE_APP_ANIM_TIMER = 200;
 /** Time of the animation to de-minimize a minimized application, in milliseconds. */
 export const DEMINIMIZE_APP_ANIM_TIMER = 200;
 /** Time of the animation to open the start menu, in milliseconds. */
-export const START_MENU_OPEN_ANIM_TIMER = 200;
+export const START_MENU_OPEN_ANIM_TIMER = 150;
 /** Time of the animation to close the start menu, in milliseconds. */
 export const CLOSE_MENU_OPEN_ANIM_TIMER = 300;
 

@@ -2,7 +2,7 @@
 // =======
 //
 // high priority:
-// - reset broken when the taskbar is left or right
+// - sometimes icons disappear after resize
 //
 // medium priority:
 // - toggle to enable taskbar resize

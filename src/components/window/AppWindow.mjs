@@ -781,6 +781,10 @@ class AppWindow extends EventEmitter {
     const minimizeBtn = header.getElementsByClassName("w-minimize")[0];
     const maximizeBtn = header.getElementsByClassName("w-maximize")[0];
 
+    addEventListener(windowElt, "mousedown", abortSignal, () => {
+      this.activate();
+    });
+
     handleResizeAndMove(
       windowElt,
       { minHeight: WINDOW_MIN_HEIGHT, minWidth: WINDOW_MIN_WIDTH },

@@ -75,7 +75,7 @@ function getConfigurable() {
 ${createAppTitle("Making it configurable", {})}
 <p>I spent some efforts trying to make the behavior of this desktop configurable (through the settings app).</p>
 
-<p>When I check a new desktop environment, I usually love diving into configurations to see if the environment kept being functional even after heavy personalization, thus I also wanted to make a highly-configurable yet always-functional desktop.</p>
+<p>When I check a new desktop environment, I usually love diving into configurations to see if the environment keep being functional even after heavy personalization, thus I also wanted to make a highly-configurable yet always-functional desktop.</p>
 
 <div class="separator" />
 

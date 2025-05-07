@@ -39,12 +39,14 @@ import {
 import { keepWindowActiveInCurrentEventLoopIteration } from "./utils.mjs";
 
 /**
+ * Setup the right events to ensure this window can be mored and resized when
+ * interacting with it.
  * @param {HTMLElement} windowElt - The whole window that can be resized and
  * moved.
- * @param {Object} dimensions
- * @param {number} dimensions.minHeight - The minimum height in pixels the
+ * @param {Object} minDimensions
+ * @param {number} minDimensions.minHeight - The minimum height in pixels the
  * window can be resized to.
- * @param {number} dimensions.minWidth - The minimum width in pixels the
+ * @param {number} minDimensions.minWidth - The minimum width in pixels the
  * window can be resized to.
  * @param {Object} callbacks
  * @param {Function} callbacks.activateWindow - Callback to activate that
@@ -64,18 +66,49 @@ import { keepWindowActiveInCurrentEventLoopIteration } from "./utils.mjs";
  */
 export function handleResizeAndMove(
   windowElt,
-  { minHeight, minWidth },
+  minDimensions,
+  callbacks,
+  abortSignal,
+) {
+  handleMoveOnWindow(windowElt, minDimensions, callbacks, abortSignal);
+  handleResizeOnWindow(windowElt, minDimensions, callbacks, abortSignal);
+}
+
+/**
+ * Setup the right events to ensure this window can be moved.
+ * @param {HTMLElement} windowElt - The whole window that can be resized and
+ * moved.
+ * @param {Object} minDimensions
+ * @param {number} minDimensions.minWidth - The minimum width in pixels the
+ * window can be resized to.
+ * @param {Object} callbacks
+ * @param {Function} callbacks.activateWindow - Callback to activate that
+ * window on the desktop.
+ * @param {Function} callbacks.updateOobDistances - Callback allowing to update
+ * one or multiple properties from the object returned by
+ * `callbacks.getOobDistances`.
+ * @param {Function} callbacks.exitFullScreen - Callback to exit the current
+ * full screen mode.
+ * @param {Function} callbacks.saveCurrentCoordinates - Callback to save the
+ * current window coordinates as the last one wanted (e.g. as a target whne
+ * exiting fullscreen mode).
+ * @param {AbortSignal} abortSignal - `AbortSignal` allowing to free all
+ * resources and event listeners registered here when it emits.
+ */
+function handleMoveOnWindow(
+  windowElt,
+  { minWidth },
   {
     activateWindow,
-    getOobDistances,
     updateOobDistances,
     exitFullScreen,
     saveCurrentCoordinates,
   },
   abortSignal,
 ) {
-  const header = windowElt.getElementsByClassName("w-header")[0];
-
+  /**
+   * If `true`, we're currently in the process of dragging the window.
+   */
   let isDragging = false;
   /**
    * When a user began clicking: the delta between the mouse X coordinate on
@@ -100,6 +133,16 @@ export function handleResizeAndMove(
    */
   let initialY;
   /**
+   * When a user began clicking: the initial height of the window when the click
+   * was started.
+   */
+  let initialHeight;
+  /**
+   * When a user began clicking: the initial width of the window when the click
+   * was started.
+   */
+  let initialWidth;
+  /**
    * When a user began clicking: the original x coordinate percentage in the
    * context of the window's titlebar.
    */
@@ -117,148 +160,24 @@ export function handleResizeAndMove(
    */
   let containerHeight;
 
+  // Reset some state on abort, just to be sure we're not left in an unwanted state
   abortSignal.addEventListener("abort", () => {
     isDragging = false;
     disableSnappingZones();
     unblockElementsFromTakingPointerEvents();
   });
 
-  addResizeHandles();
-
+  const header = windowElt.getElementsByClassName("w-header")[0];
   if (header) {
-    const onTouchStart = (e) => {
-      isDragging = true;
+    const stopDragging = () => {
+      isDragging = false;
       if (!isFullscreen(windowElt)) {
         saveCurrentCoordinates();
       }
-      const touch = e.touches[0];
-      blockElementsFromTakingPointerEvents();
-      const topOffset =
-        SETTINGS.taskbarLocation.getValue() === "top"
-          ? SETTINGS.taskbarSize.getValue()
-          : 0;
-      const leftOffset =
-        SETTINGS.taskbarLocation.getValue() === "left"
-          ? SETTINGS.taskbarSize.getValue()
-          : 0;
-      const rect = header.getBoundingClientRect();
-      offsetX = touch.clientX - rect.left + leftOffset;
-      offsetY = touch.clientY - rect.top + topOffset;
-      initialXPercent = offsetX / rect.width;
-      initialX = touch.clientX;
-      initialY = touch.clientY;
-      const maxDimensions = getMaxDesktopDimensions(
-        SETTINGS.taskbarLocation.getValue(),
-        SETTINGS.taskbarSize.getValue(),
-      );
-      containerWidth = maxDimensions.maxWidth;
-      containerHeight = maxDimensions.maxHeight;
-      activateWindow();
+      disableSnappingZones();
+      unblockElementsFromTakingPointerEvents();
     };
-    const onMouseDown = (e) => {
-      if (e.button !== 0) {
-        // not left click
-        return;
-      }
-      isDragging = true;
-      if (!isFullscreen(windowElt)) {
-        saveCurrentCoordinates();
-      }
-      blockElementsFromTakingPointerEvents();
-      const topOffset =
-        SETTINGS.taskbarLocation.getValue() === "top"
-          ? SETTINGS.taskbarSize.getValue()
-          : 0;
-      const leftOffset =
-        SETTINGS.taskbarLocation.getValue() === "left"
-          ? SETTINGS.taskbarSize.getValue()
-          : 0;
-      const rect = windowElt.getBoundingClientRect();
-      offsetX = e.clientX - rect.left + leftOffset;
-      offsetY = e.clientY - rect.top + topOffset;
-      initialXPercent = offsetX / rect.width;
-      initialX = e.clientX;
-      initialY = e.clientY;
-      const maxDimensions = getMaxDesktopDimensions(
-        SETTINGS.taskbarLocation.getValue(),
-        SETTINGS.taskbarSize.getValue(),
-      );
-      containerWidth = maxDimensions.maxWidth;
-      containerHeight = maxDimensions.maxHeight;
-      activateWindow();
-    };
-    const moveWindowOnNewMouseCoordinates = (clientX, clientY) => {
-      const newX = clientX - offsetX;
-      const newY = clientY - offsetY;
-      const { minX, minY, minXBound, minYBound } =
-        getMinWindowPositions(windowElt);
-      const { maxX, maxY, maxXBound, maxYBound } =
-        getMaxWindowPositions(windowElt);
-      if (!isFullscreen(windowElt)) {
-        const newLeft = Math.max(minX, Math.min(newX, maxX));
-        if (newLeft >= minXBound && newLeft <= maxXBound) {
-          updateOobDistances({ left: 0, right: 0 });
-        } else {
-          if (newLeft < minXBound) {
-            updateOobDistances({ left: minXBound - newLeft });
-          }
-          if (newLeft > maxXBound) {
-            updateOobDistances({ right: newLeft - maxXBound });
-          }
-        }
-
-        const newTop = Math.max(minY, Math.min(newY, maxY));
-        if (newTop >= minYBound && newTop <= maxYBound) {
-          updateOobDistances({ top: 0, bottom: 0 });
-        } else {
-          if (newTop < minYBound) {
-            updateOobDistances({ top: minYBound - newTop });
-          }
-          if (newTop > maxYBound) {
-            updateOobDistances({ bottom: newTop - maxYBound });
-          }
-        }
-
-        checkSnapping(windowElt, {
-          clientY,
-          clientX,
-          minWidth,
-          containerWidth,
-          containerHeight,
-          newTop,
-          newLeft,
-        });
-
-        setLeftPositioning(windowElt, Math.max(minX, Math.min(newX, maxX)));
-        setTopPositioning(windowElt, Math.max(minY, Math.min(newY, maxY)));
-      }
-      // Only exit full screen if the pointer moved enough
-      else if (Math.abs(clientX - initialX) > 30 || clientY - initialY > 30) {
-        exitFullScreen();
-        const newWidth = getWindowWidth(windowElt);
-        const maxWindowPos = getMaxWindowPositions(windowElt);
-        const newX = Math.max(
-          minX,
-          Math.min(clientX - initialXPercent * newWidth, maxWindowPos.maxX),
-        );
-        offsetX = clientX - newX;
-        initialX = clientX;
-        moveWindowOnNewMouseCoordinates(clientX, clientY);
-      }
-    };
-    const onTouchMove = (e) => {
-      if (e.touches.length === 1) {
-        const touch = e.touches[0];
-        moveWindowOnNewMouseCoordinates(touch.clientX, touch.clientY);
-      }
-    };
-    const onDocumentMouseMove = (e) => {
-      if (!isDragging) {
-        return;
-      }
-      moveWindowOnNewMouseCoordinates(e.clientX, e.clientY);
-    };
-    const validate = () => {
+    const validateWindowMovement = () => {
       if (!isDragging) {
         return;
       }
@@ -274,19 +193,25 @@ export function handleResizeAndMove(
       }
       stopDragging();
     };
-    const stopDragging = () => {
-      isDragging = false;
-      if (!isFullscreen(windowElt)) {
-        saveCurrentCoordinates();
-      }
-      disableSnappingZones();
-      unblockElementsFromTakingPointerEvents();
-    };
-    addEventListener(header, "touchstart", abortSignal, onTouchStart);
-    addEventListener(header, "touchend", abortSignal, validate);
+    addEventListener(header, "touchstart", abortSignal, (e) => {
+      const touch = e.touches[0];
+      startDraggingWindow(touch.clientX, touch.clientY);
+    });
+    addEventListener(header, "touchend", abortSignal, validateWindowMovement);
     addEventListener(header, "touchcancel", abortSignal, stopDragging);
-    addEventListener(header, "touchmove", abortSignal, onTouchMove);
-    addEventListener(header, "mousedown", abortSignal, onMouseDown);
+    addEventListener(header, "touchmove", abortSignal, (e) => {
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        moveDraggedWindow(touch.clientX, touch.clientY);
+      }
+    });
+    addEventListener(header, "mousedown", abortSignal, (e) => {
+      if (e.button !== 0) {
+        // not left click
+        return;
+      }
+      startDraggingWindow(e.clientX, e.clientY);
+    });
     addEventListener(
       document.documentElement,
       "mouseleave",
@@ -297,30 +222,264 @@ export function handleResizeAndMove(
       document.documentElement,
       "mouseenter",
       abortSignal,
-      validate,
+      validateWindowMovement,
     );
-    addEventListener(document.documentElement, "click", abortSignal, validate);
-    addEventListener(document, "mousemove", abortSignal, onDocumentMouseMove);
-    addEventListener(windowElt, "mouseup", abortSignal, validate);
-    addEventListener(document, "resize", abortSignal, stopDragging);
-  }
-
-  addEventListener(windowElt, "mousedown", abortSignal, () => {
-    activateWindow();
-  });
-
-  function addResizeHandles() {
-    const directions = ["n", "e", "s", "w", "ne", "nw", "se", "sw"];
-    directions.forEach((dir) => {
-      const handle = document.createElement("div");
-      handle.className = `w-res-bord res-${dir}`;
-      windowElt.appendChild(handle);
-      setupResizeEvent(handle, dir);
+    addEventListener(
+      document.documentElement,
+      "click",
+      abortSignal,
+      validateWindowMovement,
+    );
+    addEventListener(document, "mousemove", abortSignal, (e) => {
+      if (!isDragging) {
+        return;
+      }
+      moveDraggedWindow(e.clientX, e.clientY);
     });
+    addEventListener(windowElt, "mouseup", abortSignal, validateWindowMovement);
+    addEventListener(window, "resize", abortSignal, stopDragging);
   }
 
+  function startDraggingWindow(clientX, clientY) {
+    isDragging = true;
+    if (!isFullscreen(windowElt)) {
+      saveCurrentCoordinates();
+    }
+    blockElementsFromTakingPointerEvents();
+    const initialLeft = getLeftPositioning(windowElt);
+    const initialTop = getTopPositioning(windowElt);
+    initialHeight = getWindowHeight(windowElt);
+    initialWidth = getWindowWidth(windowElt);
+    offsetX = clientX - initialLeft;
+    offsetY = clientY - initialTop;
+    initialXPercent = offsetX / initialWidth;
+    initialX = clientX;
+    initialY = clientY;
+    const maxDimensions = getMaxDesktopDimensions(
+      SETTINGS.taskbarLocation.getValue(),
+      SETTINGS.taskbarSize.getValue(),
+    );
+    containerWidth = maxDimensions.maxWidth;
+    containerHeight = maxDimensions.maxHeight;
+    activateWindow();
+  }
+
+  function moveDraggedWindow(clientX, clientY) {
+    const newX = clientX - offsetX;
+    const newY = clientY - offsetY;
+    const { minX, minY, minXBound, minYBound } =
+      getMinWindowPositions(windowElt);
+    const { maxX, maxY, maxXBound, maxYBound } =
+      getMaxWindowPositions(windowElt);
+    if (!isFullscreen(windowElt)) {
+      const newLeft = Math.max(minX, Math.min(newX, maxX));
+      if (newLeft >= minXBound && newLeft <= maxXBound) {
+        updateOobDistances({ left: 0, right: 0 });
+      } else {
+        if (newLeft < minXBound) {
+          updateOobDistances({ left: minXBound - newLeft });
+        }
+        if (newLeft > maxXBound) {
+          updateOobDistances({ right: newLeft - maxXBound });
+        }
+      }
+
+      const newTop = Math.max(minY, Math.min(newY, maxY));
+      if (newTop >= minYBound && newTop <= maxYBound) {
+        updateOobDistances({ top: 0, bottom: 0 });
+      } else {
+        if (newTop < minYBound) {
+          updateOobDistances({ top: minYBound - newTop });
+        }
+        if (newTop > maxYBound) {
+          updateOobDistances({ bottom: newTop - maxYBound });
+        }
+      }
+
+      const windowLeft = Math.max(minX, Math.min(newX, maxX));
+      setLeftPositioning(windowElt, windowLeft);
+      const windowTop = Math.max(minY, Math.min(newY, maxY));
+      setTopPositioning(windowElt, windowTop);
+      checkSnapping({
+        clientY,
+        clientX,
+        windowTop,
+        windowLeft,
+      });
+    }
+
+    // Only exit full screen if the pointer moved enough
+    else if (Math.abs(clientX - initialX) > 30 || clientY - initialY > 30) {
+      exitFullScreen();
+      const newWidth = getWindowWidth(windowElt);
+      const maxWindowPos = getMaxWindowPositions(windowElt);
+      const newX = Math.max(
+        minX,
+        Math.min(clientX - initialXPercent * newWidth, maxWindowPos.maxX),
+      );
+      offsetX = clientX - newX;
+      initialX = clientX;
+      moveDraggedWindow(clientX, clientY);
+    }
+  }
+
+  /**
+   * When a window is moved around, it might activates "snapping zones" which are
+   * zones which indicate that the window will be set to fullscreen or
+   * half-screen if the window is released at that point.
+   *
+   * This function just checks if a snapping window has to be activated with the
+   * current window position, and activates the zone if that's the case.
+   *
+   * You can then check the class name of the snapping zone element to see if a
+   * snap zone is active (through the appropriate util functions).
+   * @param {Object} info
+   * @param {number} info.clientX - Current x position of the pointer in the
+   * screen, in pixels.
+   * @param {number} info.clientY  - Current x position of the pointer in the
+   * screen, in pixels.
+   * @param {number} info.windowLeft - The last `left` position applied to
+   * `windowElt`, in pixels.
+   * @param {number} info.windowTop - The last `top` position applied to
+   * `windowElt`, in pixels.
+   */
+  function checkSnapping({ clientX, clientY, windowLeft, windowTop }) {
+    if (
+      SETTINGS.topWindowSnapping.getValue() &&
+      (initialWidth < containerWidth || initialHeight < containerHeight)
+    ) {
+      const snapPosLimitTop = SETTINGS.oobWindows.getValue()
+        ? clientY -
+          15 -
+          (SETTINGS.taskbarLocation.getValue() === "top"
+            ? SETTINGS.taskbarSize.getValue()
+            : 0)
+        : windowTop;
+      if (snapPosLimitTop <= 0) {
+        if (!isFullScreenSnapping()) {
+          activateFullScreenSnapping(windowElt);
+        }
+        return;
+      }
+    }
+
+    if (isFullScreenSnapping()) {
+      disableSnappingZones();
+    }
+
+    if (
+      SETTINGS.sideWindowSnapping.getValue() &&
+      containerWidth / 2 >= minWidth &&
+      initialWidth < containerWidth
+    ) {
+      const snapPosLimitLeft = SETTINGS.oobWindows.getValue()
+        ? clientX -
+          15 -
+          (SETTINGS.taskbarLocation.getValue() === "left"
+            ? SETTINGS.taskbarSize.getValue()
+            : 0)
+        : windowLeft;
+      if (snapPosLimitLeft <= 0) {
+        if (!isLeftScreenSnapping()) {
+          activateLeftScreenSnapping(windowElt);
+        }
+        return;
+      }
+
+      if (isLeftScreenSnapping()) {
+        disableSnappingZones();
+      }
+
+      const snapPosLimitRight = SETTINGS.oobWindows.getValue()
+        ? clientX + 15
+        : windowLeft + initialWidth;
+      if (snapPosLimitRight >= containerWidth) {
+        if (!isRightScreenSnapping()) {
+          activateRightScreenSnapping(windowElt);
+        }
+        return;
+      }
+    }
+
+    if (isRightScreenSnapping()) {
+      disableSnappingZones();
+    }
+  }
+}
+
+/**
+ * Setup the right events to ensure this window can be resized when interacting
+ * with it.
+ * @param {HTMLElement} windowElt - The whole window that can be resized and
+ * moved.
+ * @param {Object} minDimensions
+ * @param {number} minDimensions.minHeight - The minimum height in pixels the
+ * window can be resized to.
+ * @param {number} minDimensions.minWidth - The minimum width in pixels the
+ * window can be resized to.
+ * @param {Object} callbacks
+ * @param {Function} callbacks.activateWindow - Callback to activate that
+ * window on the desktop.
+ * @param {Function} callbacks.getOobDistances - Callback to obtain the
+ * currently-known "oob" (out-of-bounds) distances for this window element.
+ * @param {Function} callbacks.updateOobDistances - Callback allowing to update
+ * one or multiple properties from the object returned by
+ * `callbacks.getOobDistances`.
+ * @param {Function} callbacks.exitFullScreen - Callback to exit the current
+ * full screen mode.
+ * @param {Function} callbacks.saveCurrentCoordinates - Callback to save the
+ * current window coordinates as the last one wanted (e.g. as a target whne
+ * exiting fullscreen mode).
+ * @param {AbortSignal} abortSignal - `AbortSignal` allowing to free all
+ * resources and event listeners registered here when it emits.
+ */
+function handleResizeOnWindow(
+  windowElt,
+  { minHeight, minWidth },
+  { activateWindow, getOobDistances, exitFullScreen, saveCurrentCoordinates },
+  abortSignal,
+) {
+  // Add resize handles
+  for (const dir of ["n", "e", "s", "w", "ne", "nw", "se", "sw"]) {
+    const handle = document.createElement("div");
+    handle.className = `w-res-bord res-${dir}`;
+    windowElt.appendChild(handle);
+    setupResizeEvent(handle, dir);
+  }
+
+  /**
+   * Setup one of the resize handling for a given direction.
+   * @param {HTMLElement} handle - Each resize interaction is handled on a
+   * given "handle" element, which spans the corresponding side of a window.
+   * Has to be well-placed with CSS first.
+   * @param {string} direction - A string decribing the direction as a cardinal
+   * direction's initial: "n", "s", "e", "w", "ne", "nw", "se" or "sw".
+   */
   function setupResizeEvent(handle, direction) {
-    let startX, startY, startWidth, startHeight, startLeft, startTop;
+    /**
+     * When a user began resizing: the initial mouse X position at which the
+     * resize was started.
+     */
+    let startX;
+    /**
+     * When a user began resizing: the initial mouse Y position at which the
+     * resize was started.
+     */
+    let startY;
+    /** When a user began resizing: the initial width of the window, in pixels. */
+    let startWidth;
+    /** When a user began resizing: the initial height of the window, in pixels. */
+    let startHeight;
+    /**
+     * When a user began resizing: the initial leftest position of the window,
+     * in pixels.
+     */
+    let startLeft;
+    /**
+     * When a user began resizing: the initial topest position of the window,
+     * in pixels.
+     */
+    let startTop;
 
     abortSignal.addEventListener("abort", () => {
       unblockElementsFromTakingPointerEvents();
@@ -359,12 +518,12 @@ export function handleResizeAndMove(
 
       // Add document-level event listeners
       document.addEventListener("mousemove", resize);
-      document.addEventListener("mouseup", stopResize);
-      document.addEventListener("click", stopResize);
-      document.addEventListener("resize", stopResize);
+      document.addEventListener("mouseup", validateAndStopResize);
+      document.addEventListener("click", validateAndStopResize);
+      document.addEventListener("resize", validateAndStopResize);
     });
 
-    const stopResize = () => {
+    const validateAndStopResize = () => {
       if (!isFullscreen(windowElt)) {
         saveCurrentCoordinates();
       } else if (isFullscreenLeft(windowElt)) {
@@ -387,12 +546,11 @@ export function handleResizeAndMove(
       unblockElementsFromTakingPointerEvents();
       windowElt.classList.remove("resizing");
       document.removeEventListener("mousemove", resize);
-      document.removeEventListener("mouseup", stopResize);
-      document.removeEventListener("click", stopResize);
-      document.removeEventListener("resize", stopResize);
+      document.removeEventListener("mouseup", validateAndStopResize);
+      document.removeEventListener("click", validateAndStopResize);
+      document.removeEventListener("resize", validateAndStopResize);
     };
 
-    // Resize function based on direction
     const resize = (e) => {
       requestAnimationFrame(() => {
         const deltaX = e.clientX - startX;
@@ -463,80 +621,5 @@ export function handleResizeAndMove(
         }
       });
     };
-  }
-}
-
-function checkSnapping(
-  windowElt,
-  {
-    clientX,
-    clientY,
-    minWidth,
-    containerWidth,
-    containerHeight,
-    newLeft,
-    newTop,
-  },
-) {
-  if (
-    SETTINGS.topWindowSnapping.getValue() &&
-    (getWindowWidth(windowElt) < containerWidth ||
-      getWindowHeight(windowElt) < containerHeight)
-  ) {
-    const snapPosLimitTop = SETTINGS.oobWindows.getValue()
-      ? clientY -
-        15 -
-        (SETTINGS.taskbarLocation.getValue() === "top"
-          ? SETTINGS.taskbarSize.getValue()
-          : 0)
-      : newTop;
-    if (snapPosLimitTop <= 0) {
-      if (!isFullScreenSnapping()) {
-        activateFullScreenSnapping(windowElt);
-      }
-      return;
-    }
-  }
-
-  if (isFullScreenSnapping()) {
-    disableSnappingZones();
-  }
-
-  if (
-    SETTINGS.sideWindowSnapping.getValue() &&
-    containerWidth / 2 >= minWidth &&
-    getWindowWidth(windowElt) < containerWidth
-  ) {
-    const snapPosLimitLeft = SETTINGS.oobWindows.getValue()
-      ? clientX -
-        15 -
-        (SETTINGS.taskbarLocation.getValue() === "left"
-          ? SETTINGS.taskbarSize.getValue()
-          : 0)
-      : newLeft;
-    if (snapPosLimitLeft <= 0) {
-      if (!isLeftScreenSnapping()) {
-        activateLeftScreenSnapping(windowElt);
-      }
-      return;
-    }
-
-    if (isLeftScreenSnapping()) {
-      disableSnappingZones();
-    }
-
-    const snapPosLimitRight = SETTINGS.oobWindows.getValue()
-      ? clientX + 15
-      : newLeft + getWindowWidth(windowElt);
-    if (snapPosLimitRight >= containerWidth) {
-      if (!isRightScreenSnapping()) {
-        activateRightScreenSnapping(windowElt);
-      }
-      return;
-    }
-  }
-
-  if (isRightScreenSnapping()) {
-    disableSnappingZones();
   }
 }

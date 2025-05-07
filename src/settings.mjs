@@ -215,7 +215,7 @@ export const SETTINGS = {
   /** The character to show for the start menu. */
   startMenuPic: createRefForState("start-menu-pic", "🚀", (pic) => {
     window.requestAnimationFrame(() => {
-      document.getElementById("start-button").textContent = pic;
+      document.getElementById("start-pic").textContent = pic;
     });
   }),
 

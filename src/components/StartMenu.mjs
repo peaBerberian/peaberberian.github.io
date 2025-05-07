@@ -14,6 +14,7 @@ import { SETTINGS } from "../settings.mjs";
  */
 let currentStartState = "closed";
 const startButtonElt = document.getElementById("start-button");
+const startPicElt = document.getElementById("start-pic");
 const startMenuElt = document.getElementById("start-menu");
 
 /**
@@ -46,6 +47,10 @@ export default function StartMenu(apps, openApp, abortSignal) {
         closeStartMenu(startMenuElt);
         break;
       default:
+        startPicElt.style.animation = "SPEEN 0.3s ease-in-out";
+        startPicElt.onanimationend = () => {
+          startPicElt.style.animation = "";
+        };
         openStartMenu(startMenuElt);
         break;
     }

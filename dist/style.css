@@ -1258,13 +1258,13 @@ input[type="range"]::-moz-range-thumb {
 
 @keyframes closeStartAnim {
   from {
-    pointer-events: none;
-    transform: translateY(0);
+    /* pointer-events: none; */
+    /* transform: translateY(0); */
     opacity: 1;
   }
   to {
-    pointer-events: auto;
-    transform: translateY(40px);
+    /* pointer-events: auto; */
+    /* transform: translateY(40px); */
     opacity: 0;
   }
 }
@@ -1284,13 +1284,13 @@ input[type="range"]::-moz-range-thumb {
 
 @keyframes closeStartFromTopAnim {
   from {
-    pointer-events: none;
-    transform: translateY(0);
+    /* pointer-events: none; */
+    /* transform: translateY(0); */
     opacity: 1;
   }
   to {
-    pointer-events: auto;
-    transform: translateY(-40px);
+    /* pointer-events: auto; */
+    /* transform: translateY(-40px); */
     opacity: 0;
   }
 }
@@ -1362,5 +1362,14 @@ input[type="range"]::-moz-range-thumb {
   }
   .w-sidebar-item {
     text-align: center;
+  }
+}
+
+@keyframes SPEEN {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }

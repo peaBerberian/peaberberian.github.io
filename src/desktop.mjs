@@ -2,7 +2,6 @@
 // =======
 //
 // high priority:
-// - sometimes icons disappear after resize
 //
 // medium priority:
 // - toggle to enable taskbar resize

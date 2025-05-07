@@ -40,23 +40,24 @@ export default function AppIcons(apps, onOpen, parentAbortSignal) {
   let abortController;
   const iconWrapperElt = document.createElement("div");
 
-  let { maxHeight: currentMaxHeight, maxWidth: currentMaxWidth } =
-    getMaxDesktopDimensions(
-      SETTINGS.taskbarLocation.getValue(),
-      SETTINGS.taskbarSize.getValue(),
-    );
-  let currentIconHeight = ICON_HEIGHT_BASE + SETTINGS.fontSize.getValue() * 2;
-  let lastGrid = [
-    // nb of icons on height / column
-    Math.floor((currentMaxHeight - ICON_Y_BASE) / currentIconHeight),
-    // nb of icons on width / row
-    Math.floor(
-      (currentMaxWidth - ICON_X_BASE) /
-        (ICON_WIDTH_BASE + ICON_X_OFFSET_FROM_WIDTH),
-    ),
-  ];
-
-  refreshIcons(lastGrid, currentIconHeight);
+  // initialize to no icon
+  let lastGrid = [0, 0];
+  SETTINGS.fontSize.onUpdate(recheckUpdate, {
+    clearSignal: parentAbortSignal,
+  });
+  window.addEventListener("resize", recheckUpdate);
+  SETTINGS.taskbarSize.onUpdate(recheckUpdate, {
+    clearSignal: parentAbortSignal,
+  });
+  SETTINGS.taskbarLocation.onUpdate(recheckUpdate, {
+    clearSignal: parentAbortSignal,
+  });
+  if (parentAbortSignal) {
+    parentAbortSignal.addEventListener("abort", () => {
+      window.removeEventListener("resize", recheckUpdate);
+    });
+  }
+  recheckUpdate();
   return iconWrapperElt;
 
   function refreshIcons(gridSize, iconHeight) {
@@ -137,84 +138,11 @@ export default function AppIcons(apps, onOpen, parentAbortSignal) {
           icon.classList.remove("selected");
         }
       };
-      const recheckUpdate = () => {
-        requestAnimationFrame(() => {
-          // Do a complex check first to see if icons need to be re-rendered.
-          // There was a performance ""issue"" (not that much in thruth, but still
-          // surprising) repainting the icons on resize before.
-
-          const newDimensions = getMaxDesktopDimensions(
-            SETTINGS.taskbarLocation.getValue(),
-            SETTINGS.taskbarSize.getValue(),
-          );
-          const newMaxWidth = newDimensions.maxWidth;
-          const newMaxHeight = newDimensions.maxHeight;
-          const newIconHeight =
-            ICON_HEIGHT_BASE +
-            SETTINGS.fontSize.getValue() * 2 +
-            ICON_Y_OFFSET_FROM_HEIGHT;
-          const newGrid = [
-            // nb of icons on height / column
-            Math.floor(
-              (newMaxHeight - ICON_Y_BASE) / (newIconHeight + ICON_MARGIN),
-            ),
-            // nb of icons on width / row
-            Math.floor(
-              (newMaxWidth - ICON_X_BASE) /
-                (ICON_WIDTH_BASE + ICON_X_OFFSET_FROM_WIDTH),
-            ),
-          ];
-          if (newGrid[0] < lastGrid[0]) {
-            if (newGrid[0] >= apps.length) {
-              // There's less apps than the first column anyway
-              return;
-            } else {
-              refreshIcons(newGrid, newIconHeight);
-              lastGrid = newGrid;
-            }
-          } else if (newGrid[0] === lastGrid[0]) {
-            // check columns
-            if (newGrid[1] < lastGrid[1]) {
-              // less columns check that the new still can contain all apps
-              if (newGrid[0] * newGrid[1] < apps.length) {
-                refreshIcons(newGrid, newIconHeight);
-                lastGrid = newGrid;
-              }
-            } else if (newGrid[1] > lastGrid[1]) {
-              // more columns, check that the previous could contain all apps
-              if (lastGrid[0] * lastGrid[1] < apps.length) {
-                refreshIcons(newGrid, newIconHeight);
-                lastGrid = newGrid;
-              }
-            }
-          } else {
-            // newGrid[0] > lastGrid[0]
-
-            if (lastGrid[0] >= apps.length) {
-              // There was apps than the first column anyway
-              return;
-            } else {
-              refreshIcons(newGrid, newIconHeight);
-              lastGrid = newGrid;
-            }
-          }
-        });
-      };
-      SETTINGS.fontSize.onUpdate(recheckUpdate, {
-        clearSignal: abortController.signal,
-      });
       document.addEventListener("click", onDocumentClick);
-      window.addEventListener("resize", recheckUpdate);
-      SETTINGS.taskbarSize.onUpdate(recheckUpdate, {
-        clearSignal: abortController.signal,
-      });
-      SETTINGS.taskbarLocation.onUpdate(recheckUpdate, {
-        clearSignal: abortController.signal,
-      });
       abortController.signal.addEventListener("abort", () => {
         document.removeEventListener("click", onDocumentClick);
-        window.removeEventListener("resize", recheckUpdate);
       });
+
       addMovingAroundListeners(
         icon,
         { baseLeft: basePositionLeft, baseTop: basePositionTop },
@@ -228,6 +156,69 @@ export default function AppIcons(apps, onOpen, parentAbortSignal) {
         iconWrapperElt.appendChild(iconElt);
       }
     }
+  }
+  function recheckUpdate() {
+    requestAnimationFrame(() => {
+      // Do a complex check first to see if icons need to be re-rendered.
+      // There was a performance ""issue"" (not that much in thruth, but still
+      // surprising) repainting the icons on resize before.
+
+      const newDimensions = getMaxDesktopDimensions(
+        SETTINGS.taskbarLocation.getValue(),
+        SETTINGS.taskbarSize.getValue(),
+      );
+      const newMaxWidth = newDimensions.maxWidth;
+      const newMaxHeight = newDimensions.maxHeight;
+      const newIconHeight =
+        ICON_HEIGHT_BASE +
+        SETTINGS.fontSize.getValue() * 2 +
+        ICON_Y_OFFSET_FROM_HEIGHT;
+      const newGrid = [
+        // nb of icons on height / column
+        Math.floor(
+          (newMaxHeight - ICON_Y_BASE) / (newIconHeight + ICON_MARGIN),
+        ),
+        // nb of icons on width / row
+        Math.floor(
+          (newMaxWidth - ICON_X_BASE) /
+            (ICON_WIDTH_BASE + ICON_X_OFFSET_FROM_WIDTH),
+        ),
+      ];
+      if (newGrid[0] < lastGrid[0]) {
+        if (newGrid[0] >= apps.length) {
+          // There's less apps than the first column anyway
+          return;
+        } else {
+          refreshIcons(newGrid, newIconHeight);
+          lastGrid = newGrid;
+        }
+      } else if (newGrid[0] === lastGrid[0]) {
+        // check columns
+        if (newGrid[1] < lastGrid[1]) {
+          // less columns check that the new still can contain all apps
+          if (newGrid[0] * newGrid[1] < apps.length) {
+            refreshIcons(newGrid, newIconHeight);
+            lastGrid = newGrid;
+          }
+        } else if (newGrid[1] > lastGrid[1]) {
+          // more columns, check that the previous could contain all apps
+          if (lastGrid[0] * lastGrid[1] < apps.length) {
+            refreshIcons(newGrid, newIconHeight);
+            lastGrid = newGrid;
+          }
+        }
+      } else {
+        // newGrid[0] > lastGrid[0]
+
+        if (lastGrid[0] >= apps.length) {
+          // There was apps than the first column anyway
+          return;
+        } else {
+          refreshIcons(newGrid, newIconHeight);
+          lastGrid = newGrid;
+        }
+      }
+    });
   }
 }
 

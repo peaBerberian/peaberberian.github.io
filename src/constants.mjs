@@ -96,9 +96,14 @@ export const WALLPAPERS = [
   // From Kalen Emsley (@kalenemsley from unsplash)
   IMAGE_ROOT_PATH + "photo-1464822759023-fed622ff2c3b.jpg",
 
-  // From Dima Pechurin (@pechka on unsplash)
-  IMAGE_ROOT_PATH + "photo-1745772352544-bd8f1d144497.jpg",
-  IMAGE_ROOT_PATH + "photo-1706109017677-79c0cf8c941c.jpg",
+  // Jack B (@nervum on unsplash)
+  IMAGE_ROOT_PATH + "beach1.avif",
+
+  // Irina Iriser (@iriser on unsplash)
+  IMAGE_ROOT_PATH + "forest1.avif",
+
+  // Lucas Dalamarta (@lucasdalamartaphoto on unsplash)
+  IMAGE_ROOT_PATH + "some_ducks.avif",
 
   // Tim Schmidbauer (@timschmidbauer on unsplash)
   IMAGE_ROOT_PATH + "photo-1745761412274-5303bc3f2e45.jpg",
@@ -107,7 +112,7 @@ export const WALLPAPERS = [
   IMAGE_ROOT_PATH + "photo-1479030160180-b1860951d696.jpg",
 
   // Benjamin Voros (@vorosbenisop on unsplash)
-  IMAGE_ROOT_PATH + "photo.avif",
+  IMAGE_ROOT_PATH + "dark_mountain.avif",
 ];
 
 /** URL of the SVG for the "doc" link we set on some applications */

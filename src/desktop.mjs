@@ -6,7 +6,6 @@
 // medium priority:
 // - toggle to enable taskbar resize
 // - taskbar move manually
-// - less heavy default wallpaper
 // - check why not resizing when mouse on the borders, seems CSS-related
 // - when side-by-side window snapping we should be able to resize both at the same time
 // - if click out of the screen / mouseleave do not deactivate window?

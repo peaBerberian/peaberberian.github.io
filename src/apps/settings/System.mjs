@@ -87,7 +87,9 @@ export default function createSystemSection(abortSignal) {
 	<p> Thanks to <a href="https://unsplash.com" target="_blank">unsplash</a> for providing free-to-use pictures - that I used to get wallpapers, and especially thanks to the following unsplash contributors from which I sourced wallpaper images (because I liked those!):
 	<ul>
 		<li>Kalen Emsley (@kalenemsley on unsplash)</li>
-		<li>Dima Pechurin (@pechka on unsplash)</li>
+		<li>Jack B (@nervum on unsplash)</li>
+		<li>Irina Iriser (@iriser on unsplash)</li>
+		<li>Lucas Dalamarta (@lucasdalamartaphoto on unsplash)</li>
 		<li>Tim Schmidbauer (@timschmidbauer on unsplash)</li>
 		<li>Ashim D'Silva (@randomlies on unsplash)</li>
 		<li>Benjamin Voros (@vorosbenisop on unsplash)</li>

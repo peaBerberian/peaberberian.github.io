@@ -85,31 +85,32 @@ function createSystemSettingsApp(abortSignal) {
         contentElt.appendChild(
           createWallpaperSection(childAbortController.signal),
         );
-        return;
+        break;
       case "theme":
         contentElt.appendChild(createThemeSection(childAbortController.signal));
-        return;
+        break;
       case "taskbar":
         contentElt.appendChild(
           createTaskbarSection(childAbortController.signal),
         );
-        return;
+        break;
       case "system":
         contentElt.appendChild(
           createSystemSection(childAbortController.signal),
         );
-        return;
+        break;
       case "window":
         contentElt.appendChild(
           createWindowSection(childAbortController.signal),
         );
-        return;
+        break;
       case "icons":
         contentElt.appendChild(
           createDesktopIconsSection(childAbortController.signal),
         );
-        return;
+        break;
     }
+    contentElt.scrollTo(0, 0);
   }
   function updateSectionsIcons() {
     for (const item of sidebarItems) {
@@ -142,7 +143,6 @@ function constructAppWithSidebar(sections, onChangeSection) {
   const content = strHtml`<div class="w-content"></div>`;
   const sidebar = constructSidebarElt(sections, (section) => {
     onChangeSection(section);
-    content.scrollTo(0, 0);
   });
   container.appendChild(sidebar);
   container.appendChild(content);

@@ -6,3 +6,13 @@ export function keepWindowActiveInCurrentEventLoopIteration(windowElt) {
     delete windowElt.dataset.dontDisableOnLoop;
   }, 0);
 }
+
+/**
+ * @param {HTMLElement} windowElt
+ */
+export function isMinimizedOrMinimizing(windowElt) {
+  return (
+    windowElt.classList.contains("minimized") ||
+    windowElt.dataset.state === "minimize"
+  );
+}

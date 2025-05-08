@@ -1,6 +1,16 @@
 import { demoImgUrl, docImgUrl, IMAGE_ROOT_PATH } from "../constants.mjs";
+import { applyStyle, constructAppWithSidebar } from "../utils.mjs";
 
 import strHtml from "../str-html.mjs";
+
+// ==== Globally export utils for lazy-loaded applications ====
+window.strHtml = strHtml;
+window.createAppTitle = createAppTitle;
+window.constructAppWithSidebar = constructAppWithSidebar;
+window.constructQuicklinks = constructQuicklinks;
+window.applyStyle = applyStyle;
+// ========
+
 export function createAppTitle(title, ql) {
   return strHtml`<h2 class="app-title">${title} ${constructQuicklinks(ql)}</h2>`;
 }

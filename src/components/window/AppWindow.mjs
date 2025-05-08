@@ -1,6 +1,7 @@
 import EventEmitter from "../../event-emitter.mjs";
 import {
   addEventListener,
+  applyStyle,
   constructAppWithSidebar,
   getMaxDesktopDimensions,
 } from "../../utils.mjs";
@@ -142,7 +143,22 @@ export default class AppWindow extends EventEmitter {
 
     let appElt;
     if (app.value.create) {
-      appElt = app.value.create(this._abortController.signal);
+      const created = app.value.create(this._abortController.signal);
+      if (created !== null) {
+        if (typeof created.then === "function") {
+          appElt = constructSpinnerAppPlaceholder();
+          created.then((module) => {
+            appElt.remove();
+            if (module && typeof module.create === "function") {
+              this.element.appendChild(
+                module.create(this._abortController.signal),
+              );
+            }
+          });
+        } else {
+          appElt = created;
+        }
+      }
     } else if (
       Array.isArray(app.value.sidebar) &&
       app.value.sidebar.length > 0
@@ -156,7 +172,9 @@ export default class AppWindow extends EventEmitter {
       appElt = document.createElement("div");
     }
 
-    this.element.appendChild(appElt);
+    if (appElt) {
+      this.element.appendChild(appElt);
+    }
     this._setupWindowEvents();
     if (!skipAnim) {
       this._performWindowTransition("open");
@@ -789,4 +807,21 @@ function constructInitialWindowElement(title) {
 		</div>
 	</div>
 </div>`;
+}
+
+function constructSpinnerAppPlaceholder() {
+  const placeholderElt = document.createElement("div");
+  applyStyle(placeholderElt, {
+    height: "100%",
+    width: "100%",
+    position: "relative",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "var(--window-content-bg)",
+  });
+  const spinnerElt = document.createElement("div");
+  spinnerElt.className = "spinner";
+  placeholderElt.appendChild(spinnerElt);
+  return placeholderElt;
 }

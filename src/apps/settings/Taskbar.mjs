@@ -57,10 +57,7 @@ export default function createTaskbarSection(abortSignal) {
 
   const startMenuGroup = strHtml`<div class="w-group"><h3>Start menu</h3></div>`;
 
-  // ==== SLIDER ==== Start logo
   startMenuGroup.appendChild(constructStartMenuLogoSelection());
-
-  // ==== CHECKBOX ==== Display sub-categories
   startMenuGroup.appendChild(
     createCheckboxOnRef(
       {
@@ -72,6 +69,27 @@ export default function createTaskbarSection(abortSignal) {
   );
 
   section.appendChild(startMenuGroup);
+
+  const manualGroup = strHtml`<div class="w-group"><h3>Taskbar manual updates</h3></div>`;
+  manualGroup.appendChild(
+    createCheckboxOnRef(
+      {
+        ref: SETTINGS.allowManualTaskbarResize,
+        label: "Enable resizing the taskbar from its edge",
+      },
+      abortSignal,
+    ),
+  );
+  manualGroup.appendChild(
+    createCheckboxOnRef(
+      {
+        ref: SETTINGS.allowManualTaskbarMove,
+        label: "Enable moving the taskbar by selecting it",
+      },
+      abortSignal,
+    ),
+  );
+  section.appendChild(manualGroup);
 
   const colorGroupElt = strHtml`<div class="w-group"><h3>Colors</h3></div>`;
   const taskbarOpacitySlider = createNumericSliderOnRef(

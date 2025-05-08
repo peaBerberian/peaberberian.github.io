@@ -365,6 +365,11 @@ html {
 }
 
 .taskbar-resize-handle {
+	display: none;
+}
+
+#taskbar.resizable .taskbar-resize-handle {
+	display: block;
   position: absolute;
   z-index: 300;
   top: 0px;
@@ -374,18 +379,18 @@ html {
   background: transparent;
 }
 
-.top-taskbar .taskbar-resize-handle {
+.top-taskbar #taskbar.resizable .taskbar-resize-handle {
   top: var(--taskbar-size);
 }
 
-.left-taskbar .taskbar-resize-handle {
+.left-taskbar #taskbar.resizable .taskbar-resize-handle {
   left: var(--taskbar-size);
   height: 100%;
   width: 2px;
   cursor: ew-resize;
 }
 
-.right-taskbar .taskbar-resize-handle {
+.right-taskbar #taskbar.resizable .taskbar-resize-handle {
   right: var(--taskbar-size);
   height: 100%;
   width: 2px;

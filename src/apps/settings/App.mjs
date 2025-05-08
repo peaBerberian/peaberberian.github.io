@@ -7,6 +7,7 @@ import createWallpaperSection from "./Wallpaper.mjs";
 import createSystemSection from "./System.mjs";
 import createThemeSection from "./Theming.mjs";
 import createWindowSection from "./Window.mjs";
+import createDesktopIconsSection from "./DesktopIcons.mjs";
 
 /**
  * Generate content of the "System Settings" application.
@@ -33,6 +34,7 @@ function createSystemSettingsApp(abortSignal) {
       active: false,
     },
     { icon: "🪟", text: "Window", section: "window", active: false },
+    { icon: "🤹", text: "Desktop Icons", section: "icons", active: false },
     { icon: "💻", text: "System", section: "system", active: false },
   ];
   updateSectionsIcons();
@@ -100,6 +102,11 @@ function createSystemSettingsApp(abortSignal) {
       case "window":
         contentElt.appendChild(
           createWindowSection(childAbortController.signal),
+        );
+        return;
+      case "icons":
+        contentElt.appendChild(
+          createDesktopIconsSection(childAbortController.signal),
         );
         return;
     }

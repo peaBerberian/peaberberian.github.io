@@ -882,7 +882,7 @@ export default function createThemeSection(abortSignal) {
     ["Active Icon Text", SETTINGS.iconActiveTextColor],
     ["Active Icon Background", SETTINGS.iconActiveBgColor],
     ["Inactive Icon Text", SETTINGS.iconInactiveTextColor],
-    ["Inactive Icon Background", SETTINGS.iconImageBgColor],
+    ["Icon Image Background", SETTINGS.iconImageBgColor],
     ["Icon Hover Background", SETTINGS.iconHoverBgColor],
   ].forEach(([text, ref]) => {
     colorGroupElt.appendChild(createColorPickerOnRef(ref, text, abortSignal));

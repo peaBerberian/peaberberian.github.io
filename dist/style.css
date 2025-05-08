@@ -27,9 +27,10 @@
   --start-menu-active-bg: #e0e0e0;
   --start-icon-bg: #ddd;
 
-  --icon-text: #ffffff;
+  --icon-inactive-text: #ffffff;
+  --icon-active-text: #ffffff;
   --icon-bg: rgba(255, 255, 255, 0.25);
-  --icon-hover: rgba(255, 255, 255, 0.2);
+  --icon-hover: rgba(255, 255, 255, 0.25);
   --icon-active-bg: rgba(255, 255, 255, 0.3);
 }
 
@@ -95,7 +96,7 @@ html {
   cursor: pointer;
   transition: background-color 0.2s;
   border-radius: 5px;
-  color: var(--icon-text);
+  color: var(--icon-inactive-text);
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
 }
 
@@ -105,6 +106,7 @@ html {
 
 .icon.selected {
   background-color: var(--icon-active-bg);
+  color: var(--icon-active-text);
 }
 
 .icon-img {

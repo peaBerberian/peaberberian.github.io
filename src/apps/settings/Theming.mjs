@@ -54,16 +54,16 @@ const themes = {
     "#e0e0e0",
     // start-icon-bg
     "#dddddd",
-
-    // TODO:
-    // icon-text
+    // icon-active-text
     "#ffffff",
-    // icon-bg
-    "rgba(255, 255, 255, 0.25)",
-    // icon-hover
-    "rgba(255, 255, 255, 0.2)",
+    // icon-inactive-text
+    "#ffffff",
     // icon-active-bg
-    "rgba(255, 255, 255, 0.3)",
+    "#ffffff",
+    // icon-image-bg
+    "#ffffff",
+    // icon-hover
+    "#ffffff",
   ],
   dark: [
     // button style,
@@ -115,16 +115,16 @@ const themes = {
     "#36435a",
     // start-icon-bg
     "#374256",
-
-    // TODO:
-    // icon-text
+    // icon-active-text
     "#ffffff",
-    // icon-bg
-    "rgba(55, 65, 90, 0.4)",
-    // icon-hover
-    "rgba(75, 95, 125, 0.5)",
+    // icon-inactive-text
+    "#ffffff",
     // icon-active-bg
-    "rgba(85, 110, 145, 0.6)",
+    "#37415A",
+    // icon-image-bg
+    "#37415A",
+    // icon-hover
+    "#4B5F7D",
   ],
   crystal: [
     // button style,
@@ -177,17 +177,16 @@ const themes = {
     "#d7d1f0",
     // start-icon-bg
     "#ffffff",
-
-    // TODO:
-    // Desktop icons
-    // icon-text
-    "#1e2a4a",
-    // icon-bg
-    "#e6f0fa",
-    // icon-hover
-    "#a0d8ff",
+    // icon-active-text
+    "#ffffff",
+    // icon-inactive-text
+    "#ffffff",
     // icon-active-bg
     "#a492e2",
+    // icon-image-bg
+    "#e6f0fa",
+    // icon-hover
+    "#ffffff",
   ],
 
   whale: [
@@ -240,15 +239,16 @@ const themes = {
     "#dff0f4",
     // start-icon-bg
     "#b3d6dd",
-
-    // icon-text
+    // icon-active-text
     "#e5f4f7",
-    // icon-bg
-    "rgba(65, 143, 160, 0.25)",
-    // icon-hover
-    "rgba(58, 150, 171, 0.25)",
+    // icon-inactive-text
+    "#e5f4f7",
     // icon-active-bg
-    "rgba(58, 150, 171, 0.35)",
+    "#3A96AB",
+    // icon-image-bg
+    "#418FA0",
+    // icon-hover
+    "#3A96AB",
   ],
 
   cold: [
@@ -302,16 +302,16 @@ const themes = {
     "#ade8f4",
     // start-icon-bg
     "#48b0e8",
-
-    // Desktop icons
-    // icon-text
-    "#003566",
-    // icon-bg
+    // icon-active-text
+    "#ffffff",
+    // icon-inactive-text
+    "#ffffff",
+    // icon-active-bg
+    "#00a3e0",
+    // icon-image-bg
     "#bae1ff",
     // icon-hover
     "#0095ff",
-    // icon-active-bg
-    "#00a3e0",
   ],
 
   hot: [
@@ -363,15 +363,16 @@ const themes = {
     "#f2e3d0",
     // start-icon-bg
     "#e9ccaa",
-
-    // icon-text
+    // icon-active-text
     "#fff6e9",
-    // icon-bg
-    "rgba(225, 184, 143, 0.25)",
-    // icon-hover
-    "rgba(225, 184, 143, 0.4)",
+    // icon-inactive-text
+    "#fff6e9",
     // icon-active-bg
-    "rgba(225, 184, 143, 0.5)",
+    "#E1B88F",
+    // icon-image-bg
+    "#E1B88F",
+    // icon-hover
+    "#E1B88F",
   ],
 
   watermelon: [
@@ -424,15 +425,16 @@ const themes = {
     "#d0e6d0",
     // start-icon-bg
     "#d0e6d0",
-
-    // icon-text
+    // icon-active-text
     "#f5e9e9",
-    // icon-bg
-    "rgba(77, 122, 77, 0.2)",
-    // icon-hover
-    "rgba(225, 91, 100, 0.2)",
+    // icon-inactive-text
+    "#f5e9e9",
     // icon-active-bg
-    "rgba(225, 91, 100, 0.3)",
+    "#4D7A4D",
+    // icon-image-bg
+    "#4D7A4D",
+    // icon-hover
+    "#4D7A4D",
   ],
   strawberry: [
     // button style,
@@ -484,15 +486,16 @@ const themes = {
     "#ffd3d9",
     // start-icon-bg
     "#ffd3d9",
-
-    // icon-text
+    // icon-active-text
     "#ffffff",
-    // icon-bg
-    "rgba(230, 53, 83, 0.2)",
-    // icon-hover
-    "rgba(230, 53, 83, 0.3)",
+    // icon-inactive-text
+    "#ffffff",
     // icon-active-bg
-    "rgba(230, 53, 83, 0.4)",
+    "#E63553",
+    // icon-image-bg
+    "#E63553",
+    // icon-hover
+    "#E63553",
   ],
   coffee: [
     // button style,
@@ -544,15 +547,16 @@ const themes = {
     "#f0e8e2",
     // start-icon-bg
     "#d9cec4",
-
-    // icon-text
+    // icon-active-text
     "#ffffff",
-    // icon-bg
-    "rgba(143, 94, 60, 0.2)",
-    // icon-hover
-    "rgba(143, 94, 60, 0.3)",
+    // icon-inactive-text
+    "#ffffff",
     // icon-active-bg
-    "rgba(143, 94, 60, 0.4)",
+    "#8F5E3C",
+    // icon-image-bg
+    "#8F5E3C",
+    // icon-hover
+    "#8F5E3C",
   ],
   honey: [
     // button style,
@@ -604,15 +608,16 @@ const themes = {
     "#f5e7c7",
     // start-icon-bg
     "#f0e0bc",
-
-    // icon-text
+    // icon-active-text
     "#ffffff",
-    // icon-bg
-    "rgba(216, 155, 40, 0.2)",
-    // icon-hover
-    "rgba(216, 155, 40, 0.3)",
+    // icon-inactive-text
+    "#ffffff",
     // icon-active-bg
-    "rgba(216, 155, 40, 0.4)",
+    "#D89B28",
+    // icon-image-bg
+    "#D89B28",
+    // icon-hover
+    "#D89B28",
   ],
   pig: [
     // button style,
@@ -664,15 +669,16 @@ const themes = {
     "#fff2f7",
     // start-icon-bg
     "#ffe9f2",
-
-    // icon-text
+    // icon-active-text
     "#ffffff",
-    // icon-bg
-    "rgba(241, 147, 184, 0.2)",
-    // icon-hover
-    "rgba(241, 147, 184, 0.3)",
+    // icon-inactive-text
+    "#ffffff",
     // icon-active-bg
-    "rgba(241, 147, 184, 0.4)",
+    "#F193B8",
+    // icon-image-bg
+    "#F193B8",
+    // icon-hover
+    "#F193B8",
   ],
   panda: [
     // button style,
@@ -724,15 +730,16 @@ const themes = {
     "#f7f7f7",
     // start-icon-bg
     "#ebebeb",
-
-    // icon-text
+    // icon-active-text
     "#ffffff",
-    // icon-bg
-    "rgba(42, 42, 42, 0.6)",
-    // icon-hover
-    "rgba(90, 155, 82, 0.3)",
+    // icon-inactive-text
+    "#ffffff",
     // icon-active-bg
-    "rgba(90, 155, 82, 0.4)",
+    "#ffffff",
+    // icon-image-bg
+    "#2A2A2A",
+    // icon-hover
+    "#ffffff",
   ],
   matcha: [
     // button style,
@@ -783,14 +790,16 @@ const themes = {
     "#e0e0e0",
     // start-icon-bg
     "#dddddd",
-    // icon-text
+    // icon-active-text
     "#ffffff",
-    // icon-bg
+    // icon-inactive-text
+    "#ffffff",
+    // icon-active-bg
+    "#4d8b4d",
+    // icon-image-bg
     "#3a5f3a",
     // icon-hover
     "#5d9e5d",
-    // icon-active-bg
-    "#4d8b4d",
   ],
 };
 const refs = [
@@ -818,10 +827,11 @@ const refs = [
   SETTINGS.startMenuBgColor,
   SETTINGS.startMenuActiveBgColor,
   SETTINGS.startMenuIconBgColor,
-  null,
-  null,
-  null,
-  null,
+  SETTINGS.iconActiveTextColor,
+  SETTINGS.iconInactiveTextColor,
+  SETTINGS.iconActiveBgColor,
+  SETTINGS.iconImageBgColor,
+  SETTINGS.iconHoverBgColor,
 ];
 
 export default function createThemeSection(abortSignal) {
@@ -869,6 +879,11 @@ export default function createThemeSection(abortSignal) {
     ["Sidebar Hover Background", SETTINGS.windowSidebarHoverBgColor],
     ["Sidebar Selected Background", SETTINGS.windowSidebarSelectedBgColor],
     ["Sidebar Selected Text", SETTINGS.windowSidebarSelectedTextColor],
+    ["Active Icon Text", SETTINGS.iconActiveTextColor],
+    ["Active Icon Background", SETTINGS.iconActiveBgColor],
+    ["Inactive Icon Text", SETTINGS.iconInactiveTextColor],
+    ["Inactive Icon Background", SETTINGS.iconImageBgColor],
+    ["Icon Hover Background", SETTINGS.iconHoverBgColor],
   ].forEach(([text, ref]) => {
     colorGroupElt.appendChild(createColorPickerOnRef(ref, text, abortSignal));
   });

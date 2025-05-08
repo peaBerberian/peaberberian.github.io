@@ -5,7 +5,9 @@
   "author": "peaBerberian",
   "scripts": {
     "build": "rollup --config rollup.config.js",
-    "build:min": "rollup --config rollup.config.js --environment MINIFY:true"
+    "build:min": "rollup --config rollup.config.js --environment MINIFY:true",
+    "build:watch": "rollup --config rollup.config.js --watch",
+    "serve": "node ./launch_static_server.mjs --directory dist"
   },
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",

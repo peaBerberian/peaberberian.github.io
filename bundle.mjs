@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * # run_bundler.mjs
+ * # bundle.mjs
  *
- * This file allows to create JavaScript bundles for the RxPlayer through our
- * bundlers with the right configuration.
+ * This file allows to create JavaScript bundles for the fake desktop through
+ * esbuild with the right configuration.
  *
- * You can either run it directly as a script (run `node run_bundler.mjs -h`
+ * You can either run it directly as a script (run `node bundle.mjs -h`
  * to see the different options) or by requiring it as a node module.
  * If doing the latter you will obtain a function you will have to run with the
  * right options.
@@ -233,9 +233,9 @@ function getHumanReadableHours() {
  */
 function displayHelp() {
   console.log(
-    `run_bundler.mjs: Produce a RxPlayer bundle (a single JS file containing the RxPlayer).
+    `bundle.mjs: Produce a RxPlayer bundle (a single JS file containing the RxPlayer).
 
-Usage: node run_bundler.mjs <INPUT FILE> [OPTIONS]
+Usage: node bundle.mjs <INPUT FILE> [OPTIONS]
 
 Available options:
   -h, --help                  Display this help message.

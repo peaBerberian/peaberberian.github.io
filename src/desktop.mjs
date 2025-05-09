@@ -52,6 +52,7 @@ import paintApp from "./apps/paint.mjs";
 import TextEditorApp from "./apps/editor.mjs";
 import generateDirectoryApp from "./apps/special/directory.mjs";
 import PongApp from "./apps/Pong.mjs";
+import TableApp from "./apps/table.mjs";
 
 import AppIcons from "./components/AppIcons.mjs";
 import StartMenu from "./components/StartMenu.mjs";
@@ -85,6 +86,11 @@ const apps = [
   {
     id: "editor",
     value: TextEditorApp(),
+    inStartList: "Desktop Apps",
+  },
+  {
+    id: "table",
+    value: TableApp(),
     inStartList: "Desktop Apps",
   },
   {

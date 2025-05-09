@@ -17,6 +17,10 @@ import {
 const DEFAULT_CANVAS_HEIGHT = 800;
 const DEFAULT_CANVAS_WIDTH = 800;
 
+// TODO: post-resize polish
+// TODO: disable clear button when there's nothing to clear?
+// TODO: clean-up code!
+
 export function create(abortSignal) {
   let lastX = 0;
   let lastY = 0;
@@ -252,7 +256,7 @@ export function create(abortSignal) {
     document.removeEventListener("touchcancel", stopDrawing);
   });
 
-  return wrapperElt;
+  return { element: wrapperElt };
 
   function startDrawing(objectPos) {
     isDrawing = true;
@@ -297,6 +301,10 @@ export function create(abortSignal) {
           ctx.moveTo(lastX, lastY);
           ctx.lineTo(currentX, currentY);
           ctx.stroke();
+
+          // TODO: actually check that:
+          // 1.  Something has been erased
+          // 2.  Something has been erased
           if (isInCanvas && hasSomethingDrawnOnCanvas) {
             hasUpdatesToSave = true;
           }
@@ -445,7 +453,6 @@ export function create(abortSignal) {
     }
     hasUpdatesToSave = false;
     const savedState = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    debugger;
     if (historyIndex !== history.length) {
       history.splice(historyIndex);
       disableRedoButton();
@@ -455,7 +462,7 @@ export function create(abortSignal) {
     if (historyIndex > 1) {
       enableUndoButton();
     }
-    if (history.length > 20) {
+    while (history.length > 20) {
       history.shift();
       historyIndex--;
     }
@@ -589,14 +596,14 @@ function createToolElt(toolSvg, height, onClick) {
   return toolElt;
 }
 function createButtonElt(svg, onClick) {
-  const toolElt = getSvg(svg);
-  applyStyle(toolElt, {
+  const buttonElt = getSvg(svg);
+  applyStyle(buttonElt, {
     width: "35px",
     height: "35px",
     cursor: "pointer",
   });
-  toolElt.onclick = onClick;
-  return toolElt;
+  buttonElt.onclick = onClick;
+  return buttonElt;
 }
 
 async function saveFile(content) {

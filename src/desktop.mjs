@@ -7,6 +7,7 @@
 // - check why not resizing when mouse on the borders, seems CSS-related
 // - when side-by-side window snapping we should be able to resize both at the same time
 // - if click out of the screen / mouseleave do not deactivate window?
+// - sometimes app has focus (e.g. "notes" can be written on), but not the window
 //
 // low priority:
 // - disable text shadows on icons if opacity big enough?
@@ -29,8 +30,6 @@
 //   due to a window resize, we lose the "wanted" percentage size and position
 //   of that element
 // - prevent a click on a button from allowing to move the window?
-// - paint app: Post resize canvas can be improved when you remove some content
-//   while resizing
 
 import AboutMe from "./apps/about-me.mjs";
 import BifInspectorApp from "./apps/BifInspector.mjs";

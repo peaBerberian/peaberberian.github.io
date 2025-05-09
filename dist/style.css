@@ -580,6 +580,7 @@ html {
   flex-grow: 1;
   overflow-y: auto;
   background-color: var(--window-content-bg);
+  color: var(--window-text-color);
   width: 100%;
   height: 100%;
 }

@@ -46,11 +46,12 @@ import ReadmeApp from "./apps/README.mjs";
 import RxPaired from "./apps/RxPaired.mjs";
 import RxPlayer from "./apps/rx-player.mjs";
 import StrHtml from "./apps/str-html.mjs";
-import SystemSettingsApp from "./apps/settings/App.mjs";
+import SystemSettingsApp from "./apps/special/settings/App.mjs";
 import ThisWebsite from "./apps/ThisWebsite.mjs";
 import WaspHls from "./apps/WaspHls.mjs";
 import paintApp from "./apps/paint.mjs";
 import TextEditorApp from "./apps/editor.mjs";
+import generateDirectoryApp from "./apps/special/directory.mjs";
 
 import AppIcons from "./components/AppIcons.mjs";
 import StartMenu from "./components/StartMenu.mjs";
@@ -90,51 +91,61 @@ const apps = [
     id: "rx-player",
     value: RxPlayer(),
     inStartList: "Other Projects",
+    startMenuDir: "Other Projects",
   },
   {
     id: "wasp-hls-demo",
     value: WaspHls(),
     inStartList: "Other Projects",
+    startMenuDir: "Other Projects",
   },
   {
     id: "rx-paired",
     value: RxPaired(),
     inStartList: "Other Projects",
+    startMenuDir: "Other Projects",
   },
   {
     id: "eme-spy",
     value: EMESpy(),
     inStartList: "Other Projects",
+    startMenuDir: "Other Projects",
   },
   {
     id: "mse-spy",
     value: MSESpy(),
     inStartList: "Other Projects",
+    startMenuDir: "Other Projects",
   },
   {
     id: "isobmff-inspector",
     value: IsobmffInspector(),
     inStartList: "Other Projects",
+    startMenuDir: "Other Projects",
   },
   {
     id: "gif-renderer",
     value: GifRenderer(),
     inStartList: "Other Projects",
+    startMenuDir: "Other Projects",
   },
   {
     id: "str-html",
     value: StrHtml(),
     inStartList: "Other Projects",
+    startMenuDir: "Other Projects",
   },
   {
     id: "readme",
     value: ReadmeApp(),
     inStartList: "Other Projects",
+    startMenuDir: "Other Projects",
   },
   {
     id: "keyboard9",
     value: Keyboard9App(),
     inStartList: "Other Projects",
+    startMenuDir: "Other Projects",
   },
   {
     id: "passgen-demo",
@@ -145,6 +156,7 @@ const apps = [
     id: "bif-inspector",
     value: BifInspectorApp(),
     inStartList: "Other Projects",
+    startMenuDir: "Other Projects",
   },
   {
     id: "clock",
@@ -194,7 +206,12 @@ document.addEventListener("DOMContentLoaded", function () {
       centered: false,
     });
   };
-  desktopElt.appendChild(AppIcons(apps, openAppFromIconOrStartMenu));
+  desktopElt.appendChild(
+    AppIcons(
+      getDesktopIconsList(openAppFromIconOrStartMenu),
+      openAppFromIconOrStartMenu,
+    ),
+  );
   StartMenu(apps, openAppFromIconOrStartMenu);
 
   // Open about page by default
@@ -263,4 +280,24 @@ function initializeClockElement() {
     // NOTE: \u200B == Zero-width space. Allows line breaks if needed.
     clockElt.textContent = `${formattedHours}\u200B:\u200B${formattedMinutes}${ampm}`;
   }
+}
+
+function getDesktopIconsList(onOpen) {
+  const appIcons = [];
+  const appIconDirMap = new Map();
+  for (const app of apps) {
+    if (app.startMenuDir !== undefined) {
+      let list = appIconDirMap.get(app.startMenuDir);
+      if (list === undefined) {
+        list = [];
+        appIconDirMap.set(app.startMenuDir, list);
+        appIcons.push(generateDirectoryApp(app.startMenuDir, list, onOpen));
+      }
+      list.push(app);
+    } else {
+      appIcons.push(app);
+    }
+  }
+
+  return appIcons;
 }

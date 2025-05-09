@@ -1,6 +1,6 @@
-import { SETTINGS } from "../../settings.mjs";
-import strHtml from "../../str-html.mjs";
-import { createAppTitle } from "../app-utils.mjs";
+import { SETTINGS } from "../../../settings.mjs";
+import strHtml from "../../../str-html.mjs";
+import { createAppTitle } from "../../app-utils.mjs";
 import { createColorPickerOnRef, createDropdownOnRef } from "./utils.mjs";
 
 const themes = {

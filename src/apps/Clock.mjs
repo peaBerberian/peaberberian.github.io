@@ -14,9 +14,8 @@ export default function ClockApp() {
     title: "Clock",
     icon: "🕒",
     create: (abortSignal) => createClockApp(abortSignal),
-    defaultHeight: 380,
-    defaultWidth: 380,
-    // onlyOne: true,
+    defaultHeight: 250,
+    defaultWidth: 250,
   };
 }
 

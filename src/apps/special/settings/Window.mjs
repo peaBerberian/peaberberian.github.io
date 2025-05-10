@@ -12,37 +12,31 @@ export default function createWindowSection(abortSignal) {
   const section = strHtml`<div>${createAppTitle("Window", {})}</div>`;
   section.dataset.section = "window";
 
-  const headerGroup = strHtml`<div class="w-group"><h3>Header and Buttons</h3></div>`;
-  headerGroup.appendChild(
+  const headerStyleGroup = strHtml`<div class="w-group"><h3>Header style</h3></div>`;
+  headerStyleGroup.appendChild(
+    createDropdownOnRef({
+      ref: SETTINGS.headerTitlePosition,
+      options: ["Left", "Right", "Center"],
+      label: "Title Position",
+    }),
+  );
+  headerStyleGroup.appendChild(
+    createDropdownOnRef({
+      ref: SETTINGS.buttonPosition,
+      options: ["Right", "Left"],
+      label: "Button Position",
+    }),
+  );
+  headerStyleGroup.appendChild(
     createDropdownOnRef({
       ref: SETTINGS.buttonStyle,
       options: ["Colorful", "Sober"],
       label: "Button Style",
     }),
   );
-  // headerGroup.appendChild(
-  //   createDropdownOnRef({
-  //     ref: SETTINGS.buttonPosition,
-  //     options: ["Right", "Left"],
-  //     label: "Button Position",
-  //   }),
-  // );
-  // headerGroup.appendChild(
-  //   createDropdownOnRef({
-  //     ref: SETTINGS.headerTitlePosition,
-  //     options: ["Left", "Right", "Center"],
-  //     label: "Title Position",
-  //   }),
-  // );
-  headerGroup.appendChild(
-    createCheckboxOnRef(
-      {
-        ref: SETTINGS.dblClickHeaderFullScreen,
-        label: "Double clicking on header toggles full-screen mode",
-      },
-      abortSignal,
-    ),
-  );
+  section.appendChild(headerStyleGroup);
+
+  const headerGroup = strHtml`<div class="w-group"><h3>Sizes</h3></div>`;
   headerGroup.appendChild(
     createNumericSliderOnRef(
       {
@@ -105,6 +99,15 @@ export default function createWindowSection(abortSignal) {
       {
         ref: SETTINGS.absoluteWindowSize,
         label: "Absolute size (don't update window size on page resize)",
+      },
+      abortSignal,
+    ),
+  );
+  positionGroup.appendChild(
+    createCheckboxOnRef(
+      {
+        ref: SETTINGS.dblClickHeaderFullScreen,
+        label: "Double clicking on header toggles full-screen mode",
       },
       abortSignal,
     ),

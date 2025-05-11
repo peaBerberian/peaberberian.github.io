@@ -39,7 +39,7 @@ fs.mkdirSync(OUTPUT_LAZY_LOADED_APPS, { recursive: true });
 export default [
   ...lazyLoadedApps,
   {
-    outputFile: path.join(OUTPUT_DIR, "bundle.js"),
+    outputFile: path.join(OUTPUT_DIR, "desktop.js"),
     input: path.join(DESKTOP_SRC_DIR, "desktop.mjs"),
     intoEsm: false,
   },

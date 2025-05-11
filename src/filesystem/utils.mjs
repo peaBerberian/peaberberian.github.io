@@ -254,7 +254,9 @@ export function generateDefaultAppsConfig() {
 
 export function checkWrittenFilePath(path) {
   if (![USER_DATA_DIR, USER_CONFIG_DIR].some((dir) => path.startsWith(dir))) {
-    throw new Error("Permission denied: This directory is read-only.");
+    throw new Error(
+      "Permission denied: The destination directory is read-only.",
+    );
   }
 
   if (path.endsWith("/")) {

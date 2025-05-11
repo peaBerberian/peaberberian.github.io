@@ -65,7 +65,7 @@
       "icon": "🖌️",
       "defaultHeight": 950,
       "defaultWidth": 1000,
-      "dependencies": ["filePickerSave"],
+      "dependencies": ["filePickerSave", "quickSave"],
       "startMenu": {
         "list": "Desktop Apps"
       },
@@ -79,7 +79,7 @@
       "icon": "📝",
       "defaultHeight": 600,
       "defaultWidth": 600,
-      "dependencies": ["filePickerOpen", "filePickerSave"],
+      "dependencies": ["filePickerOpen", "filePickerSave", "quickSave"],
       "startMenu": {
         "list": "Desktop Apps"
       },

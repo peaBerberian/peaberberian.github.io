@@ -68,6 +68,8 @@ export default class AppsLauncher {
         });
       }
     });
+
+    this._fileHandles = new WeakMap();
   }
 
   /**
@@ -286,12 +288,14 @@ export default class AppsLauncher {
       // TODO: what if fails? Also should we stat for max size before?
       const openedFile = await filesystem.readFile(data, "arraybuffer");
 
-      // TODO: also maintain a handle to allow save?
+      const handle = {};
+      this._fileHandles.set(handle, data);
       return this.openApp(defaultApps[extension], [
         {
           type: "file",
           filename: getName(data),
           data: openedFile,
+          handle,
         },
       ]);
     }
@@ -451,6 +455,23 @@ export default class AppsLauncher {
           providers.filePickerOpen[0],
           "object",
         );
+
+        const onFilesOpened = (files) => {
+          fileOpenerAbortCtrl.abort();
+          appStack.popElement(filePickerElt, appWindow.isActivated());
+          const proms = files.map(async (filePath) => {
+            const data = await filesystem.readFile(filePath, "arraybuffer");
+            const handle = {};
+            this._fileHandles.set(handle, filePath);
+            return {
+              filename: getName(filePath),
+              data,
+              handle,
+            };
+          });
+          Promise.all(proms).then(resolveFilePicker, rejectFilePicker);
+        };
+
         const env = {
           ...this._constructEnvObject(
             filePickerApp.dependencies,
@@ -471,19 +492,6 @@ export default class AppsLauncher {
         appStack.push(appObj, appWindow.isActivated());
       } catch (err) {
         rejectFilePicker(err);
-      }
-
-      function onFilesOpened(files) {
-        fileOpenerAbortCtrl.abort();
-        appStack.popElement(filePickerElt, appWindow.isActivated());
-        const proms = files.map(async (filePath) => {
-          const data = await filesystem.readFile(filePath, "arraybuffer");
-          return {
-            filename: getName(filePath),
-            data,
-          };
-        });
-        Promise.all(proms).then(resolveFilePicker, rejectFilePicker);
       }
     });
   }
@@ -510,6 +518,24 @@ export default class AppsLauncher {
           providers.filePickerSave[0],
           "object",
         );
+
+        const onFileSaved = (fileInfo) => {
+          if (fileInfo === null) {
+            fileSaverAbortCtrl.abort();
+            appStack.popElement(filePickerElt, appWindow.isActivated());
+            resolveFilePicker(null);
+            return;
+          }
+          fileSaverAbortCtrl.abort();
+          appStack.popElement(filePickerElt, appWindow.isActivated());
+
+          const handle = {};
+          this._fileHandles.set(handle, fileInfo.path);
+          resolveFilePicker({
+            filename: getName(fileInfo.path),
+            handle,
+          });
+        };
         const env = {
           ...this._constructEnvObject(
             filePickerApp.dependencies,
@@ -530,20 +556,6 @@ export default class AppsLauncher {
         appStack.push(appObj, appWindow.isActivated());
       } catch (err) {
         rejectFilePicker(err);
-      }
-
-      function onFileSaved(fileInfo) {
-        if (fileInfo === null) {
-          fileSaverAbortCtrl.abort();
-          appStack.popElement(filePickerElt, appWindow.isActivated());
-          resolveFilePicker(null);
-          return;
-        }
-        fileSaverAbortCtrl.abort();
-        appStack.popElement(filePickerElt, appWindow.isActivated());
-        resolveFilePicker({
-          filename: getName(fileInfo.path),
-        });
       }
     });
   }
@@ -652,6 +664,15 @@ export default class AppsLauncher {
       }
       if (dependencies.includes("filesystem")) {
         env.filesystem = filesystem;
+      }
+      if (dependencies.includes("quickSave")) {
+        env.quickSave = (handle, content) => {
+          const filePath = this._fileHandles.get(handle);
+          if (!filePath) {
+            return Promise.reject(new Error("Unknown file handle."));
+          }
+          return filesystem.writeFile(filePath, content);
+        };
       }
       if (dependencies.includes("open")) {
         env.open = (path) => {

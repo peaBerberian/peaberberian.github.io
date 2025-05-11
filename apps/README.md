@@ -33,9 +33,80 @@ Then when the desktop needs to load the application at runtime, it will be
 lazily imported as an ES6 module through a dynamic import, such as
 `import("./lazy/<id>.js")`.
 
+## The `AppInfo.json` file
+
+`AppInfo.json` contains the list of application that will be included in the
+desktop builds. It's a JSON file with for now a single key, `"apps"`, which is
+set to an array of objects, each describing the properties wanted for that
+application. The order of that array is important, as it may be re-used for
+application listings in the desktops (e.g. earlier apps might be put before
+as desktop icons or in the start menu).
+
+The following properties can be set for each application:
+
+- `"id"` (`string`, mandatory): unique identifier for the application, which
+  will should correspond to its code location (see previous chapter).
+
+  Only alphanumeric, lowerscore or dash characters are authorized in a `id`.
+
+- `"title"` (`string`, mandatory): The name of the application that will usually
+  be shown to the website user.
+
+- `"icon"` (`string`, mandatory): An emoji that will be used as an application
+  icon in the desktop.
+
+- `"website"`: (`string`, optional): If set, this object does not represent an
+  actual application stored here but will launch an "i-frame" to that website.
+
+  `website` is set to the corresponding website URL. It should be browsable in
+  an i-frame which is sadly not the case with most popular websites for
+  security reasons.
+
+  When `website` is set, no file should be declared in the `/apps` directory
+  with this application's `id`.
+
+- `"defaultHeight"` (`number`, optional): Optional wanted optimal defaut height
+  in pixels for the whole application window (including the window decorations
+  for now - this may be changed as it doesn't make much sense!).
+
+- `"defaultWidth"` (`number`, optional): Optional wanted optimal defaut width
+  in pixels for the whole application window (including the window decorations
+  for now - this may be changed as it doesn't make much sense!).
+
+- `"onlyOne"` (`boolean`, optional): If set to `true`, only one instance of the
+  application will be opened at most in the desktop. New opening attempts will
+  re-activate the window and not open a new one.
+
+- `"inStartList"` (`string`, optional): If set, the application will not be
+  directly visible in the start menu but ender a subcategory of that name.
+
+  If multiple applications shares the same `"inStartList"` property, they will
+  be together in that same subcategory.
+
+- `"desktopDir"` (`string`, optional): If set, the application will not be
+  directly visible as a desktop icon but will be added to an "app group" of that
+  name.
+
+  If multiple applications shares the same `"desktopDir"` property, they will
+  be together in that same "app group".
+
+- `"dependencies"` (`Array.<string>`, optional): Supplementary API that will be
+  provided to the application when it is run. This is kind of a permission
+  system, kind of its own thing, I'm still iterating on this.
+
+- `"preload"` (`Object`, optional): I'm also iterating on this one, but the idea
+  here is to set trigger conditions for "application preloading", that is, for
+  loading it before it is actually opened - to speed up the time to interactive
+  when it is indeed opened.
+
+  For now I already implemented the `after` key (a `number`), which if set will
+  run a timer when the desktop is first loaded of the corresponding amounts of
+  milliseconds before preloading that application.
+
 ## The `create` function
 
-Entry file of applications should export a `create` function in their main file,
+Entry file of each application should export a `create` function in their main
+file.
 
 ### Parameters
 
@@ -102,15 +173,16 @@ The `create` function should return either:
     centered in the window, see `centered` property) when the section is chosen.
 
     This function takes an `AbortSignal` as its argument, which will be
-    triggered when the section is closed (so different from the `create`
-    function `AbortSignal` which is triggered when it is application is closed).
+    triggered when the current sidebar section changed (so different from the
+    `create` function's `AbortSignal` which is triggered when the application is
+    closed).
 
     In the sidebar scenario, it is is generally this `AbortSignal` that should
     be listened to to free resources, not the one from `create` which would
     have more nich usages.
 
 - Optionally, the `create` function can also return a `focus` property which
-  will be called when the corresponding window is focused (e.g. the text area
-  in a text editor).
+  will be called when the corresponding window is focused (e.g. to focus the
+  text area in a text editor).
 
 Look at the apps already here for more information.

@@ -1,4 +1,8 @@
-import { createColorPickerOnRef, createNumericSliderOnRef } from "./utils.mjs";
+import {
+  createCheckboxOnRef,
+  createColorPickerOnRef,
+  createNumericSliderOnRef,
+} from "./utils.mjs";
 
 export default function createDesktopIconsSection(
   { settings, appUtils },
@@ -7,6 +11,18 @@ export default function createDesktopIconsSection(
   const { createAppTitle, strHtml } = appUtils;
   const section = strHtml`<div>${createAppTitle("Desktop Icons", {})}</div>`;
   section.dataset.section = "icons";
+  const generalGroupElt = strHtml`<div class="w-group"><h3>General Settings</h3></div>`;
+  generalGroupElt.appendChild(
+    createCheckboxOnRef(
+      {
+        ref: settings.moveAroundIcons,
+        label: "Desktop icons can be moved around",
+      },
+      appUtils,
+      abortSignal,
+    ),
+  );
+  section.appendChild(generalGroupElt);
   const colorGroupElt = strHtml`<div class="w-group"><h3>Colors</h3></div>`;
   const imgBgIconOpacitySlider = createNumericSliderOnRef(
     {

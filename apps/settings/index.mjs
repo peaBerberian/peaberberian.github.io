@@ -108,7 +108,7 @@ export function create(_args, env, abortSignal) {
         contentElt.appendChild(
           createTaskbarSection(
             env,
-            taskbarDimensionLimits,
+            taskbarDimensions,
             childAbortController.signal,
           ),
         );

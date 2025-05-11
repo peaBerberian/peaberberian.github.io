@@ -222,9 +222,9 @@ function writeGeneratedAppFile(baseDir) {
       );
     }
 
-    if (typeof app.title !== "string" || app.title === "") {
+    if (typeof app.title !== "string") {
       throw new Error(
-        `Invalid title for app id: "${app.id}". Title should be non-empty strings`,
+        `Invalid title for app id: "${app.id}". Title should be strings`,
       );
     }
 
@@ -268,14 +268,32 @@ function writeGeneratedAppFile(baseDir) {
         "    icon: " + JSON.stringify(app.icon) + ",\n";
     }
 
-    if (typeof app.inStartList === "string") {
-      uglyHandWrittenJsObject +=
-        "    inStartList: " + JSON.stringify(app.inStartList) + ",\n";
+    if (typeof app.desktop === "object" && app.desktop !== null) {
+      uglyHandWrittenJsObject += `    desktop: {
+`;
+      if (!!app.desktop.display) {
+        uglyHandWrittenJsObject += "      display: true,\n";
+      }
+      if (typeof app.desktop.group === "string" && app.desktop.group !== "") {
+        uglyHandWrittenJsObject += `      group: ${JSON.stringify(app.desktop.group)},
+`;
+      }
+      uglyHandWrittenJsObject += `    },
+`;
     }
 
-    if (typeof app.desktopDir === "string") {
-      uglyHandWrittenJsObject +=
-        "    desktopDir: " + JSON.stringify(app.desktopDir) + ",\n";
+    if (typeof app.startMenu === "object" && app.startMenu !== null) {
+      uglyHandWrittenJsObject += `    startMenu: {
+`;
+      if (!!app.startMenu.display) {
+        uglyHandWrittenJsObject += "      display: true,\n";
+      }
+      if (typeof app.startMenu.list === "string" && app.startMenu.list !== "") {
+        uglyHandWrittenJsObject += `      list: ${JSON.stringify(app.startMenu.list)},
+`;
+      }
+      uglyHandWrittenJsObject += `    },
+`;
     }
 
     if (typeof app.defaultHeight === "number") {

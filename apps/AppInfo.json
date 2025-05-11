@@ -8,8 +8,12 @@
       "defaultWidth": 855,
       "onlyOne": false,
       "dependencies": [],
-      "inStartList": null,
-      "desktopDir": null,
+      "startMenu": {
+        "display": true
+      },
+      "desktop": {
+        "display": true
+      },
       "website": null
     },
     {
@@ -23,8 +27,23 @@
       },
       "onlyOne": true,
       "dependencies": ["settings"],
-      "inStartList": null,
-      "desktopDir": null
+      "startMenu": {
+        "display": true
+      },
+      "desktop": {
+        "display": true
+      }
+    },
+    {
+      "id": "app-group",
+      "title": "",
+      "icon": "",
+      "defaultHeight": 400,
+      "defaultWidth": 460,
+      "dependencies": ["filesystem"],
+      "preload": {
+        "after": 150
+      }
     },
     {
       "id": "paint",
@@ -32,8 +51,12 @@
       "icon": "🖌️",
       "defaultHeight": 950,
       "defaultWidth": 1000,
-      "inStartList": "Desktop Apps",
-      "desktopDir": null
+      "startMenu": {
+        "list": "Desktop Apps"
+      },
+      "desktop": {
+        "display": true
+      }
     },
     {
       "id": "editor",
@@ -41,22 +64,34 @@
       "icon": "📝",
       "defaultHeight": 500,
       "defaultWidth": 500,
-      "inStartList": "Desktop Apps",
-      "desktopDir": null
+      "startMenu": {
+        "list": "Desktop Apps"
+      },
+      "desktop": {
+        "display": true
+      }
     },
     {
       "id": "table",
       "title": "Sheets",
       "icon": "📏",
-      "inStartList": "Desktop Apps",
-      "desktopDir": null
+      "startMenu": {
+        "list": "Desktop Apps"
+      },
+      "desktop": {
+        "display": true
+      }
     },
     {
       "id": "image-viewer",
       "title": "Image Viewer",
       "icon": "🏞️",
-      "inStartList": "Desktop Apps",
-      "desktopDir": null
+      "startMenu": {
+        "list": "Desktop Apps"
+      },
+      "desktop": {
+        "display": true
+      }
     },
     {
       "id": "bombsweeper",
@@ -64,8 +99,12 @@
       "icon": "💣",
       "defaultHeight": 700,
       "defaultWidth": 600,
-      "inStartList": "Games",
-      "desktopDir": null
+      "startMenu": {
+        "list": "Games"
+      },
+      "desktop": {
+        "display": true
+      }
     },
     {
       "id": "pong",
@@ -73,8 +112,12 @@
       "icon": "🏓",
       "defaultHeight": 400,
       "defaultWidth": 600,
-      "inStartList": "Games",
-      "desktopDir": null
+      "startMenu": {
+        "list": "Games"
+      },
+      "desktop": {
+        "display": true
+      }
     },
     {
       "id": "rx-player",
@@ -82,8 +125,12 @@
       "icon": "⏯️",
       "defaultHeight": 720,
       "defaultWidth": 950,
-      "inStartList": "My Other Projects",
-      "desktopDir": "My Other Projects"
+      "startMenu": {
+        "list": "My Other Projects"
+      },
+      "desktop": {
+        "group": "My Other Projects"
+      }
     },
     {
       "id": "wasp-hls",
@@ -91,8 +138,12 @@
       "icon": "🐝",
       "defaultHeight": 720,
       "defaultWidth": 950,
-      "inStartList": "My Other Projects",
-      "desktopDir": "My Other Projects"
+      "startMenu": {
+        "list": "My Other Projects"
+      },
+      "desktop": {
+        "group": "My Other Projects"
+      }
     },
     {
       "id": "rx-paired",
@@ -100,8 +151,12 @@
       "icon": "📈",
       "defaultHeight": 700,
       "defaultWidth": 1000,
-      "inStartList": "My Other Projects",
-      "desktopDir": "My Other Projects"
+      "startMenu": {
+        "list": "My Other Projects"
+      },
+      "desktop": {
+        "group": "My Other Projects"
+      }
     },
     {
       "id": "eme-spy",
@@ -109,8 +164,12 @@
       "icon": "🕵️",
       "defaultHeight": 500,
       "defaultWidth": 800,
-      "inStartList": "My Other Projects",
-      "desktopDir": "My Other Projects"
+      "startMenu": {
+        "list": "My Other Projects"
+      },
+      "desktop": {
+        "group": "My Other Projects"
+      }
     },
     {
       "id": "mse-spy",
@@ -118,50 +177,78 @@
       "icon": "👓",
       "defaultHeight": 500,
       "defaultWidth": 800,
-      "inStartList": "My Other Projects",
-      "desktopDir": "My Other Projects"
+      "startMenu": {
+        "list": "My Other Projects"
+      },
+      "desktop": {
+        "group": "My Other Projects"
+      }
     },
     {
       "id": "isobmff-inspector",
       "title": "isobmff-inspector",
       "icon": "📹",
-      "inStartList": "My Other Projects",
-      "desktopDir": "My Other Projects"
+      "startMenu": {
+        "list": "My Other Projects"
+      },
+      "desktop": {
+        "group": "My Other Projects"
+      }
     },
     {
       "id": "gif-renderer",
       "title": "gif-renderer.rs",
       "icon": "🏇",
-      "inStartList": "My Other Projects",
-      "desktopDir": "My Other Projects"
+      "startMenu": {
+        "list": "My Other Projects"
+      },
+      "desktop": {
+        "group": "My Other Projects"
+      }
     },
     {
       "id": "str-html",
       "title": "str-html",
       "icon": "📄",
-      "inStartList": "My Other Projects",
-      "desktopDir": "My Other Projects"
+      "startMenu": {
+        "list": "My Other Projects"
+      },
+      "desktop": {
+        "group": "My Other Projects"
+      }
     },
     {
       "id": "readme",
       "title": "README",
       "icon": "📖",
-      "inStartList": "My Other Projects",
-      "desktopDir": "My Other Projects"
+      "startMenu": {
+        "list": "My Other Projects"
+      },
+      "desktop": {
+        "group": "My Other Projects"
+      }
     },
     {
       "id": "keyboard9",
       "title": "keyboard9",
       "icon": "⌨️",
-      "inStartList": "My Other Projects",
-      "desktopDir": "My Other Projects"
+      "startMenu": {
+        "list": "My Other Projects"
+      },
+      "desktop": {
+        "group": "My Other Projects"
+      }
     },
     {
       "id": "bif-inspector",
       "title": "bif-inspector",
       "icon": "🖼️",
-      "inStartList": "My Other Projects",
-      "desktopDir": "My Other Projects"
+      "startMenu": {
+        "list": "My Other Projects"
+      },
+      "desktop": {
+        "group": "My Other Projects"
+      }
     },
     {
       "id": "godbolt",
@@ -169,9 +256,13 @@
       "icon": "🤖",
       "defaultHeight": 720,
       "defaultWidth": 1000,
-      "inStartList": "External Apps",
       "website": "https://godbolt.org/",
-      "desktopDir": "External Apps"
+      "startMenu": {
+        "list": "External Apps"
+      },
+      "desktop": {
+        "group": "External Apps"
+      }
     },
     {
       "id": "wikipedia",
@@ -179,9 +270,13 @@
       "icon": "📖",
       "defaultHeight": 720,
       "defaultWidth": 1000,
-      "inStartList": "External Apps",
       "website": "https://www.wikipedia.org/",
-      "desktopDir": "External Apps"
+      "startMenu": {
+        "list": "External Apps"
+      },
+      "desktop": {
+        "group": "External Apps"
+      }
     },
     {
       "id": "osm",
@@ -189,9 +284,13 @@
       "icon": "🗺️",
       "defaultHeight": 720,
       "defaultWidth": 1000,
-      "inStartList": "External Apps",
       "website": "https://www.openstreetmap.org/export/embed.html",
-      "desktopDir": "External Apps"
+      "startMenu": {
+        "list": "External Apps"
+      },
+      "desktop": {
+        "group": "External Apps"
+      }
     },
     {
       "id": "bbb",
@@ -199,9 +298,13 @@
       "icon": "🐇",
       "defaultHeight": 720,
       "defaultWidth": 900,
-      "inStartList": "External Apps",
       "website": "https://www.youtube.com/embed/aqz-KE-bpKQ",
-      "desktopDir": "External Apps"
+      "startMenu": {
+        "list": "External Apps"
+      },
+      "desktop": {
+        "group": "External Apps"
+      }
     },
     {
       "id": "passgen",
@@ -209,8 +312,12 @@
       "icon": "🔑",
       "defaultHeight": 300,
       "defaultWidth": 450,
-      "inStartList": "Misc",
-      "desktopDir": null
+      "startMenu": {
+        "list": "Misc"
+      },
+      "desktop": {
+        "display": true
+      }
     },
     {
       "id": "clock",
@@ -218,8 +325,12 @@
       "icon": "🕒",
       "defaultHeight": 250,
       "defaultWidth": 250,
-      "inStartList": "Misc",
-      "desktopDir": null
+      "startMenu": {
+        "list": "Misc"
+      },
+      "desktop": {
+        "display": true
+      }
     },
     {
       "id": "inception",
@@ -227,8 +338,12 @@
       "icon": "🧠",
       "defaultHeight": 720,
       "defaultWidth": 1280,
-      "inStartList": "Misc",
-      "desktopDir": null
+      "startMenu": {
+        "list": "Misc"
+      },
+      "desktop": {
+        "display": true
+      }
     },
     {
       "id": "this-website",
@@ -236,8 +351,12 @@
       "icon": "🌐",
       "defaultHeight": 600,
       "defaultWidth": 855,
-      "inStartList": "Misc",
-      "desktopDir": null
+      "startMenu": {
+        "list": "Misc"
+      },
+      "desktop": {
+        "display": true
+      }
     }
   ]
 }

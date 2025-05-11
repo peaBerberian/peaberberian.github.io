@@ -43,7 +43,6 @@
 // - icon lose focus onmousedown, not onclick
 
 import fs from "./filesystem.mjs";
-import generateAppGroupApp from "./app_group.mjs";
 import { is12HourClockFormat } from "./utils.mjs";
 import AppIcons from "./components/AppIcons.mjs";
 import StartMenu from "./components/StartMenu.mjs";
@@ -66,8 +65,6 @@ async function start() {
     await fs.readFile("/system/desktop.config.json", "object"),
     await fs.readFile("/system/start_menu.config.json", "object"),
   ]);
-
-  const appGroups = new Map();
 
   /** Clock shown as a taskbar "applet". */
   const clockElt = initializeClockElement();
@@ -92,12 +89,7 @@ async function start() {
       centered: false,
     });
   };
-  desktopElt.appendChild(
-    AppIcons(
-      getDesktopIconsList(desktopApps.list, openAppFromPath),
-      openAppFromPath,
-    ),
-  );
+  desktopElt.appendChild(AppIcons(desktopApps.list, openAppFromPath));
   StartMenu(startMenuApps.list, openAppFromPath);
 
   // Open about me default app
@@ -129,45 +121,11 @@ async function start() {
    * `null` if no window has been created.
    */
   async function createApp(appPath, appArgs, options) {
-    const inAppGroup = appGroups.get(appPath);
-    const appObj = inAppGroup ?? (await fs.readFile(appPath, "object"));
+    const appObj = await fs.readFile(appPath, "object");
     const windowElt = windowsManager.openApp(appObj, appArgs, options);
     if (windowElt !== null) {
       desktopElt.appendChild(windowElt);
     }
-  }
-  function getDesktopIconsList(apps, onOpen) {
-    const appIcons = [];
-    const appIconDirMap = new Map();
-    for (const app of apps) {
-      if (app.desktopDir !== undefined) {
-        let list = appIconDirMap.get(app.desktopDir);
-        if (list === undefined) {
-          list = [];
-          // TODO: that's kind of ugly, it's kind of a relic of an older archi
-          // I should find a better solution in the future: random generic app
-          // that takes the applications in arguments?
-          const fakeGroupApp = generateAppGroupApp(
-            app.desktopDir,
-            list,
-            onOpen,
-          );
-          const fakePath = "/desktop-fake-app/" + fakeGroupApp.id;
-          appIconDirMap.set(app.desktopDir, list);
-          appGroups.set(fakePath, fakeGroupApp);
-          appIcons.push({
-            run: fakePath,
-            title: fakeGroupApp.title,
-            icon: fakeGroupApp.icon,
-          });
-        }
-        list.push(app);
-      } else {
-        appIcons.push(app);
-      }
-    }
-
-    return appIcons;
   }
 }
 

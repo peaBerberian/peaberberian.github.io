@@ -1,24 +1,30 @@
-import { applyStyle } from "./utils.mjs";
-
-export default function generateAppGroup(name, apps, onOpen) {
-  let icon = "💽";
-  if (name === "External Apps") {
-    icon = "📡";
+/**
+ * This is just an application which displays other applications and files
+ * listed in arguments.
+ *
+ * To run it, provide to it as arguments:
+ *
+ *   1. The title wanted for that application, including the icon as a first
+ *      character
+ *
+ *   2. Then a variable numbers of paths to the applications or files that
+ *      should be listed in this application group.
+ * @param {Array.<string>} args - The application arguments, as documented
+ * above.
+ * @param {Object} env - Util functions coming from the environment
+ * @param {Object} env.filesystem
+ * @param {Object} env.appUtils
+ * @param {function(string, Array.<string>):undefined} env.open
+ * @param {function(HTMLElement, Object):undefined} env.appUtils.applyStyle -
+ * Util function allowing to apply multiple CSS rules at once on an
+ * `HTMLElement`.
+ * @returns {Promise.<Object>}
+ */
+export async function create(args, env) {
+  const applyStyle = env.appUtils.applyStyle;
+  if (args.length > 0) {
+    env.updateTitle(args[0]);
   }
-  return {
-    id: `__dir-${name}`,
-    title: name,
-    icon,
-    data: {
-      create: (abortSignal) => createApp(apps, onOpen, abortSignal),
-    },
-    // TODO: calculate from number of apps?
-    defaultHeight: 400,
-    defaultWidth: 460,
-  };
-}
-
-function createApp(apps, onOpen) {
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
     // backgroundColor: "var(--window-sidebar-bg)",
@@ -37,8 +43,13 @@ function createApp(apps, onOpen) {
     alignItems: "center",
   });
   containerElt.appendChild(iconsContainerElt);
+
+  const appPaths = args.slice(1);
+  const appProms = appPaths.map((a) => env.filesystem.readFile(a, "object"));
+  const apps = await Promise.all(appProms);
   const icons = [];
-  for (const app of apps) {
+  for (let i = 0; i < apps.length; i++) {
+    const app = apps[i];
     const icon = document.createElement("span");
     icons.push(icon);
     iconsContainerElt.appendChild(icon);
@@ -95,14 +106,14 @@ function createApp(apps, onOpen) {
         // Double click to open app
         if (clickCount && performance.now() - lastClickTs < 300) {
           clickCount = 0;
-          onOpen(app.run);
+          env.open(appPaths[i], []);
         } else {
           clickCount = 1;
           lastClickTs = performance.now();
         }
       } else {
         clickCount = 0;
-        onOpen(app.run);
+        env.open(appPaths[i], []);
       }
     });
     icon.addEventListener("mouseover", () => {

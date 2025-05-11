@@ -1,9 +1,10 @@
 // TODO: Make base mostly work even without `IndexededDB` API (just do not store
 // long term in that case)
+// TODO: consistency check
 /**
  * # The FileSystem
  *
- * This file defines our "filesystem".
+ * This file defines the "filesystem".
  *
  * It follows the old unix way of doing `/` stuff but with many many
  * simplfications in some ways and specificities in other due to the nature of
@@ -79,32 +80,49 @@
  *    -  `run` (`string`): The path to the application "executable" (e.g.
  *       `/apps/paint.run`).
  *
+ *    - `args` (`Array.<string>`): The arguments the application "executable"
+ *      should be run with.
+ *
  *    -  `title` (`string`): The `title` of the application to show on the
  *       desktop.
  *
  *    - `icon` (`string|undefined`): The icon to show for the application.
  *
- *    - `desktopDir` (`string|undefined`): If set, the application should be
- *      put in an "app group" with the corresponding name, not directly on the
- *      desktop.
- *
  * -  `system/start_menu.config.json`: Contains metadata for the arrangement of
  *    apps in the start menu
  *
  *    Reading that file will return you a JSON object,
- *    That object will contain a `list` key containing an Array of JSON objects,
- *    each representing an application to display on that menu, in the given
- *    order they should be ordered, with the following keys:
+ *
+ *    That object will contain a `list` key containing an Array of JSON objects.
+ *
+ *    Those objects can be of two forms: application objects (each representing
+ *    an application to display on that menu) or sublists (each representing a
+ *    sub-list of applications in the menu).
+ *
+ *    They are all in the given order they should be ordered.
+ *
+ *    Application objects have the following keys:
+ *
+ *    - `type` (`string`): Set to `"application"`.
  *
  *    -  `run` (`string`): The path to the application (e.g. `/apps/about.run`).
+ *
+ *    - `args` (`Array.<string>`): The arguments the application "executable"
+ *      should be run with.
  *
  *    -  `title` (`string`): The `title` of the application to show on the
  *       start menu.
  *
  *    - `icon` (`string|undefined`): The icon to show for the application.
  *
- *    - `inStartList` (`string|undefined`): If set, the application should be
- *      part of a sublist in the start menu, with the corresponding name.
+ *    Sublists have the following properties:
+ *
+ *    - `type` (`string`): Set to `"sublist"`.
+ *
+ *    - `name` (`string`): The name to display for this sublist.
+ *
+ *    - `list` (`Array.<Object>`): The application objects inside that sublist.
+ *      A sublist cannot contain another sublist.
  *
  * ### `/userdata/`
  *
@@ -135,10 +153,9 @@ const DEFAULT_MODIFIED_DATE = 1747073021004;
 const textDecoder = new TextDecoder();
 const textEncoder = new TextEncoder();
 
-// TODO: check consistency at startup?
-
 class DesktopFileSystem {
   constructor() {
+    this._apps = apps;
     this._dbProm = openDB();
     this._virtualRootDirs = [APPS_DIR, SYSTEM_DIR];
   }
@@ -208,7 +225,7 @@ class DesktopFileSystem {
 
     if (this._virtualRootDirs.includes(normalizedDirPath)) {
       if (normalizedDirPath === APPS_DIR) {
-        return apps.map((a) => {
+        return this._apps.map((a) => {
           return {
             name: `${a.id}.run`,
             icon: a.icon,
@@ -280,7 +297,7 @@ class DesktopFileSystem {
     }
     if (filePath.startsWith(APPS_DIR)) {
       const id = filePath.substring(APPS_DIR.length, id.length - ".run".length);
-      const app = apps.find((a) => a.id === id);
+      const app = this._apps.find((a) => a.id === id);
       if (!app || id.indexOf("/") >= 0) {
         throw new Error("Cannot stat file: file not found");
       }
@@ -455,7 +472,10 @@ class DesktopFileSystem {
         APPS_DIR.length,
         path.length - ".run".length,
       );
-      for (const app of apps) {
+
+      // As this should be relatively frequent, we may also do a map
+      // though at current scale, don't think it will have real-life impact
+      for (const app of this._apps) {
         if (app.id === wantedApp) {
           return parseToWantedFormat(app, format);
         }
@@ -467,34 +487,12 @@ class DesktopFileSystem {
       const wantedFile = path.substring(SYSTEM_DIR.length);
       try {
         if (wantedFile === "desktop.config.json") {
-          return parseToWantedFormat(
-            {
-              list: apps.map((app) => {
-                return {
-                  run: `/apps/${app.id}.run`,
-                  title: app.title,
-                  icon: app.icon,
-                  desktopDir: app.desktopDir,
-                };
-              }),
-            },
-            format,
-          );
+          const desktopConfig = generateDesktopConfig();
+          return parseToWantedFormat(desktopConfig, format);
         }
         if (wantedFile === "start_menu.config.json") {
-          return parseToWantedFormat(
-            {
-              list: apps.map((app) => {
-                return {
-                  run: `/apps/${app.id}.run`,
-                  title: app.title,
-                  icon: app.icon,
-                  inStartList: app.inStartList,
-                };
-              }),
-            },
-            format,
-          );
+          const startMenuConfig = generateStartMenuConfig();
+          return parseToWantedFormat(startMenuConfig, format);
         }
       } catch (err) {
         throw new Error("Impossible to read corrupted file: " + path);
@@ -580,8 +578,6 @@ class DesktopFileSystem {
         const cursor = event.target.result;
         if (cursor) {
           const entry = cursor.value;
-
-          // TODO: more efficient
           if (
             entry.fullPath === normalizedDirPath ||
             entry.fullPath.startsWith(normalizedDirPath)
@@ -682,4 +678,82 @@ function parseToWantedFormat(data, format) {
     return textDecoder.decode(data);
   }
   return JSON.stringify(data);
+}
+
+/**
+ * Generate `desktop.config.json` object depending on the generated app file.
+ * @returns {Object}
+ */
+function generateDesktopConfig() {
+  const groups = new Map();
+  return {
+    list: apps.reduce((acc, app) => {
+      const path = `/apps/${app.id}.run`;
+      if (typeof app.desktop?.group === "string" && app.desktop.group !== "") {
+        const existingGroupList = groups.get(app.desktop.group);
+        if (existingGroupList) {
+          existingGroupList.push(path);
+        } else {
+          const title = app.desktop.group;
+          const icon = app.desktop.group === "External Apps" ? "📡" : "💽";
+          const newList = [`${icon} ${title}`, path];
+          groups.set(app.desktop.group, newList);
+          acc.push({
+            run: "/apps/app-group.run",
+            args: newList,
+            title,
+            icon,
+          });
+        }
+      } else if (app.desktop?.display) {
+        acc.push({
+          run: path,
+          args: [],
+          title: app.title,
+          icon: app.icon,
+        });
+      }
+      return acc;
+    }, []),
+  };
+}
+
+/**
+ * Generate `start_menu.config.json` object depending on the generated app file.
+ * @returns {Object}
+ */
+function generateStartMenuConfig() {
+  const lists = new Map();
+  return {
+    list: apps.reduce((acc, app) => {
+      const path = `/apps/${app.id}.run`;
+      const appObject = {
+        type: "application",
+        run: path,
+        args: [],
+        title: app.title,
+        icon: app.icon,
+      };
+      if (
+        typeof app.startMenu?.list === "string" &&
+        app.startMenu.list !== ""
+      ) {
+        const existinglistList = lists.get(app.startMenu.list);
+        if (existinglistList) {
+          existinglistList.push(appObject);
+        } else {
+          const newList = [appObject];
+          lists.set(app.startMenu.list, newList);
+          acc.push({
+            type: "sublist",
+            name: app.startMenu.list,
+            list: newList,
+          });
+        }
+      } else if (app.desktop?.display) {
+        acc.push(appObject);
+      }
+      return acc;
+    }, []),
+  };
 }

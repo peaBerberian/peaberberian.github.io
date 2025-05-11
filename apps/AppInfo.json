@@ -71,7 +71,7 @@
       }
     },
     {
-      "id": "editor",
+      "id": "notes",
       "title": "Notes",
       "icon": "📝",
       "defaultHeight": 500,
@@ -81,7 +81,27 @@
       },
       "desktop": {
         "display": true
-      }
+      },
+      "defaultForExtensions": [
+        "html",
+        "css",
+        "json",
+        "mjs",
+        "js",
+        "jsx",
+        "c",
+        "cc",
+        "cpp",
+        "toml",
+        "ts",
+        "tsx",
+        "go",
+        "txt",
+        "s",
+        "S",
+        "asm",
+        "rs"
+      ]
     },
     {
       "id": "table",

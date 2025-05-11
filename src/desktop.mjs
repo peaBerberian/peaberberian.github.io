@@ -15,16 +15,10 @@
 // high priority:
 //
 // medium priority:
-// - Exception for app group where the icon / title is pre-filled?
-// - when side-by-side window snapping we should be able to resize both at the same time
 // - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices
-// - Sidebar should be able to break a word in worst cases I think.
 // - What do if App creation errors or rejects?
-// - PONG not focused move or not?
-// - clock not centered on taskbar?
-// - applications defaultHeight and defaultWidth exclude window decorations
-// - some accessibility I guess
+// - image viewer touch controls
 //
 // low priority:
 // - windows moving when moving taskbar to top/bottom. Could be cool to stay in
@@ -45,11 +39,17 @@
 //   and when it shows it disappears forever after like 2 seconds.
 // - block-iframe too much used sometimes?
 // - Allow to disable the i-frame warning in settings?
+// - End accessibility stuff (complete tab navigation, label for all interactive
+//   elements)
+// - when side-by-side window snapping we should be able to resize both at the same time
 // - z-index normalization could be less frequent, I don't know much if this has
 //   an impact
 // - icon lose focus onmousedown, not onclick
+// - Do "fake" app store to actually add external apps? (without it, though they
+//   do not really take space, it still could clutter if enough interesting
+//   i-frame-capable websites are found.)
 
-import fs from "./filesystem.mjs";
+import fs from "./filesystem/filesystem.mjs";
 import DesktopAppIcons from "./components/DesktopAppIcons.mjs";
 import StartMenu from "./components/StartMenu.mjs";
 import Taskbar from "./components/Taskbar.mjs";
@@ -79,7 +79,13 @@ async function start() {
     appsLauncher.openApp("/apps/clock.run", [], {
       centered: true,
     });
-    return;
+  };
+  clockElt.tabIndex = "0";
+  clockElt.onkeydown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      clockElt.click();
+    }
   };
 
   const taskbarManager = new Taskbar({ applets: [clockElt] });

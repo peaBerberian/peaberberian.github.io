@@ -1,31 +1,4 @@
-import { applyStyle, constructSidebarElt, createAppIframe } from "./utils.mjs";
-import strHtml from "./str-html.mjs";
-
-// ==== Utils for lazy-loaded applications ====
-
-export default {
-  // Often needed utils:
-  applyStyle: applyStyle,
-  strHtml: strHtml,
-  constructAppHeaderLine: constructAppHeaderLine,
-
-  // In rare situations:
-  constructSidebarElt: constructSidebarElt,
-  createAppIframe: createAppIframe,
-  createAppTitle: createAppTitle,
-  createFullscreenButton: createFullscreenButton,
-};
-
-// ========
-
-/** URL of the SVG for the "doc" link we set on some applications */
-const docImgSvg = `<svg width="800px" height="800px" viewBox="0 0 16 16" fill="var(--window-text-color)" xmlns="http://www.w3.org/2000/svg"><path d="M5 0C3.34315 0 2 1.34315 2 3V13C2 14.6569 3.34315 16 5 16H14V14H4V12H14V0H5Z"/></svg>`;
-
-/** URL of the SVG for the "demo" link we set on some applications */
-const demoImgSvg = `<svg version="1.1" fill="var(--window-text-color)" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="800px" height="800px" viewBox="0 0 512 512" xml:space="preserve"><g><path class="st0" d="M485.234,116.625H261.906l69.719-69.719c1.75-1.75,1.75-4.563,0-6.313l-17.422-17.438   c-1.734-1.75-4.563-1.75-6.297,0l-89.688,89.688l-89.656-89.688c-1.75-1.75-4.563-1.75-6.313,0l-17.438,17.438   c-1.75,1.75-1.75,4.563,0,6.313l69.75,69.719H26.766c-14.781,0-26.766,12-26.766,26.781v319.969   c0,14.781,11.984,26.781,26.766,26.781h458.469c14.781,0,26.766-12,26.766-26.781V143.406   C512,128.625,500.016,116.625,485.234,116.625z M383.594,421.188c0,8.531-6.906,15.438-15.422,15.438H66.844   c-8.531,0-15.438-6.906-15.438-15.438V191.875c0-8.531,6.906-15.438,15.438-15.438h301.328c8.516,0,15.422,6.906,15.422,15.438   V421.188z M473.188,333.813h-45.125v-45.125h45.125V333.813z M449.047,234.156c-13.906,0-25.172-11.281-25.172-25.188   s11.266-25.188,25.172-25.188s25.172,11.281,25.172,25.188S462.953,234.156,449.047,234.156z"/>
-</g></svg>`;
-
-const codeImgSvg = `<svg width="800px" height="800px" viewBox="0 0 16 16"  fill="var(--window-text-color)" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M15 1H1V15H15V1ZM6 5L7.41421 6.41421L5.82843 8L7.41421 9.58579L6 11L3 8L6 5ZM10 5L8.58579 6.41421L10.1716 8L8.58579 9.58579L10 11L13 8L10 5Z"/></svg>`;
+import { applyStyle } from "../utils.mjs";
 
 const BUTTONS_LIST = [
   // All SVG are with a CC0 or PD license, most found on svgrepo
@@ -47,6 +20,18 @@ const BUTTONS_LIST = [
     defaultTitle: "Download",
     height: "1.4rem",
     svg: `<svg width="800px" height="800px" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><g transform="translate(-340.000000, -3479.000000)" fill="currentColor"><g transform="translate(56.000000, 160.000000)"><path d="M297.995199,3334.46886 C297.995199,3334.07649 296.972565,3334.08051 296.583086,3334.47187 L295.852063,3335.20843 C295.537483,3335.52452 294.999203,3335.30275 294.999203,3334.8552 L294.999203,3326.03153 C294.999203,3325.48162 294.600735,3325.03708 294.055464,3325.03005 C293.508195,3325.03708 293.001872,3325.48162 293.001872,3326.03153 L293.001872,3334.8552 C293.001872,3335.30275 292.463591,3335.52653 292.149011,3335.21043 L291.417988,3334.26715 C291.028509,3333.87579 290.40634,3334.05943 290.016861,3334.05943 L290.010869,3334.05943 C289.621389,3335.06292 289.618393,3335.29473 290.008871,3335.68609 L292.589423,3338.38547 C293.36938,3339.16919 294.633691,3339.22137 295.413649,3338.43765 L297.995199,3335.86872 C298.385677,3335.47636 297.995199,3334.85419 297.995199,3334.46283 L297.995199,3334.46886 Z M294.044478,3325.02805 C294.048473,3325.02805 294.051469,3325.03005 294.055464,3325.03005 C294.059458,3325.03005 294.062454,3325.02805 294.066449,3325.02805 L294.044478,3325.02805 Z M297.995199,3333.05595 C297.443936,3333.05595 296.996533,3332.60638 296.996533,3332.05246 C296.996533,3331.49853 297.443936,3331.04897 297.995199,3331.04897 L298.888006,3331.04897 C303.142321,3331.04897 302.833733,3324.89559 298.893998,3325.03808 C297.547797,3318.33479 287.212608,3320.75419 289.243893,3327.47756 C287.168667,3325.8198 284.677995,3329.02795 286.79916,3330.61145 C288.298157,3331.73134 291.004541,3330.19902 291.004541,3332.05246 C291.004541,3333.31484 289.578446,3333.05595 288.209276,3333.05595 C284.877728,3333.05595 282.824472,3329.48353 284.731923,3326.75204 C285.643704,3325.4475 287.073793,3325.12539 287.073793,3325.12539 C287.732913,3319.99456 293.563122,3317.28514 297.881351,3320.18923 C299.734874,3321.43657 300.437935,3323.2589 300.437935,3323.2589 C301.527479,3323.59206 302.46223,3324.28246 303.098379,3325.19663 C305.240517,3328.27332 303.575742,3333.05595 297.995199,3333.05595 L297.995199,3333.05595 Z"></path></g></g></g></svg>`,
+  },
+  {
+    name: "previous",
+    defaultTitle: "Previous",
+    height: "1.4em",
+    svg: `<svg width="800px" height="800px" viewBox="-4.5 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><g transform="translate(-385.000000, -6679.000000)" fill="currentColor"><g transform="translate(56.000000, 160.000000)"><path d="M338.61,6539 L340,6537.594 L331.739,6528.987 L332.62,6528.069 L332.615,6528.074 L339.955,6520.427 L338.586,6519 C336.557,6521.113 330.893,6527.014 329,6528.987 C330.406,6530.453 329.035,6529.024 338.61,6539"></path></g></g></g></svg>`,
+  },
+  {
+    name: "next",
+    defaultTitle: "Next",
+    height: "1.4em",
+    svg: `<svg width="800px" height="800px" viewBox="-4.5 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><g transform="translate(-425.000000, -6679.000000)" fill="currentColor"><g transform="translate(56.000000, 160.000000)"><path d="M370.39,6519 L369,6520.406 L377.261,6529.013 L376.38,6529.931 L376.385,6529.926 L369.045,6537.573 L370.414,6539 C372.443,6536.887 378.107,6530.986 380,6529.013 C378.594,6527.547 379.965,6528.976 370.39,6519"></path </g></g></g></svg>`,
   },
   {
     name: "undo",
@@ -79,89 +64,7 @@ const BUTTONS_BY_NAME = BUTTONS_LIST.reduce((acc, val) => {
   return acc;
 }, {});
 
-/**
- * Title `h2` element found in many mostly-textual app.
- * @param {string} title - Title that will be rendered
- * @param {Object|undefined} [ql] - Quicklinks object for quicklinks that will
- * be shown aside the title.
- * @returns {HTMLElement}
- */
-function createAppTitle(title, ql) {
-  return strHtml`<h2 class="app-title">${title} ${constructQuicklinks(ql ?? {})}</h2>`;
-}
-
-/**
- * Construct quicklinks part of an app's title.
- * @param {Object} ql
- * @returns {HTMLElement}
- */
-function constructQuicklinks(ql) {
-  const links = [];
-  if (ql.demo) {
-    const imgWrapper = document.createElement("span");
-    imgWrapper.innerHTML = demoImgSvg;
-    imgWrapper.className = "quicklink-img";
-    imgWrapper.title = "Link to its demo page";
-    imgWrapper.alt = "Link to demo page";
-    links.push(
-      strHtml`<a class="quicklink-link" href="${ql.demo}" target="_blank">${imgWrapper}</a>`,
-    );
-  }
-  if (ql.github) {
-    const imgWrapper = document.createElement("span");
-    imgWrapper.innerHTML = codeImgSvg;
-    imgWrapper.className = "quicklink-img";
-    imgWrapper.title = "Link to its code repository";
-    imgWrapper.alt = "Link to its code repository";
-    links.push(
-      strHtml`<a class="quicklink-link" href="${ql.github}" target="_blank">${imgWrapper}</a>`,
-    );
-  }
-  if (ql.doc) {
-    const imgWrapper = document.createElement("span");
-    imgWrapper.innerHTML = docImgSvg;
-    imgWrapper.className = "quicklink-img";
-    imgWrapper.title = "Link to its API documentation";
-    imgWrapper.alt = "Link to its API documentation";
-    links.push(
-      strHtml`<a class="quicklink-link" href="${ql.doc}" target="_blank">${imgWrapper}</a>`,
-    );
-  }
-  return strHtml`<span class="quickLinks">${links}</span>`;
-}
-
-/**
- * Create automatically-updating fullscreen enter/exit button.
- * @param {AbortSignal} abortSignal - This button adds event listener on the
- * page, which means it reserves some resource. To free up that resource, it
- * will listen to this signal.
- * @returns {HTMLElement}
- */
-function createFullscreenButton(abortSignal) {
-  const fullscreenButton = strHtml`<input class="btn" type="button" value="">`;
-  function updateFullScreenText() {
-    const fullscreenText =
-      document.fullscreenElement === null
-        ? "Go fullscreen!"
-        : "Exit fullcreen mode";
-    fullscreenButton.value = fullscreenText;
-  }
-  updateFullScreenText();
-  document.body.addEventListener("fullscreenchange", updateFullScreenText);
-  abortSignal.addEventListener("aborted", () => {
-    document.body.removeEventListener("fullscreenchange", updateFullScreenText);
-  });
-  fullscreenButton.onclick = function () {
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      document.body.requestFullscreen();
-    }
-  };
-  return fullscreenButton;
-}
-
-function constructAppHeaderLine(buttonConfigs) {
+export function constructAppHeaderLine(buttonConfigs) {
   const headerElt = document.createElement("div");
   applyStyle(headerElt, {
     backgroundColor: "var(--window-sidebar-bg)",
@@ -243,15 +146,18 @@ function constructAppHeaderLine(buttonConfigs) {
  * @param {HTMLElement} buttonElt
  */
 function enableButton(buttonElt) {
+  buttonElt.setAttribute("tabindex", "0");
   buttonElt.classList.remove("disabled");
 }
 
 function disableButton(buttonElt) {
+  buttonElt.removeAttribute("tabindex");
   buttonElt.classList.add("disabled");
 }
 
 function createButtonElt(svg, title, height = "1.7rem", onClick) {
   const buttonWrapperElt = document.createElement("span");
+  buttonWrapperElt.setAttribute("tabindex", "0");
   applyStyle(buttonWrapperElt, {
     height: height,
     margin: "auto 0",
@@ -265,6 +171,11 @@ function createButtonElt(svg, title, height = "1.7rem", onClick) {
     buttonWrapperElt.appendChild(buttonSvgElt);
   }
   buttonWrapperElt.onclick = onClick;
+  buttonWrapperElt.onkeydown = (e) => {
+    if (e.key === " " || e.key === "Enter") {
+      onClick(e);
+    }
+  };
   buttonWrapperElt.title = title;
   return buttonWrapperElt;
 }

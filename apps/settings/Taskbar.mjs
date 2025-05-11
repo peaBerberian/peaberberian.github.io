@@ -243,6 +243,13 @@ function constructStartMenuLogoSelection(settings) {
       evt.stopPropagation();
       evt.preventDefault();
     });
+    button.tabIndex = "0";
+    button.onkeydown = (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        button.click();
+      }
+    };
     gridElt.appendChild(button);
   });
   return wrapperElt;

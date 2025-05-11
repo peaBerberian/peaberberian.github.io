@@ -130,6 +130,7 @@ export function create(_args, env, abortSignal) {
         break;
     }
     contentElt.scrollTo(0, 0);
+    contentElt.focus();
   }
   function updateSectionsIcons() {
     for (const item of sidebarItems) {
@@ -158,6 +159,7 @@ export function create(_args, env, abortSignal) {
   function constructAppWithSidebar(sections, onChangeSection) {
     const container = strHtml`<div class="w-container" />`;
     const content = strHtml`<div class="w-content"></div>`;
+    content.tabIndex = "0";
     const sidebar = constructSidebarElt(sections, (section) => {
       onChangeSection(section);
     });

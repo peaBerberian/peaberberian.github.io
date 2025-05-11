@@ -165,9 +165,14 @@ export function constructSidebarElt(sections, onChangeSection) {
     const itemIcon = item.icon
       ? strHtml`<span class="w-sidebar-icon">${item.icon}</span>`
       : null;
-    const itemElement = strHtml`<div class="w-sidebar-item${item.active ? " active" : ""}">
+    const itemElement = strHtml`<div class="w-sidebar-item${item.active ? " active" : ""}" tabindex="0">
 ${itemIcon}${item.text}
 </div>`;
+    itemElement.onkeydown = (e) => {
+      if (e.key === "Enter") {
+        itemElement.click();
+      }
+    };
     itemElement.onclick = () => {
       if (itemElement.classList.contains("active")) {
         // Already the active one, exit

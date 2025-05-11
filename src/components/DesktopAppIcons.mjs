@@ -85,6 +85,7 @@ export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
     for (let i = 0; i < apps.length; i++) {
       const app = apps[i];
       const icon = document.createElement("div");
+      icon.tabIndex = "0";
       icon.className = "icon";
 
       if (currentRow >= gridSize[0]) {
@@ -114,6 +115,14 @@ export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
 
       let clickCount = 0;
       let lastClickTs = -Infinity;
+      icon.addEventListener("keydown", (evt) => {
+        if (evt.key === "Enter") {
+          onOpen(app.run, app.args);
+        }
+      });
+      icon.addEventListener("blur", () => {
+        icon.classList.remove("selected");
+      });
       icon.addEventListener("click", (evt) => {
         if (evt.pointerType === "mouse") {
           selectIcon(icon);

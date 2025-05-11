@@ -67,6 +67,14 @@ export default function createWallpaperSection(env) {
       wpPreviewElt.classList.add("selected");
       settings.desktopBackground.setValue({ type: "image", value: wp });
     };
+    wpPreviewElt.tabIndex = "0";
+    wpPreviewElt.onkeydown = (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        wpPreviewElt.click();
+      }
+    };
+
     selectableWallpaperItems.push(wpPreviewElt);
     wpGroupElt.appendChild(wpPreviewElt);
   }
@@ -131,6 +139,13 @@ export default function createWallpaperSection(env) {
       value: customImgInputElt.value,
     });
   };
+  customImgPreviewElt.tabIndex = "0";
+  customImgPreviewElt.onkeydown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      customImgPreviewElt.click();
+    }
+  };
   selectableWallpaperItems.push(customImgPreviewElt);
   const customImgGroup = strHtml`<div class="w-group"><h3>Custom Image</h3>${[
     customImgInputElt,
@@ -151,6 +166,13 @@ export default function createWallpaperSection(env) {
   const colorPreviewElt = strHtml`<div class="w-color-item selectable" />`;
   colorPreviewElt.style.background = colorInputElt.value;
   colorPreviewElt.onclick = () => colorInputElt.click();
+  colorPreviewElt.tabIndex = "0";
+  colorPreviewElt.onkeydown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      colorPreviewElt.click();
+    }
+  };
   colorInputElt.onclick = function () {
     selectableWallpaperItems.forEach((wi) => {
       wi.classList.remove("selected");
@@ -207,6 +229,13 @@ export default function createWallpaperSection(env) {
         type: "color",
         value: DEFAULT_GRADIENTS[i],
       });
+    };
+    item.tabIndex = "0";
+    item.onkeydown = (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        item.click();
+      }
     };
   }
 

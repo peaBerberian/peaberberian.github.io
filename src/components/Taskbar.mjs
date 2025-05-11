@@ -48,6 +48,7 @@ export default class Taskbar {
   addWindow(windowId, { icon, title }, { toggleAppActivation, closeApp }) {
     const item = document.createElement("div");
     item.className = "taskbar-item";
+    item.tabIndex = "0";
     item.dataset.window = windowId;
     item.addEventListener("mousedown", (evt) => {
       if (evt && evt.button == 1) {
@@ -61,6 +62,11 @@ export default class Taskbar {
         return;
       }
       toggleAppActivation();
+    });
+    item.addEventListener("keydown", (evt) => {
+      if (evt.key === " " || evt.key === "Enter") {
+        toggleAppActivation();
+      }
     });
     const iconElt = document.createElement("span");
     iconElt.className = "taskbar-item-text taskbar-item-icon";

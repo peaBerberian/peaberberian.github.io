@@ -66,12 +66,12 @@ The following properties can be set for each application:
   with this application's `id`.
 
 - `"defaultHeight"` (`number`, optional): Optional wanted optimal defaut height
-  in pixels for the whole application window (including the window decorations
-  for now - this may be changed as it doesn't make much sense!).
+  in pixels for the application content (the window minus window decorations
+  like potential borders and the header).
 
 - `"defaultWidth"` (`number`, optional): Optional wanted optimal defaut width
-  in pixels for the whole application window (including the window decorations
-  for now - this may be changed as it doesn't make much sense!).
+  in pixels for the application content (the window minus window decorations
+  like potential borders and the header).
 
 - `"onlyOne"` (`boolean`, optional): If set to `true`, only one instance of the
   application will be opened at most in the desktop. New opening attempts will
@@ -122,7 +122,7 @@ depending on the application's needs:
     Contains the following properties:
 
     - `appUtils` (`Object`): the standard desktop libraries (look at
-      `../src/app-utils.mjs` for more information on what utils there is)
+      `../src/app-utils` for more information on what utils there is)
 
     - The `getImageRootPath` function, which returns the base URL where static
       images will be served.

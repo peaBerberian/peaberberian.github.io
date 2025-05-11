@@ -1,140 +1,9 @@
 // TODO: Make base mostly work even without `IndexedDB` API (just do not store
 // long term in that case)
-// TODO: consistency check
-/**
- * # The FileSystem
- *
- * This file defines the "filesystem".
- *
- * It follows the old unix way of doing `/` stuff but with many many
- * simplfications in some ways and specificities in other due to the nature of
- * the site.
- *
- * The root directory is `/` and can be read through the `readDir` API.
- * It is read-only.
- *
- *
- *
- * ## Directories at the root
- *
- * The root directory contains itself the following directories.
- *
- *
- * ### `/apps/`
- *
- * The `/apps/` root  contains virtual "executable" files corresponding to this
- * desktop's application. They are not actually stored on long term storage on
- * the user's device, they are embedded inside the JS files.
- *
- * Each "file" in that directory is an actual app. This whole directory is
- * read-only: no file can be removed, moved or renamed. No file can be added to
- * this directory. Doing any of this will lead to an error.
- *
- * #### Reading the `/apps/` dir
- *
- * When reading the dir, e.g. through `readDir`, you'll get an Array of objects
- * corresponding to the list of ""installed"" applications.
- *
- * Each returned object will have the following properties:
- *
- * -  Its `name` property is the actual application's `id` property, followed by
- *    the extension `.run` (e.g. `paint.run`)
- *
- * -  Its `icon` property wll correspond to the application's `icon` property.
- *
- * -  Its `type` property set to `file`.
- *
- * -  Its `modified` property set to some hardcoded old date.
- *
- * #### Reading a file from `/apps/`
- *
- * When reading a file in `/apps/` e.g. `/apps/about.run`, the returned
- * information will contain the corresponding app object in
- * `./__generated_apps.mjs` that contains everything that's needed to run it.
- *
- * It's basically the executable format of this desktop: a JSON/JS object with
- * some set properties defining different aspects of the app (wanted
- * width/height, where to find its code etc.).
- *
- *
- * ### `/system/`
- *
- * `/system/` is also a read-only root directory. It contains basically
- * virtual "config files" for the desktop.
- *
- * It is for now read-only, as well as all its content. However the whole point
- * is here to make it configurable in the future, I just didn't take the time
- * yet.
- *
- * For now it contains the following files (with the `type` set to `file`), they
- * can be discovered through `readDir`, but they should be always there:
- *
- * -  `/system/desktop.config.json`: Contains metadata on the wanted arrangement
- *    for the desktop icons.
- *
- *    Reading that file will return you a JSON object.
- *    That object will contain a `list` key containing an Array of JSON objects,
- *    each representing an application to display on the desktop, in the given
- *    order they should be ordered, with the following keys:
- *
- *    -  `run` (`string`): The path to the application "executable" (e.g.
- *       `/apps/paint.run`).
- *
- *    - `args` (`Array.<string>`): The arguments the application "executable"
- *      should be run with.
- *
- *    -  `title` (`string`): The `title` of the application to show on the
- *       desktop.
- *
- *    - `icon` (`string|undefined`): The icon to show for the application.
- *
- * -  `system/start_menu.config.json`: Contains metadata for the arrangement of
- *    apps in the start menu
- *
- *    Reading that file will return you a JSON object,
- *
- *    That object will contain a `list` key containing an Array of JSON objects.
- *
- *    Those objects can be of two forms: application objects (each representing
- *    an application to display on that menu) or sublists (each representing a
- *    sub-list of applications in the menu).
- *
- *    They are all in the given order they should be ordered.
- *
- *    Application objects have the following keys:
- *
- *    - `type` (`string`): Set to `"application"`.
- *
- *    -  `run` (`string`): The path to the application (e.g. `/apps/about.run`).
- *
- *    - `args` (`Array.<string>`): The arguments the application "executable"
- *      should be run with.
- *
- *    -  `title` (`string`): The `title` of the application to show on the
- *       start menu.
- *
- *    - `icon` (`string|undefined`): The icon to show for the application.
- *
- *    Sublists have the following properties:
- *
- *    - `type` (`string`): Set to `"sublist"`.
- *
- *    - `name` (`string`): The name to display for this sublist.
- *
- *    - `list` (`Array.<Object>`): The application objects inside that sublist.
- *      A sublist cannot contain another sublist.
- *
- * ### `/userdata/`
- *
- * The root directory where the user can do whatever it wants: read/write.
- * Not decided yet on its content.
- */
-
-// We first import app-utils as a library for Applications that we're going
-// to load just now.
-import "./app-utils.mjs";
+// TODO: Consistency check
+// TODO: Special Error objects
 // /!\ Apps file is automatically generated by the build script
-import apps from "./__generated_apps.mjs";
+import apps from "../__generated_apps.mjs";
 
 const DB_NAME = "fake_filesystem";
 const DB_VERSION = 1;
@@ -147,6 +16,9 @@ const DIR_CONFIG_FILENAME = ".dir_config";
 const APPS_DIR = "/apps/";
 const SYSTEM_DIR = "/system/";
 const USER_DATA_DIR = "/userdata/";
+
+const DESKTOP_CONFIG = "desktop.config.json";
+const START_MENU_CONFIG = "start_menu.config.json";
 
 const DEFAULT_MODIFIED_DATE = 1747073021004;
 
@@ -237,12 +109,12 @@ class DesktopFileSystem {
       if (normalizedDirPath === SYSTEM_DIR) {
         return [
           {
-            name: "desktop.config.json",
+            name: DESKTOP_CONFIG,
             type: "file",
             modified: DEFAULT_MODIFIED_DATE,
           },
           {
-            name: "start_menu.config.json",
+            name: START_MENU_CONFIG,
             type: "file",
             modified: DEFAULT_MODIFIED_DATE,
           },
@@ -310,7 +182,7 @@ class DesktopFileSystem {
     }
     if (filePath.startsWith(SYSTEM_DIR)) {
       const file = filePath.substring(SYSTEM_DIR.length);
-      if (["desktop.config.json", "start_menu.config.json"].includes(file)) {
+      if ([DESKTOP_CONFIG, START_MENU_CONFIG].includes(file)) {
         return {
           name: file,
           type: "file",
@@ -486,11 +358,11 @@ class DesktopFileSystem {
     if (path.startsWith(SYSTEM_DIR)) {
       const wantedFile = path.substring(SYSTEM_DIR.length);
       try {
-        if (wantedFile === "desktop.config.json") {
+        if (wantedFile === DESKTOP_CONFIG) {
           const desktopConfig = generateDesktopConfig();
           return parseToWantedFormat(desktopConfig, format);
         }
-        if (wantedFile === "start_menu.config.json") {
+        if (wantedFile === START_MENU_CONFIG) {
           const startMenuConfig = generateStartMenuConfig();
           return parseToWantedFormat(startMenuConfig, format);
         }
@@ -598,7 +470,7 @@ export default fs;
 window.fs = fs;
 
 function openDB() {
-  return new Promise((_resolve, _reject) => {
+  return new Promise((resolve, reject) => {
     // Disabling IndexedDB usage for now
     // I chose to set a dangling promise because I'm monitoring **ALL**, even
     // catched, errors to ensure I'm not doing bad stuff.
@@ -606,21 +478,21 @@ function openDB() {
     // Weird effect could be infinite loading when trying to access non-virtual
     // filesystem, but this shouldn't happen.
     //
-    //   const request = indexedDB.open(DB_NAME, DB_VERSION);
-    //
-    //   request.onupgradeneeded = (event) => {
-    //     const db = event.target.result;
-    //
-    //     const store = db.createObjectStore(METADATA_STORE, { keyPath: "id" });
-    //     store.createIndex("directory", "directory");
-    //     store.createIndex("fullPath", "fullPath", { unique: true });
-    //
-    //     // Store content separately for efficiency
-    //     db.createObjectStore(CONTENT_STORE, { keyPath: "id" });
-    //   };
-    //
-    //   request.onsuccess = () => resolve(request.result);
-    //   request.onerror = () => reject(request.error);
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+
+      const store = db.createObjectStore(METADATA_STORE, { keyPath: "id" });
+      store.createIndex("directory", "directory");
+      store.createIndex("fullPath", "fullPath", { unique: true });
+
+      // Store content separately for efficiency
+      db.createObjectStore(CONTENT_STORE, { keyPath: "id" });
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
   });
 }
 
@@ -688,7 +560,7 @@ function parseToWantedFormat(data, format) {
 }
 
 /**
- * Generate `desktop.config.json` object depending on the generated app file.
+ * Generate desktop config object depending on the generated app file.
  * @returns {Object}
  */
 function generateDesktopConfig() {
@@ -728,7 +600,7 @@ function generateDesktopConfig() {
 }
 
 /**
- * Generate `start_menu.config.json` object depending on the generated app file.
+ * Generate start menu config object depending on the generated app file.
  * @returns {Object}
  */
 function generateStartMenuConfig() {

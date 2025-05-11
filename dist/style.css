@@ -41,11 +41,6 @@
   box-sizing: border-box;
 }
 
-/* Bad I know. I should do accessiblity. */
-*:focus {
-  outline: none;
-}
-
 a {
   color: var(--window-text-color);
 }
@@ -71,9 +66,11 @@ html {
 }
 
 #desktop {
+	top: 0;
+	left: 0;
   width: 100%;
   height: calc(100% - var(--taskbar-size));
-  position: relative;
+  position: fixed;
   overflow: visible;
   user-select: none;
 }
@@ -114,6 +111,11 @@ html {
   background-color: var(--icon-active-bg);
   color: var(--icon-active-text);
 }
+.icon:focus {
+  outline: none;
+  background-color: var(--icon-active-bg);
+  color: var(--icon-active-text);
+}
 
 .icon-img {
   width: 50px;
@@ -130,12 +132,12 @@ html {
 .icon-text {
   font-size: var(--font-size);
   text-align: center;
-  text-overflow: ellipsis;
-  white-space: normal;
   line-height: 1.2;
-  overflow: hidden;
   margin: auto;
   display: -webkit-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow-wrap: break-word;
@@ -202,6 +204,11 @@ html {
   margin-left: 5px;
 }
 
+#taskbar.no-title .taskbar-item {
+  justify-content: center;
+  width: var(--taskbar-size);
+}
+
 #taskbar.no-title .taskbar-item-title {
   display: none;
 }
@@ -233,6 +240,10 @@ html {
 #start-button:hover {
   background-color: var(--taskbar-hover);
 }
+#start-button:focus {
+	outline:none;
+  background-color: var(--taskbar-hover);
+}
 
 #start-menu {
   position: absolute;
@@ -247,6 +258,7 @@ html {
   max-height: calc(100% - var(--taskbar-size));
   border-radius: 10px 10px 0px 0px;
   flex-direction: column;
+  scrollbar-color: var(--start-menu-active-bg) var(--start-menu-bg);
 }
 
 #start-menu.active {
@@ -317,7 +329,13 @@ html {
   padding: 10px 15px 10px 25px;
 }
 
+#start-menu .start-item:focus {
+	outline: none;
+}
 #start-menu.active .start-item:hover {
+  background-color: var(--start-menu-active-bg);
+}
+#start-menu.active .start-item:focus {
   background-color: var(--start-menu-active-bg);
 }
 
@@ -596,6 +614,10 @@ html {
 .w-tool-btn:hover {
   color: var(--sidebar-selected-bg-color);
 }
+.w-tool-btn:focus {
+	/* outline:none; */
+	/*  color: var(--sidebar-selected-bg-color); */
+}
 
 .w-tool-btn.disabled {
   cursor: auto;
@@ -686,6 +708,10 @@ html {
   color: var(--window-text-color);
   width: 100%;
   height: 100%;
+}
+/* TODO: find way to communicate focus */
+.w-content:focus {
+	outline: none;
 }
 
 .w-content-centered {
@@ -796,6 +822,10 @@ ol {
 }
 
 .taskbar-item:hover {
+  background-color: var(--taskbar-hover);
+}
+.taskbar-item:focus {
+	outline: none;
   background-color: var(--taskbar-hover);
 }
 
@@ -920,12 +950,21 @@ ol {
   background-color: var(--start-menu-bg);
 }
 
-#start-menu.active .start-item:hover > .s-list {
+
+#start-menu.active .s-list.active {
   display: block;
   animation: openStartListAnim 0.2s ease-out;
 }
 
 .right-taskbar #start-menu.active .start-item:hover > .s-list {
+  animation: openStartListFromRightAnim 0.2s ease-out;
+}
+
+#start-menu.active .start-item:focus > .s-list {
+  display: block;
+  animation: openStartListAnim 0.2s ease-out;
+}
+.right-taskbar #start-menu.active .start-item:focus > .s-list {
   animation: openStartListFromRightAnim 0.2s ease-out;
 }
 
@@ -1029,12 +1068,19 @@ ol {
     color 0.25s;
   display: flex;
   align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .w-sidebar-item:hover {
   background-color: var(--sidebar-hover-bg);
 }
-
+.w-sidebar-item:focus {
+	outline: none;
+  background-color: var(--sidebar-hover-bg);
+}
 .w-sidebar-item.active {
   background-color: var(--sidebar-selected-bg-color);
   color: var(--sidebar-selected-text-color);
@@ -1206,6 +1252,9 @@ ol {
   border-radius: 2px;
   cursor: pointer;
 }
+.w-slider:focus {
+  background: var(--window-line-color);
+}
 
 .w-slider::-webkit-w-slider-thumb {
   appearance: none;
@@ -1311,14 +1360,15 @@ input[type="range"]::-moz-range-thumb {
     background-color 0.15s ease-in-out,
     border-color 0.15s ease-in-out;
 }
+
 .w-select:hover {
   border-color: var(--app-primary-color);
   background-color: var(--app-primary-bg);
 }
 .w-select:focus {
+  outline: none;
   border-color: var(--window-line-color);
   background-color: var(--app-primary-bg);
-  outline: none;
 }
 
 /* Animations */
@@ -1495,6 +1545,10 @@ input[type="range"]::-moz-range-thumb {
   }
   .w-sidebar-item {
     text-align: center;
+    text-overflow: clip;
+    overflow-wrap: normal;
+    word-break: normal;
+    overflow: visible;
   }
 }
 

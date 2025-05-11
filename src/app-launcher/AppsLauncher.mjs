@@ -10,7 +10,6 @@ import {
   getMaxDesktopDimensions,
 } from "../utils.mjs";
 import appUtils from "./app-utils/index.mjs";
-// import { createFileOpener } from "./app-utils/explorer/explorer.mjs";
 import WindowedApplicationStack from "./windowed_application_stack.mjs";
 import strHtml from "../str-html.mjs";
 

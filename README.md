@@ -34,39 +34,48 @@ here that I find interesting:
 
 - I also started implementing a permission-like system (here called
   `dependencies`) where apps declare in advance what they will need and the
-  desktop will choose to give them interfaces to those or not (e.g. `filesystem`
-  access, desktop settings access etc.)
+  desktop will choose to give them interfaces to those or not (e.g. "filesystem"
+  access, desktop settings access, able to open other applications and files
+  etc.)
 
-  For now all applications run in the same context/realm than the desktop so
-  it's not a real sandbox, but an i-frame could theoretically easily be added in
-  the mix for "untrusted" applications to have I guess a sound permission system
-  (no filesystem access, no location access etc.).
+  That permission system has some modern concepts, most notably an application
+  may have access to a file-picker to open and save files, but no direct access
+  to the filesystem.
+  The resulting application will never see paths nor the organization of files
+  (only the file-picker, another application, will), just data and filenames for
+  files the user explicitly chose to open through the file-picker.
 
-  There are some other niceties in the way like the possibility of just asking
-  for "file-picker" authorizations if what you want to do is just to open/save
-  files. This allows to let application read files without ever having to ask
-  for access to the file system.
+  Though because the next point is not yet finished, applications can today
+  theoretically be able to escape that limitation if motivated enough (e.g.
+  by reimplementing the whole filesystem logic).
 
-  The "file-picker" itself may be implemented by any other application, which
-  themselves most probably do have the "filesystem" dependency to implement it.
+- A next step would be to run most applications in "sandboxed" iframes, to
+  ensure that their permissions can never be escaped and to also prevent a
+  misbehaving application from hanging the whole "system".
+
+  I tested this, it works as intended, but I did not actually fully implement it
+  for now... There's work to do like communication between iframe and the
+  desktop, and I focused for now on other, more visible, stuff!
 
 - I ended up implementing an "executable" format: a JS object that can be
   serialized to JSON which contains metadata about the app and how to run it.
 
   The desktop actually runs applications by running those executables after
-  reading them from a virtual directory in the filesystem (read next point).
+  reading them from the filesystem (read next point).
 
   This makes it possible to "install" applications (by adding them to the
   file system) and to let applications run other applications when they
   have the permission (e.g. the file explorer runs applications when you
   launch them from their location in the filesystem).
 
-- I "copied" some ideas from unix-like filesystem:
+- I implemented a "filesystem", mostly backed by [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)-based
+  storage.
 
-  The root directory is `/` with a "user" directory in it (`/userdata/`) and
-  some directories with virtual files (not actually on disk, and computed at
-  read time): `/apps/` for build-time apps, `/system/` for start menu
-  and desktop configurations.
+  It is influenced by how things work on unix-like systems for familiarity
+  reasons: the root directory is `/` with a "user" directory in it
+  (`/userdata/`) and some directories with virtual files (not actually on
+  disk, and computed at read time): `/apps/` for build-time apps, `/system/`
+  for start menu and desktop configurations.
 
 - As we're on the web platform, we do not have much control over memory and
   performance. At first I thought this would become ugly very quick but until
@@ -93,6 +102,10 @@ here that I find interesting:
 
      Seeing the simplicity with which complex ideas could be quickly implemented
      efficiently is what dragged me to this rabbit hole of implementing a desktop.
+
+  6. In all honesty, I didn't yet finish everything, especially the
+     application-in-iframe-sandbox idea, which may or may not have a visible
+     impact (I could see it going either way, to test with actual cases).
 
 - I'm still unsure of how to do keyboard shortcuts, as we're running on top of an
   environment with already its fair share of it: the OS, the browser, and

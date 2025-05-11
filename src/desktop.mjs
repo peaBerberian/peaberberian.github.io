@@ -3,13 +3,6 @@
 //
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
-// filesystem:
-// - Open in sheets
-// - Begin save work
-// - When indexedDB is not available, fallback on in-memory
-// - Proxy local storage in `/system/`?
-// - watch API?
-//
 // high priority:
 //
 // medium priority:
@@ -47,6 +40,26 @@
 // - Do "fake" app store to actually add external apps? (without it, though they
 //   do not really take space, it still could clutter if enough interesting
 //   i-frame-capable websites are found.)
+//
+// filesystem:
+// - Open in sheets
+// - Begin save work
+// - When indexedDB is not available, fallback on in-memory
+// - Proxy local storage in `/system/`?
+// - watch API?
+//
+// desktop ideas:
+// - Allow multi-selection which changes drag bahavior
+// - Ctrl+A catched
+// - Enter to open
+// - highest z-index when moving icons?
+// - optionally implement `onDrop` method on apps, which takes x, y, and the
+//   info on what has been dropped
+// - apps can have an `env.drag` method (`"drag"` dependency?) to start drag
+//   and dropping
+//
+// application ideas:
+// - Actually enforce permissions by adding iframe with sandbox="allow-scripts"
 
 import fs from "./filesystem/filesystem.mjs";
 import DesktopAppIcons from "./components/DesktopAppIcons.mjs";

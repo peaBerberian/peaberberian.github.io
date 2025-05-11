@@ -131,7 +131,7 @@ export function create(abortSignal) {
       // TODO: Stop iterating with insane logic and find a good smart one :D
       const paddleCenter = enemyPaddle.y + paddleHeight / 2;
       if (paddleCenter < ball.y - 20) {
-        enemyPaddle.y += 5 = currEnemySpeed;
+        enemyPaddle.y += 5 + currEnemySpeed;
       } else if (paddleCenter > ball.y + 20) {
         enemyPaddle.y -= 5 + currEnemySpeed;
       } else if (paddleCenter < ball.y - 5) {
@@ -160,7 +160,7 @@ export function create(abortSignal) {
         checkPaddleBallCollision(enemyPaddle, ball);
       } else if (ball.dx > 0) {
         if (checkPaddleBallCollision(userPaddle, ball)) {
-					// Mario Kart that thing
+          // Mario Kart that thing
           if (rightScore - leftScore > 3) {
             currEnemySpeed = 13;
           } else if (rightScore - leftScore >= 2) {

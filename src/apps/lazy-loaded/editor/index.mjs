@@ -275,7 +275,7 @@ function createButtonElt(svg, height, onClick) {
 }
 
 function getSvg(svg) {
-  const svgWrapperElt = strHtml`<div />`;
+  const svgWrapperElt = document.createElement("div");
   svgWrapperElt.innerHTML = svg;
   const svgElt = svgWrapperElt.children[0];
   return svgElt;

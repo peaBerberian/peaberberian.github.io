@@ -6,7 +6,7 @@ const paddleHeight = 80;
 export function create(abortSignal) {
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
-    backgroundColor: "var(--app-primary-color)",
+    backgroundColor: "var(--window-active-header)",
     height: "100%",
     width: "100%",
     overflowY: "auto",
@@ -196,8 +196,9 @@ export function create(abortSignal) {
       // TODO: optimize that shit? To check.
       const objectsColor = getComputedStyle(canvas).getPropertyValue(
         // "--app-primary-color",
-        "--window-text-color",
+        // "--window-text-color",
         // "--window-content-bg",
+        "--window-active-header-text",
       );
 
       // Doing the ball

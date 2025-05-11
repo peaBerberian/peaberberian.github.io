@@ -50,7 +50,6 @@
 // - Allow multi-selection which changes drag bahavior
 // - Ctrl+A catched
 // - Enter to open
-// - highest z-index when moving icons?
 // - optionally implement `onDrop` method on apps, which takes x, y, and the
 //   info on what has been dropped
 // - apps can have an `env.drag` method (`"drag"` dependency?) to start drag

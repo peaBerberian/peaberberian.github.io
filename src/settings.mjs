@@ -26,7 +26,8 @@ import { SharedReference } from "./utils.mjs";
 
 const DEFAULT_FONT_SIZE = 14;
 const DEFAULT_TASKBAR_OPACITY = 57;
-const DEFAULT_ICON_INACTIVE_OPACITY = 25;
+const DEFAULT_ICON_IMAGE_OPACITY = 25;
+const DEFAULT_ICON_HOVER_OPACITY = 25;
 const DEFAULT_ICON_ACTIVE_OPACITY = 30;
 const DEFAULT_TASK_BG_COLOR = "#1a2e4b";
 const DEFAULT_TASK_TEXT_COLOR = "#ffffff";
@@ -741,20 +742,36 @@ export const SETTINGS = {
     },
   ),
 
-  /** Defines the opacity of non-selected icons, as a value from `0` to `1` */
-  iconInactiveOpacity: createRefForState(
-    "icon-inactive-opacity",
-    DEFAULT_ICON_INACTIVE_OPACITY,
+  /**
+   * Defines the opacity of the background of hovered icons, as a value from `0`
+   * to `1`.
+   */
+  iconHoverOpacity: createRefForState(
+    "icon-hover-opacity",
+    DEFAULT_ICON_HOVER_OPACITY,
+    (opacityPercent) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--icon-hover",
+          SETTINGS.iconHoverBgColor.getValue() +
+            percentageToHex(opacityPercent),
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines the opacity of the image background behind images, as a value
+   * from `0` to `1`.
+   */
+  iconImageBgOpacity: createRefForState(
+    "icon-image-bg-opacity",
+    DEFAULT_ICON_IMAGE_OPACITY,
     (opacityPercent) => {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
           "--icon-bg",
           SETTINGS.iconImageBgColor.getValue() +
-            percentageToHex(opacityPercent),
-        );
-        document.documentElement.style.setProperty(
-          "--icon-hover",
-          SETTINGS.iconHoverBgColor.getValue() +
             percentageToHex(opacityPercent),
         );
       });
@@ -832,7 +849,7 @@ export const SETTINGS = {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
           "--icon-bg",
-          color + percentageToHex(SETTINGS.iconInactiveOpacity.getValue()),
+          color + percentageToHex(SETTINGS.iconImageBgOpacity.getValue()),
         );
       });
     },
@@ -849,7 +866,7 @@ export const SETTINGS = {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
           "--icon-hover",
-          color + percentageToHex(SETTINGS.iconInactiveOpacity.getValue()),
+          color + percentageToHex(SETTINGS.iconHoverOpacity.getValue()),
         );
       });
     },

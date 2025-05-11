@@ -19,7 +19,9 @@
       "icon": "⚙️",
       "defaultHeight": 700,
       "defaultWidth": 1000,
-      "preload": true,
+      "preload": {
+        "after": 100
+      },
       "onlyOne": true,
       "needsSettingsObject": true,
       "inStartList": null,

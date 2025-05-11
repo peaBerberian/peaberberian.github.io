@@ -8,11 +8,21 @@ import { SETTINGS } from "../settings.mjs";
 /**
  * Description of a single application that will be displayed in the start menu.
  * @typedef {Object} StartMenuAppObject
+ * @property {string} type - Set to `"application"` to indicate this is an
+ * application.
  * @property {string} run - The path to the application to run.
+ * @property {Array.<string>} args - The arguments with which this app should be
+ * run.
  * @property {string} icon` - The icon representing that application.
  * @property {string} title - The title for that application.
- * @property {string|undefined} [inStartList] - If set, the icon should be in a
- * start menu sub-group called a "start list".
+ */
+
+/**
+ * Description of a sublist in the start menu.
+ * @typedef {Object} Sublist Object
+ * @property {string} type - Set to `"sublist"` to indicate this is a sublist.
+ * @property {string} name - The name of this sublist
+ * @property {Array.<StartMenuAppObject>} list - List of applications inside
  */
 
 /**
@@ -213,6 +223,10 @@ function refreshStartMenu(
     startMenuItemsElt.style.overflow = "auto";
   }
 
+  const doesTaskbarInfluencesMaxHeight = ["top", "bottom"].includes(
+    SETTINGS.taskbarLocation.getValue(),
+  );
+
   if (SETTINGS.taskbarLocation.getValue() === "top") {
     startMenuElt.appendChild(startMenuItemsElt);
     startMenuElt.appendChild(startMenuHeaderElt);
@@ -221,42 +235,27 @@ function refreshStartMenu(
     startMenuElt.appendChild(startMenuItemsElt);
   }
 
-  let nbOfItems = 0;
-
-  /**
-   * Map each "list" created to an object with the following keys keys:
-   *   - {HTMLElement} `element`: The `HTMLElement` where the list's item should
-   *     be appended.
-   *   - {number} `height`: The current height in pixels for this list
-   *   	 (including that list's title element) if shown on screen.
-   *   - {number} `itemIdx`: The "index" where the list is inserted
-   *   	 top-to-bottom in the main start menu.
-   */
-  const listMap = new Map();
-
-  for (const appObj of apps) {
-    const startItemElt = document.createElement("div");
-    startItemElt.className = "start-item";
-    startItemElt.style.height = String(START_ITEM_HEIGHT) + "px";
-
-    const startIconElt = document.createElement("div");
-    startIconElt.className = "start-icon";
-    startIconElt.textContent = appObj.icon;
-
-    const startTitleElt = document.createElement("div");
-    startTitleElt.className = "start-title";
-    startTitleElt.textContent = appObj.title;
-
-    startItemElt.appendChild(startIconElt);
-    startItemElt.appendChild(startTitleElt);
-
-    if (doLists && appObj.inStartList) {
-      const currentList = listMap.get(appObj.inStartList);
-      if (currentList) {
-        currentList.element.appendChild(startItemElt);
-        currentList.height += START_ITEM_HEIGHT;
-        currentList.height = Math.min(currentList.height, clientHeight);
+  for (let currentIdx = 0; currentIdx < apps.length; currentIdx++) {
+    const appObj = apps[currentIdx];
+    if (appObj.type === "application") {
+      startMenuItemsElt.appendChild(constructAppItem(appObj));
+    } else if (appObj.type === "sublist") {
+      if (!doLists) {
+        for (const subAppObj of appObj.list) {
+          startMenuItemsElt.appendChild(constructAppItem(subAppObj));
+        }
       } else {
+        const startItemElt = document.createElement("div");
+        startItemElt.className = "start-item";
+        startItemElt.style.height = String(START_ITEM_HEIGHT) + "px";
+
+        // XXX TODO:
+        // const currentList = listMap.get(appObj.name);
+        // if (currentList) {
+        //   currentList.height += START_ITEM_HEIGHT;
+        //   currentList.height = Math.min(currentList.height, clientHeight);
+        // }
+
         const startItemListElt = document.createElement("div");
         startItemListElt.className = "start-item start-item-list";
         startItemListElt.style.height = String(START_ITEM_HEIGHT) + "px";
@@ -269,7 +268,7 @@ function refreshStartMenu(
         listTitleElt.style.display = "flex";
         listTitleElt.style.alignItems = "center";
         listTitleElt.className = "start-title";
-        listTitleElt.textContent = appObj.inStartList;
+        listTitleElt.textContent = appObj.name;
 
         startItemListElt.appendChild(listIconElt);
         startItemListElt.appendChild(listTitleElt);
@@ -282,43 +281,50 @@ function refreshStartMenu(
 
         const listItemsWrapper = document.createElement("div");
         listItemsWrapper.className = "s-list-wrapper";
-        listItemsWrapper.appendChild(startItemElt);
-
-        const listHeight = Math.min(
-          baseYOffset + START_ITEM_HEIGHT,
-          clientHeight,
-        );
-        listMap.set(appObj.inStartList, {
-          element: listItemsWrapper,
-          height: listHeight,
-          itemIdx: nbOfItems,
-        });
         listItemsWrapper.style.maxHeight =
           String(clientHeight - baseYOffset) + "px";
 
         list.appendChild(listItemsWrapper);
         startItemListElt.appendChild(list);
 
-        nbOfItems++;
+        for (const subAppObj of appObj.list) {
+          listItemsWrapper.appendChild(constructAppItem(subAppObj));
+        }
+        const listHeight = Math.min(
+          baseYOffset + START_ITEM_HEIGHT * appObj.list.length,
+          clientHeight,
+        );
+        if (SETTINGS.taskbarLocation.getValue() === "bottom") {
+          const totalTop =
+            (doesTaskbarInfluencesMaxHeight
+              ? SETTINGS.taskbarSize.getValue()
+              : 0) +
+            (apps.length - 1 - currentIdx) * START_ITEM_HEIGHT +
+            listHeight;
+          if (clientHeight < totalTop) {
+            listItemsWrapper.style.marginBottom =
+              "-" + String(totalTop - clientHeight) + "px";
+          }
+        } else {
+          const totalBottom =
+            (doesTaskbarInfluencesMaxHeight
+              ? SETTINGS.taskbarSize.getValue()
+              : 0) +
+            (apps.length - 1 - currentIdx) * START_ITEM_HEIGHT +
+            listHeight;
+          if (clientHeight < totalBottom) {
+            listItemsWrapper.style.marginTop =
+              "-" + String(totalBottom - clientHeight) + "px";
+          }
+        }
       }
-    } else {
-      startMenuItemsElt.appendChild(startItemElt);
-      nbOfItems++;
     }
-
-    startItemElt.addEventListener("click", () => {
-      closeStartMenu(startMenuElt);
-      openApp(appObj.run);
-    });
   }
 
-  const doesTaskbarInfluencesMaxHeight = ["top", "bottom"].includes(
-    SETTINGS.taskbarLocation.getValue(),
-  );
   if (
     doLists &&
     (doesTaskbarInfluencesMaxHeight ? SETTINGS.taskbarSize.getValue() : 0) +
-      nbOfItems * START_ITEM_HEIGHT >
+      apps.length * START_ITEM_HEIGHT >
       clientHeight
   ) {
     return refreshStartMenu(startMenuElt, apps, openApp, {
@@ -328,25 +334,25 @@ function refreshStartMenu(
     });
   }
 
-  for (const { element, height, itemIdx } of listMap.values()) {
-    if (SETTINGS.taskbarLocation.getValue() === "bottom") {
-      const totalTop =
-        (doesTaskbarInfluencesMaxHeight ? SETTINGS.taskbarSize.getValue() : 0) +
-        (nbOfItems - 1 - itemIdx) * START_ITEM_HEIGHT +
-        height;
-      if (clientHeight < totalTop) {
-        element.style.marginBottom =
-          "-" + String(totalTop - clientHeight) + "px";
-      }
-    } else {
-      const totalBottom =
-        (doesTaskbarInfluencesMaxHeight ? SETTINGS.taskbarSize.getValue() : 0) +
-        (nbOfItems - 1 - itemIdx) * START_ITEM_HEIGHT +
-        height;
-      if (clientHeight < totalBottom) {
-        element.style.marginTop =
-          "-" + String(totalBottom - clientHeight) + "px";
-      }
-    }
+  function constructAppItem(appObj) {
+    const startItemElt = document.createElement("div");
+    startItemElt.className = "start-item";
+    startItemElt.style.height = String(START_ITEM_HEIGHT) + "px";
+
+    const startIconElt = document.createElement("div");
+    startIconElt.className = "start-icon";
+    startIconElt.textContent = appObj.icon;
+    const startTitleElt = document.createElement("div");
+    startTitleElt.className = "start-title";
+    startTitleElt.textContent = appObj.title;
+
+    startItemElt.appendChild(startIconElt);
+    startItemElt.appendChild(startTitleElt);
+
+    startItemElt.addEventListener("click", () => {
+      closeStartMenu(startMenuElt);
+      openApp(appObj.run, appObj.args);
+    });
+    return startItemElt;
   }
 }

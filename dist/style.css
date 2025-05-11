@@ -584,17 +584,17 @@ html {
 }
 
 .w-tool-btn {
-	cursor: pointer;
-	color: var(--window-text-color);
+  cursor: pointer;
+  color: var(--window-text-color);
 }
 
 .w-tool-btn:hover {
-	color: var(--sidebar-selected-bg-color);
+  color: var(--sidebar-selected-bg-color);
 }
 
 .w-tool-btn.disabled {
-	cursor: auto;
-	color: var(--sidebar-hover-bg);
+  cursor: auto;
+  color: var(--sidebar-hover-bg);
 }
 
 .w-button {

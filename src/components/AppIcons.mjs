@@ -121,14 +121,14 @@ export default function AppIcons(apps, onOpen, parentAbortSignal) {
           // Double click to open app
           if (clickCount && performance.now() - lastClickTs < 300) {
             clickCount = 0;
-            onOpen(app.run);
+            onOpen(app.run, app.args);
           } else {
             clickCount = 1;
             lastClickTs = performance.now();
           }
         } else {
           clickCount = 0;
-          onOpen(app.run);
+          onOpen(app.run, app.args);
         }
       });
 

@@ -192,6 +192,14 @@ export default class AppWindow extends EventEmitter {
     return this.element.classList.contains("active");
   }
 
+  // TODO: only title, not icon + title?
+  updateTitle(newTitle) {
+    const titleElt = this.element.getElementsByClassName("w-title")[0];
+    if (titleElt) {
+      titleElt.textContent = newTitle;
+    }
+  }
+
   /**
    * Function to toggle the activation of the current window (e.g. when clicking
    * on it in the taskbar).
@@ -347,6 +355,7 @@ export default class AppWindow extends EventEmitter {
         appUtils,
         getImageRootPath: () => IMAGE_ROOT_PATH,
         getVersion: () => __VERSION__,
+        updateTitle: (newTitle) => this.updateTitle(newTitle),
         CONSTANTS,
       };
       if (Array.isArray(dependencies)) {

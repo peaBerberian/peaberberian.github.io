@@ -1,3 +1,8 @@
+// NOTE: I took again the buttons from the paint app.
+// We may want to add them in the base js instead?
+export const undoSvg = `<svg fill="var(--window-text-color)" height="15" viewBox="0 0 15 15" width="15" xmlns="http://www.w3.org/2000/svg"><path clip-rule="evenodd" d="m6.85355 2.14645c.19527.19526.19527.51184 0 .7071l-2.14644 2.14645h3.79289c1.933 0 3.5 1.567 3.5 3.5s-1.567 3.5-3.5 3.5h-4c-.27614 0-.5-.2239-.5-.5s.22386-.5.5-.5h4c1.38071 0 2.5-1.11929 2.5-2.5s-1.11929-2.5-2.5-2.5h-3.79289l2.14644 2.14645c.19527.19526.19527.51184 0 .7071-.19526.19527-.51184.19527-.7071 0l-3-3c-.19527-.19526-.19527-.51184 0-.7071l3-3c.19526-.19527.51184-.19527.7071 0z" fill-rule="evenodd"/></svg>`;
+export const redoSvg = `<svg height="15" viewBox="0 0 15 15" width="15" xmlns="http://www.w3.org/2000/svg" fill="var(--window-text-color)"><path clip-rule="evenodd" d="m8.14645 2.14645c-.19527.19526-.19527.51184 0 .7071l2.14645 2.14645h-3.7929c-1.933 0-3.5 1.567-3.5 3.5s1.567 3.5 3.5 3.5h4c.2761 0 .5-.2239.5-.5s-.2239-.5-.5-.5h-4c-1.38071 0-2.5-1.11929-2.5-2.5s1.11929-2.5 2.5-2.5h3.7929l-2.14645 2.14645c-.19527.19526-.19527.51184 0 .7071.19526.19527.51184.19527.7071 0l3.00005-3c.1952-.19526.1952-.51184 0-.7071l-3.00005-3c-.19526-.19527-.51184-.19527-.7071 0z" fill-rule="evenodd"/></svg>`;
+
 const DEFAULT_CELL_HEIGHT = 30;
 const DEFAULT_CELL_WIDTH = 100;
 const MINIMUM_CELL_HEIGHT = 20;
@@ -107,20 +112,130 @@ document.head.appendChild(style);
 export function create(abortSignal) {
   const spreadsheet = new Spreadsheet(49, 13);
   const containerElt = document.createElement("div");
-  containerElt.className = "__table_app_spreadsheet";
+  applyStyle(containerElt, {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+  });
 
-  renderTableInContainer();
-  setupResizeEvents(containerElt, spreadsheet, abortSignal);
+  const tableContainerElt = document.createElement("div");
+  tableContainerElt.className = "__table_app_spreadsheet";
+
+  const headerElt = document.createElement("div");
+  applyStyle(headerElt, {
+    backgroundColor: "var(--window-sidebar-bg)",
+    width: "100%",
+    overflow: "auto",
+    display: "flex",
+    padding: "3px",
+    gap: "5px",
+    flexShrink: "0",
+  });
+
+  let history = [];
+  let historyIndex = 0;
+
+  const undoButton = createButtonElt(undoSvg, "Undo", 1, (e) => {
+    e.preventDefault();
+    undo();
+  });
+  disableButton(undoButton);
+  headerElt.appendChild(undoButton);
+
+  const redoButton = createButtonElt(redoSvg, "Redo", 1, (e) => {
+    e.preventDefault();
+    redo();
+  });
+  disableButton(redoButton);
+  headerElt.appendChild(redoButton);
+
+  const tableElt = constructTable();
+  tableContainerElt.appendChild(tableElt);
+  setupResizeEvents(tableContainerElt, spreadsheet, abortSignal);
+  containerElt.appendChild(headerElt);
+  containerElt.appendChild(tableContainerElt);
   return { element: containerElt };
 
-  function renderTableInContainer() {
-    containerElt.innerHTML = "";
+  function saveToHistory(row, col, prevValue, newValue) {
+    if (prevValue === newValue) {
+      return;
+    }
+    if (historyIndex < history.length) {
+      history.splice(historyIndex);
+    }
+    history.push({ row, col, prevValue, newValue });
+    historyIndex++;
 
-    // Create table element
+    while (history.length > 100) {
+      history.shift();
+      historyIndex--;
+    }
+
+    disableButton(redoButton);
+    if (historyIndex > 0) {
+      enableButton(undoButton);
+    }
+  }
+
+  function undo() {
+    if (historyIndex <= 0) {
+      return;
+    }
+
+    historyIndex--;
+    const historyElt = history[historyIndex];
+    spreadsheet.setCell(historyElt.row, historyElt.col, historyElt.prevValue);
+
+    const tdElt = tableElt
+      .getElementsByTagName("tr")
+      ?.[historyElt.row + 1]?.getElementsByTagName("td")?.[historyElt.col];
+    if (tdElt) {
+      tdElt.textContent = historyElt.prevValue;
+    }
+
+    enableButton(redoButton);
+    if (historyIndex <= 0) {
+      disableButton(undoButton);
+    }
+    // if (textArea.value === "") {
+    //   disableButton(clearButton);
+    // } else {
+    //   enableButton(clearButton);
+    // }
+  }
+
+  function redo() {
+    if (historyIndex >= history.length) {
+      return;
+    }
+
+    const historyElt = history[historyIndex];
+    historyIndex++;
+    spreadsheet.setCell(historyElt.row, historyElt.cell, historyElt.newValue);
+    const tdElt = tableElt
+      .getElementsByTagName("tr")
+      ?.[historyElt.row + 1]?.getElementsByTagName("td")?.[historyElt.col];
+    if (tdElt) {
+      tdElt.textContent = historyElt.newValue;
+    }
+
+    if (historyIndex > 0) {
+      enableButton(undoButton);
+    }
+    if (historyIndex >= history.length - 1) {
+      disableButton(redoButton);
+    }
+    // if (textArea.value === "") {
+    //   disableButton(clearButton);
+    // } else {
+    //   enableButton(clearButton);
+    // }
+  }
+
+  function constructTable() {
     const table = document.createElement("table");
     table.className = "__table_app_spreadsheet-table";
-
-    // Create header row with column resizers
     const headerRow = document.createElement("tr");
     headerRow.className = "header-row";
 
@@ -172,12 +287,23 @@ export function create(abortSignal) {
         td.textContent = spreadsheet.getCell(row, col);
         td.dataset.row = row;
         td.dataset.col = col;
-        td.contentEditable = true; // Make cell editable
+        td.contentEditable = true;
         applyStyle(td, {
           maxWidth: `${spreadsheet.colWidths[col]}px`,
           minWidth: `${spreadsheet.colWidths[col]}px`,
         });
+        td.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            td.blur();
+          }
+        });
         td.addEventListener("blur", () => {
+          saveToHistory(
+            row,
+            col,
+            spreadsheet.getCell(row, col) ?? "",
+            td.textContent,
+          );
           spreadsheet.setCell(row, col, td.textContent);
         });
         tr.appendChild(td);
@@ -185,8 +311,7 @@ export function create(abortSignal) {
 
       table.appendChild(tr);
     }
-
-    containerElt.appendChild(table);
+    return table;
   }
 }
 function setupResizeEvents(containerElt, spreadsheet, abortSignal) {
@@ -261,6 +386,14 @@ class Spreadsheet {
     this.rowHeights = Array(nbRows).fill(DEFAULT_CELL_HEIGHT);
   }
 
+  clear() {
+    this.data = Array(nbRows)
+      .fill()
+      .map(() => Array(nbCols).fill(""));
+    this.colWidths = Array(nbCols).fill(DEFAULT_CELL_WIDTH);
+    this.rowHeights = Array(nbRows).fill(DEFAULT_CELL_HEIGHT);
+  }
+
   getCell(row, col) {
     if (this.isCellValid(row, col)) {
       return this.data[row][col];
@@ -304,4 +437,40 @@ function addEventListener(target, event, abortSignal, callback) {
   abortSignal.addEventListener("abort", () => {
     target.removeEventListener(event, callback);
   });
+}
+
+function createButtonElt(svg, title, heightScale, onClick) {
+  const buttonSvgElt = getSvg(svg);
+  applyStyle(buttonSvgElt, {
+    width: "2rem",
+    height: `${heightScale * 2}rem`,
+  });
+  const buttonWrapperElt = document.createElement("span");
+  buttonWrapperElt.style.margin = "auto 0";
+  buttonWrapperElt.style.cursor = "pointer";
+  buttonWrapperElt.appendChild(buttonSvgElt);
+  buttonWrapperElt.onclick = onClick;
+  buttonWrapperElt.title = title;
+  return buttonWrapperElt;
+}
+
+function enableButton(buttonElt) {
+  if (buttonElt.style.cursor !== "pointer") {
+    buttonElt.style.cursor = "pointer";
+    buttonElt.children[0].setAttribute("fill", "var(--window-text-color)");
+  }
+}
+
+function disableButton(buttonElt) {
+  if (buttonElt.style.cursor === "pointer") {
+    buttonElt.style.cursor = "auto";
+    buttonElt.children[0].setAttribute("fill", "var(--window-inactive-header)");
+  }
+}
+
+function getSvg(svg) {
+  const svgWrapperElt = document.createElement("div");
+  svgWrapperElt.innerHTML = svg;
+  const svgElt = svgWrapperElt.children[0];
+  return svgElt;
 }

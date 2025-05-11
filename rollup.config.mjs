@@ -58,7 +58,6 @@ export default [
 }));
 
 function createAppImports(baseDir) {
-  const bundlesToMake = [];
   const fileContent = fs.readFileSync(path.join(baseDir, "AppInfo.json"), {
     encoding: "utf8",
   });
@@ -67,12 +66,22 @@ function createAppImports(baseDir) {
     throw new Error("Invalid AppInfo.json: no apps Array");
   }
 
-  const imports = [];
+  const bundlesToMake = [];
+  const importsToWrite = [];
+  const automaticDynImportsAfterTimer = [];
   let uglyHandWrittenJsObject = "export default [";
   for (let i = 0; i < json.apps.length; i++) {
     const app = json.apps[i];
     let hasRemoteUrl = !!app.website;
     let filePath;
+
+    // dumb rule so it's simpler to write the following code
+    if (!/^[A-Za-z0-9-_]+$/.test(app.id)) {
+      throw new Error(
+        `Invalid app id: "${app.id}". Should only contain alphanumeric, dashes or lowescores characters`,
+      );
+    }
+
     for (const ext of [".mjs", ".js"]) {
       const fileName = path.join(baseDir, app.id + ext);
       if (fs.existsSync(fileName)) {
@@ -85,6 +94,7 @@ function createAppImports(baseDir) {
         break;
       }
     }
+
     if (!filePath && !hasRemoteUrl) {
       throw new Error(`Failed to find app ${app.id}`);
     }
@@ -123,27 +133,31 @@ function createAppImports(baseDir) {
       uglyHandWrittenJsObject += "    autoload: true,\n";
     }
     if (filePath) {
-      if (app.preload) {
+      if (app.preload === true) {
         uglyHandWrittenJsObject += "    data: __APP__" + String(i) + ",\n";
-        imports.push({
+        importsToWrite.push({
           name: "__APP__" + String(i),
           filePath: path.relative(SRC_DIR, filePath),
         });
       } else {
+        const importPath = `/lazy/${app.id}.js`;
         uglyHandWrittenJsObject += `    data: {
-			lazyLoad: () => import(${JSON.stringify(
-        "/lazy/" +
-          // TODO: I'm sure I missed some unauthorized char in a JS string
-          app.id.replaceAll("\\", "\\\\").replaceAll('"', '\\"') +
-          ".js",
-      )}),
+			lazyLoad: () => import(${JSON.stringify(importPath)}),
 		},
 `;
+        const bundlePath = path.join(OUTPUT_DIR, "lazy", `${app.id}.js`);
         bundlesToMake.push({
-          bundlePath: path.join(OUTPUT_DIR, "lazy", `${app.id}.js`),
+          bundlePath,
           input: filePath,
           keepEsm: true,
         });
+
+        if (typeof app.preload?.after === "number") {
+          automaticDynImportsAfterTimer.push({
+            importPath,
+            timer: app.preload.after,
+          });
+        }
       }
     } else if (typeof app.website === "string" && app.website !== "") {
       uglyHandWrittenJsObject += `    data: {
@@ -157,10 +171,21 @@ function createAppImports(baseDir) {
   uglyHandWrittenJsObject += "];";
 
   let jsFile = "";
-  for (const importStmt of imports) {
+
+  for (const importStmt of importsToWrite) {
     jsFile += `import * as ${importStmt.name} from ${JSON.stringify(importStmt.filePath)};\n`;
   }
   jsFile += "\n" + uglyHandWrittenJsObject;
+
+  for (const timerImports of automaticDynImportsAfterTimer) {
+    jsFile += `
+
+setTimeout(
+	() => import(${JSON.stringify(timerImports.importPath)}),
+  ${timerImports.timer}
+);
+`;
+  }
 
   fs.writeFileSync(GENERATED_APP_DIR, jsFile);
   return bundlesToMake;

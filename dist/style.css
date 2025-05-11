@@ -330,15 +330,22 @@ html {
 .window {
   position: absolute;
   border-radius: 10px;
+  z-index: 100;
+  resize: none;
+  overflow: visible;
+}
+
+.w-visible {
+  height: 100%;
+  width: 100%;
   border: var(--window-border-size) solid var(--window-inactive-header);
   border-top: 0px;
   box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   user-select: text;
-  z-index: 100;
-  resize: none;
   overflow: hidden;
+  border-radius: inherit;
   scrollbar-color: var(--window-inactive-header) var(--window-content-bg);
   color: var(--window-text-color);
   font-size: var(--font-size);
@@ -417,75 +424,82 @@ html {
 }
 
 .res-n {
-  top: calc(var(--window-border-size) * -1);
-  left: 5px;
-  right: 5px;
-  height: calc(5px + var(--window-border-size));
+  /* background-color: red; */
+  top: 0px;
+  height: 5px;
+  left: var(--window-border-size);
+  right: var(--window-border-size);
   cursor: ns-resize;
 }
 
 .res-e {
-  top: 5px;
-  right: calc(var(--window-border-size) * -1);
-  bottom: 5px;
-  width: calc(5px + var(--window-border-size));
+  /* background-color: red; */
+  top: max(5px, calc(var(--window-border-size)));
+  bottom: max(5px, calc(var(--window-border-size)));
+  right: 0px;
+  width: max(5px, calc(var(--window-border-size) - 3px));
   cursor: ew-resize;
 }
 
 .res-s {
-  bottom: calc(var(--window-border-size) * -1);
-  left: 5px;
-  right: 5px;
-  height: calc(5px + var(--window-border-size));
+  /* background-color: red; */
+  left: max(5px, calc(var(--window-border-size)));
+  right: max(5px, calc(var(--window-border-size)));
+  bottom: 0px;
+  height: max(5px, var(--window-border-size));
   cursor: ns-resize;
 }
 
 .res-w {
-  top: 5px;
-  left: calc(var(--window-border-size) * -1);
-  bottom: 5px;
-  width: calc(5px + var(--window-border-size));
+  /* background-color: red; */
+  top: max(5px, calc(var(--window-border-size)));
+  bottom: max(5px, calc(var(--window-border-size)));
+  left: 0px;
+  width: max(5px, calc(var(--window-border-size) - 3px));
   cursor: ew-resize;
 }
 
 .res-ne {
-  top: calc(var(--window-border-size) * -1);
-  right: calc(var(--window-border-size) * -1);
-  height: calc(10px + var(--window-border-size));
-  width: calc(10px + var(--window-border-size));
+  /* background-color: green; */
+  top: 0px;
+  right: 0px;
+  height: max(5px, var(--window-border-size));
+  width: max(5px, calc(var(--window-border-size) - 3px));
   cursor: nesw-resize;
 }
 
 .res-nw {
-  top: calc(var(--window-border-size) * -1);
-  left: calc(var(--window-border-size) * -1);
-  height: calc(10px + var(--window-border-size));
-  width: calc(10px + var(--window-border-size));
+  /* background-color: green; */
+  top: 0px;
+  left: 0px;
+  height: max(5px, var(--window-border-size));
+  width: max(5px, calc(var(--window-border-size) - 3px));
   cursor: nwse-resize;
 }
 
 .res-se {
-  bottom: calc(var(--window-border-size) * -1);
-  right: calc(var(--window-border-size) * -1);
-  height: calc(10px + var(--window-border-size));
-  width: calc(10px + var(--window-border-size));
+  /* background-color: green; */
+  bottom: 0px;
+  right: 0px;
+  height: max(5px, calc(var(--window-border-size)));
+  width: max(5px, calc(var(--window-border-size)));
   cursor: nwse-resize;
 }
 
 .res-sw {
-  bottom: calc(var(--window-border-size) * -1);
-  left: calc(var(--window-border-size) * -1);
-  height: calc(10px + var(--window-border-size));
-  width: calc(10px + var(--window-border-size));
+  /* background-color: green; */
+  bottom: 0px;
+  left: 0px;
+  height: max(5px, calc(var(--window-border-size)));
+  width: max(5px, calc(var(--window-border-size)));
   cursor: nesw-resize;
 }
 
-.window.active {
+.window.active .w-visible {
   scrollbar-color: var(--window-active-header) var(--window-content-bg);
   border: var(--window-border-size) solid var(--window-active-header);
   border-top: 0px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-  z-index: 200;
 }
 
 .w-header {

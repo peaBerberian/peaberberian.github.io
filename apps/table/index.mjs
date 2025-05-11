@@ -274,7 +274,7 @@ export function create(abortSignal) {
     if (historyIndex > 0) {
       enableButton(undoButton);
     }
-    if (historyIndex >= history.length - 1) {
+    if (historyIndex >= history.length) {
       disableButton(redoButton);
     }
     // if (textArea.value === "") {

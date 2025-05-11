@@ -521,7 +521,7 @@ export function constructAppWithSidebar(sections, abortSignal) {
       innerContentElt.classList.add("w-content-centered");
     }
     content.appendChild(innerContentElt);
-    content.focus();
+    content.focus({ preventScroll: true });
   };
   const sidebar = constructSidebarElt(formattedSections, (section) => {
     displaySection(section);
@@ -530,5 +530,8 @@ export function constructAppWithSidebar(sections, abortSignal) {
   container.appendChild(sidebar);
   container.appendChild(content);
   displaySection(0);
-  return { element: container, focus: () => content.focus() };
+  return {
+    element: container,
+    focus: () => content.focus({ preventScroll: true }),
+  };
 }

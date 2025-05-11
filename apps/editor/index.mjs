@@ -142,7 +142,7 @@ export function create(_args, env) {
 
     return {
       element: editorWrapperElt,
-      focus: () => textArea.focus(),
+      focus: () => textArea.focus({ preventScroll: true }),
     };
 
     function updateLineNumbers() {

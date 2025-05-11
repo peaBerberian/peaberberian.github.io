@@ -54,14 +54,6 @@ export default class AppsLauncher {
     this._windows = [];
 
     /**
-     * Allows to quickly generate an identifier by just incrementing a number.
-     * /!\ Careful of not overflowing `Number.MAX_SAFE_INTEGER`.
-     * @type {number}
-     * @private
-     */
-    this._nextWindowId = 0;
-
-    /**
      * Allows to add and remove tasks to the taskbar.
      * @type {Object}
      * @private
@@ -127,9 +119,7 @@ export default class AppsLauncher {
     // Move a little perfectly-overlapping windows
     this._checkRelativeWindowPlacement(appWindow);
 
-    /** Identifier unique to this window. */
-    const windowId = "w-" + this._nextWindowId++;
-    this._taskbarManager.addWindow(windowId, app, {
+    this._taskbarManager.addWindow(appWindow, app, {
       toggleAppActivation: () => appWindow.toggleActivation(),
       closeApp: () => appWindow.close(),
     });
@@ -142,7 +132,7 @@ export default class AppsLauncher {
         this._windows.splice(windowIndex, 1);
         this.activateMostVisibleWindow();
       }
-      this._taskbarManager.remove(windowId);
+      this._taskbarManager.remove(appWindow);
       appStack.onClose();
     });
 
@@ -154,10 +144,11 @@ export default class AppsLauncher {
       // directly in front of the minimizing one, which would ruin the effect
       appWindow.element.style.zIndex = 500;
 
-      this._taskbarManager.deActiveWindow(windowId);
+      this._taskbarManager.deActiveWindow(appWindow);
 
       // Translation of the minimized window toward the taskbar
-      const taskRect = this._taskbarManager.getTaskBoundingClientRect(windowId);
+      const taskRect =
+        this._taskbarManager.getTaskBoundingClientRect(appWindow);
       if (taskRect) {
         // Calculate transform origin based on taskbar item position
         const windowRect = appWindow.element.getBoundingClientRect();
@@ -199,68 +190,29 @@ export default class AppsLauncher {
       });
       appWindow.element.style.zIndex =
         BASE_WINDOW_Z_INDEX + windowEltsWithZIndex.length + 1;
-      this._taskbarManager.setActiveWindow(windowId);
+      this._taskbarManager.setActiveWindow(appWindow);
 
       appStack.onActivate();
     });
 
     appWindow.addEventListener("deactivated", () => {
-      this._taskbarManager.deActiveWindow(windowId);
+      this._taskbarManager.deActiveWindow(appWindow);
       appStack.onDeactivate();
     });
 
     appWindow.activate();
-    this._taskbarManager.setActiveWindow(windowId);
+    this._taskbarManager.setActiveWindow(appWindow);
 
     if (options.fullscreen) {
       appWindow.setFullscreen();
     }
 
-    /**
-     * Construct `env` object that is given to application as their link to the
-     * desktop element.
-     */
-    const env = {
-      appUtils,
-      getImageRootPath: () => IMAGE_ROOT_PATH,
-      getVersion: () => __VERSION__,
-      // TODO: With imediately-updating titles, it can look quite jumpy to first
-      // update it to its initial title and then potentially update it once the
-      // app is loaded... Find a solution.
-      updateTitle: (newIcon, newTitle) => {
-        appWindow.updateTitle(newIcon, newTitle);
-        this._taskbarManager.updateTitle(windowId, newIcon, newTitle);
-      },
-      CONSTANTS,
-    };
-
-    if (Array.isArray(app.dependencies)) {
-      if (app.dependencies.includes("settings")) {
-        env.settings = SETTINGS;
-      }
-      if (app.dependencies.includes("filesystem")) {
-        env.filesystem = filesystem;
-      }
-      if (app.dependencies.includes("open")) {
-        env.open = (path) => {
-          if (Array.isArray(path)) {
-            // TODO: multiple open in same app
-            path.forEach((p) => this.open(p));
-          } else {
-            this.open(path);
-          }
-        };
-      }
-      if (app.dependencies.includes("filePickerOpen")) {
-        env.filePickerOpen = (config) =>
-          this._createFilePickerOpen(
-            appStack,
-            appWindow,
-            { type: "options", ...config },
-            applicationAbortCtrl.signal,
-          );
-      }
-    }
+    const env = this._constructEnvObject(
+      app.dependencies,
+      appStack,
+      appWindow,
+      applicationAbortCtrl.signal,
+    );
 
     // Actually launch the application
     this._launchAppFromAppData(
@@ -468,7 +420,7 @@ export default class AppsLauncher {
     return { element, onActivate, onDeactivate, onClose };
   }
 
-  _createFilePickerOpen(appStack, appWindow, config, appAbortSignal) {
+  _createFilePickerOpen(config, appStack, appWindow, appAbortSignal) {
     return new Promise(async (resolveFilePicker, rejectFilePicker) => {
       let filePickerElt;
       const fileOpenerAbortCtrl = createLinkedAbortController(appAbortSignal);
@@ -490,19 +442,20 @@ export default class AppsLauncher {
           providers.filePickerOpen[0],
           "object",
         );
+        const env = {
+          ...this._constructEnvObject(
+            filePickerApp.dependencies,
+            appStack,
+            appWindow,
+            fileOpenerAbortCtrl.signal,
+          ),
+          onOpen: onFilesOpened,
+        };
         const appObj = await this._launchAppFromAppData(
           "createFileOpener",
           filePickerApp.data,
           [config],
-          // TODO: More centralized and normalized env construction?
-          {
-            appUtils,
-            getImageRootPath: () => IMAGE_ROOT_PATH,
-            getVersion: () => __VERSION__,
-            CONSTANTS,
-            open: onFilesOpened,
-            filesystem,
-          },
+          env,
           fileOpenerAbortCtrl.signal,
         );
         filePickerElt = appObj.element;
@@ -522,6 +475,66 @@ export default class AppsLauncher {
           };
         });
         Promise.all(proms).then(resolveFilePicker, rejectFilePicker);
+      }
+    });
+  }
+
+  _createFilePickerSave(config, appStack, appWindow, appAbortSignal) {
+    return new Promise(async (resolveFilePicker, rejectFilePicker) => {
+      let filePickerElt;
+      const fileSaverAbortCtrl = createLinkedAbortController(appAbortSignal);
+      try {
+        const providers = await filesystem.readFile(
+          "/system/providers.config.json",
+          "object",
+        );
+        if (
+          !providers.filePickerSave ||
+          providers.filePickerSave.length === 0
+        ) {
+          rejectFilePicker(
+            new Error("No file picker provider found in this system."),
+          );
+          return;
+        }
+        const filePickerApp = await filesystem.readFile(
+          providers.filePickerSave[0],
+          "object",
+        );
+        const env = {
+          ...this._constructEnvObject(
+            filePickerApp.dependencies,
+            appStack,
+            appWindow,
+            fileSaverAbortCtrl.signal,
+          ),
+          onSaved: onFileSaved,
+        };
+        const appObj = await this._launchAppFromAppData(
+          "createFileSaver",
+          filePickerApp.data,
+          [config],
+          env,
+          fileSaverAbortCtrl.signal,
+        );
+        filePickerElt = appObj.element;
+        appStack.push(appObj, appWindow.isActivated());
+      } catch (err) {
+        rejectFilePicker(err);
+      }
+
+      function onFileSaved(fileInfo) {
+        if (fileInfo === null) {
+          fileSaverAbortCtrl.abort();
+          appStack.popElement(filePickerElt, appWindow.isActivated());
+          resolveFilePicker(null);
+          return;
+        }
+        fileSaverAbortCtrl.abort();
+        appStack.popElement(filePickerElt, appWindow.isActivated());
+        resolveFilePicker({
+          filename: getName(fileInfo.path),
+        });
       }
     });
   }
@@ -594,6 +607,73 @@ export default class AppsLauncher {
     if (left !== undefined || top !== undefined) {
       newAppWindow.move({ left, top, desktopDimensions: maxDesktopDimensions });
     }
+  }
+
+  /**
+   * Construct `env` object that is given to application as their link to the
+   * desktop element.
+   * @param {Array.<string>} dependencies - The application's listed
+   * dependencies.
+   * @param {WindowedApplicationStack} appStack
+   * @param {AppWindow} appWindow
+   * @param {AbortSignal} abortSignal
+   */
+  _constructEnvObject(dependencies, appStack, appWindow, abortSignal) {
+    /**
+     * Construct `env` object that is given to application as their link to the
+     * desktop element.
+     */
+    const env = {
+      appUtils,
+      getImageRootPath: () => IMAGE_ROOT_PATH,
+      getVersion: () => __VERSION__,
+      // TODO: With imediately-updating titles, it can look quite jumpy to first
+      // update it to its initial title and then potentially update it once the
+      // app is loaded... Find a solution.
+      updateTitle: (newIcon, newTitle) => {
+        appWindow.updateTitle(newIcon, newTitle);
+        this._taskbarManager.updateTitle(appWindow, newIcon, newTitle);
+      },
+      CONSTANTS,
+    };
+
+    if (Array.isArray(dependencies)) {
+      if (dependencies.includes("settings")) {
+        env.settings = SETTINGS;
+      }
+      if (dependencies.includes("filesystem")) {
+        env.filesystem = filesystem;
+      }
+      if (dependencies.includes("open")) {
+        env.open = (path) => {
+          if (Array.isArray(path)) {
+            // TODO: multiple open in same app
+            path.forEach((p) => this.open(p));
+          } else {
+            this.open(path);
+          }
+        };
+      }
+      if (dependencies.includes("filePickerOpen")) {
+        env.filePickerOpen = (config) =>
+          this._createFilePickerOpen(
+            { type: "options", ...config },
+            appStack,
+            appWindow,
+            abortSignal,
+          );
+      }
+      if (dependencies.includes("filePickerSave")) {
+        env.filePickerSave = (config) =>
+          this._createFilePickerSave(
+            { type: "options", ...config },
+            appStack,
+            appWindow,
+            abortSignal,
+          );
+      }
+    }
+    return env;
   }
 }
 

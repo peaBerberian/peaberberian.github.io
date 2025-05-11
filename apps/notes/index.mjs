@@ -10,6 +10,7 @@ export function create(args, env) {
   let history = [];
   let historyIndex = -1;
   let lastSavedContent = null;
+  let currentFilename = null;
 
   applyStyle(containerElt, {
     position: "relative",
@@ -166,7 +167,7 @@ export function create(args, env) {
         name: "download",
         onClick: () => {
           if (typeof window.showSaveFilePicker === "function") {
-            saveFile(textArea.value);
+            downloadFile(textArea.value);
           } else {
             const link = document.createElement("a");
             link.download = "notes.txt";
@@ -176,6 +177,10 @@ export function create(args, env) {
             link.click();
           }
         },
+      },
+      {
+        name: "save",
+        onClick: saveFile,
       },
     ]);
     disableButton("undo");
@@ -273,13 +278,13 @@ export function create(args, env) {
       try {
         const data = textDecoder.decode(file.data);
         textArea.value = data;
-        env.updateTitle("📝", String(file.filename) + " - " + "Notes");
       } catch (_err) {
         // TODO: signal error
       }
       history.length = 0;
       historyIndex = -1;
       lastSavedContent = null;
+      updateFilename(file.filename);
       disableButton("undo");
       disableButton("redo");
       disableButton("clear");
@@ -291,10 +296,10 @@ export function create(args, env) {
       spinnerContainerElt.style.display = "none";
       statusBar.textContent = "Ready";
       textArea.value = "";
-      env.updateTitle("📝", "Notes");
       history.length = 0;
       historyIndex = -1;
       lastSavedContent = null;
+      updateFilename(null);
       disableButton("undo");
       disableButton("redo");
       disableButton("clear");
@@ -399,9 +404,33 @@ export function create(args, env) {
       }
       updateLineNumbers();
     }
+
+    async function saveFile() {
+      spinnerContainerElt.style.display = "flex";
+      statusBar.textContent = "Saving file...";
+      try {
+        const textEncoder = new TextEncoder();
+        const savedFileData = textEncoder.encode(textArea.value).buffer;
+        const saveData = await env.filePickerSave({
+          title: "Choose where to save your (beautiful) note",
+          savedFileData,
+          savedFileName: currentFilename ?? "new_note.txt",
+        });
+        spinnerContainerElt.style.display = "none";
+        statusBar.textContent = "Ready";
+        if (!saveData) {
+          return;
+        }
+        updateFilename(saveData.filename);
+      } catch (err) {
+        spinnerContainerElt.style.display = "none";
+        statusBar.textContent = "Ready";
+        showMessage(element, "❌ " + err.toString(), 10000);
+      }
+    }
   }
 
-  async function saveFile(content) {
+  async function downloadFile(content) {
     try {
       const handle = await window.showSaveFilePicker({
         suggestedName: "notes.txt",
@@ -412,6 +441,16 @@ export function create(args, env) {
       return handle;
     } catch (err) {
       console.error(err);
+    }
+  }
+
+  function updateFilename(name) {
+    if (name == null) {
+      currentFilename = null;
+      env.updateTitle("📝", "Notes");
+    } else {
+      currentFilename = name;
+      env.updateTitle("📝", String(name) + " - " + "Notes");
     }
   }
 }

@@ -47,10 +47,11 @@ export function create(_args, env, abortSignal) {
     element: headerElt,
     enableButton,
     disableButton,
-  } = constructAppHeaderLine({
-    undo: { onClick: undo },
-    redo: { onClick: redo },
-    clear: {
+  } = constructAppHeaderLine([
+    { name: "undo", onClick: undo },
+    { name: "redo", onClick: redo },
+    {
+      name: "clear",
       onClick: () => {
         const hadSomethingDrawn = hasSomethingDrawnOnCanvas;
         clearCanvas();
@@ -60,8 +61,10 @@ export function create(_args, env, abortSignal) {
         }
       },
     },
-    download: { onClick: saveImage },
-  });
+    { name: "separator" },
+    { name: "download", onClick: downloadImage },
+    { name: "save", onClick: saveFile },
+  ]);
   disableButton("undo");
   disableButton("redo");
   disableButton("clear");
@@ -646,13 +649,13 @@ export function create(_args, env, abortSignal) {
     return true;
   }
 
-  function saveImage() {
+  function downloadImage() {
     if (
       typeof window.showSaveFilePicker === "function" &&
       typeof canvas.toBlob === "function"
     ) {
       canvas.toBlob((img) => {
-        saveFile(img);
+        downloadImageThroughLocalPicker(img);
       }, "image/png");
     } else {
       const link = document.createElement("a");
@@ -660,6 +663,17 @@ export function create(_args, env, abortSignal) {
       link.href = canvas.toDataURL("image/png");
       link.click();
     }
+  }
+
+  function saveFile() {
+    canvas.toBlob(async (blob) => {
+      const savedFileData = await blob.arrayBuffer();
+      await env.filePickerSave({
+        title: "Choose where to save your (magnificient 👌) painting",
+        savedFileData,
+        savedFileName: "painting.png",
+      });
+    }, "image/png");
   }
 
   function saveCurrentState() {
@@ -790,7 +804,7 @@ export function create(_args, env, abortSignal) {
     return toolWrapperElt;
   }
 
-  async function saveFile(content) {
+  async function downloadImageThroughLocalPicker(content) {
     try {
       const handle = await window.showSaveFilePicker({
         suggestedName: "painting.png",

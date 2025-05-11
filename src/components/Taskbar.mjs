@@ -30,11 +30,13 @@ export default class Taskbar {
       taskbarElt.getElementsByClassName("taskbar-items")[0];
     addResizeHandle(taskbarElt, this._abortController.signal);
     handleTaskbarMove(taskbarElt, this._abortController.signal);
+    this._taskbarItemMap = new WeakMap();
   }
 
   /**
    * Add an item to the taskbar's tasks.
-   * @param {string} windowId - Identifier for the corresponding opened window.
+   * @param {Object} windowHandle - Handle for the corresponding opened window.
+   * Give the same reference anytime you wish to update an aspect of it.
    * @param {Object} appText - Strings to write for the task.
    * @param {string} appText.icon - Icon of the application, as an unicode
    * emoji probably.
@@ -45,11 +47,10 @@ export default class Taskbar {
    * minimized) or minimize (if it wasn't) a window.
    * @param {Function} callbacks.closeApp - Close the corresponding window.
    */
-  addWindow(windowId, { icon, title }, { toggleAppActivation, closeApp }) {
+  addWindow(windowHandle, { icon, title }, { toggleAppActivation, closeApp }) {
     const item = document.createElement("div");
     item.className = "taskbar-item";
     item.tabIndex = "0";
-    item.dataset.window = windowId;
     item.addEventListener("mousedown", (evt) => {
       if (evt && evt.button == 1) {
         // middle click
@@ -76,44 +77,45 @@ export default class Taskbar {
     titleElt.textContent = title;
     item.appendChild(iconElt);
     item.appendChild(titleElt);
+    this._taskbarItemMap.set(windowHandle, item);
     this._taskbarItemsElt.appendChild(item);
   }
 
   /**
    * Update the title and icon of a specific window in the taskbar.
-   * @param {string} windowId - The `windowId` (@see `addWindow`) of the window
-   * whose title should be updated.
+   * @param {string} windowHandle - The `windowHandle` (@see `addWindow`) of the
+   * window whose title should be updated.
    * @param {string} icon - The icon, as a single character (generally an
    * emoji).
    * @param {string} title - The title of the application.
    */
-  updateTitle(windowId, icon, title) {
-    for (const item of this._taskbarItemsElt.getElementsByClassName(
-      "taskbar-item",
-    )) {
-      if (item.dataset.window === windowId) {
-        const iconElt = item.getElementsByClassName("taskbar-item-icon");
-        if (iconElt.length) {
-          iconElt[0].textContent = icon;
-        }
-        const titleElt = item.getElementsByClassName("taskbar-item-title");
-        if (titleElt.length) {
-          titleElt[0].textContent = title;
-        }
-      }
+  updateTitle(windowHandle, icon, title) {
+    const itemElt = this._taskbarItemMap.get(windowHandle);
+    if (!itemElt) {
+      return;
+    }
+
+    const iconElt = itemElt.getElementsByClassName("taskbar-item-icon");
+    if (iconElt.length) {
+      iconElt[0].textContent = icon;
+    }
+    const titleElt = itemElt.getElementsByClassName("taskbar-item-title");
+    if (titleElt.length) {
+      titleElt[0].textContent = title;
     }
   }
 
   /**
    * Change the active window or deactivate all windows.
-   * @param {string|null} windowId - The `windowId` for the window you wish to
-   * activate, or `null` if no window should be activated.
+   * @param {string|null} windowHandle - The `windowHandle` for the window you
+   * wish to activate, or `null` if no window should be activated.
    */
-  setActiveWindow(windowId) {
+  setActiveWindow(windowHandle) {
+    const itemElt = this._taskbarItemMap.get(windowHandle);
     for (const item of this._taskbarItemsElt.getElementsByClassName(
       "taskbar-item",
     )) {
-      if (item.dataset.window === windowId) {
+      if (item === itemElt) {
         item.classList.add("active");
       } else {
         item.classList.remove("active");
@@ -123,46 +125,37 @@ export default class Taskbar {
 
   /**
    * "Deactivate" visually a specific window in the taskbar.
-   * @param {string} windowId - The `windowId` (@see `addWindow`) of the window
-   * which should be deactivated.
+   * @param {string} windowHandle - The `windowHandle` (@see `addWindow`) of
+   * the window which should be deactivated.
    */
-  deActiveWindow(windowId) {
-    for (const item of this._taskbarItemsElt.getElementsByClassName(
-      "taskbar-item",
-    )) {
-      if (item.dataset.window === windowId) {
-        item.classList.remove("active");
-      }
+  deActiveWindow(windowHandle) {
+    const itemElt = this._taskbarItemMap.get(windowHandle);
+    if (itemElt) {
+      itemElt.classList.remove("active");
     }
   }
 
   /**
-   * @param {string} windowId
+   * @param {string} windowHandle
    * @returns {DOMRect|null}
    */
-  getTaskBoundingClientRect(windowId) {
-    for (const item of this._taskbarItemsElt.getElementsByClassName(
-      "taskbar-item",
-    )) {
-      if (item.dataset.window === windowId) {
-        return item.getBoundingClientRect();
-      }
+  getTaskBoundingClientRect(windowHandle) {
+    const itemElt = this._taskbarItemMap.get(windowHandle);
+    if (itemElt) {
+      return item.getBoundingClientRect();
     }
     return null;
   }
 
   /**
    * Remove a window from the taskbar.
-   * @param {string} windowId - The `windowId` (@see `addWindow`) of the window
-   * that should be removed.
+   * @param {string} windowHandle - The `windowHandle` (@see `addWindow`) of the
+   * window that should be removed.
    */
-  remove(windowId) {
-    for (const item of this._taskbarItemsElt.getElementsByClassName(
-      "taskbar-item",
-    )) {
-      if (item.dataset.window === windowId) {
-        item.remove();
-      }
+  remove(windowHandle) {
+    const itemElt = this._taskbarItemMap.get(windowHandle);
+    if (itemElt) {
+      itemElt.remove();
     }
   }
 

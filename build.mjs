@@ -364,9 +364,13 @@ function writeGeneratedAppFile(baseDir) {
           }
           for (const dep of app.dependencies) {
             if (
-              !["settings", "filesystem", "filePickerOpen", "open"].includes(
-                dep,
-              )
+              ![
+                "settings",
+                "filesystem",
+                "filePickerOpen",
+                "filePickerSave",
+                "open",
+              ].includes(dep)
             ) {
               throw new Error(
                 `Error in app "${app.id}". One of the asked dependency does not exist: ${dep}`,
@@ -384,7 +388,7 @@ function writeGeneratedAppFile(baseDir) {
             );
           }
           for (const feature of app.provider) {
-            if (!["filePickerOpen"].includes(feature)) {
+            if (!["filePickerOpen", "filePickerSave"].includes(feature)) {
               throw new Error(
                 `Error in app "${app.id}". Provider of unknown feature: ${feature}`,
               );

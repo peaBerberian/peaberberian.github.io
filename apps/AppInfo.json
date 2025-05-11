@@ -57,7 +57,7 @@
         "display": true
       },
       "dependencies": ["filesystem", "open"],
-      "provider": ["filePickerOpen"]
+      "provider": ["filePickerOpen", "filePickerSave"]
     },
     {
       "id": "paint",
@@ -65,6 +65,7 @@
       "icon": "🖌️",
       "defaultHeight": 950,
       "defaultWidth": 1000,
+      "dependencies": ["filePickerSave"],
       "startMenu": {
         "list": "Desktop Apps"
       },
@@ -78,7 +79,7 @@
       "icon": "📝",
       "defaultHeight": 600,
       "defaultWidth": 600,
-      "dependencies": ["filePickerOpen"],
+      "dependencies": ["filePickerOpen", "filePickerSave"],
       "startMenu": {
         "list": "Desktop Apps"
       },

@@ -15,13 +15,13 @@ export function create(settings, abortSignal) {
   const sidebarItems = [
     { icon: "🖼️", text: "Wallpaper", section: "wallpaper", active: true },
     { icon: "🎨", text: "Theming", section: "theme", active: false },
+    { icon: "🪟", text: "Window", section: "window", active: false },
     {
       icon: settings.startMenuPic.getValue(),
       text: "Taskbar",
       section: "taskbar",
       active: false,
     },
-    { icon: "🪟", text: "Window", section: "window", active: false },
     { icon: "🤹", text: "Desktop Icons", section: "icons", active: false },
     { icon: "💻", text: "System", section: "system", active: false },
   ];

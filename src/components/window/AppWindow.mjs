@@ -146,8 +146,10 @@ export default class AppWindow extends EventEmitter {
       const created = app.value.create(this._abortController.signal);
       if (created !== null) {
         if (typeof created.then === "function") {
-          appElt = constructSpinnerAppPlaceholder();
+          const spinnerPlaceholder = getSpinnerPlaceholder();
+          appElt = spinnerPlaceholder.element;
           created.then((module) => {
+            clearTimeout(spinnerPlaceholder.timeout);
             appElt.remove();
             if (module && typeof module.create === "function") {
               this.element.appendChild(
@@ -809,7 +811,7 @@ function constructInitialWindowElement(title) {
 </div>`;
 }
 
-function constructSpinnerAppPlaceholder() {
+function getSpinnerPlaceholder() {
   const placeholderElt = document.createElement("div");
   applyStyle(placeholderElt, {
     height: "100%",
@@ -820,8 +822,13 @@ function constructSpinnerAppPlaceholder() {
     alignItems: "center",
     backgroundColor: "var(--window-content-bg)",
   });
-  const spinnerElt = document.createElement("div");
-  spinnerElt.className = "spinner";
-  placeholderElt.appendChild(spinnerElt);
-  return placeholderElt;
+  const timeout = setTimeout(() => {
+    const spinnerElt = document.createElement("div");
+    spinnerElt.className = "spinner";
+    placeholderElt.appendChild(spinnerElt);
+  }, 500);
+  return {
+    element: placeholderElt,
+    timeout,
+  };
 }

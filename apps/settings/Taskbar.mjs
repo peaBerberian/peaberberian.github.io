@@ -5,9 +5,7 @@ import {
   createNumericSliderOnRef,
 } from "./utils.mjs";
 
-// TODO: For now this is kept in sync with the constants in the main desktop.
-// A better solution should be found (through a virtual fs in
-// `/system/constants`?)
+// TODO: use fs path `/system/constants`
 const TASKBAR_MIN_HORIZONTAL_SIZE = 25;
 const TASKBAR_MAX_HORIZONTAL_SIZE = 70;
 const TASKBAR_MIN_VERTICAL_SIZE = 60;

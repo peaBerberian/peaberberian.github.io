@@ -9,7 +9,6 @@
 // - When indexedDB is not available, fallback on in-memory
 // - Proxy local storage in `/system/`?
 // - watch API?
-// - Proxy most constants in `/system/`?
 //
 // high priority:
 //

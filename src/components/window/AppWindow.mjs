@@ -158,10 +158,6 @@ export default class AppWindow extends EventEmitter {
     enterFullFullScreen(this.element);
   }
 
-  focus() {
-    // TODO
-  }
-
   /**
    * Run animation for the closing window and removes it from the DOM.
    * Might activate the next visible window as a side-effect.
@@ -240,6 +236,9 @@ export default class AppWindow extends EventEmitter {
   deActivate() {
     this.element.classList.remove("active");
     this.trigger("deactivated");
+    if (this.element.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
   }
 
   /**

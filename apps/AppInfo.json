@@ -7,6 +7,7 @@
       "defaultHeight": 600,
       "defaultWidth": 855,
       "onlyOne": false,
+      "dependencies": [],
       "inStartList": null,
       "desktopDir": null,
       "website": null
@@ -51,12 +52,19 @@
       "desktopDir": null
     },
     {
+      "id": "image-viewer",
+      "title": "Image Viewer",
+      "icon": "🏞️",
+      "inStartList": "Desktop Apps",
+      "desktopDir": null
+    },
+    {
       "id": "bombsweeper",
       "title": "BombSweeper!",
       "icon": "💣",
       "defaultHeight": 700,
       "defaultWidth": 600,
-      "inStartList": "Desktop Apps",
+      "inStartList": "Games",
       "desktopDir": null
     },
     {
@@ -65,7 +73,7 @@
       "icon": "🏓",
       "defaultHeight": 400,
       "defaultWidth": 600,
-      "inStartList": "Desktop Apps",
+      "inStartList": "Games",
       "desktopDir": null
     },
     {

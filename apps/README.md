@@ -181,8 +181,14 @@ The `create` function should return either:
     be listened to to free resources, not the one from `create` which would
     have more nich usages.
 
-- Optionally, the `create` function can also return a `focus` property which
-  will be called when the corresponding window is focused (e.g. to focus the
-  text area in a text editor).
+- Optionally, the `create` function can also return a `onActivate` property
+  which will be called when the corresponding window is focused and an
+  `onDeactivate` function for when it is deactivated.
+
+  This can be used to for example register keyboard event listener when it's
+  the application which has the focus, and removing them when it's another.
+
+  This can also be used to decide what element will be focused when opening
+  or switching to the application.
 
 Look at the apps already here for more information.

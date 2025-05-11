@@ -583,6 +583,20 @@ html {
   text-align: end;
 }
 
+.w-tool-btn {
+	cursor: pointer;
+	color: var(--window-text-color);
+}
+
+.w-tool-btn:hover {
+	color: var(--sidebar-selected-bg-color);
+}
+
+.w-tool-btn.disabled {
+	cursor: auto;
+	color: var(--sidebar-hover-bg);
+}
+
 .w-button {
   width: var(--window-button-size);
   height: var(--window-button-size);

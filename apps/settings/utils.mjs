@@ -6,7 +6,6 @@ export function createColorPickerOnRef(ref, text, appUtils, abortSignal) {
     applyStyle(textElt, {
       backgroundColor: "#00000054",
       color: "#fff",
-      fontSize: "var(--font-size)",
       padding: "5px",
       top: "0px",
       left: "0px",

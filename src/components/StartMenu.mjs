@@ -6,22 +6,41 @@ import {
 import { SETTINGS } from "../settings.mjs";
 
 /**
+ * Description of a single application that will be displayed in the start menu.
+ * @typedef {Object} StartMenuAppObject
+ * @property {string} run - The path to the application to run.
+ * @property {string} icon` - The icon representing that application.
+ * @property {string} title - The title for that application.
+ * @property {string|undefined} [inStartList] - If set, the icon should be in a
+ * start menu sub-group called a "start list".
+ */
+
+/**
  * The current start menu state we're in:
  *   - `"closed"`: The start menu is closed.
  *   - `"opened"`: The start menu is opened.
  *   - `"opening"`: The start menu is opening.
  *   - `"closing"`: The start menu is closing.
+ * @type {string}
  */
 let currentStartState = "closed";
+
+/** The button element to open the start menu */
 const startButtonElt = document.getElementById("start-button");
+/** The picture inside the start button element. */
 const startPicElt = document.getElementById("start-pic");
+/** The `HTMLElement for the start menu itself */
 const startMenuElt = document.getElementById("start-menu");
 
 /**
- * @param {Object} apps
- * @param {function} openApp
- * @param {AbortSignal} [abortSignal]
- * @returns {HTMLElement}
+ * @param {Array.<StartMenuAppObject>} apps - List of applications for which you
+ * want to generate an icon, in order from the first displayed to the last
+ * displayed.
+ * @param {Function} onOpen - Callback that will be called when/if an app is
+ * launched through its start menu entry, with the corresponding application
+ * path.
+ * @param {AbortSignal} [abortSignal] - AbortSignal allowing to free
+ * all resources taken by this component.
  */
 export default function StartMenu(apps, openApp, abortSignal) {
   refreshStartMenu(startMenuElt, apps, openApp, {
@@ -156,13 +175,15 @@ function closeStartMenu(startMenuElt) {
  * which case the start menu will be re-computed.
  * @param {HTMLElement} startMenuElt - `HTMLElement` where the start menu will
  * be inserted. Note that this `HTMLELement` will be emptied.
- * @param {Array.<Object>} apps - Description of every applications that should
- * be inserted in the start menu.
+ * @param {Array.<StartMenuAppObject>} apps - Description of every applications
+ * that should be inserted in the start menu.
  * @param {Function} openApp - Callback allowing to open an app on which the
  * user would have clicked through the start menu.
- * @param {Object} dimensions
- * @param {number} param3.clientHeight - Total available height in pixels.
- * @param {number} param3.clientWidth - Total available width in pixels.
+ * @param {Object} params
+ * @param {number} params.clientHeight - Total available height in pixels.
+ * @param {number} params.clientWidth - Total available width in pixels.
+ * @param {boolean} params.disableLists - If `true`, "sub-lists" should be
+ * disabled.
  */
 function refreshStartMenu(
   startMenuElt,

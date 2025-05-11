@@ -95,14 +95,14 @@ function createApp(apps, onOpen) {
         // Double click to open app
         if (clickCount && performance.now() - lastClickTs < 300) {
           clickCount = 0;
-          onOpen(app);
+          onOpen(app.run);
         } else {
           clickCount = 1;
           lastClickTs = performance.now();
         }
       } else {
         clickCount = 0;
-        onOpen(app);
+        onOpen(app.run);
       }
     });
     icon.addEventListener("mouseover", () => {

@@ -21,7 +21,6 @@
 // - windows moving when moving taskbar to top/bottom. Could be cool to stay in
 //   place if possible
 // - disable text shadows on icons if opacity big enough?
-// - move around icons?
 // - detect iframe URL change? Do something about github?
 // - Allow to auto-hide taskbar. Should be relatively simple.
 // - The clock icon's emoji reflect the current hour?
@@ -44,7 +43,6 @@
 // - Do "fake" app store to actually add external apps? (without it, though they
 //   do not really take space, it still could clutter if enough interesting
 //   i-frame-capable websites are found.)
-// - Sometimes the focus in on a desktop icon, not on the app
 //
 // desktop ideas:
 // - Allow multi-selection which changes drag bahavior
@@ -79,12 +77,11 @@ console.log(
 async function start() {
   const desktopElt = document.getElementById("desktop");
 
-  // Get list of apps from "filesystem" (they're actually all virtual paths for
-  // now)
-  const [desktopApps, startMenuApps] = await Promise.all([
-    await fs.readFile("/system/desktop.config.json", "object"),
-    await fs.readFile("/system/start_menu.config.json", "object"),
-  ]);
+  // TODO: move to start menu
+  const startMenuApps = await fs.readFile(
+    "/system/start_menu.config.json",
+    "object",
+  );
 
   /** Clock shown as a taskbar "applet". */
   const clockElt = initializeClockApplet();
@@ -103,8 +100,7 @@ async function start() {
 
   const taskbarManager = new Taskbar({ applets: [clockElt] });
   const appsLauncher = new AppsLauncher(desktopElt, taskbarManager);
-
-  desktopElt.appendChild(DesktopAppIcons(desktopApps.list, openAppFromPath));
+  DesktopAppIcons(desktopElt, openAppFromPath);
   StartMenu(startMenuApps.list, openAppFromPath);
 
   // Open default app or asked one

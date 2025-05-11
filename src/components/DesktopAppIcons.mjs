@@ -1,6 +1,7 @@
 // TODO: Actually persist new icon grid
 // TODO: What to do if dragging and there's a window on top?
 
+import fs from "../filesystem/filesystem.mjs";
 import {
   ICON_WIDTH_BASE,
   ICON_HEIGHT_BASE,
@@ -38,7 +39,15 @@ import { SETTINGS } from "../settings.mjs";
  * the whole screen beside the taskbar element (and is automatically updated
  * on page resize).
  */
-export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
+export default async function DesktopAppIcons(
+  containerElt,
+  onOpen,
+  parentAbortSignal,
+) {
+  const { list: apps } = await fs.readFile(
+    "/system/desktop.config.json",
+    "object",
+  );
   let abortController;
   let appList = apps.slice();
   const iconWrapperElt = document.createElement("div");
@@ -61,7 +70,8 @@ export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
     });
   }
   recheckUpdate();
-  return iconWrapperElt;
+  containerElt.appendChild(iconWrapperElt);
+  return;
 
   function refreshIcons(gridSize, iconHeight) {
     /**

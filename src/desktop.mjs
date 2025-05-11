@@ -5,10 +5,12 @@
 //
 // high priority:
 // - Storage settings
+// - context menu
+// - notification system
+// - Finish save work (save handles for apps)
 //
 // medium priority:
 // - image viewer touch controls
-// - Finish save work (save handles for apps)
 // - Actually enforce permissions by adding iframe with sandbox="allow-scripts"
 // - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices

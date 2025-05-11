@@ -1,15 +1,11 @@
-import appUtils from "../../app-utils.mjs";
-import EventEmitter from "../../event-emitter.mjs";
 import {
+  EventEmitter,
   addAbortableEventListener,
-  applyStyle,
-  createAppIframe,
   getMaxDesktopDimensions,
 } from "../../utils.mjs";
 import * as CONSTANTS from "../../constants.mjs";
 import { SETTINGS } from "../../settings.mjs";
 import strHtml from "../../str-html.mjs";
-import filesystem from "../../filesystem.mjs";
 import {
   enterFullFullScreen,
   exitAllFullScreens,
@@ -30,11 +26,7 @@ import {
   setWindowWidth,
 } from "./position_utils.mjs";
 import { handleResizeAndMove } from "./resize_and_move.mjs";
-import {
-  keepWindowActiveInCurrentEventLoopIteration,
-  isMinimizedOrMinimizing,
-  constructAppWithSidebar,
-} from "./utils.mjs";
+import { keepWindowActiveInCurrentEventLoopIteration } from "./utils.mjs";
 
 const {
   WINDOW_MIN_WIDTH,
@@ -47,15 +39,15 @@ const {
   MINIMIZE_APP_ANIM_TIMER,
   DEMINIMIZE_APP_ANIM_TIMER,
   WINDOW_OOB_SECURITY_PIX,
-  IMAGE_ROOT_PATH,
-  __VERSION__,
 } = CONSTANTS;
 
 export default class AppWindow extends EventEmitter {
   /**
-   * @param {Object} app - Object describing the application to run (result of
+   * @param {Object} appObj - Object describing the application to run (result of
    * reading the corresponding app as an object in the filesystem).
-   * @param {Array} appArgs - The application's arguments.
+   * @param {HTMLElement} initialAppElement - The application's initial content.
+   * Note that it may be replaced at any time, the reference of that element
+   * should not be stored.
    * @param {Object} options - Various options to configure how that new
    * application window will behave
    * @param {boolean} [options.skipAnim] - If set to `true`, we will not show the
@@ -65,14 +57,14 @@ export default class AppWindow extends EventEmitter {
    * @returns {Object|null} - Object representing the newly created window.
    * `null` if no window has been created.
    */
-  constructor(app, appArgs, { skipAnim, centered } = {}) {
+  constructor(appObj, initialAppElement, { skipAnim, centered } = {}) {
     super();
 
     /**
      * Identifier for this application.
      * @type {string}
      */
-    this.appId = app.id;
+    this.appId = appObj.id;
     /**
      * The default height the window should have, in pixels.
      * Can be defined as a function for when the application wants to define
@@ -80,7 +72,7 @@ export default class AppWindow extends EventEmitter {
      * maximum width currently available.
      * @type {number|Function}
      */
-    this.defaultHeight = app.defaultHeight ?? DEFAULT_WINDOW_HEIGHT;
+    this.defaultHeight = appObj.defaultHeight ?? DEFAULT_WINDOW_HEIGHT;
     /**
      * The default width the window should have, in pixels.
      * Can be defined as a function for when the application wants to define
@@ -88,7 +80,7 @@ export default class AppWindow extends EventEmitter {
      * maximum width currently available.
      * @type {number|Function}
      */
-    this.defaultWidth = app.defaultWidth ?? DEFAULT_WINDOW_WIDTH;
+    this.defaultWidth = appObj.defaultWidth ?? DEFAULT_WINDOW_WIDTH;
     /**
      * Will allow to free resources linked to that window.
      * @private
@@ -101,8 +93,9 @@ export default class AppWindow extends EventEmitter {
      * @type {HTMLElement}
      */
     const appContainer = constructVisibleWindowScaffolding(
-      (app.icon ?? "") + " " + (app.title ?? ""),
+      (appObj.icon ?? "") + " " + (appObj.title ?? ""),
     );
+    appContainer.appendChild(initialAppElement);
     this.element = document.createElement("div");
     this.element.appendChild(appContainer);
 
@@ -145,27 +138,16 @@ export default class AppWindow extends EventEmitter {
       y: 0,
     };
 
+    this.element.className = "window";
     this._setPositionAndSize({
       isInitialization: true,
       centerOnDesktop: centered,
     });
-
-    this.element.className = "window";
-    this._appCallbacks = {
-      onActivate: () => {
-        /* noop */
-      },
-      onDeactivate: () => {
-        /* noop */
-      },
-    };
-
-    this._setUpAppContent(appContainer, app.data, appArgs, app.dependencies);
+    this._saveCurrentCoordinates();
     this._setupWindowEvents();
     if (!skipAnim) {
       this._performWindowTransition("open");
     }
-    this._saveCurrentCoordinates();
   }
 
   setFullscreen() {
@@ -181,7 +163,6 @@ export default class AppWindow extends EventEmitter {
     this._abortController.abort();
     this.trigger("closing");
     this.removeEventListener();
-    this._appCallbacks.onDeactivate();
   }
 
   isClosed() {
@@ -205,7 +186,7 @@ export default class AppWindow extends EventEmitter {
    * on it in the taskbar).
    */
   toggleActivation() {
-    if (isMinimizedOrMinimizing(this.element)) {
+    if (this.isMinimizedOrMinimizing()) {
       // If minimized, deminimize and activate it
       if (!this._performWindowTransition("deminimize")) {
         return;
@@ -231,13 +212,23 @@ export default class AppWindow extends EventEmitter {
 
   deminimizeAndActivate() {
     if (
-      isMinimizedOrMinimizing(this.element) &&
+      this.isMinimizedOrMinimizing() &&
       !this._performWindowTransition("deminimize")
     ) {
       // Did not succeed to deminimize, just exit before activating
       return;
     }
     this.activate();
+  }
+
+  /**
+   * @returns {boolean}
+   */
+  isMinimizedOrMinimizing() {
+    return (
+      this.element.classList.contains("minimized") ||
+      this.element.dataset.state === "minimize"
+    );
   }
 
   /**
@@ -250,7 +241,6 @@ export default class AppWindow extends EventEmitter {
     keepWindowActiveInCurrentEventLoopIteration(this.element);
     this.element.classList.add("active");
     this.trigger("activated");
-    this._appCallbacks.onActivate();
   }
 
   /**
@@ -259,7 +249,6 @@ export default class AppWindow extends EventEmitter {
   deActivate() {
     this.element.classList.remove("active");
     this.trigger("deactivated");
-    this._appCallbacks.onDeactivate();
     if (this.element.contains(document.activeElement)) {
       document.activeElement.blur();
     }
@@ -336,74 +325,6 @@ export default class AppWindow extends EventEmitter {
       height: getWindowHeight(this.element),
       width: getWindowWidth(this.element),
     };
-  }
-
-  async _setUpAppContent(container, appData, appArgs, dependencies) {
-    const retryAfterPromise = (prom) => {
-      const spinnerPlaceholder = getSpinnerPlaceholder();
-      const initialElement = spinnerPlaceholder.element;
-      container.appendChild(initialElement);
-      return prom.then((module) => {
-        clearTimeout(spinnerPlaceholder.timeout);
-        initialElement.remove();
-        return this._setUpAppContent(container, module, appArgs, dependencies);
-      });
-    };
-
-    if (appData.create) {
-      const env = {
-        appUtils,
-        getImageRootPath: () => IMAGE_ROOT_PATH,
-        getVersion: () => __VERSION__,
-        updateTitle: (newTitle) => this.updateTitle(newTitle),
-        CONSTANTS,
-      };
-      if (Array.isArray(dependencies)) {
-        if (dependencies.includes("settings")) {
-          env.settings = SETTINGS;
-        }
-        if (dependencies.includes("filesystem")) {
-          env.filesystem = filesystem;
-        }
-      }
-      const ret = appData.create(appArgs, env, this._abortController.signal);
-      return this._setUpAppContent(container, ret, appArgs, dependencies);
-    }
-
-    if (appData.element) {
-      container.appendChild(appData.element);
-    } else if (Array.isArray(appData.sidebar) && appData.sidebar.length > 0) {
-      const { element, focus } = constructAppWithSidebar(
-        appData.sidebar,
-        this._abortController.signal,
-      );
-      container.appendChild(element);
-      this._appCallbacks.onActivate = focus;
-    } else if (typeof appData.then === "function") {
-      return retryAfterPromise(appData);
-    } else if (appData.website) {
-      const iframeContainer = createAppIframe(appData.website);
-      container.appendChild(iframeContainer);
-      this._appCallbacks.onActivate =
-        iframeContainer.focus.bind(iframeContainer);
-    } else if (appData.lazyLoad) {
-      return retryAfterPromise(import(appData.lazyLoad));
-    } else {
-      container.appendChild(document.createElement("div"));
-    }
-
-    if (typeof appData.onActivate === "function") {
-      this._appCallbacks.onActivate = appData.onActivate.bind(appData);
-      if (this.isActivated()) {
-        appData.onActivate();
-      }
-    }
-    if (typeof appData.onDeactivate === "function") {
-      this._appCallbacks.onDeactivate = appData.onDeactivate.bind(appData);
-      if (!this.isActivated()) {
-        appData.onDeactivate();
-      }
-    }
   }
 
   _onMaximizeButton() {
@@ -483,7 +404,7 @@ export default class AppWindow extends EventEmitter {
           "s ease-out forwards";
         this.element.onanimationend = () => {
           this._performWindowTransition("");
-          if (isMinimizedOrMinimizing(this.element)) {
+          if (this.isMinimizedOrMinimizing()) {
             this.trigger("minimized");
           }
         };
@@ -884,26 +805,4 @@ function constructVisibleWindowScaffolding(title) {
 			</div>
 		</div>
   </div>`;
-}
-
-function getSpinnerPlaceholder() {
-  const placeholderElt = document.createElement("div");
-  applyStyle(placeholderElt, {
-    height: "100%",
-    width: "100%",
-    position: "relative",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "var(--window-content-bg)",
-  });
-  const timeout = setTimeout(() => {
-    const spinnerElt = document.createElement("div");
-    spinnerElt.className = "spinner";
-    placeholderElt.appendChild(spinnerElt);
-  }, 200);
-  return {
-    element: placeholderElt,
-    timeout,
-  };
 }

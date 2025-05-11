@@ -1,0 +1,523 @@
+import appUtils from "./app-utils.mjs";
+import {
+  applyStyle,
+  constructSidebarElt,
+  createAppIframe,
+  getMaxDesktopDimensions,
+} from "./utils.mjs";
+import * as CONSTANTS from "./constants.mjs";
+import { SETTINGS } from "./settings.mjs";
+import filesystem from "./filesystem.mjs";
+import AppWindow from "./components/window/AppWindow.mjs";
+
+const { BASE_WINDOW_Z_INDEX, IMAGE_ROOT_PATH, __VERSION__ } = CONSTANTS;
+
+/**
+ * Class simplifying the task of Launching applications:
+ *
+ * - set-up windows
+ *
+ * - dynamically import applications and handle their lifecycle
+ *
+ * - communicates with the taskbar to tell when an application is activated /
+ *   deactivated, and how to close it.
+ *
+ * - Provide then the right arguments.and dependencies to application.
+ *
+ * A single AppsLauncher should be created per desktop.
+ * @class AppsLauncher
+ */
+export default class AppsLauncher {
+  /**
+   * Creates a new `AppsLauncher` for the desktop.
+   * @param {HTMLElement} dekstopElt - `HTMLElement` where new windows may be
+   * added and removed from.
+   * @param {Object} taskbarManager - Abstraction allowing to show the current
+   * opened application windows. The `AppsLauncher` will add and remove tasks to
+   * that `TaskbarManager` for the corresponding windows.
+   */
+  constructor(desktopElt, taskbarManager) {
+    /**
+     * `HTMLElement` where new windows may be added and removed from.
+     * @type {HTMLElement}
+     * @private
+     */
+    this._desktopElt = desktopElt;
+    /**
+     * Metadata on all currently created windows.
+     * @type {Array.<AppWindow>}
+     * @private
+     */
+    this._windows = [];
+
+    /**
+     * Allows to quickly generate an identifier by just incrementing a number.
+     * /!\ Careful of not overflowing `Number.MAX_SAFE_INTEGER`.
+     * @type {number}
+     * @private
+     */
+    this._nextWindowId = 0;
+
+    /**
+     * Allows to add and remove tasks to the taskbar.
+     * @type {Object}
+     * @private
+     */
+    this._taskbarManager = taskbarManager;
+  }
+
+  /**
+   * Open the given application, and optionally open a window for it.
+   * @param {string} appPath - FileSystem path to the application to run (e.g.
+   * `/apps/about.run`).
+   * @param {Array.<string>} appArgs - The application's arguments.
+   * @param {Object} options - Various options to configure how that new
+   * application will behave.
+   * @param {boolean} [options.fullscreen] - If set to `true`, the application's
+   * window will be started full screen.
+   * @param {boolean} [options.skipAnim] - If set to `true`, we will not show the
+   * open animation for the optional new window linked to that application.
+   * @param {boolean} [options.centered] - If set to `true`, the application
+   * window will be centered relative to the desktop in which it can be moved.
+   * @returns {Promise.<boolean>} - `true` if a window has been created, `false`
+   * if not.
+   */
+  async openApp(appPath, appArgs, options = {}) {
+    // we're given a path, from which we can get the app's executable format:
+    // an object with all its metadata, including the script to import to run it.
+    const app = await filesystem.readFile(appPath, "object");
+
+    if (app.onlyOne) {
+      // If only instance of the app can be created, check if this window already
+      // exists. If so, activate it.
+      const createdWindowForApp = this._getNextWindowForApp(app.id);
+      if (createdWindowForApp !== null) {
+        createdWindowForApp.deminimizeAndActivate();
+        return false;
+      }
+    }
+
+    /** `AbortController` linked to the life of this application. */
+    const abortController = new AbortController();
+
+    /**
+     * Information on spinner prepared just in case the application takes time
+     * to create.
+     * This is actually an object.
+     */
+    const spinnerPlaceholder = getSpinnerPlaceholder();
+
+    const initialElt = spinnerPlaceholder.element;
+    const appWindow = new AppWindow(app, initialElt, appArgs, options);
+    if (!appWindow) {
+      return false; // No window has been created
+    }
+
+    this._windows.push(appWindow);
+
+    // Move a little perfectly-overlapping windows
+    this._checkRelativeWindowPlacement(appWindow);
+
+    /** Identifier unique to this window. */
+    const windowId = "w-" + this._nextWindowId++;
+    this._taskbarManager.addWindow(windowId, app, {
+      toggleAppActivation: () => appWindow.toggleActivation(),
+      closeApp: () => appWindow.close(),
+    });
+
+    appWindow.addEventListener("closing", () => {
+      abortController.abort();
+      const windowIndex = this._windows.indexOf(appWindow);
+      if (windowIndex !== -1) {
+        // Remove from array
+        this._windows.splice(windowIndex, 1);
+        this.activateMostVisibleWindow();
+      }
+      this._taskbarManager.remove(windowId);
+    });
+
+    appWindow.addEventListener("minimizing", () => {
+      this.activateMostVisibleWindow();
+
+      // We uglily cheat a little by giving the current window a much more
+      // proeminent z-index when minimizing, so that the next window is not
+      // directly in front of the minimizing one, which would ruin the effect
+      appWindow.element.style.zIndex = 500;
+
+      this._taskbarManager.deActiveWindow(windowId);
+
+      // Translation of the minimized window toward the taskbar
+      const taskRect = this._taskbarManager.getTaskBoundingClientRect(windowId);
+      if (taskRect) {
+        // Calculate transform origin based on taskbar item position
+        const windowRect = appWindow.element.getBoundingClientRect();
+        const taskbarCenterX = taskRect.left + taskRect.width / 2;
+        const taskbarCenterY = taskRect.top - taskRect.height / 2;
+        appWindow.element.style.transformOrigin = `${taskbarCenterX - windowRect.left}px ${taskbarCenterY - windowRect.top}px`;
+      }
+    });
+
+    appWindow.addEventListener("deminimized", () => {
+      // Reset attribute only after restored
+      appWindow.element.style.transformOrigin = "";
+    });
+
+    appWindow.addEventListener("activated", () => {
+      const windowEltsWithZIndex = [];
+
+      // Deactivate all other windows
+      for (const w of this._windows) {
+        if (w !== appWindow) {
+          w.deActivate();
+        }
+        windowEltsWithZIndex.push({
+          element: w.element,
+          zIndex: parseInt(w.element.style.zIndex, 10) || BASE_WINDOW_Z_INDEX,
+        });
+      }
+
+      // Normalize all windows so it starts at `BASE_WINDOW_Z_INDEX`
+      // as a low value
+      windowEltsWithZIndex.sort((a, b) => a.zIndex - b.zIndex);
+      windowEltsWithZIndex.forEach((item, index) => {
+        const newZIndex = String(BASE_WINDOW_Z_INDEX + index);
+        if (newZIndex !== item.element.style.zIndex) {
+          item.element.style.zIndex = newZIndex;
+        }
+      });
+      appWindow.element.style.zIndex =
+        BASE_WINDOW_Z_INDEX + windowEltsWithZIndex.length + 1;
+      this._taskbarManager.setActiveWindow(windowId);
+    });
+
+    appWindow.addEventListener("deactivated", () => {
+      this._taskbarManager.deActiveWindow(windowId);
+    });
+
+    appWindow.activate();
+    this._taskbarManager.setActiveWindow(windowId);
+
+    if (options.fullscreen) {
+      appWindow.setFullscreen();
+    }
+
+    /**
+     * Construct `env` object that is given to application as their link to the
+     * desktop element.
+     */
+    const env = {
+      appUtils,
+      getImageRootPath: () => IMAGE_ROOT_PATH,
+      getVersion: () => __VERSION__,
+      updateTitle: (newIcon, newTitle) => {
+        appWindow.updateTitle(`${newIcon} ${newTitle}`);
+        this._taskbarManager.updateTitle(windowId, newIcon, newTitle);
+      },
+      open: (path, args) => this.openApp(path, args),
+      CONSTANTS,
+    };
+
+    if (Array.isArray(app.dependencies)) {
+      if (app.dependencies.includes("settings")) {
+        env.settings = SETTINGS;
+      }
+      if (app.dependencies.includes("filesystem")) {
+        env.filesystem = filesystem;
+      }
+    }
+
+    // Actually launch the application
+    this._launchApp(app.data, appArgs, env, abortController.signal).then(
+      ({ element, onActivate, onDeactivate }) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        clearTimeout(spinnerPlaceholder.timeout);
+
+        // /!\ Note that we replace here, the element communicated to the
+        // `AppWindow` is stale now. Hopefully, it shouldn't care.
+        spinnerPlaceholder.element.replaceWith(element);
+
+        if (typeof onActivate === "function") {
+          if (appWindow.isActivated()) {
+            onActivate();
+          }
+          appWindow.addEventListener("activated", () => {
+            onActivate();
+          });
+        }
+        if (typeof onDeactivate === "function") {
+          if (!isActivated()) {
+            onDeactivate();
+          }
+          appWindow.addEventListener("deactivated", () => {
+            onDeactivate();
+          });
+          appWindow.addEventListener("closing", () => {
+            onDeactivate();
+          });
+        }
+      },
+    );
+
+    this._desktopElt.appendChild(appWindow.element);
+    return true;
+  }
+
+  /**
+   * Activate the window the most forward and non-minimized.
+   */
+  activateMostVisibleWindow() {
+    if (this._windows.length === 0) {
+      return;
+    }
+
+    let currentWindowWithMaxZIndex;
+    let maxZindex = -Infinity;
+    for (const w of this._windows) {
+      if (!w.isMinimizedOrMinimizing()) {
+        const wZindex = parseInt(w.element.style.zIndex, 10);
+        if (!isNaN(wZindex) && wZindex >= maxZindex) {
+          currentWindowWithMaxZIndex = w;
+          maxZindex = wZindex;
+        }
+      }
+    }
+
+    if (currentWindowWithMaxZIndex) {
+      currentWindowWithMaxZIndex.activate();
+    }
+  }
+
+  /**
+   * Actually launch the application and get its return values (element and
+   * various lifecycle functions).
+   * @param {Object} appData - The `data` property from executable, which
+   * describes how to actually launch the application.
+   * @param {Array.<string>} - The arguments that should be communicated to the
+   * application when launching it.
+   * @param {Object} env - The `env` object providing some desktop context and
+   * API to applications.
+   * @param {AbortSignal} abortSignal - `AbortSignal` which triggers when the
+   * application is closed.
+   * @returns {Promise.<Object>} - Promise which resolves when and if it
+   * succeded to launch the application, with the payload obtained from
+   * launching it.
+   */
+  async _launchApp(appData, appArgs, env, abortSignal) {
+    const launchAfterPromise = (prom) => {
+      return prom.then((module) =>
+        this._launchApp(module, appArgs, env, abortSignal),
+      );
+    };
+    if (appData.create) {
+      const ret = appData.create(appArgs, env, abortSignal);
+      return this._launchApp(ret, appArgs, env, abortSignal);
+    }
+
+    let element;
+    let onActivate;
+    let onDeactivate;
+
+    if (appData.element) {
+      element = appData.element;
+    } else if (Array.isArray(appData.sidebar) && appData.sidebar.length > 0) {
+      const sidebarInfo = constructAppWithSidebar(appData.sidebar, abortSignal);
+      element = sidebarInfo.element;
+      onActivate = sidebarInfo.focus;
+    } else if (typeof appData.then === "function") {
+      return launchAfterPromise(appData);
+    } else if (appData.website) {
+      const iframeContainer = createAppIframe(appData.website);
+      element = iframeContainer;
+      onActivate = iframeContainer.focus.bind(iframeContainer);
+    } else if (appData.lazyLoad) {
+      return launchAfterPromise(import(appData.lazyLoad));
+    } else {
+      element = document.createElement("div");
+    }
+
+    if (!onActivate && typeof appData.onActivate === "function") {
+      onActivate = appData.onActivate.bind(appData);
+    }
+    if (onDeactivate && typeof appData.onDeactivate === "function") {
+      onDeactivate = appData.onDeactivate.bind(appData);
+    }
+    return { element, onActivate, onDeactivate };
+  }
+
+  /**
+   * @private
+   * @returns {AppWindow|null}
+   */
+  _getNextWindowForApp(appId) {
+    for (const w of this._windows) {
+      if (w.appId === appId) {
+        return w;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * @param {AppWindow} newAppWindow - The newly-created `AppWindow` for which
+   * we want to check the relative positionning to other windows.
+   * @private
+   */
+  _checkRelativeWindowPlacement(newAppWindow) {
+    const {
+      top: initialTop,
+      left: initialLeft,
+      height: initialHeight,
+      width: initialWidth,
+    } = newAppWindow.getPlacement();
+
+    const maxDesktopDimensions = getMaxDesktopDimensions(
+      SETTINGS.taskbarLocation.getValue(),
+      SETTINGS.taskbarSize.getValue(),
+    );
+
+    let top = initialTop;
+    let left = initialLeft;
+
+    // Do not overlap previously-create window on the top left position
+    for (let windowIdx = 0; windowIdx < this._windows.length; windowIdx++) {
+      const appWindow = this._windows[windowIdx];
+      if (appWindow === newAppWindow) {
+        continue;
+      }
+      const windowPlacement = appWindow.getPlacement();
+
+      let needRecheck = false;
+      if (initialHeight && windowPlacement.top === top) {
+        if (top + initialHeight + 25 <= maxDesktopDimensions.maxHeight) {
+          top += 25;
+          needRecheck = true;
+        } else {
+          top = maxDesktopDimensions.maxHeight - initialHeight;
+        }
+      }
+
+      if (initialWidth && windowPlacement.left === left) {
+        if (left + initialWidth + 25 <= maxDesktopDimensions.maxWidth) {
+          left += 25;
+          needRecheck = true;
+        } else {
+          left = maxDesktopDimensions.maxWidth - initialWidth;
+        }
+      }
+      if (needRecheck) {
+        windowIdx = -1;
+      }
+    }
+
+    if (left !== undefined || top !== undefined) {
+      newAppWindow.move({ left, top, desktopDimensions: maxDesktopDimensions });
+    }
+  }
+}
+
+/**
+ * @typedef {Object} SpinnerPlaceholderInfo
+ * @property {HTMLElement} element - The container element in which the
+ * spinner is shown. Will be given as the initial element the window should
+ * display, that may then be replaced by the real window content.
+ * @param {number} timeout - The spinner is only displayed after a timer, this
+ * is the `setTimeout` id for this timer.
+ */
+
+/**
+ * @returns {SpinnerPlaceholderInfo}
+ */
+function getSpinnerPlaceholder() {
+  const placeholderElt = document.createElement("div");
+  applyStyle(placeholderElt, {
+    height: "100%",
+    width: "100%",
+    position: "relative",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "var(--window-content-bg)",
+  });
+  const timeout = setTimeout(() => {
+    const spinnerElt = document.createElement("div");
+    spinnerElt.className = "spinner";
+    placeholderElt.appendChild(spinnerElt);
+  }, 200);
+  return {
+    element: placeholderElt,
+    timeout,
+  };
+}
+
+/**
+ * Construct the content part of an app with a sidebar corresponding to the
+ * given `sections` object.
+ *
+ * @param {Array.<Object>} sections - Array of objects, each of which describes
+ * a single sidebar section.
+ * Each object have the following properties:
+ * -  `icon` (`string|undefined`): Optional icon describing the section.
+ * -  `text` (`string`): Title describing the section.
+ * -  `centered` (`boolean|undefined`): If `true`, the section should be
+ *    centered on screen and have large paddings. Adapted for text-only
+ *    sections.
+ * -  `noPadding` (`boolean|undefined`): If `true`, we will ensure that there's
+ *    no padding in the content. Adapted for i-frame. SHOULD NOT be combined
+ *    with the `centered` option.
+ * - `render` (Function): Function taking in argument an `AbortSignal` (so the
+ *   section can know when to free resources) and returning the `HTMLElement`
+ *   that will be the content of this section.
+ * @param {AbortSignal} abortSignal - `AbortSignal` that will be provided to the
+ * application so it can free the resources it reserved.
+ * @returns {Object} - Object describing the application:
+ * -  `element` (`HTMLElement`): The application's content, with a sidebar.
+ * -  `focus` (`function`): Allows to focus the content of the application.
+ */
+export function constructAppWithSidebar(sections, abortSignal) {
+  /**
+   * Inner AbortController, used to free resources when navigating to the
+   * different sections.
+   * @type {AbortController}
+   */
+  let childAbortController = new AbortController();
+  abortSignal.addEventListener("abort", () => {
+    childAbortController.abort();
+  });
+
+  // const sidebarTitle = strHtml`<div class="sidebar-title">...</div>`;
+  const container = document.createElement("div");
+  container.className = "w-container";
+  const content = document.createElement("div");
+  content.className = "w-content";
+  const formattedSections = sections.slice().map((s, i) => {
+    return { ...s, section: i };
+  });
+  formattedSections[0].active = true;
+  const displaySection = (section) => {
+    childAbortController.abort();
+    childAbortController = new AbortController();
+    content.innerHTML = "";
+    if (formattedSections[section].noPadding) {
+      content.style.padding = "0";
+    } else {
+      content.style.padding = "";
+    }
+    const wantedSection = formattedSections[section];
+    const innerContentElt = wantedSection.render(childAbortController.signal);
+    if (wantedSection.centered) {
+      innerContentElt.classList.add("w-content-centered");
+    }
+    content.appendChild(innerContentElt);
+  };
+  const sidebar = constructSidebarElt(formattedSections, (section) => {
+    displaySection(section);
+    content.scrollTo(0, 0);
+  });
+  container.appendChild(sidebar);
+  container.appendChild(content);
+  displaySection(0);
+  return { element: container, focus: () => content.focus() };
+}

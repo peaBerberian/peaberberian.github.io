@@ -283,6 +283,10 @@ export function create(abortSignal) {
       draw(touch);
     }
   });
+  // Safari just selects all over the place like some maniac without this
+  wrapperElt.addEventListener("selectstart", (e) => {
+    e.preventDefault();
+  });
   wrapperElt.addEventListener("mousemove", draw);
   document.addEventListener("mouseup", stopDrawing);
   document.addEventListener("click", stopDrawing);

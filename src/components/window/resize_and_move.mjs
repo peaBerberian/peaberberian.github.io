@@ -205,6 +205,12 @@ function handleMoveOnWindow(
         moveDraggedWindow(touch.clientX, touch.clientY);
       }
     });
+
+    // Safari just selects all over the place like some maniac without this
+    addEventListener(header, "selectstart", abortSignal, (e) => {
+      e.preventDefault();
+    });
+
     addEventListener(header, "mousedown", abortSignal, (e) => {
       if (e.button !== 0) {
         // not left click

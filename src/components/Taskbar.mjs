@@ -276,6 +276,11 @@ function handleTaskbarMove(taskbarElt, abortSignal) {
       moveDraggedTaskbar(touch.clientX, touch.clientY);
     }
   });
+
+  // Safari just selects all over the place like some maniac without this
+  addEventListener(taskbarElt, "selectstart", abortSignal, (e) => {
+    e.preventDefault();
+  });
   addEventListener(taskbarElt, "mousedown", abortSignal, (e) => {
     if (e.button !== 0) {
       // not left click

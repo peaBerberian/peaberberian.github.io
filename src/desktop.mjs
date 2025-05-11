@@ -18,6 +18,7 @@
 // - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices
 // - Sidebar should be able to break a word in worst cases I think.
+// - What do if App creation errors or rejects?
 //
 // low priority:
 // - windows moving when moving taskbar to top/bottom. Could be cool to stay in

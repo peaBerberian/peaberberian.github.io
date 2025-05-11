@@ -328,7 +328,18 @@ export default class AppWindow extends EventEmitter {
     };
   }
 
-  _setUpAppContent(container, appData, appArgs, dependencies) {
+  async _setUpAppContent(container, appData, appArgs, dependencies) {
+    const retryAfterPromise = (prom) => {
+      const spinnerPlaceholder = getSpinnerPlaceholder();
+      const initialElement = spinnerPlaceholder.element;
+      container.appendChild(initialElement);
+      return prom.then((module) => {
+        clearTimeout(spinnerPlaceholder.timeout);
+        initialElement.remove();
+        return this._setUpAppContent(container, module, appArgs, dependencies);
+      });
+    };
+
     if (appData.create) {
       const env = {
         appUtils,
@@ -344,53 +355,43 @@ export default class AppWindow extends EventEmitter {
         }
       }
       const ret = appData.create(appArgs, env, this._abortController.signal);
-      if (ret.element) {
-        container.appendChild(ret.element);
-      } else if (Array.isArray(ret.sidebar) && ret.sidebar.length > 0) {
-        const { element, focus } = constructAppWithSidebar(
-          ret.sidebar,
-          this._abortController.signal,
-        );
-        container.appendChild(element);
-        this._appCallbacks.onActivate = focus;
-        return;
-      } else {
-        container.appendChild(document.createElement("div"));
-      }
-      if (ret.onActivate) {
-        this._appCallbacks.onActivate = ret.onActivate.bind(ret);
-        if (this.isActivated()) {
-          ret.onActivate();
-        }
-      }
-      if (ret.onDeactivate) {
-        this._appCallbacks.onDeactivate = ret.onDeactivate.bind(ret);
-        if (!this.isActivated()) {
-          ret.onDeactivate();
-        }
-      }
-      return;
+      return this._setUpAppContent(container, ret, appArgs, dependencies);
     }
 
-    if (appData.website) {
+    if (appData.element) {
+      container.appendChild(appData.element);
+    } else if (Array.isArray(appData.sidebar) && appData.sidebar.length > 0) {
+      const { element, focus } = constructAppWithSidebar(
+        appData.sidebar,
+        this._abortController.signal,
+      );
+      container.appendChild(element);
+      this._appCallbacks.onActivate = focus;
+    } else if (typeof appData.then === "function") {
+      return retryAfterPromise(appData);
+    } else if (appData.website) {
       const iframeContainer = createAppIframe(appData.website);
       container.appendChild(iframeContainer);
-      this.focus = iframeContainer.focus.bind(iframeContainer);
-      return;
+      this._appCallbacks.onActivate =
+        iframeContainer.focus.bind(iframeContainer);
+    } else if (appData.lazyLoad) {
+      return retryAfterPromise(import(appData.lazyLoad));
+    } else {
+      container.appendChild(document.createElement("div"));
     }
 
-    if (appData.lazyLoad) {
-      const spinnerPlaceholder = getSpinnerPlaceholder();
-      const initialElement = spinnerPlaceholder.element;
-      container.appendChild(initialElement);
-      import(appData.lazyLoad).then((module) => {
-        clearTimeout(spinnerPlaceholder.timeout);
-        initialElement.remove();
-        this._setUpAppContent(container, module, appArgs, dependencies);
-      });
-      return;
+    if (typeof appData.onActivate === "function") {
+      this._appCallbacks.onActivate = appData.onActivate.bind(appData);
+      if (this.isActivated()) {
+        appData.onActivate();
+      }
     }
-    container.appendChild(document.createElement("div"));
+    if (typeof appData.onDeactivate === "function") {
+      this._appCallbacks.onDeactivate = appData.onDeactivate.bind(appData);
+      if (!this.isActivated()) {
+        appData.onDeactivate();
+      }
+    }
   }
 
   _onMaximizeButton() {

@@ -22,6 +22,16 @@ export default function createDesktopIconsSection(
       abortSignal,
     ),
   );
+  generalGroupElt.appendChild(
+    createCheckboxOnRef(
+      {
+        ref: settings.canDeleteIcon,
+        label: "Desktop icons can be deleted",
+      },
+      appUtils,
+      abortSignal,
+    ),
+  );
   section.appendChild(generalGroupElt);
   const colorGroupElt = strHtml`<div class="w-group"><h3>Colors</h3></div>`;
   const imgBgIconOpacitySlider = createNumericSliderOnRef(

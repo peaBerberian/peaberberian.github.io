@@ -340,6 +340,9 @@ export default async function DesktopAppIcons(
         break;
       }
       case "Delete": {
+        if (!SETTINGS.canDeleteIcon.getValue()) {
+          return;
+        }
         e.preventDefault();
         const index = appList.indexOf(app);
         if (index >= 0) {

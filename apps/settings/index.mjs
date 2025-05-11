@@ -1,3 +1,6 @@
+// TODO: It's one of the earliest app and thus went through many iterations,
+// it may now be clean-up time :p
+
 import createTaskbarSection from "./Taskbar.mjs";
 import createWallpaperSection from "./Wallpaper.mjs";
 import createSystemSection from "./System.mjs";
@@ -7,12 +10,53 @@ import createDesktopIconsSection from "./DesktopIcons.mjs";
 
 /**
  * Generate content of the "System Settings" application.
+ * @param {Array} env
  * @param {Object} dependencies
  * @param {Object} dependencies.settings
+ * @param {Object} dependencies.filesystem
+ * @param {Object} dependencies.appUtils
  * @param {AbortSignal} abortSignal
  * @returns {Object}
  */
 export function create(_args, env, abortSignal) {
+  // Get some hardcoded constants from the desktop. Sadly as settings is an app
+  // and thus lives totally elsewhere it has to get it from the
+  // less-discoverable and more issue-prone "filesystem" (as opposed to
+  // importing the file directly).
+  // NOTE: Not sure this is the right approach, it looks hard to see when it
+  // would break.
+  return env.filesystem
+    .readFile("/system/constants.json", "object")
+    .then((constants) => {
+      const taskbarDimensions = {
+        minHorizontalSize: constants.TASKBAR_MIN_HORIZONTAL_SIZE,
+        maxHorizontalSize: constants.TASKBAR_MAX_HORIZONTAL_SIZE,
+        minVerticalSize: constants.TASKBAR_MIN_VERTICAL_SIZE,
+        maxVerticalSize: constants.TASKBAR_MAX_VERTICAL_SIZE,
+      };
+      for (const key of Object.keys(taskbarDimensions)) {
+        if (taskbarDimensions[key] === undefined) {
+          console.error(
+            `Settings app: Impossible to get the taskbar's ${key}. ` +
+              "The constant names might have been updated.",
+          );
+        }
+      }
+      return runSettingsApp(env, taskbarDimensions, abortSignal);
+    });
+}
+
+/**
+ * @param {Array} env
+ * @param {Object} dependencies
+ * @param {Object} dependencies.settings
+ * @param {Object} dependencies.filesystem
+ * @param {Object} dependencies.appUtils
+ * @param {Object} taskbarDimensionLimits
+ * @param {AbortSignal} abortSignal
+ * @returns {Object}
+ */
+function runSettingsApp(env, taskbarDimensionLimits, abortSignal) {
   const { settings } = env;
   const { constructSidebarElt, strHtml } = env.appUtils;
   const sidebarItems = [
@@ -85,7 +129,11 @@ export function create(_args, env, abortSignal) {
         break;
       case "taskbar":
         contentElt.appendChild(
-          createTaskbarSection(env, childAbortController.signal),
+          createTaskbarSection(
+            env,
+            taskbarDimensionLimits,
+            childAbortController.signal,
+          ),
         );
         break;
       case "system":

@@ -45,19 +45,19 @@ function createEditor() {
   let historyIndex = -1;
   let lastSavedContent = null;
 
-  const undoButton = createButtonElt(undoSvg, 1, (e) => {
+  const undoButton = createButtonElt(undoSvg, "Undo", 1, (e) => {
     e.preventDefault();
     undo();
   });
   disableButton(undoButton);
 
-  const redoButton = createButtonElt(redoSvg, 1, (e) => {
+  const redoButton = createButtonElt(redoSvg, "Redo", 1, (e) => {
     e.preventDefault();
     redo();
   });
   disableButton(redoButton);
 
-  const clearButton = createButtonElt(clearSvg, 1, () => {
+  const clearButton = createButtonElt(clearSvg, "Clear", 1, () => {
     const hadSomethingWritten = textArea.value;
     statusBar.textContent = "Cleared";
     textArea.value = "";
@@ -69,7 +69,7 @@ function createEditor() {
   });
   disableButton(clearButton);
 
-  const saveButton = createButtonElt(saveSvg, 0.75, () => {
+  const saveButton = createButtonElt(saveSvg, "Save (download)", 0.75, () => {
     if (typeof window.showSaveFilePicker === "function") {
       saveFile(textArea.value);
     } else {
@@ -262,16 +262,19 @@ function createEditor() {
   }
 }
 
-function createButtonElt(svg, heightScale, onClick) {
-  const buttonElt = getSvg(svg);
-  applyStyle(buttonElt, {
+function createButtonElt(svg, title, heightScale, onClick) {
+  const buttonSvgElt = getSvg(svg);
+  applyStyle(buttonSvgElt, {
     width: "2rem",
     height: `${heightScale * 2}rem`,
-    cursor: "pointer",
-    margin: "auto 0px",
   });
-  buttonElt.onclick = onClick;
-  return buttonElt;
+  const buttonWrapperElt = document.createElement("span");
+  buttonWrapperElt.style.margin = "auto 0";
+  buttonWrapperElt.style.cursor = "pointer";
+  buttonWrapperElt.appendChild(buttonSvgElt);
+  buttonWrapperElt.onclick = onClick;
+  buttonWrapperElt.title = title;
+  return buttonWrapperElt;
 }
 
 function getSvg(svg) {
@@ -284,14 +287,14 @@ function getSvg(svg) {
 function enableButton(buttonElt) {
   if (buttonElt.style.cursor !== "pointer") {
     buttonElt.style.cursor = "pointer";
-    buttonElt.setAttribute("fill", "var(--window-text-color)");
+    buttonElt.children[0].setAttribute("fill", "var(--window-text-color)");
   }
 }
 
 function disableButton(buttonElt) {
   if (buttonElt.style.cursor === "pointer") {
     buttonElt.style.cursor = "auto";
-    buttonElt.setAttribute("fill", "var(--window-inactive-header)");
+    buttonElt.children[0].setAttribute("fill", "var(--window-inactive-header)");
   }
 }
 

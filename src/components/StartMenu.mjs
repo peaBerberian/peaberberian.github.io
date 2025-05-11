@@ -104,6 +104,7 @@ export default function StartMenu(apps, openApp, abortSignal) {
     }
   });
   window.addEventListener("resize", scheduleRefresh);
+  startMenuElt.addEventListener("mousedown", onMouseDown);
   SETTINGS.enableStartMenuSublists.onUpdate(scheduleRefresh, {
     clearSignal: abortSignal,
   });
@@ -116,6 +117,7 @@ export default function StartMenu(apps, openApp, abortSignal) {
 
   if (abortSignal) {
     abortSignal.addEventListener("abort", () => {
+      startMenuElt.removeEventListener("mousedown", onMouseDown);
       document.removeEventListener("click", onDocumentClick);
       document.removeEventListener("keydown", onKeyDown);
       startButtonElt.removeEventListener("click", onStartButtonClick);
@@ -127,6 +129,14 @@ export default function StartMenu(apps, openApp, abortSignal) {
     if (e.key === "Escape") {
       closeStartMenu(startMenuElt);
     }
+  }
+
+  function onMouseDown(e) {
+    if (e.button) {
+      // not left click
+      return;
+    }
+    e.preventDefault();
   }
 }
 

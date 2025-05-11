@@ -42,9 +42,9 @@ export async function create(args = [], env) {
   containerElt.addEventListener("mousedown", (e) => {
     e.preventDefault();
   });
-  containerElt.addEventListener("selectstart", (e) => {
+  containerElt.onselectstart = (e) => {
     e.preventDefault();
-  });
+  };
 
   const icons = [];
   for (let i = 0; i < apps.length; i++) {

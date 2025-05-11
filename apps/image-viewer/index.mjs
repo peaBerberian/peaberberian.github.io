@@ -68,12 +68,12 @@ export function create(_args, env, parentAbortSignal) {
           })
           .then(
             (files) => {
-              clear();
               if (files.length === 0) {
                 updateDisplayedImage();
                 updateStatusBar();
                 return;
               }
+              clear();
               for (const file of files) {
                 const imgElt = document.createElement("img");
                 applyStyle(imgElt, {

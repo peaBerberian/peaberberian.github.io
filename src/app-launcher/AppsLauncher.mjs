@@ -12,6 +12,7 @@ import {
 import appUtils from "./app-utils/index.mjs";
 import { createFileOpener } from "./app-utils/explorer/file-picker.mjs";
 import WindowedApplicationStack from "./windowed_application_stack.mjs";
+import strHtml from "../str-html.mjs";
 
 const { BASE_WINDOW_Z_INDEX, IMAGE_ROOT_PATH, __VERSION__ } = CONSTANTS;
 
@@ -290,6 +291,9 @@ export default class AppsLauncher {
         // `AppWindow` is stale now. Hopefully, it shouldn't care.
         appStack.replaceAll(appObj, appWindow.isActivated());
       },
+      (err) => {
+        appStack.replaceAll(getErrorApp(err), appWindow.isActivated());
+      },
     );
 
     this._desktopElt.appendChild(appWindow.element);
@@ -496,6 +500,25 @@ function getSpinnerApp() {
     element: placeholderElt,
     onClose: () => clearTimeout(timeout),
   };
+}
+
+function getErrorApp(err) {
+  const errorElt = document.createElement("div");
+  applyStyle(errorElt, {
+    position: "relative",
+    width: "100%",
+    height: "100%",
+    backgroundColor: "var(--window-content-bg)",
+    padding: "10px",
+    overflow: "auto",
+  });
+  errorElt.appendChild(strHtml`<div>
+<h2>Oh no! This application crashed... 😿</h2>
+<p>Failed to load this application due to the following error:</p>
+<p style="font-family:monospace">${err.toString()}</p>
+</div>
+`);
+  return { element: errorElt };
 }
 
 /**

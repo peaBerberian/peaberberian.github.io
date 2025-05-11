@@ -318,6 +318,11 @@ function addMovingAroundListeners(icon, { baseLeft, baseTop }, abortSignal) {
   addEventListener(icon, "touchstart", abortSignal, onTouchStart);
   addEventListener(icon, "touchend", abortSignal, onMouseUp);
   addEventListener(icon, "touchmove", abortSignal, onTouchMove);
+
+  // Safari just selects all over the place like some maniac without this
+  addEventListener(icon, "selectstart", abortSignal, (e) => {
+    e.preventDefault();
+  });
   addEventListener(icon, "mousedown", abortSignal, onMouseDown);
   addEventListener(document.documentElement, "mouseleave", abortSignal, () => {
     isDragging = false;

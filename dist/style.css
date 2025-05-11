@@ -254,7 +254,7 @@ html {
   top: 10px;
   bottom: auto;
   left: var(--taskbar-size);
-  max-height: 100%;
+  max-height: calc(100% - 10px);
   border-radius: 0px 10px 10px 0px;
 }
 
@@ -263,7 +263,7 @@ html {
   bottom: auto;
   right: var(--taskbar-size);
   left: auto;
-  max-height: 100%;
+  max-height: calc(100% - 10px);
   border-radius: 10px 0px 0px 10px;
 }
 
@@ -320,7 +320,7 @@ html {
 
 .window {
   position: absolute;
-  border-radius: 5px;
+  border-radius: 10px;
   border: var(--window-border-size) solid var(--window-border-color);
   box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
   display: flex;

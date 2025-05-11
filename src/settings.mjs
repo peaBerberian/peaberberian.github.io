@@ -147,6 +147,9 @@ const taskbarLocation = createRefForState(
 
 /** Global settings defined for the application, changing many UI parameters. */
 export const SETTINGS = {
+  /** Display the "About me" App at start-up */
+  aboutMeStart: createRefForState("about-me-start", true),
+
   /** Update the base font size to the given size in px. */
   fontSize: createRefForState("font-size", DEFAULT_FONT_SIZE, (size) => {
     window.requestAnimationFrame(() => {

@@ -4,8 +4,8 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
-// - Storage settings
 // - context menu in desktop, taskbar, start menu, and explorer at least?
+// - Storage settings
 // - notification system
 // - ctrl+s in paint and note
 //
@@ -64,6 +64,7 @@ import StartMenu from "./components/StartMenu.mjs";
 import Taskbar from "./components/Taskbar.mjs";
 import AppsLauncher from "./app-launcher/AppsLauncher.mjs";
 import initializeClockApplet from "./clock_applet.mjs";
+import { SETTINGS } from "./settings.mjs";
 
 /**
  * To bypass the initial app at start-up, this string can be set in the URL
@@ -117,10 +118,12 @@ async function start() {
     }
   }
   if (!wantedApp) {
-    appsLauncher.openApp("/apps/about.run", [], {
-      skipAnim: true,
-      centered: true,
-    });
+    if (SETTINGS.aboutMeStart.getValue()) {
+      appsLauncher.openApp("/apps/about.run", [], {
+        skipAnim: true,
+        centered: true,
+      });
+    }
   } else if (wantedApp !== SPECIAL_NO_APP_STRING) {
     appsLauncher.openApp(`/apps/${wantedApp}.run`, [], {
       skipAnim: true,

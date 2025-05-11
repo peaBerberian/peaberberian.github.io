@@ -6,23 +6,18 @@ const DB_VERSION = 1;
 const METADATA_STORE = "files";
 const CONTENT_STORE = "files_content";
 
+const DIR_CONFIG_FILENAME = ".dir_config";
+
+// TODO: check consistency at startup?
+
 class DesktopFileSystem {
   constructor() {
     this._dbProm = openDB();
-    this._virtualRootDir = {
-      "/apps/": { type: "virtual" },
-      // "/config/": { type: "virtual" },
-    };
-  }
-
-  async _getMetadataStore(mode = "readonly") {
-    const db = await this._dbProm;
-    return db.transaction(METADATA_STORE, mode).objectStore(METADATA_STORE);
-  }
-
-  async _getContentStore(mode = "readonly") {
-    const db = await this._dbProm;
-    return db.transaction(CONTENT_STORE, mode).objectStore(CONTENT_STORE);
+    this._virtualRootDirs = [
+      "/apps/",
+      // "/config/",
+      // "/appdata/",
+    ];
   }
 
   async writeFile(path, content, mimeType) {
@@ -33,51 +28,62 @@ class DesktopFileSystem {
       throw new Error("Writing a directory instead of a file");
     }
 
-    const [metadataStore, contentStore] = await Promise.all([
-      this._getMetadataStore("readwrite"),
-      this._getContentStore("readwrite"),
-    ]);
+    const name = getName(path);
+    if (name === DIR_CONFIG_FILENAME) {
+      throw new Error("Using a reserved system name");
+    }
+    if (/[\x00-\x1F\x7F/\\]/.test(name)) {
+      throw new Error(
+        "Unauthorized file name: Please do not use control characters, slash or anti-slash characters.",
+      );
+    }
 
+    // I group both metadata and content write in the same IndexedDB
+    // transaction (its mechanism for consistency) to avoid desynchronization.
+    // There might still be due to a browser crash or power outage but shit
+    // happens.
+    const db = await this._dbProm;
+    const tx = db.transaction([METADATA_STORE, CONTENT_STORE], "readwrite");
+    const metadataStore = tx.objectStore(METADATA_STORE);
+    const contentStore = tx.objectStore(CONTENT_STORE);
     const now = Date.now();
-    const name = path.split("/").filter(Boolean).pop();
-    const entry = {
-      id: pathToId(path),
+    const id = pathToId(path);
+    metadataStore.put({
+      id,
       fullPath: path,
-      directory: getParentDirectory(path),
+      directory: getDirectory(path),
       name,
       type: "file",
       modified: now,
       mimeType,
-      content,
-    };
+    });
+    contentStore.put({ id, content });
 
-    // XXX TODO: If one operation fails remove the other
-    // TODO: check rejection syntax
-    await Promise.all([
-      new Promise((resolve) => (metadataStore.put(entry).onsuccess = resolve)),
-      new Promise(
-        (resolve) =>
-          (contentStore.put({ id: entry.id, content }).onsuccess = resolve),
-      ),
-    ]);
+    return new Promise((resolve, reject) => {
+      tx.onerror = () => reject(tx.error);
+      tx.oncomplete = () => resolve();
+    });
   }
 
-  async readDir(directoryPath) {
-    if (directoryPath in this._virtualRootDir) {
-      if (directoryPath === "/apps/") {
+  async readDir(dirPath) {
+    const normalizedDirPath = dirPath.endsWith("/") ? dirPath : dirPath + "/";
+    if (this._virtualRootDirs.includes(normalizedDirPath)) {
+      if (normalizedDirPath === "/apps/") {
         return apps.map((a) => {
           return {
-            name: a.title,
+            name: a.id,
             icon: a.icon,
             type: "file",
             mimeType: "exec",
           };
         });
       }
+
+      // TODO: other virtual dirs?
       return [];
     }
 
-    if (directoryPath === "/") {
+    if (normalizedDirPath === "/") {
       return [
         {
           name: "apps",
@@ -90,151 +96,181 @@ class DesktopFileSystem {
       ];
     }
 
-    if (!directoryPath.startsWith("/user/")) {
+    if (!normalizedDirPath.startsWith("/user/")) {
       return Promise.reject(new Error("Invalid directory"));
     }
 
-    const store = await this._getMetadataStore();
-    const range = IDBKeyRange.only(directoryPath);
+    const db = await this._dbProm;
+    const metadataStore = db
+      .transaction(METADATA_STORE, "readonly")
+      .objectStore(METADATA_STORE);
+    const range = IDBKeyRange.only(normalizedDirPath);
 
     return new Promise((resolve, reject) => {
-      const request = store.index("directory").getAll(range, 100);
-      request.onsuccess = () =>
-        resolve(
-          request.result.map(({ name, type, size, modified, mimeType }) => ({
-            name,
-            type,
-            size,
-            modified,
-            mimeType,
-          })),
-        );
+      const request = metadataStore.index("directory").getAll(range, 100);
       request.onerror = () => reject(request.error);
-    });
-  }
-
-  async deletePath(path, options = { recursive: false }) {
-    if (!path.startsWith("/user/")) {
-      throw new Error("No permission to delete in the given path: " + path);
-    }
-    if (path === "/user/") {
-      throw new Error("Cannot delete the user directory itself.");
-    }
-
-    const store = await this._getMetadataStore("readwrite");
-    const getRequest = store.index("fullPath").get(path);
-
-    const entry = await new Promise((resolve) => {
-      getRequest.onsuccess = () => resolve(getRequest.result);
-      getRequest.onerror = () => resolve(null);
-    });
-
-    if (!entry) {
-      throw new Error("Cannot delete: Path not found");
-    }
-
-    if (entry.type === "file") {
-      return this._deleteFile(path);
-    } else {
-      return this._deleteDirectory(path, options.recursive);
-    }
-  }
-
-  async _deleteFile(filePath) {
-    // TODO: we could reuse the store already requested
-    const [metadataStore, contentStore] = await Promise.all([
-      this._getMetadataStore("readwrite"),
-      this._getContentStore("readwrite"),
-    ]);
-    const id = pathToId(filePath);
-
-    // TODO: check rejection syntax
-    await Promise.all([
-      new Promise((resolve) => {
-        metadataStore.delete(id).onsuccess = resolve;
-      }),
-      new Promise((resolve) => {
-        contentStore.delete({ id: entry.id, content }).onsuccess = resolve;
-      }),
-    ]);
-  }
-
-  async _deleteDirectory(dirPath, recursive = false) {
-    if (!dirPath.endsWith("/")) {
-      throw new Error("Deleting a file instead of a directory");
-    }
-
-    // XXX TODO: check with file content and whatnot
-    const metadataStore = await this._getMetadataStore("readwrite");
-    const range = IDBKeyRange.lowerBound(dirPath);
-
-    return new Promise((resolve, reject) => {
-      const itemsToDelete = [];
-      const cursorRequest = metadataStore.index("fullPath").openCursor(range);
-
-      cursorRequest.onsuccess = (event) => {
-        const cursor = event.target.result;
-        if (cursor) {
-          if (cursor.value.fullPath.startsWith(dirPath)) {
-            if (
-              !recursive &&
-              cursor.value.fullPath.replace(dirPath, "").includes("/")
-            ) {
-              reject(new Error("Directory not empty"));
-              return;
-            }
-            itemsToDelete.push(cursor.value.id);
-            cursor.continue();
+      request.onsuccess = () => {
+        if (request.result.length === 0) {
+          if (normalizedDirPath === "/user/") {
+            resolve([]);
           } else {
-            processDeletion();
+            // For now we placed a system file in all other directories
+            // If we don't see it, the directory doesn't exists
+            reject(new Error("Unknown directory"));
           }
-        } else {
-          processDeletion();
         }
+        const res = [];
+        for (const r of request.result) {
+          if (r.name === DIR_CONFIG_FILENAME) {
+            continue;
+          }
+          res.push({
+            name: r.name,
+            type: r.type,
+            modified: r.modified,
+            mimeType: r.mimeType,
+          });
+        }
+        resolve(res);
       };
+    });
+  }
 
-      cursorRequest.onerror = () => reject(cursorRequest.error);
+  async rmFile(filePath) {
+    if (!path.startsWith("/user/")) {
+      throw new Error("No permission to write in the given path: " + path);
+    }
+    if (path.endsWith("/")) {
+      throw new Error("Writing a directory instead of a file");
+    }
 
-      function processDeletion() {
-        if (itemsToDelete.length === 0) {
-          return resolve();
+    // I group both metadata and content write in the same IndexedDB
+    // transaction (its mechanism for consistency) to avoid desynchronization.
+    // There might still be due to a browser crash or power outage but shit
+    // happens.
+    const db = await this._dbProm;
+    const tx = db.transaction([METADATA_STORE, CONTENT_STORE], "readwrite");
+    return new Promise((resolve, reject) => {
+      tx.onerror = () => reject(tx.error);
+      tx.oncomplete = () => resolve();
+      const id = pathToId(filePath);
+
+      const metadataStore = tx.objectStore(METADATA_STORE);
+      const contentStore = tx.objectStore(CONTENT_STORE);
+      metadataStore.delete(id);
+      contentStore.delete(id);
+    });
+  }
+
+  async mv(sourcePath, destinationPath) {
+    if (!path.startsWith("/user/")) {
+      throw new Error("No permission to write in the given path: " + path);
+    }
+
+    const db = await this._dbProm;
+
+    const allEntries = await this._readDirRecursive(sourcePath);
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction([METADATA_STORE, CONTENT_STORE], "readwrite");
+      tx.onerror = () => reject(tx.error);
+      tx.oncomplete = () => resolve();
+
+      const metadataStore = tx.objectStore(METADATA_STORE);
+      const contentStore = tx.objectStore(CONTENT_STORE);
+
+      allEntries.forEach((entry) => {
+        const originalId = pathToId(entry.fullPath);
+        let newPath;
+        if (entry.fullPath === sourcePath) {
+          newPath = destinationPath;
+        } else {
+          newPath = destinationPath + entry.fullPath.slice(sourcePath.length);
         }
-        let processed = 0;
+        const newId = pathToId(newPath);
+        metadataStore.put({
+          ...dirEntry,
+          id: newId,
+          fullPath: newPath,
+          directory: getDirectory(newPath),
+          name: getName(newPath),
+        });
+        metadataStore.delete(originalId);
 
-        itemsToDelete.forEach((id) => {
-          const deleteRequest = store.delete(id);
-          deleteRequest.onerror = () => reject(deleteRequest.error);
-          deleteRequest.onsuccess = () => {
-            if (++processed === itemsToDelete.length) {
-              resolve();
+        if (entry.type !== "directory") {
+          const getRequest = contentStore.get(originalId);
+          getRequest.onsuccess = () => {
+            if (getRequest.result) {
+              contentStore.put({
+                id: newId,
+                content: getRequest.result.content,
+              });
+              contentStore.delete(originalId);
             }
           };
-        });
-      }
+        }
+      });
+    });
+  }
+
+  async rm(path) {
+    if (!path.startsWith("/user/")) {
+      throw new Error("No permission to write in the given path: " + path);
+    }
+
+    const db = await this._dbProm;
+
+    const allEntries = await this._readDirRecursive(path);
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction([METADATA_STORE, CONTENT_STORE], "readwrite");
+      tx.onerror = () => reject(tx.error);
+      tx.oncomplete = () => resolve();
+
+      const metadataStore = tx.objectStore(METADATA_STORE);
+      const contentStore = tx.objectStore(CONTENT_STORE);
+      allEntries.forEach((entry) => {
+        const originalId = pathToId(entry.fullPath);
+        metadataStore.delete(originalId);
+
+        if (entry.type !== "directory") {
+          const getRequest = contentStore.get(originalId);
+          getRequest.onsuccess = () => {
+            if (getRequest.result) {
+              contentStore.delete(originalId);
+            }
+          };
+        }
+      });
     });
   }
 
   async readFile(path) {
-    if (path in this._virtualRootDir) {
-      return null;
-    }
-
-    if (!path.startsWith("/user/")) {
-      // TODO:
+    if (path.startsWith("/apps/") && path !== "/apps/") {
+      const wantedApp = path.substring("/apps/".length);
+      for (const app of apps) {
+        if (app.id === wantedApp) {
+          return app.id;
+        }
+      }
       throw new Error("File not found.");
     }
 
-    const contentStore = await this._getContentStore("readwrite");
+    if (!path.startsWith("/user/")) {
+      throw new Error("File not found.");
+    }
 
+    const db = await this._dbProm;
+    const contentStore = db
+      .transaction(CONTENT_STORE, "readwrite")
+      .objectStore(CONTENT_STORE);
     return new Promise((resolve, reject) => {
       const request = contentStore.get(pathToId(path));
+      request.onerror = () => reject(request.error);
       request.onsuccess = () => {
         if (!request.result) {
           reject(new Error("File not found."));
         }
         resolve(request.result.content);
       };
-      request.onerror = () => reject(request.error);
     });
   }
 
@@ -243,15 +279,69 @@ class DesktopFileSystem {
       throw new Error("No permission to write in the given path: " + path);
     }
 
-    const store = await this._getMetadataStore("readwrite");
+    const db = await this._dbProm;
+    const tx = db.transaction(METADATA_STORE, "readwrite");
+    const store = tx.objectStore(METADATA_STORE);
+
+    // TODO: What if the parent dir doesn't even exist?
+    // Maybe add some consistency checks somewhere so it doesn't go out of hands
+
     return new Promise((resolve, reject) => {
-      const request = store.put({
-        path: path.endsWith("/") ? path : `${path}/`,
+      tx.onerror = () => reject(tx.error);
+      tx.oncomplete = () => resolve();
+
+      const fullPath = path.endsWith("/") ? path : path + "/";
+      const name = getName(fullPath);
+      const now = Date.now();
+      store.put({
+        id: pathToId(fullPath),
+        fullPath,
+        directory: getDirectory(fullPath.substring(0, fullPath.length - 1)),
+        name,
         type: "directory",
-        created: Date.now(),
+        modified: now,
+        mimeType: undefined,
       });
-      request.onsuccess = () => resolve();
+
+      const systemFile = fullPath + DIR_CONFIG_FILENAME;
+      store.put({
+        id: pathToId(systemFile),
+        fullPath: systemFile,
+        directory: fullPath,
+        name: DIR_CONFIG_FILENAME,
+        type: "system",
+        modified: now,
+        mimeType: undefined,
+      });
+    });
+  }
+  async _readDirRecursive(dirPath) {
+    const db = await this._dbProm;
+    const normalizedDirPath = dirPath.endsWith("/") ? dirPath : dirPath + "/";
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([METADATA_STORE], "readonly");
+      const metadataStore = transaction.objectStore(METADATA_STORE);
+      const allEntries = [];
+      const request = metadataStore.openCursor();
       request.onerror = () => reject(request.error);
+      request.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+          const entry = cursor.value;
+
+          // TODO: more efficient
+          if (
+            entry.fullPath === normalizedDirPath ||
+            entry.fullPath.startsWith(normalizedDirPath)
+          ) {
+            allEntries.push(entry);
+          }
+          cursor.continue();
+        } else {
+          resolve(allEntries);
+        }
+      };
     });
   }
 }
@@ -280,8 +370,12 @@ function openDB() {
   });
 }
 
-function getParentDirectory(path) {
+function getDirectory(path) {
   return path.substring(0, path.lastIndexOf("/") + 1);
+}
+
+function getName(path) {
+  return path.split("/").filter(Boolean).pop();
 }
 
 function pathToId(path) {

@@ -5,14 +5,9 @@ import {
   createNumericSliderOnRef,
 } from "./utils.mjs";
 
-// TODO: use fs path `/system/constants`
-const TASKBAR_MIN_HORIZONTAL_SIZE = 25;
-const TASKBAR_MAX_HORIZONTAL_SIZE = 70;
-const TASKBAR_MIN_VERTICAL_SIZE = 60;
-const TASKBAR_MAX_VERTICAL_SIZE = 150;
-
 export default function createTaskbarSection(
   { settings, appUtils },
+  taskbarDimensionLimits,
   abortSignal,
 ) {
   const { createAppTitle, strHtml } = appUtils;
@@ -43,7 +38,9 @@ export default function createTaskbarSection(
     ),
   );
 
-  generalGroup.appendChild(createTaskbarSizeElt(settings, abortSignal));
+  generalGroup.appendChild(
+    createTaskbarSizeElt(settings, taskbarDimensionLimits, abortSignal),
+  );
   generalGroup.appendChild(
     createNumericSliderOnRef(
       {
@@ -144,7 +141,7 @@ export default function createTaskbarSection(
   section.appendChild(colorGroupElt);
   return section;
 
-  function createTaskbarSizeElt(settings, abortSignal) {
+  function createTaskbarSizeElt(settings, taskbarDimensionLimits, abortSignal) {
     const taskbarSizeWrapperElt = document.createElement("span");
     settings.taskbarLocation.onUpdate(
       (newVal) => {
@@ -157,11 +154,11 @@ export default function createTaskbarSection(
               ref: settings.taskbarSize,
               label: "Taskbar size",
               min: isCurrentlyHorizontal
-                ? TASKBAR_MIN_HORIZONTAL_SIZE
-                : TASKBAR_MIN_VERTICAL_SIZE,
+                ? taskbarDimensionLimits.minHorizontalSize
+                : taskbarDimensionLimits.minVerticalSize,
               max: isCurrentlyHorizontal
-                ? TASKBAR_MAX_HORIZONTAL_SIZE
-                : TASKBAR_MAX_VERTICAL_SIZE,
+                ? taskbarDimensionLimits.maxHorizontalSize
+                : taskbarDimensionLimits.maxVerticalSize,
               valueToText: (val) => String(val),
             },
             appUtils,

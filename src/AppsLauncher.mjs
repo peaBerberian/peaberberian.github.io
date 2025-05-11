@@ -1,4 +1,4 @@
-import appUtils from "./app-utils.mjs";
+import appUtils from "./app-utils/index.mjs";
 import {
   applyStyle,
   constructSidebarElt,
@@ -7,7 +7,7 @@ import {
 } from "./utils.mjs";
 import * as CONSTANTS from "./constants.mjs";
 import { SETTINGS } from "./settings.mjs";
-import filesystem from "./filesystem.mjs";
+import filesystem from "./filesystem/filesystem.mjs";
 import AppWindow from "./components/window/AppWindow.mjs";
 
 const { BASE_WINDOW_Z_INDEX, IMAGE_ROOT_PATH, __VERSION__ } = CONSTANTS;
@@ -107,11 +107,13 @@ export default class AppsLauncher {
      */
     const spinnerPlaceholder = getSpinnerPlaceholder();
 
-    const initialElt = spinnerPlaceholder.element;
-    const appWindow = new AppWindow(app, initialElt, appArgs, options);
-    if (!appWindow) {
-      return false; // No window has been created
-    }
+    let appElement = spinnerPlaceholder.element;
+    const appWindow = new AppWindow(app, appElement, options);
+
+    // TODO: here instead?
+    // The `AppWindow` doesn't really need to know about the app metadata
+    // appWindow.updateTitle(app.icon, app.title);
+    // this._windows.push({ appId: app.id, appWindow });
 
     this._windows.push(appWindow);
 
@@ -129,7 +131,7 @@ export default class AppsLauncher {
       abortController.abort();
       const windowIndex = this._windows.indexOf(appWindow);
       if (windowIndex !== -1) {
-        // Remove from array
+        // Remove from array and activate next window
         this._windows.splice(windowIndex, 1);
         this.activateMostVisibleWindow();
       }
@@ -178,6 +180,8 @@ export default class AppsLauncher {
 
       // Normalize all windows so it starts at `BASE_WINDOW_Z_INDEX`
       // as a low value
+      // TODO: I may do this too often? I don't know how much this has an
+      // effect, yet normalization could be a rare-ish event.
       windowEltsWithZIndex.sort((a, b) => a.zIndex - b.zIndex);
       windowEltsWithZIndex.forEach((item, index) => {
         const newZIndex = String(BASE_WINDOW_Z_INDEX + index);
@@ -209,8 +213,11 @@ export default class AppsLauncher {
       appUtils,
       getImageRootPath: () => IMAGE_ROOT_PATH,
       getVersion: () => __VERSION__,
+      // TODO: With imediately-updating titles, it can look quite jumpy to first
+      // update it to its initial title and then potentially update it once the
+      // app is loaded... Find a solution.
       updateTitle: (newIcon, newTitle) => {
-        appWindow.updateTitle(`${newIcon} ${newTitle}`);
+        appWindow.updateTitle(newIcon, newTitle);
         this._taskbarManager.updateTitle(windowId, newIcon, newTitle);
       },
       open: (path, args) => this.openApp(path, args),
@@ -229,15 +236,16 @@ export default class AppsLauncher {
     // Actually launch the application
     this._launchApp(app.data, appArgs, env, abortController.signal).then(
       ({ element, onActivate, onDeactivate }) => {
+        clearTimeout(spinnerPlaceholder.timeout);
+
         if (abortController.signal.aborted) {
           return;
         }
 
-        clearTimeout(spinnerPlaceholder.timeout);
-
         // /!\ Note that we replace here, the element communicated to the
         // `AppWindow` is stale now. Hopefully, it shouldn't care.
-        spinnerPlaceholder.element.replaceWith(element);
+        appElement.replaceWith(element);
+        appElement = element;
 
         if (typeof onActivate === "function") {
           if (appWindow.isActivated()) {
@@ -248,7 +256,7 @@ export default class AppsLauncher {
           });
         }
         if (typeof onDeactivate === "function") {
-          if (!isActivated()) {
+          if (!appWindow.isActivated()) {
             onDeactivate();
           }
           appWindow.addEventListener("deactivated", () => {
@@ -307,10 +315,11 @@ export default class AppsLauncher {
    */
   async _launchApp(appData, appArgs, env, abortSignal) {
     const launchAfterPromise = (prom) => {
-      return prom.then((module) =>
-        this._launchApp(module, appArgs, env, abortSignal),
+      return prom.then((appVal) =>
+        this._launchApp(appVal, appArgs, env, abortSignal),
       );
     };
+
     if (appData.create) {
       const ret = appData.create(appArgs, env, abortSignal);
       return this._launchApp(ret, appArgs, env, abortSignal);
@@ -341,7 +350,7 @@ export default class AppsLauncher {
     if (!onActivate && typeof appData.onActivate === "function") {
       onActivate = appData.onActivate.bind(appData);
     }
-    if (onDeactivate && typeof appData.onDeactivate === "function") {
+    if (!onDeactivate && typeof appData.onDeactivate === "function") {
       onDeactivate = appData.onDeactivate.bind(appData);
     }
     return { element, onActivate, onDeactivate };
@@ -492,6 +501,7 @@ export function constructAppWithSidebar(sections, abortSignal) {
   container.className = "w-container";
   const content = document.createElement("div");
   content.className = "w-content";
+  content.tabIndex = "0";
   const formattedSections = sections.slice().map((s, i) => {
     return { ...s, section: i };
   });
@@ -511,6 +521,7 @@ export function constructAppWithSidebar(sections, abortSignal) {
       innerContentElt.classList.add("w-content-centered");
     }
     content.appendChild(innerContentElt);
+    content.focus();
   };
   const sidebar = constructSidebarElt(formattedSections, (section) => {
     displaySection(section);

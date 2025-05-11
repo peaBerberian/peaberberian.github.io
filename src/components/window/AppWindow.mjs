@@ -43,25 +43,24 @@ const {
 
 export default class AppWindow extends EventEmitter {
   /**
-   * @param {Object} appObj - Object describing the application to run (result of
+   * @param {Object} appObj - Object describing this application (result of
    * reading the corresponding app as an object in the filesystem).
-   * @param {HTMLElement} initialAppElement - The application's initial content.
-   * Note that it may be replaced at any time, the reference of that element
-   * should not be stored.
+   * @param {HTMLElement} initialContent - The application's initial content.
+   * As it may be replaced at any time, the reference of that element will not
+   * be stored.
    * @param {Object} options - Various options to configure how that new
    * application window will behave
    * @param {boolean} [options.skipAnim] - If set to `true`, we will not show the
    * open animation for this new window.
    * @param {boolean} [options.centered] - If set to `true`, the application
    * window will be centered relative to the desktop in which it can be moved.
-   * @returns {Object|null} - Object representing the newly created window.
-   * `null` if no window has been created.
    */
-  constructor(appObj, initialAppElement, { skipAnim, centered } = {}) {
+  constructor(appObj, initialContent, { skipAnim, centered } = {}) {
     super();
 
     /**
      * Identifier for this application.
+     * TODO: A window shouldn't care about the app's id I guess
      * @type {string}
      */
     this.appId = appObj.id;
@@ -95,7 +94,7 @@ export default class AppWindow extends EventEmitter {
     const appContainer = constructVisibleWindowScaffolding(
       (appObj.icon ?? "") + " " + (appObj.title ?? ""),
     );
-    appContainer.appendChild(initialAppElement);
+    appContainer.appendChild(initialContent);
     this.element = document.createElement("div");
     this.element.appendChild(appContainer);
 
@@ -119,23 +118,6 @@ export default class AppWindow extends EventEmitter {
       right: 0,
       top: 0,
       bottom: 0,
-      /**
-       * If `0`, the window is not out-of-bounds on the x axis.
-       * If positive, it is out-of-bounds from that amount in pixels past the
-       * right side of its parent container.
-       * If negative, it is out-of-bounds from that amount in pixels past the
-       * left side of its parent container.
-       * @type {number|null}
-       */
-      x: 0,
-      /**
-       * If `0`, the window is not out-of-bounds on the y axis.
-       * If positive, it is out-of-bounds from that amount in pixels past the
-       * bottom side of its parent container.
-       * If negative, it is out-of-bounds from that amount in pixels past the
-       * top side of its parent container.
-       */
-      y: 0,
     };
 
     this.element.className = "window";
@@ -173,11 +155,10 @@ export default class AppWindow extends EventEmitter {
     return this.element.classList.contains("active");
   }
 
-  // TODO: only title, not icon + title?
-  updateTitle(newTitle) {
+  updateTitle(newIcon, newTitle) {
     const titleElt = this.element.getElementsByClassName("w-title")[0];
     if (titleElt) {
-      titleElt.textContent = newTitle;
+      titleElt.textContent = (newIcon ?? "") + " " + (newTitle ?? "");
     }
   }
 
@@ -484,28 +465,12 @@ export default class AppWindow extends EventEmitter {
     let wantedWWidth;
 
     if (isInitialization) {
-      if (typeof this.defaultHeight === "function") {
-        const wantedHeight = this.defaultHeight({
-          maxWidth: maxWindowWidth,
-          maxHeight: maxWindowHeight,
-          minWidth: minWindowWidth,
-          minHeight: minWindowHeight,
-        });
-        wantedWHeight = wantedHeight ?? DEFAULT_WINDOW_HEIGHT;
-      } else {
-        wantedWHeight = this.defaultHeight;
-      }
-      if (typeof this.defaultWidth === "function") {
-        const wantedWidth = this.defaultWidth({
-          maxWidth: maxWindowWidth,
-          maxHeight: maxWindowHeight,
-          minWidth: minWindowWidth,
-          minHeight: minWindowHeight,
-        });
-        wantedWWidth = wantedWidth ?? DEFAULT_WINDOW_WIDTH;
-      } else {
-        wantedWWidth = this.defaultWidth;
-      }
+      wantedWHeight =
+        this.defaultHeight +
+        SETTINGS.windowHeaderHeight.getValue() +
+        SETTINGS.windowBorderSize.getValue();
+      wantedWWidth =
+        this.defaultWidth + SETTINGS.windowBorderSize.getValue() * 2;
 
       if (wantedWWidth > maxWindowWidth) {
         wantedWWidth = maxWindowWidth;
@@ -716,15 +681,30 @@ export default class AppWindow extends EventEmitter {
       addAbortableEventListener(minimizeBtn, "click", abortSignal, () => {
         this.minimize();
       });
+      addAbortableEventListener(minimizeBtn, "keydown", abortSignal, (e) => {
+        if (e.key === "Enter") {
+          this.minimize();
+        }
+      });
     }
     if (maximizeBtn) {
       addAbortableEventListener(maximizeBtn, "click", abortSignal, () => {
         this._onMaximizeButton(windowElt);
       });
+      addAbortableEventListener(maximizeBtn, "keydown", abortSignal, (e) => {
+        if (e.key === "Enter") {
+          this._onMaximizeButton();
+        }
+      });
     }
     if (closeBtn) {
       addAbortableEventListener(closeBtn, "click", abortSignal, () => {
         this.close();
+      });
+      addAbortableEventListener(closeBtn, "keydown", abortSignal, (e) => {
+        if (e.key === "Enter") {
+          this.close();
+        }
       });
     }
 
@@ -743,15 +723,26 @@ export default class AppWindow extends EventEmitter {
         });
       }
     });
-    addAbortableEventListener(document, "click", abortSignal, (evt) => {
-      if (
-        windowElt.classList.contains("active") &&
-        // The setup of events may be following a click, just don't deactivate on an
-        // ouside click if the window just had been activated
-        !windowElt.dataset.dontDisableOnLoop &&
-        evt.target !== windowElt &&
-        !windowElt.contains(evt.target)
-      ) {
+
+    // This had too much false positives (e.g. when a click unmounted the
+    // corresponding HTMLElement).
+    // Removing it is also nice :p
+    // addAbortableEventListener(document, "click", abortSignal, (evt) => {
+    //   if (
+    //     windowElt.classList.contains("active") &&
+    //     // The setup of events may be following a click, just don't deactivate on an
+    //     // ouside click if the window just had been activated
+    //     !windowElt.dataset.dontDisableOnLoop &&
+    //     evt.target !== windowElt &&
+    //     !windowElt.contains(evt.target)
+    //   ) {
+    //     this.deActivate(windowElt);
+    //   }
+    // });
+    addAbortableEventListener(document, "focusin", abortSignal, (evt) => {
+      if (windowElt.contains(evt.target)) {
+        this.activate(windowElt);
+      } else {
         this.deActivate(windowElt);
       }
     });
@@ -799,9 +790,9 @@ function constructVisibleWindowScaffolding(title) {
 		<div class="w-header">
 			<div class="w-title">${title}</div>
 			<div class="w-controls">
-				<div class="w-button w-minimize" title="Minimize"><span class="w-button-icon"></span></div>
-				<div class="w-button w-maximize" title="Maximize"><span class="w-button-icon"></span></div>
-				<div class="w-button w-close" title="Close"><span class="w-button-icon"></span></div>
+				<div class="w-button w-minimize" title="Minimize" tabindex="0"><span class="w-button-icon"></span></div>
+				<div class="w-button w-maximize" title="Maximize" tabindex="0"><span class="w-button-icon"></span></div>
+				<div class="w-button w-close" title="Close" tabindex="0"><span class="w-button-icon"></span></div>
 			</div>
 		</div>
   </div>`;

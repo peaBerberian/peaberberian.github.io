@@ -95,7 +95,14 @@ export default function StartMenu(apps, openApp, abortSignal) {
   };
 
   document.addEventListener("click", onDocumentClick);
+  document.addEventListener("keydown", onKeyDown);
   startButtonElt.addEventListener("click", onStartButtonClick);
+  startButtonElt.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onStartButtonClick();
+    }
+  });
   window.addEventListener("resize", scheduleRefresh);
   SETTINGS.enableStartMenuSublists.onUpdate(scheduleRefresh, {
     clearSignal: abortSignal,
@@ -110,9 +117,16 @@ export default function StartMenu(apps, openApp, abortSignal) {
   if (abortSignal) {
     abortSignal.addEventListener("abort", () => {
       document.removeEventListener("click", onDocumentClick);
+      document.removeEventListener("keydown", onKeyDown);
       startButtonElt.removeEventListener("click", onStartButtonClick);
       window.removeEventListener("resize", scheduleRefresh);
     });
+  }
+
+  function onKeyDown(e) {
+    if (e.key === "Escape") {
+      closeStartMenu(startMenuElt);
+    }
   }
 }
 
@@ -206,33 +220,33 @@ function refreshStartMenu(
   const startMenuHeaderElt = document.createElement("div");
   startMenuHeaderElt.className = "start-header";
   startMenuHeaderElt.textContent = "Paul's Web Desktop";
+  startMenuHeaderElt.style.height = String(START_ITEM_HEIGHT) + "px";
+  startMenuHeaderElt.style.display = "flex";
+  startMenuHeaderElt.style.alignItems = "center";
 
   const startMenuItemsElt = document.createElement("div");
   startMenuItemsElt.className = "start-menu-items";
+  startMenuItemsElt.style.overflow = "auto";
 
   // TODO: constants?
   const doLists =
     !disableLists &&
     SETTINGS.enableStartMenuSublists.getValue() &&
     clientWidth >= 10 + 250 + 200;
-  if (doLists) {
-    // TODO: still do for the y axis only, but I don't know how to do that
-    // without breaking everything for now
-    startMenuItemsElt.style.overflow = "";
-  } else {
-    startMenuItemsElt.style.overflow = "auto";
-  }
 
   const doesTaskbarInfluencesMaxHeight = ["top", "bottom"].includes(
     SETTINGS.taskbarLocation.getValue(),
   );
 
+  const itemsWrapperElt = document.createElement("div");
+  itemsWrapperElt.appendChild(startMenuItemsElt);
+  itemsWrapperElt.style.overflow = "auto";
   if (SETTINGS.taskbarLocation.getValue() === "top") {
-    startMenuElt.appendChild(startMenuItemsElt);
+    startMenuElt.appendChild(itemsWrapperElt);
     startMenuElt.appendChild(startMenuHeaderElt);
   } else {
     startMenuElt.appendChild(startMenuHeaderElt);
-    startMenuElt.appendChild(startMenuItemsElt);
+    startMenuElt.appendChild(itemsWrapperElt);
   }
 
   for (let currentIdx = 0; currentIdx < apps.length; currentIdx++) {
@@ -245,21 +259,6 @@ function refreshStartMenu(
           startMenuItemsElt.appendChild(constructAppItem(subAppObj));
         }
       } else {
-        const startItemElt = document.createElement("div");
-        startItemElt.className = "start-item";
-        startItemElt.style.height = String(START_ITEM_HEIGHT) + "px";
-
-        // XXX TODO:
-        // const currentList = listMap.get(appObj.name);
-        // if (currentList) {
-        //   currentList.height += START_ITEM_HEIGHT;
-        //   currentList.height = Math.min(currentList.height, clientHeight);
-        // }
-
-        const startItemListElt = document.createElement("div");
-        startItemListElt.className = "start-item start-item-list";
-        startItemListElt.style.height = String(START_ITEM_HEIGHT) + "px";
-
         const listIconElt = document.createElement("div");
         listIconElt.className = "start-icon";
         listIconElt.textContent = "📂";
@@ -270,13 +269,33 @@ function refreshStartMenu(
         listTitleElt.className = "start-title";
         listTitleElt.textContent = appObj.name;
 
+        const startItemListElt = document.createElement("div");
+        startItemListElt.className = "start-item start-item-list";
+        startItemListElt.style.height = String(START_ITEM_HEIGHT) + "px";
+
         startItemListElt.appendChild(listIconElt);
         startItemListElt.appendChild(listTitleElt);
         startMenuItemsElt.appendChild(startItemListElt);
 
         const list = document.createElement("div");
         list.className = "s-list";
+        list.style.bottom =
+          String((apps.length - 1 - currentIdx) * START_ITEM_HEIGHT) + "px";
+        // String(START_ITEM_HEIGHT + currentIdx * START_ITEM_HEIGHT) + "px";
 
+        startItemListElt.onmouseenter = () => {
+          list.classList.add("active");
+        };
+        list.onmouseleave = (e) => {
+          if (!list.contains(e.relatedTarget)) {
+            list.classList.remove("active");
+          }
+        };
+        startItemListElt.onmouseleave = (e) => {
+          if (!list.contains(e.relatedTarget)) {
+            list.classList.remove("active");
+          }
+        };
         let baseYOffset = 0;
 
         const listItemsWrapper = document.createElement("div");
@@ -285,11 +304,25 @@ function refreshStartMenu(
           String(clientHeight - baseYOffset) + "px";
 
         list.appendChild(listItemsWrapper);
-        startItemListElt.appendChild(list);
+        startMenuElt.appendChild(list);
 
         for (const subAppObj of appObj.list) {
           listItemsWrapper.appendChild(constructAppItem(subAppObj));
         }
+
+        // TODO: I didn't succeed to make sublist accessible sadly
+        // startItemListElt.addEventListener("keydown", (e) => {
+        //   if (
+        //     e.key === "Enter" ||
+        //     e.key === " " ||
+        //     e.key ===
+        //       (SETTINGS.taskbarLocation.getValue() === "right"
+        //         ? "ArrowLeft"
+        //         : "ArrowRight")
+        //   ) {
+        //     listItemsWrapper.children[0].children[0].focus();
+        //   }
+        // });
         const listHeight = Math.min(
           baseYOffset + START_ITEM_HEIGHT * appObj.list.length,
           clientHeight,
@@ -337,6 +370,7 @@ function refreshStartMenu(
   function constructAppItem(appObj) {
     const startItemElt = document.createElement("div");
     startItemElt.className = "start-item";
+    startItemElt.tabIndex = "0";
     startItemElt.style.height = String(START_ITEM_HEIGHT) + "px";
 
     const startIconElt = document.createElement("div");
@@ -352,6 +386,12 @@ function refreshStartMenu(
     startItemElt.addEventListener("click", () => {
       closeStartMenu(startMenuElt);
       openApp(appObj.run, appObj.args);
+    });
+    startItemElt.addEventListener("keydown", (e) => {
+      if (e.key === " " || e.key === "Enter") {
+        closeStartMenu(startMenuElt);
+        openApp(appObj.run, appObj.args);
+      }
     });
     return startItemElt;
   }

@@ -31,7 +31,7 @@
 export async function create(args, env) {
   const applyStyle = env.appUtils.applyStyle;
   if (args.length > 1) {
-    env.updateTitle(args[0], args[1]);
+    env.updateTitle(args[0], "Apps: " + args[1]);
   }
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {

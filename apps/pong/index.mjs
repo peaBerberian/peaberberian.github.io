@@ -1,5 +1,8 @@
-const paddleWidth = 10;
-const paddleHeight = 80;
+// TODO: configurable?
+
+const PADDLE_WIDTH = 10;
+const PADDLE_HEIGHT = 80;
+const BALL_RADIUS = 10;
 
 export function create(_args, env, abortSignal) {
   const { applyStyle } = env.appUtils;
@@ -37,7 +40,11 @@ export function create(_args, env, abortSignal) {
   });
 
   let canvas;
+  let hasStarted = false;
   let userPaddle;
+  let isTopPressed = false;
+  let isDownPressed = false;
+
   containerElt.appendChild(
     contructCanvas(containerElt.getBoundingClientRect()),
   );
@@ -47,7 +54,55 @@ export function create(_args, env, abortSignal) {
   // Safari just selects all over the place like some maniac without this
   containerElt.addEventListener("selectstart", (e) => e.preventDefault());
 
-  return { element: containerElt };
+  return {
+    element: containerElt,
+
+    onActivate: () => {
+      document.addEventListener("keydown", onKeyDown);
+      document.addEventListener("keyup", onKeyUp);
+    },
+    onDeactivate: () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("keyup", onKeyUp);
+      isTopPressed = false;
+      isDownPressed = false;
+    },
+  };
+
+  /**
+   * @param {KeyboardEvent} e
+   */
+  function onKeyDown(e) {
+    // TODO: It might be more usable/fun by re-checking each frame is the key is
+    // maintained and move accordingly as an accessible alternative to the mouse
+    switch (e.key) {
+      case "ArrowUp":
+        isTopPressed = true;
+        break;
+      case "ArrowDown":
+        isDownPressed = true;
+        break;
+      case " ":
+        hasStarted = true;
+        break;
+    }
+  }
+
+  /**
+   * @param {KeyboardEvent} e
+   */
+  function onKeyUp(e) {
+    // TODO: It might be more usable/fun by re-checking each frame is the key is
+    // maintained and move accordingly as an accessible alternative to the mouse
+    switch (e.key) {
+      case "ArrowUp":
+        isTopPressed = false;
+        break;
+      case "ArrowDown":
+        isDownPressed = false;
+        break;
+    }
+  }
 
   function onTouchMove(e) {
     if (e.touches.length === 1) {
@@ -56,7 +111,7 @@ export function create(_args, env, abortSignal) {
       const relativeY = touch.clientY - canvasRect.top;
       userPaddle.y = Math.max(
         0,
-        Math.min(relativeY - paddleHeight / 2, canvas.height - paddleHeight),
+        Math.min(relativeY - PADDLE_HEIGHT / 2, canvas.height - PADDLE_HEIGHT),
       );
     }
   }
@@ -65,7 +120,7 @@ export function create(_args, env, abortSignal) {
     const relativeY = e.clientY - canvasRect.top;
     userPaddle.y = Math.max(
       0,
-      Math.min(relativeY - paddleHeight / 2, canvas.height - paddleHeight),
+      Math.min(relativeY - PADDLE_HEIGHT / 2, canvas.height - PADDLE_HEIGHT),
     );
   }
 
@@ -85,7 +140,7 @@ export function create(_args, env, abortSignal) {
     const ball = {
       x: canvas.width / 2,
       y: canvas.height / 2,
-      radius: 10,
+      radius: BALL_RADIUS,
       dx: 5,
       dy: 5,
       prevX: canvas.width / 2,
@@ -94,15 +149,15 @@ export function create(_args, env, abortSignal) {
 
     const enemyPaddle = {
       x: 0,
-      y: canvas.height / 2 - paddleHeight / 2,
+      y: canvas.height / 2 - PADDLE_HEIGHT / 2,
     };
 
     userPaddle = {
-      x: canvas.width - paddleWidth,
-      y: canvas.height / 2 - paddleHeight / 2,
+      x: canvas.width - PADDLE_WIDTH,
+      y: canvas.height / 2 - PADDLE_HEIGHT / 2,
     };
 
-    let hasStarted = false;
+    hasStarted = false;
     let leftScore = 0;
     let rightScore = 0;
 
@@ -120,6 +175,15 @@ export function create(_args, env, abortSignal) {
     return canvas;
 
     function tick() {
+      if (isTopPressed) {
+        userPaddle.y = Math.max(0, userPaddle.y - 7);
+      } else if (isDownPressed) {
+        userPaddle.y = Math.min(
+          canvas.height - PADDLE_HEIGHT,
+          userPaddle.y + 7,
+        );
+      }
+
       if (!hasStarted) {
         drawTheObjects(false, false);
         ctx.font = "32px monospace";
@@ -132,7 +196,7 @@ export function create(_args, env, abortSignal) {
 
       // Move the enemy paddle
       // TODO: Stop iterating with insane logic and find a good smart one :D
-      const paddleCenter = enemyPaddle.y + paddleHeight / 2;
+      const paddleCenter = enemyPaddle.y + PADDLE_HEIGHT / 2;
       if (paddleCenter < ball.y - 10) {
         enemyPaddle.y += Math.min(2 + currEnemySpeed, ball.y - paddleCenter);
       } else if (paddleCenter > ball.y + 10) {
@@ -145,7 +209,7 @@ export function create(_args, env, abortSignal) {
 
       enemyPaddle.y = Math.max(
         0,
-        Math.min(enemyPaddle.y, canvas.height - paddleHeight),
+        Math.min(enemyPaddle.y, canvas.height - PADDLE_HEIGHT),
       );
 
       // Move the ball
@@ -212,8 +276,8 @@ export function create(_args, env, abortSignal) {
 
       // Now the "paddles"
       ctx.fillStyle = objectsColor;
-      ctx.fillRect(enemyPaddle.x, enemyPaddle.y, paddleWidth, paddleHeight);
-      ctx.fillRect(userPaddle.x, userPaddle.y, paddleWidth, paddleHeight);
+      ctx.fillRect(enemyPaddle.x, enemyPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
+      ctx.fillRect(userPaddle.x, userPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
 
       if (withScore) {
         // And now the score
@@ -250,7 +314,7 @@ function checkPaddleBallCollision(paddle, ball) {
   const timeToX =
     (paddle.x -
       ball.prevX +
-      (ball.dx > 0 ? -ball.radius : paddleWidth + ball.radius)) /
+      (ball.dx > 0 ? -ball.radius : PADDLE_WIDTH + ball.radius)) /
     ball.dx;
 
   if (timeToX < 0 || timeToX > 1) {
@@ -260,7 +324,7 @@ function checkPaddleBallCollision(paddle, ball) {
   const collisionY = ball.prevY + ball.dy * timeToX;
   if (
     collisionY + ball.radius > paddle.y &&
-    collisionY - ball.radius < paddle.y + paddleHeight
+    collisionY - ball.radius < paddle.y + PADDLE_HEIGHT
   ) {
     ball.x = ball.prevX + ball.dx * timeToX;
     ball.y = collisionY;
@@ -268,7 +332,7 @@ function checkPaddleBallCollision(paddle, ball) {
     ball.dx = -ball.dx * 1.05;
 
     // Change some y based on where the paddle is
-    const paddleCenter = paddle.y + paddleHeight / 2;
+    const paddleCenter = paddle.y + PADDLE_HEIGHT / 2;
     ball.dy += (ball.y - paddleCenter) * 0.1;
     return true;
   }

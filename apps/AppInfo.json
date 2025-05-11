@@ -4,7 +4,7 @@
       "id": "about",
       "title": "About Me",
       "icon": "🙋🏻‍♂️",
-      "defaultHeight": 600,
+      "defaultHeight": 550,
       "defaultWidth": 855,
       "onlyOne": false,
       "dependencies": [],
@@ -36,8 +36,8 @@
     },
     {
       "id": "app-group",
-      "title": "",
-      "icon": "",
+      "title": "Apps",
+      "icon": "💽",
       "defaultHeight": 400,
       "defaultWidth": 460,
       "dependencies": ["filesystem"],
@@ -285,6 +285,20 @@
       "defaultHeight": 720,
       "defaultWidth": 1000,
       "website": "https://www.openstreetmap.org/export/embed.html",
+      "startMenu": {
+        "list": "External Apps"
+      },
+      "desktop": {
+        "group": "External Apps"
+      }
+    },
+    {
+      "id": "noclip",
+      "title": "noclip.website",
+      "icon": "🕹️",
+      "defaultHeight": 720,
+      "defaultWidth": 1280,
+      "website": "https://noclip.website/",
       "startMenu": {
         "list": "External Apps"
       },

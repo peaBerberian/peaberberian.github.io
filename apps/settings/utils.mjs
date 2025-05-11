@@ -24,6 +24,13 @@ export function createColorPickerOnRef(ref, text, appUtils, abortSignal) {
   );
   previewElt.style.backgroundColor = inputElt.value;
   previewElt.onclick = () => inputElt.click();
+  previewElt.tabIndex = "0";
+  previewElt.onkeydown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      previewElt.click();
+    }
+  };
   inputElt.onclick = function (evt) {
     ref.setValueIfChanged(evt.target.value);
   };

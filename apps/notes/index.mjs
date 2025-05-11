@@ -225,6 +225,7 @@ export function create(args, env) {
     const statusBar = document.createElement("div");
     applyStyle(statusBar, {
       backgroundColor: "var(--window-sidebar-bg)",
+      borderTop: "1px solid var(--window-line-color)",
       padding: "4px",
       bottom: "0",
       width: "100%",

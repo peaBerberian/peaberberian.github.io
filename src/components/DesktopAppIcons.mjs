@@ -241,7 +241,7 @@ export default async function DesktopAppIcons(
 
     iconWrapperElt.innerHTML = "";
 
-    const iconEltAppTuple = [];
+    const iconEltToAppMap = new Map();
     let currentRow = 0;
     for (let i = 0; i < appList.length; i++) {
       const app = appList[i];
@@ -309,20 +309,40 @@ export default async function DesktopAppIcons(
       abortSignal.addEventListener("abort", () => {
         document.removeEventListener("click", onDocumentClick);
       });
-      iconEltAppTuple.push([iconElt, app]);
+      iconEltToAppMap.set(iconElt, app);
       iconWrapperElt.appendChild(iconElt);
       currentRow++;
     }
 
     addMovingAroundListeners(
-      iconEltAppTuple,
+      iconWrapperElt.children,
       {
         height: iconHeight,
         width: ICON_WIDTH_BASE,
       },
-      (newTuple) => reorderApps(appList, newTuple),
+      (elt1, elt2) => exchangeAppPlaces(appList, iconEltToAppMap, elt1, elt2),
       abortSignal,
     );
+  }
+
+  function exchangeAppPlaces(appList, iconEltToAppMap, iconElt1, iconElt2) {
+    const app1 = iconEltToAppMap.get(iconElt1);
+    const app2 = iconEltToAppMap.get(iconElt2);
+    for (let i = 0; i < appList.length; i++) {
+      if (appList[i] === app1) {
+        for (let j = 0; j < appList.length; j++) {
+          if (appList[j] === app2) {
+            const tempApp1 = appList[i];
+            appList[i] = appList[j];
+            appList[j] = tempApp1;
+            lastAppListMemory = JSON.stringify({ list: appList }, null, 2);
+            fs.writeFile("/userconfig/desktop.config.json", lastAppListMemory);
+            return;
+          }
+        }
+        return;
+      }
+    }
   }
 
   /**
@@ -455,11 +475,6 @@ export default async function DesktopAppIcons(
       }
     }
   }
-  function reorderApps(appList, newTuple) {
-    appList = newTuple.map(([_, app]) => app);
-    lastAppListMemory = JSON.stringify({ list: appList }, null, 2);
-    fs.writeFile("/userconfig/desktop.config.json", lastAppListMemory);
-  }
 }
 
 /**
@@ -483,9 +498,9 @@ function getMaxIconPosition(iconElt) {
 }
 
 function addMovingAroundListeners(
-  iconEltAppTuple,
+  iconElts,
   { height, width },
-  reOrderApps,
+  exchangeApps,
   abortSignal,
 ) {
   let isDragging = null;
@@ -498,30 +513,14 @@ function addMovingAroundListeners(
   abortSignal.addEventListener("abort", () => {
     unblockElementsFromTakingPointerEvents();
   });
-  function exchangeAppPlacesInTuple(iconElt1, iconElt2) {
-    for (let i = 0; i < iconEltAppTuple.length; i++) {
-      if (iconEltAppTuple[i][0] === iconElt1.element) {
-        for (let j = 0; j < iconEltAppTuple.length; j++) {
-          if (iconEltAppTuple[j][0] === iconElt2) {
-            const tempI = iconEltAppTuple[i];
-            iconEltAppTuple[i] = iconEltAppTuple[j];
-            iconEltAppTuple[j] = tempI;
-            reOrderApps(iconEltAppTuple);
-            return;
-          }
-        }
-        return;
-      }
-    }
-  }
 
-  for (const [iconElt] of iconEltAppTuple) {
+  for (const iconElt of iconElts) {
     const onMouseUp = () => {
       if (isDragging !== iconElt) {
         return;
       }
       if (tempMovedElt) {
-        exchangeAppPlacesInTuple(tempMovedElt, iconElt);
+        exchangeApps(tempMovedElt.element, iconElt);
       }
       tempMovedElt = null;
       isDragging = null;
@@ -649,7 +648,7 @@ function addMovingAroundListeners(
 
     const newRight = newLeft + width;
     const newBottom = newTop + height;
-    for (const [child] of iconEltAppTuple) {
+    for (const child of iconElts) {
       if (child === iconElt) {
         continue;
       }
@@ -706,60 +705,3 @@ function addMovingAroundListeners(
     dragBaseTop = updatedTop;
   }
 }
-
-// function areAppListsDifferent(appList1, appList2) {
-//   if (appList1.length !== appList2.length) {
-//     return false;
-//   }
-//
-//   for (let i = 0; i < appList1.length; i++) {
-//     if (!isEqual(appList1[i], appList2[i])) {
-//       return false;
-//     }
-//   }
-//
-//   return true;
-//
-//   // TODO: arraybuffer?
-//
-//   function isEqual(obj1, obj2) {
-//     if (obj1 === obj2) {
-//       return true;
-//     }
-//     if (obj1 == null || obj2 == null) {
-//       return false;
-//     }
-//
-//     if (typeof obj1 !== "object" || typeof obj2 !== "object") {
-//       return obj1 === obj2;
-//     }
-//
-//     if (Array.isArray(obj1) || Array.isArray(obj2)) {
-//       if (!Array.isArray(obj1) || !Array.isArray(obj2)) {
-//         return false;
-//       }
-//       if (obj1.length !== obj2.length) {
-//         return false;
-//       }
-//       for (let i = 0; i < obj1.length; i++) {
-//         if (!isEqual(obj1[i], obj2[i])) return false;
-//       }
-//       return true;
-//     }
-//
-//     const keys1 = Object.keys(obj1);
-//     const keys2 = Object.keys(obj2);
-//
-//     if (keys1.length !== keys2.length) {
-//       return false;
-//     }
-//
-//     for (let key of keys1) {
-//       if (!keys2.includes(key) || !isEqual(obj1[key], obj2[key])) {
-//         return false;
-//       }
-//     }
-//
-//     return true;
-//   }
-// }

@@ -47,7 +47,7 @@ import { is12HourClockFormat } from "./utils.mjs";
 import AppIcons from "./components/AppIcons.mjs";
 import StartMenu from "./components/StartMenu.mjs";
 import Taskbar from "./components/Taskbar.mjs";
-import WindowsManager from "./components/window/WindowsManager.mjs";
+import AppsManager from "./components/window/AppsManager.mjs";
 
 // Fragment is only used for in-app anchors for now.
 // We can remove it when the desktop is restared to prevent weird behaviors
@@ -69,7 +69,7 @@ async function start() {
   /** Clock shown as a taskbar "applet". */
   const clockElt = initializeClockElement();
   clockElt.onclick = function () {
-    createApp("/apps/clock.run", [], {
+    appsManager.openApp("/apps/clock.run", [], {
       activate: true,
       fullscreen: false,
       skipAnim: false,
@@ -79,10 +79,10 @@ async function start() {
   };
 
   const taskbarManager = new Taskbar({ applets: [clockElt] });
-  const windowsManager = new WindowsManager(taskbarManager);
+  const appsManager = new AppsManager(desktopElt, taskbarManager);
 
   const openAppFromPath = (appPath, appArgs) => {
-    createApp(appPath, appArgs ?? [], {
+    appsManager.openApp(appPath, appArgs ?? [], {
       activate: true,
       fullscreen: false,
       skipAnim: false,
@@ -93,40 +93,13 @@ async function start() {
   StartMenu(startMenuApps.list, openAppFromPath);
 
   // Open about me default app
-  createApp("/apps/about.run", [], {
+  appsManager.openApp("/apps/about.run", [], {
     activate: true,
     fullscreen: false,
     skipAnim: true,
     centered: true,
   });
-
   console.timeEnd("START");
-  return;
-
-  /**
-   * Launch the given application.
-   * @param {string} appPath - FileSystem path to the application to run.
-   * @param {Array} appArgs - The application's arguments.
-   * @param {Object} options - Various options to configure how that new
-   * application window will behave
-   * @param {boolean} [options.fullscreen] - If set to `true`, the application
-   * will be started full screen.
-   * @param {boolean} [options.skipAnim] - If set to `true`, we will not show the
-   * open animation for this new window.
-   * @param {boolean} [options.centered] - If set to `true`, the application
-   * window will be centered relative to the desktop in which it can be moved.
-   * @param {boolean} [options.activate] - If set to `true`, the application
-   * window will be directly activated.
-   * @returns {Object|null} - Object representing the newly created window.
-   * `null` if no window has been created.
-   */
-  async function createApp(appPath, appArgs, options) {
-    const appObj = await fs.readFile(appPath, "object");
-    const windowElt = windowsManager.openApp(appObj, appArgs, options);
-    if (windowElt !== null) {
-      desktopElt.appendChild(windowElt);
-    }
-  }
 }
 
 document.addEventListener("DOMContentLoaded", function () {

@@ -5,20 +5,22 @@ import AppWindow from "./AppWindow.mjs";
 import { SETTINGS } from "../../settings.mjs";
 import { getMaxDesktopDimensions } from "../../utils.mjs";
 
-/**
- * Abstraction handling multiple windows in the same desktop.
- *
- * You may be able to create one `WindowsManager` per desktop in multi-desktop
- * scenarios.
- */
-export default class WindowsManager {
+export default class AppsManager {
   /**
-   * Creates a new `WindowsManager` for the desktop.
+   * Creates a new `AppsManager` for the desktop.
+   * @param {HTMLElement} dekstopElt - `HTMLElement` where new windows may be
+   * added and removed from.
    * @param {Object} taskbarManager - Abstraction allowing to show the current
-   * opened windows. The `WindowsManager` will add and remove tasks to that
-   * `TaskbarManager` for the corresponding windows.
+   * opened application windows. The `AppsManager` will add and remove tasks to
+   * that `TaskbarManager` for the corresponding windows.
    */
-  constructor(taskbarManager) {
+  constructor(desktopElt, taskbarManager) {
+    /**
+     * `HTMLElement` where new windows may be added and removed from.
+     * @type {HTMLElement}
+     * @private
+     */
+    this._desktopElt = desktopElt;
     /**
      * Metadata on all currently created windows.
      * @type {Array.<AppWindow>}
@@ -43,24 +45,24 @@ export default class WindowsManager {
   }
 
   /**
-   * Create a "window" for the given "app" object.
-   *
-   * @param {Object} app
+   * Open the given application, and optionally open a window for it.
+   * @param {string} appPath - FileSystem path to the application to run.
    * @param {Array} appArgs - The application's arguments.
    * @param {Object} options - Various options to configure how that new
    * application window will behave
-   * @param {boolean} [options.activate] - If set to `true`, the application
-   * window will be directly activated.
    * @param {boolean} [options.fullscreen] - If set to `true`, the application
    * will be started full screen.
    * @param {boolean} [options.skipAnim] - If set to `true`, we will not show the
    * open animation for this new window.
    * @param {boolean} [options.centered] - If set to `true`, the application
    * window will be centered relative to the desktop in which it can be moved.
-   * @returns {HTMLElement|null} - `HTMLElement` of the newly created window.
-   * `null` if no window has been created.
+   * @param {boolean} [options.activate] - If set to `true`, the application
+   * window will be directly activated.
+   * @returns {Promise.<boolean>} - `true` if a window has been create, `false`
+   * if not.
    */
-  openApp(app, appArgs, options = {}) {
+  async openApp(appPath, appArgs, options = {}) {
+    const app = await fs.readFile(appPath, "object");
     if (app.onlyOne) {
       // If only instance of the app can be created, check if this window already
       // exists. If so, activate it.
@@ -69,13 +71,13 @@ export default class WindowsManager {
         if (options.activate) {
           createdWindowForApp.deminimizeAndActivate();
         }
-        return null;
+        return false;
       }
     }
 
     const appWindow = new AppWindow(app, appArgs, options);
     if (!appWindow) {
-      return; // No window has been created
+      return false; // No window has been created
     }
     this._windows.push(appWindow);
     this._checkRelativeWindowPlacement(appWindow);
@@ -165,7 +167,8 @@ export default class WindowsManager {
       appWindow.setFullscreen();
     }
 
-    return appWindow.element;
+    this._desktopElt.appendChild(appWindow.element);
+    return true;
   }
 
   /**

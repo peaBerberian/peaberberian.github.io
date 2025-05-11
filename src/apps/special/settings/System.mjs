@@ -14,26 +14,31 @@ export default function createSystemSection(abortSignal) {
     {
       ref: SETTINGS.fontSize,
       label: "Font Size",
-      min: 12,
+      min: 10,
       max: 19,
       valueToText: (val) => {
         const numVal = +val;
-        if (numVal <= 12) {
-          return "Very small";
-        } else if (numVal === 13) {
-          return "Small";
-        } else if (numVal === 14) {
-          return "Medium";
-        } else if (numVal === 15) {
-          return "Somewhat Large?";
-        } else if (numVal === 16) {
-          return "Large";
-        } else if (numVal === 17) {
-          return "Even Larger";
-        } else if (numVal === 18) {
-          return "Very Large";
-        } else {
-          return "Extra Large";
+        switch (numVal) {
+          case 10:
+            return "Extremely small";
+          case 11:
+            return "Minuscule";
+          case 12:
+            return "Very small";
+          case 13:
+            return "Small";
+          case 14:
+            return "Medium";
+          case 15:
+            return "Somewhat Large?";
+          case 16:
+            return "Large";
+          case 17:
+            return "Even Larger";
+          case 18:
+            return "Very Large";
+          default:
+            return "Extra Large";
         }
       },
     },

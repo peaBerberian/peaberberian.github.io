@@ -66,8 +66,8 @@ html {
 }
 
 #desktop {
-	top: 0;
-	left: 0;
+  top: 0;
+  left: 0;
   width: 100%;
   height: calc(100% - var(--taskbar-size));
   position: fixed;
@@ -241,7 +241,7 @@ html {
   background-color: var(--taskbar-hover);
 }
 #start-button:focus {
-	outline:none;
+  outline: none;
   background-color: var(--taskbar-hover);
 }
 
@@ -330,7 +330,7 @@ html {
 }
 
 #start-menu .start-item:focus {
-	outline: none;
+  outline: none;
 }
 #start-menu.active .start-item:hover {
   background-color: var(--start-menu-active-bg);
@@ -615,8 +615,8 @@ html {
   color: var(--sidebar-selected-bg-color);
 }
 .w-tool-btn:focus {
-	/* outline:none; */
-	/*  color: var(--sidebar-selected-bg-color); */
+  /* outline:none; */
+  /*  color: var(--sidebar-selected-bg-color); */
 }
 
 .w-tool-btn.disabled {
@@ -711,7 +711,7 @@ html {
 }
 /* TODO: find way to communicate focus */
 .w-content:focus {
-	outline: none;
+  outline: none;
 }
 
 .w-content-centered {
@@ -825,7 +825,7 @@ ol {
   background-color: var(--taskbar-hover);
 }
 .taskbar-item:focus {
-	outline: none;
+  outline: none;
   background-color: var(--taskbar-hover);
 }
 
@@ -949,7 +949,6 @@ ol {
   overflow: auto;
   background-color: var(--start-menu-bg);
 }
-
 
 #start-menu.active .s-list.active {
   display: block;
@@ -1078,7 +1077,7 @@ ol {
   background-color: var(--sidebar-hover-bg);
 }
 .w-sidebar-item:focus {
-	outline: none;
+  outline: none;
   background-color: var(--sidebar-hover-bg);
 }
 .w-sidebar-item.active {

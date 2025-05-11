@@ -2,6 +2,7 @@ import EventEmitter from "../../event-emitter.mjs";
 import {
   addEventListener,
   applyStyle,
+  createAppIframe,
   getMaxDesktopDimensions,
 } from "../../utils.mjs";
 import {
@@ -339,6 +340,13 @@ export default class AppWindow extends EventEmitter {
       );
       container.appendChild(element);
       this.focus = focus;
+      return;
+    }
+
+    if (appData.website) {
+      const iframeContainer = createAppIframe(appData.website);
+      container.appendChild(iframeContainer);
+      this.focus = iframeContainer.focus.bind(iframeContainer);
       return;
     }
 

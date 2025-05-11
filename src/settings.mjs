@@ -25,7 +25,9 @@ import { SharedReference } from "./utils.mjs";
 // TODO: read from CSS directly?
 
 const DEFAULT_FONT_SIZE = 14;
-const DEFAULT_OPACITY = 57;
+const DEFAULT_TASKBAR_OPACITY = 57;
+const DEFAULT_ICON_INACTIVE_OPACITY = 25;
+const DEFAULT_ICON_ACTIVE_OPACITY = 30;
 const DEFAULT_TASK_BG_COLOR = "#1a2e4b";
 const DEFAULT_TASK_TEXT_COLOR = "#ffffff";
 const DEFAULT_TASK_HOVER_COLOR = "#2196f3";
@@ -49,6 +51,12 @@ const DEFAULT_WINDOW_SIDEBAR_BG = "#E0E0E0";
 const DEFAULT_SIDEBAR_HOVER_BG = "#c8c8c8";
 const DEFAULT_SIDEBAR_SELECTED_BG_COLOR = "#3498db";
 const DEFAULT_SIDEBAR_SELECTED_TEXT_COLOR = "#ffffff";
+const DEFAULT_ICON_ACTIVE_TEXT_COLOR = "#ffffff";
+const DEFAULT_ICON_INACTIVE_TEXT_COLOR = "#ffffff";
+const DEFAULT_ICON_BG_COLOR = "#ffffff";
+const DEFAULT_ICON_HOVER_COLOR = "#ffffff";
+const DEFAULT_ICON_ACTIVE_COLOR = "#ffffff";
+
 const DEFAULT_WINDOW_BORDER_SIZE = 0;
 const DEFAULT_SPACE_BETWEEN_TASKS = 5;
 const DEFAULT_TASKBAR_SIZE = 35;
@@ -254,7 +262,7 @@ export const SETTINGS = {
   /** Defines the opacity of the taskbar, as a value from `0` to `1` */
   taskbarOpacity: createRefForState(
     "taskbar-opacity",
-    DEFAULT_OPACITY,
+    DEFAULT_TASKBAR_OPACITY,
     (opacityPercent) => {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
@@ -728,6 +736,120 @@ export const SETTINGS = {
         document.documentElement.style.setProperty(
           "--window-border-size",
           String(size) + "px",
+        );
+      });
+    },
+  ),
+
+  /** Defines the opacity of non-selected icons, as a value from `0` to `1` */
+  iconInactiveOpacity: createRefForState(
+    "icon-inactive-opacity",
+    DEFAULT_ICON_INACTIVE_OPACITY,
+    (opacityPercent) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--icon-bg",
+          SETTINGS.iconImageBgColor.getValue() +
+            percentageToHex(opacityPercent),
+        );
+        document.documentElement.style.setProperty(
+          "--icon-hover",
+          SETTINGS.iconHoverBgColor.getValue() +
+            percentageToHex(opacityPercent),
+        );
+      });
+    },
+  ),
+
+  /** Defines the opacity of selected icons, as a value from `0` to `1` */
+  iconActiveOpacity: createRefForState(
+    "icon-active-opacity",
+    DEFAULT_ICON_ACTIVE_OPACITY,
+    (opacityPercent) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--icon-active-bg",
+          SETTINGS.iconActiveBgColor.getValue() +
+            percentageToHex(opacityPercent),
+        );
+      });
+    },
+  ),
+
+  /** Defines the text color for the selected icon, as an hex-encoded 24 bits color */
+  iconActiveTextColor: createRefForState(
+    "icon-active-text",
+    DEFAULT_ICON_ACTIVE_TEXT_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty("--icon-active-text", color);
+      });
+    },
+  ),
+
+  /**
+   * Defines the text color for the non-selected icons, as an hex-encoded 24
+   * bits color.
+   */
+  iconInactiveTextColor: createRefForState(
+    "icon-text",
+    DEFAULT_ICON_INACTIVE_TEXT_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--icon-inactive-text",
+          color,
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines the background-color for the selected icon, as an hex-encoded 24
+   * bits color.
+   */
+  iconActiveBgColor: createRefForState(
+    "icon-active-bg",
+    DEFAULT_ICON_ACTIVE_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--icon-active-bg",
+          color + percentageToHex(SETTINGS.iconActiveOpacity.getValue()),
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines the background-color for non-selected icons, as an hex-encoded 24
+   * bits color.
+   */
+  iconImageBgColor: createRefForState(
+    "icon-image-bg",
+    DEFAULT_ICON_BG_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--icon-bg",
+          color + percentageToHex(SETTINGS.iconInactiveOpacity.getValue()),
+        );
+      });
+    },
+  ),
+
+  /**
+   * Defines the background-color for hovered icons, as an hex-encoded 24
+   * bits color.
+   */
+  iconHoverBgColor: createRefForState(
+    "icon-hover-bg",
+    DEFAULT_ICON_HOVER_COLOR,
+    (color) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--icon-hover",
+          color + percentageToHex(SETTINGS.iconInactiveOpacity.getValue()),
         );
       });
     },

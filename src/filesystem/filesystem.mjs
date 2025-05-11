@@ -167,6 +167,9 @@ class DesktopFileSystem {
         ? baseDestPath
         : baseDestPath + "/";
       if (normalizedDest.startsWith(srcPath)) {
+        if (normalizedDest === srcPath) {
+          return;
+        }
         throw new FileSystemError(
           "IllegalOperation",
           "Cannot move directory: moving inside itself",

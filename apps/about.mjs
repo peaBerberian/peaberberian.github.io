@@ -1,6 +1,9 @@
 const { strHtml, createAppTitle, createFullscreenButton, IMAGE_ROOT_PATH } =
   AppUtils;
 
+const IMAGE_HEIGHT = 45;
+const IMAGE_WIDTH = 60;
+
 const quickLinks = [
   {
     link: "https://github.com/peaBerberian",
@@ -14,87 +17,8 @@ const quickLinks = [
   },
 ];
 
-const educationData = {
-  esiee: {
-    image: IMAGE_ROOT_PATH + "esiee2.png",
-    height: 45,
-    width: 60,
-    description: "ESIEE",
-  },
-
-  xidian: {
-    image: IMAGE_ROOT_PATH + "xidian2.png",
-    height: 45,
-    width: 60,
-    description: "Xidian",
-  },
-
-  upec: {
-    image: IMAGE_ROOT_PATH + "upec2.png",
-    height: 45,
-    width: 60,
-    description: "UPEC",
-  },
-};
-
-const experienceData = {
-  canal: {
-    image: IMAGE_ROOT_PATH + "canal.png",
-    height: 45,
-    width: 60,
-    description: "Canal+",
-  },
-  davidson: {
-    image: IMAGE_ROOT_PATH + "davidson2.png",
-    height: 45,
-    width: 60,
-    description: "Davidson Consulting",
-
-    languages: ["JavaScript", "Node.js", "Python", "Qml", "CoffeeScript"],
-
-    libraries: {
-      JavaScript: [
-        "React.js",
-        "Rx.js",
-        "Flux",
-        "Redux",
-        "Backbone",
-        "Mocha",
-        "Chai",
-        "Sinon",
-        "Jasmine",
-      ],
-    },
-
-    tools: ["Jenkins", "Docker", "Git", "GitHub", "WebPack", "Grunt", "Vim"],
-  },
-
-  orangeIPTV: {
-    image: IMAGE_ROOT_PATH + "orange.png",
-    description: "Orange",
-
-    languages: ["PHP", "VBA", "Java", "JavaScript", "Node.JS"],
-
-    libraries: {
-      JavaScript: ["jquery", "socket.io"],
-
-      tools: ["Android SDK", "Eclipse", "Vim"],
-    },
-  },
-
-  orange: {
-    image: IMAGE_ROOT_PATH + "orange.png",
-    height: 45,
-    width: 60,
-    description: "Orange",
-    languages: [],
-    libraries: {},
-  },
-};
-
 const jobs = [
   {
-    id: "canal",
     dateFrom: "2017/05",
     dateTo: "Today",
     jobTitle: "Tech Lead",
@@ -103,9 +27,10 @@ const jobs = [
       "<b>Canal+ Group</b> is a french media company which broadcasts and produces contents for multiple countries.",
     jobDescription:
       '<p>Lead developer of several media-related projects, including the <a href="https://github.com/canalplus/rx-player" target="_blank">RxPlayer</a>: A featureful media player for the web with adaptive streaming, live playback, low-latency streaming, support of multiple devices and DRMs.</p><p>The RxPlayer is an on-going project used in production for internal needs and several premium products at Canal+ as well as outside the company.</p><p>I also lead several other projects some open-source, some closed-source, to help with the development of those media products.</p>',
+    img: IMAGE_ROOT_PATH + "canal.png",
+    imgDescription: "Canal+",
   },
   {
-    id: "davidson",
     dateFrom: "2014/09",
     dateTo: "2017/04",
     jobTitle: "Software developer",
@@ -114,10 +39,11 @@ const jobs = [
       '<b>Davidson Consulting</b> is a french consulting company named 4 times in a row (between 2014 and 2017 included) at the top of the "best place to work" ranking for french companies.',
     jobDescription:
       "<p>Worked with Canal+ in the STB development team where we designed and developed new interfaces for various set-top boxes and other similar platforms.</p><p>In particular, I worked on several aspects of those applications like general design, media player integration, TV remote controls, GUI, porting the API abstraction layer to multiple devices and others. We did all of that with the help of multiple JavaScript libraries: mainly RxJS, React, flow, Redux and BackboneJS.</p>",
+    img: IMAGE_ROOT_PATH + "davidson2.png",
+    imgDescription: "Davidson Consulting",
   },
 
   {
-    id: "orangeIPTV",
     dateFrom: "2011/09",
     dateTo: "2014/08",
     jobTitle: "Software developer / Assistant Project Manager",
@@ -126,10 +52,11 @@ const jobs = [
       "<b>Orange</b> is a french telecommunications corporation. It provides mobile, landline, internet and IPTV services in multiple countries.",
     jobDescription:
       "<p>Worked as a software developer helping the project managers of the IPTV division.</p><p>Those 3 years were done in apprenticeship, as I continued to study at my engineering school at the time.</p>The programming languages I used to create these tools were varied depending on the project: PHP, javascript, Node.js, Java Android and VBA - for Microsoft Office documents.</p>",
+    img: IMAGE_ROOT_PATH + "orange.png",
+    imgDescription: "Orange",
   },
 
   {
-    id: "orange",
     dateTo: "08/2011",
     dateFrom: "06/2011",
     jobTitle: "Telecommunications technician",
@@ -138,12 +65,13 @@ const jobs = [
       "<b>Orange</b> is a french telecommunications corporation. It provides mobile, landline, internet and IPTV services in multiple countries.",
     jobDescription:
       "<p>These 3 months in Orange were in the context of an internship. I had as a mission to help with the maintenance of Orange's local loop in Paris.</p>",
+    img: IMAGE_ROOT_PATH + "orange.png",
+    imgDescription: "Orange",
   },
 ];
 
 const schools = [
   {
-    id: "esiee",
     dateFrom: "2011/09",
     dateTo: "2014/08",
     schoolName: "ESIEE Paris",
@@ -154,10 +82,11 @@ const schools = [
       "5-year engineering diploma (equivalent to a master's degree in engineering) with a specialization in Networks and Telecommunications.",
     shortDescription:
       "This cursus was done in apprenticeship (I also worked at Orange during that time) and it ended with a foreign experience: 6 month in a chinese university (Xidian University in Xi'An) where I studied Networks and Computer Science.<br />The ESIEE Paris cursus included courses in programming (mainly algorithms, Java and C), networks (tcp/ip, mobile networks, routing...) and system management (mostly linux-related administration).",
+    img: IMAGE_ROOT_PATH + "esiee2.png",
+    imgDescription: "ESIEE",
   },
 
   {
-    id: "xidian",
     dateFrom: "2013/09",
     dateTo: "2014/02",
     schoolName: "Xidian University (Chinese: 西安电子科技大学)",
@@ -168,10 +97,11 @@ const schools = [
       "6 months in Xidian done as an university Exchange (with ESIEE Paris).",
     shortDescription:
       "I followed several courses concerning networks engineering and computer science there, in english, while learning (trying to!) chinese and living in immersion in this country. This was definitely a good experience as well on a personal than on an educational level",
+    img: IMAGE_ROOT_PATH + "xidian2.png",
+    imgDescription: "Xidian",
   },
 
   {
-    id: "upec",
     dateFrom: "2009/09",
     dateTo: "2011/08",
     schoolName: "UPEC",
@@ -181,6 +111,8 @@ const schools = [
     firstLine:
       'I obtained a 2-year "DUT" diploma in the French UPEC university where I studied networks, telecommunications and computer science.',
     shortDescription: "",
+    img: IMAGE_ROOT_PATH + "upec2.png",
+    imgDescription: "UPEC",
   },
 ];
 
@@ -190,7 +122,7 @@ const wording = {
     description: `<div>
 	<p>Hi, my name is Paul Berberian, I'm 34¹ I'm a software engineer and tech lead at Canal+ Group living in Montpellier, France. I lead several projects linked to media streaming, including the open-source <a href="https://github.com/canalplus/rx-player" target="_blank">RxPlayer</a> media player.</p>
 
-	<p>You\'re here in my personal website which emulates a classical desktop environment. Everything you see here has been done especially for this desktop without any external dependency / library.</p>
+	<p>You're here in my personal website which emulates a classical desktop environment. Everything you see here has been done especially for this desktop without any external dependency (even apps).</p>
 
 	<p>To contact me, you can send an e-mail to: <a href="mailto:paul.berberian@proton.me">paul.berberian@proton.me</a>.</p>
 
@@ -285,9 +217,9 @@ function getJobs(jobs) {
         `<div class="job-item item-group">
   <div class="group-header">
 		<span class= "item-group-img-container">
-			<img height="${experienceData[jobObj.id].height}px" width="${experienceData[jobObj.id].width}px" class="job-company-img item-group-img"
-				alt="${experienceData[jobObj.id].description}"
-				src="${experienceData[jobObj.id].image}" />
+			<img height="${IMAGE_HEIGHT}px" width="${IMAGE_WIDTH}px" class="job-company-img item-group-img"
+				alt="${jobObj.imgDescription}"
+				src="${jobObj.img}" />
 		</span>
 		<div class="job-title item-group-header">
 			<span class="job-name item-group-name">${jobObj.jobTitle}</span>
@@ -312,9 +244,9 @@ function getSchools(schools) {
         `<div class="edu-item item-group">
   <div class="group-header">
 		<span class= "item-group-img-container">
-			<img height="${educationData[schoolObj.id].height}px" width="${educationData[schoolObj.id].width}px" class="edu-school-img item-group-img"
-				alt="${educationData[schoolObj.id].description}"
-				src="${educationData[schoolObj.id].image}" />
+			<img height="${IMAGE_HEIGHT}px" width="${IMAGE_WIDTH}px" class="edu-school-img item-group-img"
+				alt="${schoolObj.imgDescription}"
+				src="${schoolObj.img}" />
 		</span>
 		<div class="edu-title item-group-header">
 			<span class="edu-diploma item-group-name">${schoolObj.diploma}</span>

@@ -919,6 +919,16 @@ ol {
   pointer-events: none;
 }
 
+.iframe-top-layer {
+  display: flex;
+}
+.window.active .iframe-top-layer {
+  display: none;
+}
+.block-iframe .window.active .iframe-top-layer {
+  display: flex;
+}
+
 .btn {
   background-color: var(--app-primary-bg);
   color: var(--window-text-color);

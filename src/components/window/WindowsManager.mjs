@@ -60,7 +60,7 @@ export default class WindowsManager {
    * `null` if no window has been created.
    */
   openApp(app, options = {}) {
-    if (app.value.onlyOne) {
+    if (app.onlyOne) {
       // If only instance of the app can be created, check if this window already
       // exists. If so, activate it.
       const createdWindowForApp = this._getNextWindowForApp(app.id);
@@ -80,7 +80,7 @@ export default class WindowsManager {
     this._checkRelativeWindowPlacement(appWindow);
 
     const windowId = "w-" + this._nextId++;
-    this._taskbarManager.addWindow(windowId, app.value, {
+    this._taskbarManager.addWindow(windowId, app, {
       toggleAppActivation: () => appWindow.toggleActivation(),
       closeApp: () => appWindow.close(),
     });

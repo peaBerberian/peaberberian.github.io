@@ -971,3 +971,5 @@ export function resetStateToDefault() {
     localStorage.clear();
   });
 }
+
+SETTINGS.resetStateToDefault = resetStateToDefault;

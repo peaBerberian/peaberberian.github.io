@@ -8,13 +8,16 @@
  * @param {number} minDimensions.minWidth - The minimum width in pixels the
  * canvas can be resized to.
  * @param {Object} callbacks
+ * @param {Function} callbacks.onStart
+ * @param {Function} callback.onResize
+ * @param {Function} callback.onEnd
  * @param {AbortSignal} abortSignal - `AbortSignal` allowing to free all
  * resources and event listeners registered here when it emits.
  */
 export default function handleResizeOnCanvas(
   canvasElt,
   { minHeight, minWidth },
-  updateCanvasDimensions,
+  { onStart, onResize, onEnd },
   abortSignal,
 ) {
   // Add resize handles
@@ -83,6 +86,7 @@ export default function handleResizeOnCanvas(
         return;
       }
       canvasElt.classList.add("resizing");
+      onStart();
       e.stopPropagation();
       e.preventDefault();
 
@@ -102,6 +106,7 @@ export default function handleResizeOnCanvas(
     });
 
     const validateAndStopResize = () => {
+      onEnd();
       canvasElt.classList.remove("resizing");
       document.removeEventListener("mousemove", resize);
       document.removeEventListener("mouseup", validateAndStopResize);
@@ -124,7 +129,7 @@ export default function handleResizeOnCanvas(
         if (direction.includes("s")) {
           newHeight = Math.max(minHeight, startHeight + deltaY);
         }
-        updateCanvasDimensions({ newHeight, newWidth });
+        onResize({ newHeight, newWidth });
       });
     };
   }

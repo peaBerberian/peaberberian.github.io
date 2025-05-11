@@ -121,23 +121,37 @@ export function create(abortSignal) {
   });
   canvasContainerElt.appendChild(canvas);
   canvasAreaElt.appendChild(canvasContainerElt);
+  let resizingState = null;
+  let isResizing = false;
   handleResizeOnCanvas(
     canvasContainerElt,
     { minHeight: 100, minWidth: 100 },
-    ({ newHeight, newWidth }) => {
-      window.requestAnimationFrame(() => {
-        const savedState = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        if (newHeight !== undefined) {
-          canvasAreaElt.style.height = String(newHeight + 30) + "px";
-          canvas.height = newHeight;
-        }
-        if (newWidth !== undefined) {
-          canvasAreaElt.style.width = String(newWidth + 30) + "px";
-          canvas.width = newWidth;
-        }
-        clearCanvas();
-        ctx.putImageData(savedState, 0, 0);
-      });
+    {
+      onStart: () => {
+        resizingState = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        isResizing = true;
+      },
+      onResize: ({ newHeight, newWidth }) => {
+        window.requestAnimationFrame(() => {
+          if (newHeight !== undefined) {
+            canvasAreaElt.style.height = String(newHeight + 30) + "px";
+            canvas.height = newHeight;
+          }
+          if (newWidth !== undefined) {
+            canvasAreaElt.style.width = String(newWidth + 30) + "px";
+            canvas.width = newWidth;
+          }
+          clearCanvas();
+          if (resizingState) {
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.putImageData(resizingState, 0, 0);
+          }
+        });
+      },
+      onEnd: () => {
+        isResizing = false;
+      },
     },
     abortSignal,
   );
@@ -265,7 +279,7 @@ export function create(abortSignal) {
   }
 
   function draw(e) {
-    if (!isDrawing) {
+    if (!isDrawing || isResizing) {
       return;
     }
 
@@ -471,6 +485,8 @@ export function create(abortSignal) {
   function restoreState() {
     if (historyIndex > 0) {
       const [state, somethingIsDrawn] = history[historyIndex - 1];
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.putImageData(state, 0, 0);
       hasSomethingDrawnOnCanvas = somethingIsDrawn;
     }

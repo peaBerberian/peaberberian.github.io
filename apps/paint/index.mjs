@@ -306,7 +306,54 @@ export function create(_args, env, abortSignal) {
     document.removeEventListener("touchcancel", stopDrawing);
   });
 
-  return { element: wrapperElt };
+  return {
+    element: wrapperElt,
+    onActivate() {
+      document.addEventListener("keydown", onKeyDown);
+    },
+    onDeactivate() {
+      document.removeEventListener("keydown", onKeyDown);
+    },
+  };
+
+  /**
+   * @param {KeyboardEvent} e
+   */
+  function onKeyDown(e) {
+    switch (e.key) {
+      case "S":
+      case "s":
+        if (e.ctrlKey) {
+          e.preventDefault();
+          if (currentFileHandle) {
+            quickSave();
+          } else {
+            saveFile();
+          }
+        }
+        break;
+
+      case "Z":
+      case "z":
+        if (e.ctrlKey) {
+          e.preventDefault();
+          if (e.shiftKey) {
+            redo();
+          } else {
+            undo();
+          }
+        }
+        break;
+
+      case "Y":
+      case "y":
+        if (e.ctrlKey) {
+          e.preventDefault();
+          redo();
+        }
+        break;
+    }
+  }
 
   function startDrawing(objectPos) {
     isDrawing = true;

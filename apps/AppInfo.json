@@ -6,7 +6,6 @@
       "icon": "🙋🏻‍♂️",
       "defaultHeight": 600,
       "defaultWidth": 855,
-      "preload": true,
       "onlyOne": false,
       "dependencies": [],
       "inStartList": null,
@@ -230,7 +229,6 @@
       "icon": "🌐",
       "defaultHeight": 600,
       "defaultWidth": 855,
-      "preload": false,
       "inStartList": "Misc",
       "desktopDir": null
     }

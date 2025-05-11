@@ -319,18 +319,6 @@ export default class AppWindow extends EventEmitter {
   }
 
   _setUpAppContent(container, appData, appArgs, dependencies) {
-    if (
-      typeof appData.globalApp === "string" &&
-      window.globalApps?.[appData.globalApp]
-    ) {
-      return this._setUpAppContent(
-        container,
-        window.globalApps[appData.globalApp],
-        appArgs,
-        dependencies,
-      );
-    }
-
     if (appData.create) {
       const env = {
         appUtils,

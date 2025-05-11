@@ -20,6 +20,20 @@ export default function createWindowSection(abortSignal) {
       label: "Button Style",
     }),
   );
+  // headerGroup.appendChild(
+  //   createDropdownOnRef({
+  //     ref: SETTINGS.buttonPosition,
+  //     options: ["Right", "Left"],
+  //     label: "Button Position",
+  //   }),
+  // );
+  // headerGroup.appendChild(
+  //   createDropdownOnRef({
+  //     ref: SETTINGS.headerTitlePosition,
+  //     options: ["Left", "Right", "Center"],
+  //     label: "Title Position",
+  //   }),
+  // );
   headerGroup.appendChild(
     createCheckboxOnRef(
       {

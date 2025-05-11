@@ -487,6 +487,8 @@ html {
   cursor: move;
   user-select: none;
   overflow: hidden;
+  gap: 15px;
+  justify-content: end;
 }
 
 .window.active .w-header {
@@ -502,6 +504,25 @@ html {
 
 .w-controls {
   display: flex;
+}
+
+.w-btn-pos-left .w-header {
+  flex-direction: row-reverse;
+  justify-content: left;
+}
+
+.w-btn-pos-left .w-controls {
+  flex-direction: row-reverse;
+}
+
+.w-title-pos-center .w-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.w-title-pos-right .w-title {
+  text-align: right;
 }
 
 .w-button {

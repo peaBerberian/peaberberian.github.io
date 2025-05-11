@@ -13,40 +13,6 @@ const GENERATED_APP_PATH = path.join(DESKTOP_SRC_DIR, "__generated_apps.mjs");
 const OUTPUT_DIR = path.join(PROJECT_ROOT_DIRECTORY, "dist");
 const OUTPUT_LAZY_LOADED_APPS = path.join(OUTPUT_DIR, "lazy");
 
-/**
- * Rollup is too smart and just *WANT* to resolve+rewrite a dynamic import's
- * path, even with the right options it seems...
- *
- * The work-around here, is to first write dynamic imports as absolute path -
- * that rollup won't dare to ever rewrite - and use this plugin to add the `.`
- * prefix to indicate this is actually relative.
- *
- * That's so dumb, even more when considering that being unable to tell esbuild
- * to ignore dynamic imports was the whole reason I tried rollup.
- *
- * Note that I'm sure that I could make the same thing I'm manually doing here
- * with JS chunks, even probably in a more-supported / less clunky way.
- * But I'm not doing this project to depend too much on bundlers and their
- * locked ways of doing things.
- */
-const lazyAppPlugin = {
-  name: "preserve-dynamic-imports",
-
-  resolveDynamicImport(specifier) {
-    if (typeof specifier === "string" && specifier.startsWith("/lazy/")) {
-      // We have to both add the `.` indicating this will be relative at runtime
-      // now (see comment above) and to also tell rollup to not resolve it with
-      // `external` set to `true`.
-      return {
-        id: "." + specifier,
-        external: true,
-      };
-    }
-    // Resolve this one I guess...
-    return null;
-  },
-};
-
 // We'll create `GENERATED_APP_PATH` here:
 const lazyLoadedApps = writeGeneratedAppFile(APPS_SRC_DIR);
 
@@ -83,7 +49,7 @@ export default [
     file: bundle.outputFile,
     format: bundle.intoEsm ? "es" : "iife",
   },
-  plugins: [process.env.MINIFY && terser(), lazyAppPlugin].filter(Boolean),
+  plugins: [process.env.MINIFY && terser()].filter(Boolean),
 }));
 
 /**
@@ -133,7 +99,7 @@ function writeGeneratedAppFile(baseDir) {
     // dumb rule so it's simpler to write the following code
     if (!/^[A-Za-z0-9-_]+$/.test(app.id)) {
       throw new Error(
-        `Invalid app id: "${app.id}". Should only contain alphanumeric, dashes or lowescores characters`,
+        `Invalid app id: "${app.id}". Should only contain alphanumeric, dash or lowescore characters`,
       );
     }
 
@@ -207,8 +173,16 @@ function writeGeneratedAppFile(baseDir) {
       uglyHandWrittenJsObject += "    onlyOne: true,\n";
     }
 
-    if (!!app.needsSettingsObject) {
-      uglyHandWrittenJsObject += "    needsSettingsObject: true,\n";
+    if (Array.isArray(app.dependencies)) {
+      for (const dep of app.dependencies) {
+        if (dep !== "settings") {
+          throw new Error(
+            `Error in app "${app.id}". One of the asked dependency does not exist: ${dep}`,
+          );
+        }
+      }
+      uglyHandWrittenJsObject +=
+        "    dependencies: " + JSON.stringify(app.dependencies) + ",\n";
     }
 
     if (!!app.autoload) {
@@ -225,16 +199,10 @@ function writeGeneratedAppFile(baseDir) {
           filePath: path.relative(DESKTOP_SRC_DIR, filePath),
         });
       } else {
-        // Here I will just write a dynamic import
-        // NOTE: Sadly rollup just keep rewriting the dynamic import's path,
-        // unless it's absolute (where I would have prefered to link relatively
-        // to `.lazy/`). So the ugly trick is to first write it as if it was an
-        // absolute path, and then use a plugin to rewrite it after rollup did
-        // its resolution to an actual relative import.
-        // SMH MY HEAD
-        const importPath = `/lazy/${app.id}.js`;
+        // Here I will put the import path as a `lazyLoad` property.
+        const importPath = `./lazy/${app.id}.js`;
         uglyHandWrittenJsObject += `    data: {
-			lazyLoad: () => import(${JSON.stringify(importPath)}),
+			lazyLoad: ${JSON.stringify(importPath)},
 		},
 `;
         const outputFile = path.join(OUTPUT_LAZY_LOADED_APPS, `${app.id}.js`);
@@ -271,8 +239,20 @@ function writeGeneratedAppFile(baseDir) {
 
 `;
 
-  for (const importStmt of importsToWrite) {
-    jsFile += `import * as ${importStmt.name} from ${JSON.stringify(importStmt.filePath)};\n`;
+  if (importsToWrite.length) {
+    for (const importStmt of importsToWrite) {
+      jsFile += `import * as ${importStmt.name} from ${JSON.stringify(importStmt.filePath)};\n`;
+    }
+
+    jsFile += `
+// Making the imports available in global scope just so the app object stay
+// serializable **AND** complete.
+window.globalApps = {};
+`;
+    for (const importStmt of importsToWrite) {
+      jsFile += `window.globalApps.${importStmt.name} = ${importStmt.name};
+`;
+    }
   }
   jsFile += "\n" + uglyHandWrittenJsObject;
 
@@ -280,7 +260,11 @@ function writeGeneratedAppFile(baseDir) {
     jsFile += `
 
 setTimeout(
-	() => import(${JSON.stringify(timerImports.importPath)}),
+	() => {
+    // trick so our bundler doesn't try funky things like rewriting paths
+    const importPath = ${JSON.stringify(timerImports.importPath)};
+    import(importPath);
+  },
   ${timerImports.timer}
 );
 `;

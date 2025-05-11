@@ -18,6 +18,7 @@ import {
   WINDOW_OOB_SECURITY_PIX,
 } from "../../constants.mjs";
 import { SETTINGS } from "../../settings.mjs";
+import strHtml from "../../str-html.mjs";
 import {
   enterFullFullScreen,
   exitAllFullScreens,
@@ -43,11 +44,11 @@ import {
   isMinimizedOrMinimizing,
   constructAppWithSidebar,
 } from "./utils.mjs";
-import strHtml from "../../str-html.mjs";
 
 export default class AppWindow extends EventEmitter {
   /**
-   * @param {Object} app
+   * @param {Object} app - Application object to display in the window.
+   * @param {Array} appArgs - The application's arguments.
    * @param {Object} options - Various options to configure how that new
    * application window will behave
    * @param {boolean} [options.skipAnim] - If set to `true`, we will not show the
@@ -57,7 +58,7 @@ export default class AppWindow extends EventEmitter {
    * @returns {Object|null} - Object representing the newly created window.
    * `null` if no window has been created.
    */
-  constructor(app, { skipAnim, centered } = {}) {
+  constructor(app, appArgs, { skipAnim, centered } = {}) {
     super();
 
     /**
@@ -147,7 +148,7 @@ export default class AppWindow extends EventEmitter {
       /* noop */
     };
 
-    this._setUpAppContent(appContainer, app.data, app.needsSettingsObject);
+    this._setUpAppContent(appContainer, app.data, appArgs, app.dependencies);
     this._setupWindowEvents();
     if (!skipAnim) {
       this._performWindowTransition("open");
@@ -314,14 +315,16 @@ export default class AppWindow extends EventEmitter {
     };
   }
 
-  _setUpAppContent(container, appData, needsSettingsObject) {
+  _setUpAppContent(container, appData, appArgs, dependencies) {
     if (appData.create) {
       let app;
-      if (needsSettingsObject) {
-        app = appData.create(SETTINGS, this._abortController.signal);
-      } else {
-        app = appData.create(this._abortController.signal);
+      const env = {};
+      if (Array.isArray(dependencies)) {
+        if (dependencies.includes("settings")) {
+          env.settings = SETTINGS;
+        }
       }
+      app = appData.create(appArgs, env, this._abortController.signal);
       container.appendChild(app.element);
       if (app.focus) {
         this.focus = app.focus.bind(app);
@@ -353,10 +356,10 @@ export default class AppWindow extends EventEmitter {
       const spinnerPlaceholder = getSpinnerPlaceholder();
       const initialElement = spinnerPlaceholder.element;
       container.appendChild(initialElement);
-      appData.lazyLoad().then((module) => {
+      import(appData.lazyLoad).then((module) => {
         clearTimeout(spinnerPlaceholder.timeout);
         initialElement.remove();
-        this._setUpAppContent(container, module, needsSettingsObject);
+        this._setUpAppContent(container, module, appArgs, dependencies);
       });
       return;
     }

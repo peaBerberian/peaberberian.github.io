@@ -8,10 +8,6 @@ import {
   filledSquareSvg,
   filledCircleSvg,
   cursorSvg,
-  undoSvg,
-  redoSvg,
-  saveSvg,
-  clearSvg,
   crosshairCursor,
   bucketSvg,
 } from "./svgs.mjs";
@@ -19,11 +15,11 @@ import {
 const DEFAULT_CANVAS_HEIGHT = 800;
 const DEFAULT_CANVAS_WIDTH = 800;
 
-const { strHtml, applyStyle } = window.AppUtils;
+const { strHtml, applyStyle, constructAppHeaderLine } = window.AppUtils;
 
 // TODO: clean-up code!
 
-export function create(abortSignal) {
+export function create(_args, _env, abortSignal) {
   let lastX = 0;
   let lastY = 0;
   let startX = 0;
@@ -46,44 +42,29 @@ export function create(abortSignal) {
     display: "flex",
     flexDirection: "column",
   });
-  const headerElt = document.createElement("div");
-  applyStyle(headerElt, {
-    backgroundColor: "var(--window-sidebar-bg)",
-    borderBottom: "1px solid var(--window-inactive-header)",
-    width: "100%",
-    overflow: "auto",
-    display: "flex",
-    padding: "3px",
-    gap: "5px",
-    flexShrink: "0",
+  const {
+    element: headerElt,
+    enableButton,
+    disableButton,
+  } = constructAppHeaderLine({
+    undo: { onClick: undo },
+    redo: { onClick: redo },
+    clear: {
+      onClick: () => {
+        const hadSomethingDrawn = hasSomethingDrawnOnCanvas;
+        clearCanvas();
+        if (hadSomethingDrawn) {
+          hasUpdatesToSave = true;
+          saveCurrentState();
+        }
+      },
+    },
+    save: { onClick: saveImage },
   });
+  disableButton("undo");
+  disableButton("redo");
+  disableButton("clear");
   wrapperElt.appendChild(headerElt);
-
-  const undoButton = createButtonElt(undoSvg, "Undo", 1, undo);
-  headerElt.appendChild(undoButton);
-  disableUndoButton();
-
-  const redoButton = createButtonElt(redoSvg, "Redo", 1, redo);
-  headerElt.appendChild(redoButton);
-  disableRedoButton();
-
-  const clearButton = createButtonElt(clearSvg, "Clear", 1, () => {
-    const hadSomethingDrawn = hasSomethingDrawnOnCanvas;
-    clearCanvas();
-    if (hadSomethingDrawn) {
-      hasUpdatesToSave = true;
-      saveCurrentState();
-    }
-  });
-  headerElt.appendChild(clearButton);
-  disableClearButton();
-  const saveButton = createButtonElt(
-    saveSvg,
-    "Save (download)",
-    0.75,
-    saveImage,
-  );
-  headerElt.appendChild(saveButton);
 
   const contentElt = document.createElement("div");
   applyStyle(contentElt, {
@@ -342,7 +323,8 @@ export function create(abortSignal) {
           if (isInCanvas) {
             hasUpdatesToSave = true;
             hasSomethingDrawnOnCanvas = true;
-            enableClearButton();
+            enableButton("clear");
+            enableButton("undo");
           }
         }
         break;
@@ -351,7 +333,8 @@ export function create(abortSignal) {
           if (isInCanvas && applyBucket(currentX, currentY, currentColor)) {
             hasUpdatesToSave = true;
             hasSomethingDrawnOnCanvas = true;
-            enableClearButton();
+            enableButton("clear");
+            enableButton("undo");
           }
         }
         break;
@@ -382,7 +365,8 @@ export function create(abortSignal) {
           if (isInCanvas) {
             hasUpdatesToSave = true;
             hasSomethingDrawnOnCanvas = true;
-            enableClearButton();
+            enableButton("clear");
+            enableButton("undo");
           }
         }
         break;
@@ -400,7 +384,8 @@ export function create(abortSignal) {
           ) {
             hasUpdatesToSave = true;
             hasSomethingDrawnOnCanvas = true;
-            enableClearButton();
+            enableButton("clear");
+            enableButton("undo");
           }
         }
         break;
@@ -424,7 +409,8 @@ export function create(abortSignal) {
             ctx.fill();
             hasUpdatesToSave = true;
             hasSomethingDrawnOnCanvas = true;
-            enableClearButton();
+            enableButton("clear");
+            enableButton("undo");
           }
         }
         break;
@@ -444,7 +430,8 @@ export function create(abortSignal) {
           ) {
             hasUpdatesToSave = true;
             hasSomethingDrawnOnCanvas = true;
-            enableClearButton();
+            enableButton("clear");
+            enableButton("undo");
           }
         }
         break;
@@ -468,7 +455,8 @@ export function create(abortSignal) {
             ctx.stroke();
             hasUpdatesToSave = true;
             hasSomethingDrawnOnCanvas = true;
-            enableClearButton();
+            enableButton("clear");
+            enableButton("undo");
           }
         }
         break;
@@ -495,7 +483,7 @@ export function create(abortSignal) {
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     hasSomethingDrawnOnCanvas = false;
-    disableClearButton();
+    disableButton("clear");
   }
 
   /**
@@ -673,12 +661,12 @@ export function create(abortSignal) {
     const savedState = ctx.getImageData(0, 0, canvas.width, canvas.height);
     if (historyIndex !== history.length) {
       history.splice(historyIndex);
-      disableRedoButton();
+      disableButton("redo");
     }
     history.push([savedState, hasSomethingDrawnOnCanvas]);
     historyIndex++;
     if (historyIndex > 1) {
-      enableUndoButton();
+      enableButton("undo");
     }
     while (history.length > 20) {
       history.shift();
@@ -694,9 +682,9 @@ export function create(abortSignal) {
       ctx.putImageData(state, 0, 0);
       hasSomethingDrawnOnCanvas = somethingIsDrawn;
       if (hasSomethingDrawnOnCanvas) {
-        enableClearButton();
+        enableButton("clear");
       } else {
-        disableClearButton();
+        disableButton("clear");
       }
     }
   }
@@ -706,10 +694,10 @@ export function create(abortSignal) {
       restoreState();
 
       if (historyIndex <= 1) {
-        disableUndoButton();
+        disableButton("undo");
       }
       if (historyIndex < history.length) {
-        enableRedoButton();
+        enableButton("redo");
       }
     }
   }
@@ -718,62 +706,11 @@ export function create(abortSignal) {
       historyIndex++;
       restoreState();
       if (historyIndex > 1) {
-        enableUndoButton();
+        enableButton("undo");
       }
       if (historyIndex >= history.length) {
-        disableRedoButton();
+        disableButton("redo");
       }
-    }
-  }
-
-  function enableClearButton() {
-    if (clearButton.style.cursor !== "pointer") {
-      clearButton.style.cursor = "pointer";
-      clearButton.children[0].setAttribute("fill", "var(--window-text-color)");
-    }
-  }
-
-  function disableClearButton() {
-    if (clearButton.style.cursor === "pointer") {
-      clearButton.style.cursor = "auto";
-      clearButton.children[0].setAttribute(
-        "fill",
-        "var(--window-inactive-header)",
-      );
-    }
-  }
-
-  function enableUndoButton() {
-    if (undoButton.style.cursor !== "pointer") {
-      undoButton.style.cursor = "pointer";
-      undoButton.children[0].setAttribute("fill", "var(--window-text-color)");
-    }
-  }
-
-  function disableUndoButton() {
-    if (undoButton.style.cursor === "pointer") {
-      undoButton.style.cursor = "auto";
-      undoButton.children[0].setAttribute(
-        "fill",
-        "var(--window-inactive-header)",
-      );
-    }
-  }
-
-  function enableRedoButton() {
-    if (redoButton.style.cursor !== "pointer") {
-      redoButton.style.cursor = "pointer";
-      redoButton.children[0].setAttribute("fill", "var(--window-text-color)");
-    }
-  }
-
-  function disableRedoButton() {
-    if (redoButton.style.cursor === "pointer") {
-      redoButton.style.cursor = "auto";
-      redoButton.children[0].setAttribute(
-        "fill",
-        "var(--window-inactive-header)",
-      );
     }
   }
 }
@@ -840,6 +777,7 @@ function createToolElt(toolSvg, title, heightScale, onClick) {
     height: `${heightScale * 2}rem`,
     minHeight: `${heightScale * 2}rem`,
     margin: "10px",
+    overflow: "visible",
   });
   const toolWrapperElt = document.createElement("span");
   toolWrapperElt.style.margin = "0 auto";
@@ -849,21 +787,6 @@ function createToolElt(toolSvg, title, heightScale, onClick) {
   // toolWrapperElt.ontouchend = onClick;
   toolWrapperElt.title = title;
   return toolWrapperElt;
-}
-function createButtonElt(svg, title, heightScale, onClick) {
-  const buttonSvgElt = getSvg(svg);
-  applyStyle(buttonSvgElt, {
-    width: "2.5rem",
-    height: `${heightScale * 2.5}rem`,
-  });
-  const buttonWrapperElt = document.createElement("span");
-  buttonWrapperElt.style.margin = "auto 0";
-  buttonWrapperElt.style.cursor = "pointer";
-  buttonWrapperElt.appendChild(buttonSvgElt);
-  buttonWrapperElt.onclick = onClick;
-  // buttonWrapperElt.ontouchend = onClick;
-  buttonWrapperElt.title = title;
-  return buttonWrapperElt;
 }
 
 async function saveFile(content) {

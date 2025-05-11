@@ -135,6 +135,7 @@ html {
   -webkit-box-orient: vertical;
   overflow-wrap: break-word;
   word-break: break-word;
+	padding-bottom: 6px;
 }
 
 #taskbar {
@@ -742,14 +743,14 @@ ol {
 .taskbar-item {
   background-color: var(--taskbar-inactive-bg);
   display: flex;
-  justify-content: center;
+  /* justify-content: center; */
   border-radius: 3px;
   padding: 0 15px;
   align-items: center;
   cursor: pointer;
   transition: background-color 0.2s;
   min-width: var(--taskbar-size);
-  max-width: 200px;
+  width: 170px;
   margin-right: var(--taskbar-task-margin);
   overflow: hidden;
 }

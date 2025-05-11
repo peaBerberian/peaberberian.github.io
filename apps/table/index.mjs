@@ -1,17 +1,4 @@
-const { applyStyle } = AppUtils;
-
-// NOTE: I took again the buttons from the paint app.
-// We may want to add them in the base js instead?
-const undoSvg = `<svg height="15" viewBox="0 0 15 15" width="15" xmlns="http://www.w3.org/2000/svg"><path clip-rule="evenodd" d="m6.85355 2.14645c.19527.19526.19527.51184 0 .7071l-2.14644 2.14645h3.79289c1.933 0 3.5 1.567 3.5 3.5s-1.567 3.5-3.5 3.5h-4c-.27614 0-.5-.2239-.5-.5s.22386-.5.5-.5h4c1.38071 0 2.5-1.11929 2.5-2.5s-1.11929-2.5-2.5-2.5h-3.79289l2.14644 2.14645c.19527.19526.19527.51184 0 .7071-.19526.19527-.51184.19527-.7071 0l-3-3c-.19527-.19526-.19527-.51184 0-.7071l3-3c.19526-.19527.51184-.19527.7071 0z" fill-rule="evenodd"/></svg>`;
-const redoSvg = `<svg height="15" viewBox="0 0 15 15" width="15" xmlns="http://www.w3.org/2000/svg" ><path clip-rule="evenodd" d="m8.14645 2.14645c-.19527.19526-.19527.51184 0 .7071l2.14645 2.14645h-3.7929c-1.933 0-3.5 1.567-3.5 3.5s1.567 3.5 3.5 3.5h4c.2761 0 .5-.2239.5-.5s-.2239-.5-.5-.5h-4c-1.38071 0-2.5-1.11929-2.5-2.5s1.11929-2.5 2.5-2.5h3.7929l-2.14645 2.14645c-.19527.19526-.19527.51184 0 .7071.19526.19527.51184.19527.7071 0l3.00005-3c.1952-.19526.1952-.51184 0-.7071l-3.00005-3c-.19526-.19527-.51184-.19527-.7071 0z" fill-rule="evenodd"/></svg>`;
-const newFileSvg = `<svg fill="var(--window-text-color)" height="800px" width="800px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
-	 viewBox="0 0 317.001 317.001" xml:space="preserve">
-<path d="M270.825,70.55L212.17,3.66C210.13,1.334,207.187,0,204.093,0H55.941C49.076,0,43.51,5.566,43.51,12.431V304.57
-	c0,6.866,5.566,12.431,12.431,12.431h205.118c6.866,0,12.432-5.566,12.432-12.432V77.633
-	C273.491,75.027,272.544,72.51,270.825,70.55z M55.941,305.073V12.432H199.94v63.601c0,3.431,2.78,6.216,6.216,6.216h54.903
-	l0.006,222.824H55.941z"/>
-</svg>`;
-const saveSvg = `<svg fill="var(--window-text-color)" width="800px" height="800px" viewBox="0 -0.5 21 21" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g stroke="none" stroke-width="1" fill-rule="evenodd"><g transform="translate(-419.000000, -640.000000)"><g transform="translate(56.000000, 160.000000)"><path d="M370.21875,484 C370.21875,483.448 370.68915,483 371.26875,483 C371.84835,483 372.31875,483.448 372.31875,484 C372.31875,484.552 371.84835,485 371.26875,485 C370.68915,485 370.21875,484.552 370.21875,484 L370.21875,484 Z M381.9,497 C381.9,497.552 381.4296,498 380.85,498 L379.8,498 L379.8,494 C379.8,492.895 378.86025,492 377.7,492 L369.3,492 C368.13975,492 367.2,492.895 367.2,494 L367.2,498 L366.15,498 C365.5704,498 365.1,497.552 365.1,497 L365.1,487.044 C365.1,486.911 365.15565,486.784 365.2533,486.691 L367.2,484.837 L367.2,486 C367.2,487.105 368.13975,488 369.3,488 L377.7,488 C378.86025,488 379.8,487.105 379.8,486 L379.8,482 L380.85,482 C381.4296,482 381.9,482.448 381.9,483 L381.9,497 Z M377.7,498 L369.3,498 L369.3,495 C369.3,494.448 369.7704,494 370.35,494 L376.65,494 C377.2296,494 377.7,494.448 377.7,495 L377.7,498 Z M369.3,482.837 L370.17885,482 L377.7,482 L377.7,485 C377.7,485.552 377.2296,486 376.65,486 L370.35,486 C369.7704,486 369.3,485.552 369.3,485 L369.3,482.837 Z M381.9,480 L369.7347,480 C369.45645,480 369.18975,480.105 368.99235,480.293 L363.30765,485.707 C363.11025,485.895 363,486.149 363,486.414 L363,498 C363,499.105 363.93975,500 365.1,500 L381.9,500 C383.06025,500 384,499.105 384,498 L384,482 C384,480.895 383.06025,480 381.9,480 L381.9,480 Z"></path></g></g></g></svg>`;
+const { applyStyle, constructAppHeaderLine } = AppUtils;
 
 const DEFAULT_CELL_HEIGHT = 30;
 const DEFAULT_CELL_WIDTH = 100;
@@ -119,7 +106,7 @@ style.textContent = `
 
 document.head.appendChild(style);
 
-export function create(abortSignal) {
+export function create(_args, _env, abortSignal) {
   const spreadsheet = new Spreadsheet(49, 13);
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
@@ -132,75 +119,66 @@ export function create(abortSignal) {
   const tableContainerElt = document.createElement("div");
   tableContainerElt.className = "__table_app_spreadsheet";
 
-  const headerElt = document.createElement("div");
-  applyStyle(headerElt, {
-    backgroundColor: "var(--window-sidebar-bg)",
-    width: "100%",
-    overflow: "auto",
-    display: "flex",
-    padding: "3px",
-    gap: "5px",
-    flexShrink: "0",
-  });
-
   let history = [];
   let historyIndex = 0;
 
   let tableElt = constructTable();
   tableContainerElt.appendChild(tableElt);
 
-  const newFileButton = createButtonElt(
-    newFileSvg,
-    "New blank sheet",
-    0.8,
-    (e) => {
-      e.preventDefault();
-      history.length = 0;
-      historyIndex = 0;
-      disableButton(undoButton);
-      disableButton(redoButton);
-      spreadsheet.reset();
-      tableElt.remove();
-      tableElt = constructTable();
-      tableContainerElt.appendChild(tableElt);
+  const {
+    element: headerElt,
+    enableButton,
+    disableButton,
+  } = constructAppHeaderLine({
+    newFile: {
+      title: "New blank sheet",
+      onClick: () => {
+        history.length = 0;
+        historyIndex = 0;
+        disableButton("undo");
+        disableButton("redo");
+        spreadsheet.reset();
+        tableElt.remove();
+        tableElt = constructTable();
+        tableContainerElt.appendChild(tableElt);
+      },
     },
-  );
-  headerElt.appendChild(newFileButton);
-
-  const undoButton = createButtonElt(undoSvg, "Undo", 1, (e) => {
-    e.preventDefault();
-    undo();
-  });
-  disableButton(undoButton);
-  headerElt.appendChild(undoButton);
-
-  const redoButton = createButtonElt(redoSvg, "Redo", 1, (e) => {
-    e.preventDefault();
-    redo();
-  });
-  disableButton(redoButton);
-  headerElt.appendChild(redoButton);
-
-  const saveButton = createButtonElt(
-    saveSvg,
-    "Save as CSV (download)",
-    0.75,
-    () => {
-      const rows = spreadsheet.getData();
-      const data = rows
-        .map((row) => row.map(escapeCsvField).join(","))
-        .join("\n");
-      if (typeof window.showSaveFilePicker === "function") {
-        saveFile(data);
-      } else {
-        const link = document.createElement("a");
-        link.download = "sheet.csv";
-        link.href = "data:text/plain;charset=utf-8," + encodeURIComponent(data);
-        link.click();
-      }
+    undo: { onClick: undo },
+    redo: { onClick: redo },
+    clear: {
+      onClick: () => {
+        const hadSomethingWritten = textArea.value;
+        statusBar.textContent = "Cleared";
+        textArea.value = "";
+        disableButton("clear");
+        if (hadSomethingWritten) {
+          saveState(false);
+        }
+        updateLineNumbers();
+      },
     },
-  );
-  headerElt.appendChild(saveButton);
+    save: {
+      title: "Save as CSV (download)",
+      onClick: () => {
+        const rows = spreadsheet.getData();
+        const data = rows
+          .map((row) => row.map(escapeCsvField).join(","))
+          .join("\n");
+        if (typeof window.showSaveFilePicker === "function") {
+          saveFile(data);
+        } else {
+          const link = document.createElement("a");
+          link.download = "sheet.csv";
+          link.href =
+            "data:text/plain;charset=utf-8," + encodeURIComponent(data);
+          link.click();
+        }
+      },
+    },
+  });
+  disableButton("undo");
+  disableButton("redo");
+  disableButton("clear");
 
   setupResizeEvents(tableContainerElt, spreadsheet, abortSignal);
   containerElt.appendChild(headerElt);
@@ -222,9 +200,9 @@ export function create(abortSignal) {
       historyIndex--;
     }
 
-    disableButton(redoButton);
+    disableButton("redo");
     if (historyIndex > 0) {
-      enableButton(undoButton);
+      enableButton("undo");
     }
   }
 
@@ -245,14 +223,14 @@ export function create(abortSignal) {
       tdElt.focus();
     }
 
-    enableButton(redoButton);
+    enableButton("redo");
     if (historyIndex <= 0) {
-      disableButton(undoButton);
+      disableButton("undo");
     }
     // if (textArea.value === "") {
-    //   disableButton(clearButton);
+    //   disableButton("clear");
     // } else {
-    //   enableButton(clearButton);
+    //   enableButton("clear");
     // }
   }
 
@@ -272,15 +250,15 @@ export function create(abortSignal) {
     }
 
     if (historyIndex > 0) {
-      enableButton(undoButton);
+      enableButton("undo");
     }
     if (historyIndex >= history.length) {
-      disableButton(redoButton);
+      disableButton("redo");
     }
     // if (textArea.value === "") {
-    //   disableButton(clearButton);
+    //   disableButton("clear");
     // } else {
-    //   enableButton(clearButton);
+    //   enableButton("clear");
     // }
   }
 
@@ -504,42 +482,6 @@ function addEventListener(target, event, abortSignal, callback) {
   abortSignal.addEventListener("abort", () => {
     target.removeEventListener(event, callback);
   });
-}
-
-function createButtonElt(svg, title, heightScale, onClick) {
-  const buttonSvgElt = getSvg(svg);
-  applyStyle(buttonSvgElt, {
-    width: "2rem",
-    height: `${heightScale * 2}rem`,
-  });
-  const buttonWrapperElt = document.createElement("span");
-  buttonWrapperElt.style.margin = "auto 0";
-  buttonWrapperElt.style.cursor = "pointer";
-  buttonWrapperElt.appendChild(buttonSvgElt);
-  buttonWrapperElt.onclick = onClick;
-  buttonWrapperElt.title = title;
-  return buttonWrapperElt;
-}
-
-function enableButton(buttonElt) {
-  if (buttonElt.style.cursor !== "pointer") {
-    buttonElt.style.cursor = "pointer";
-    buttonElt.children[0].setAttribute("fill", "var(--window-text-color)");
-  }
-}
-
-function disableButton(buttonElt) {
-  if (buttonElt.style.cursor === "pointer") {
-    buttonElt.style.cursor = "auto";
-    buttonElt.children[0].setAttribute("fill", "var(--window-inactive-header)");
-  }
-}
-
-function getSvg(svg) {
-  const svgWrapperElt = document.createElement("div");
-  svgWrapperElt.innerHTML = svg;
-  const svgElt = svgWrapperElt.children[0];
-  return svgElt;
 }
 
 function escapeCsvField(field) {

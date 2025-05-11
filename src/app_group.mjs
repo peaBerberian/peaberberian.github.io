@@ -1,16 +1,20 @@
 import { applyStyle } from "./utils.mjs";
 
-export default function generateDirectoryApp(name, apps, onOpen) {
+export default function generateAppGroup(name, apps, onOpen) {
+  let icon = "💽";
+  if (name === "External Apps") {
+    icon = "📡";
+  }
   return {
     id: `__dir-${name}`,
     title: name,
-    icon: "📁",
+    icon,
     data: {
       create: (abortSignal) => createApp(apps, onOpen, abortSignal),
     },
     // TODO: calculate from number of apps?
     defaultHeight: 400,
-    defaultWidth: 450,
+    defaultWidth: 460,
   };
 }
 
@@ -48,8 +52,8 @@ function createApp(apps, onOpen) {
       transition: "background-color 0.2s",
       borderRadius: "5px",
       padding: "5px",
-      width: "80px",
-      height: "100px",
+      width: "105px",
+      height: "105px",
       overflow: "hidden",
     });
     const iconImgElt = document.createElement("span");
@@ -76,6 +80,7 @@ function createApp(apps, onOpen) {
       display: "-webkit-box",
       webkitLineClamp: "2",
       webkitBoxOrient: "vertical",
+      paddingBottom: "7px",
     });
     iconTextElt.textContent = app.title;
     icon.appendChild(iconImgElt);

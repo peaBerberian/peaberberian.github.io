@@ -46,6 +46,7 @@ export default class WindowsManager {
    * Create a "window" for the given "app" object.
    *
    * @param {Object} app
+   * @param {Array} appArgs - The application's arguments.
    * @param {Object} options - Various options to configure how that new
    * application window will behave
    * @param {boolean} [options.activate] - If set to `true`, the application
@@ -59,7 +60,7 @@ export default class WindowsManager {
    * @returns {HTMLElement|null} - `HTMLElement` of the newly created window.
    * `null` if no window has been created.
    */
-  openApp(app, options = {}) {
+  openApp(app, appArgs, options = {}) {
     if (app.onlyOne) {
       // If only instance of the app can be created, check if this window already
       // exists. If so, activate it.
@@ -72,7 +73,7 @@ export default class WindowsManager {
       }
     }
 
-    const appWindow = new AppWindow(app, options);
+    const appWindow = new AppWindow(app, appArgs, options);
     if (!appWindow) {
       return; // No window has been created
     }

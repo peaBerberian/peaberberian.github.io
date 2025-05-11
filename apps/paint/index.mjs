@@ -11,6 +11,7 @@ import {
   crosshairCursor,
   bucketSvg,
 } from "./svgs.mjs";
+import { applyStyle } from "./utils.mjs";
 
 const DEFAULT_CANVAS_HEIGHT = 800;
 const DEFAULT_CANVAS_WIDTH = 800;
@@ -19,7 +20,7 @@ const DEFAULT_CANVAS_WIDTH = 800;
 // TODO: bucket (or all operations really) in a Worker with a canvas delocalized to it?
 
 export function create(_args, env, abortSignal) {
-  const { strHtml, applyStyle, constructAppHeaderLine } = env.appUtils;
+  const { strHtml, constructAppHeaderLine } = env.appUtils;
   let lastX = 0;
   let lastY = 0;
   let startX = 0;
@@ -142,7 +143,6 @@ export function create(_args, env, abortSignal) {
         isResizing = false;
       },
     },
-    applyStyle,
     abortSignal,
   );
 

@@ -1,3 +1,5 @@
+import { applyStyle } from "./utils.mjs";
+
 /**
  * Setup the right events to ensure this canvas can be resized when interacting
  * with it.
@@ -18,10 +20,6 @@ export default function handleResizeOnCanvas(
   canvasElt,
   { minHeight, minWidth },
   { onStart, onResize, onEnd },
-
-  // TODO: This is ugly and brought here following an APP API refacto
-  // find a more readable solution.
-  applyStyle,
   abortSignal,
 ) {
   // Add resize handles

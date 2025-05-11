@@ -263,7 +263,13 @@ export default class AppsLauncher {
     }
 
     // Actually launch the application
-    this._launchApp(app.data, appArgs, env, applicationAbortCtrl.signal).then(
+    this._launchAppFromAppData(
+      "create",
+      app.data,
+      appArgs,
+      env,
+      applicationAbortCtrl.signal,
+    ).then(
       (appObj) => {
         if (applicationAbortCtrl.signal.aborted) {
           appStack.onClose();
@@ -364,18 +370,15 @@ export default class AppsLauncher {
   }
 
   /**
-   * Actually launch the application and get its return values (element and
-   * various lifecycle functions).
-   *
-   * NOTE: This method may be a little too magic in what it accepts: function,
-   * object with a create function, object with an `element`, Promise etc.
-   * It's kind of the fruit of adding stuff on top of other stuff, but I should
-   * probably have to simplify that at some point.
-   *
-   * @param {Object} appData - The `data` property from executable, which
+   * Launch an application from its executable's `data` property and get its
+   * return values (element and various lifecycle functions).
+   * @param {string} method - Either "create" for the default app launch, or the
+   * method name of the various other features they may provide (e.g. a
+   * file-picker may provide other entry points for opening and saving files).
+   * @param {Object} appData - The `data` property from an executable, which
    * describes how to actually launch the application.
-   * @param {Array.<string>} - The arguments that should be communicated to the
-   * application when launching it.
+   * @param {Array.<string>} appArgs - The arguments that should be communicated
+   * to the application when launching it.
    * @param {Object} env - The `env` object providing some desktop context and
    * API to applications.
    * @param {AbortSignal} abortSignal - `AbortSignal` which triggers when the
@@ -384,62 +387,83 @@ export default class AppsLauncher {
    * succeded to launch the application, with the payload obtained from
    * launching it.
    */
-  async _launchApp(
-    appData,
-    appArgs,
-    env,
-    abortSignal,
-    wantedExport = "create",
-  ) {
-    const launchAfterPromise = (prom) => {
-      return prom.then((appVal) =>
-        this._launchApp(appVal, appArgs, env, abortSignal, wantedExport),
-      );
-    };
-
-    if (typeof appData[wantedExport] === "function") {
-      const ret = appData[wantedExport](
+  async _launchAppFromAppData(method, appData, appArgs, env, abortSignal) {
+    if (appData.website) {
+      if (method !== "create") {
+        console.warn('Not calling "create" on an i-frame application.');
+      }
+      const iframeContainer = createAppIframe(appData.website);
+      const element = iframeContainer;
+      const onActivate = iframeContainer.focus.bind(iframeContainer);
+      return { element, onActivate };
+    } else if (appData.lazyLoad) {
+      return await this._launchAppFromScript(
+        appData.lazyLoad,
+        method,
         appArgs,
         env,
         abortSignal,
-        wantedExport,
       );
-      return this._launchApp(ret, appArgs, env, abortSignal, wantedExport);
-    } else if (typeof appData === "function") {
-      return this._launchApp(appData(appArgs, env, abortSignal, wantedExport));
+    } else {
+      throw new Error("Unknown application data format.");
     }
+  }
+
+  /**
+   * Launch an application from its external script's URL and get its return
+   * values (element and various lifecycle functions).
+   * @param {string} scriptUrl
+   * @param {string} method - Either "create" for the default app launch, or the
+   * method name of the various other features they may provide (e.g. a
+   * file-picker may provide other entry points for opening and saving files).
+   * @param {Array.<string>} appArgs - The arguments that should be communicated
+   * to the application when launching it.
+   * @param {Object} env - The `env` object providing some desktop context and
+   * API to applications.
+   * @param {AbortSignal} abortSignal - `AbortSignal` which triggers when the
+   * application is closed.
+   * @returns {Promise.<Object>} - Promise which resolves when and if it
+   * succeded to launch the application, with the payload obtained from
+   * launching it.
+   */
+  async _launchAppFromScript(scriptUrl, method, appArgs, env, abortSignal) {
+    const appVal = await import(scriptUrl);
+    if (typeof appVal?.[method] !== "function") {
+      throw new Error(
+        "Empty application JS file. " +
+          `Please export a function called "${method}" in it.`,
+      );
+    }
+
+    const appRet = await appVal[method](appArgs, env, abortSignal);
 
     let element;
     let onActivate;
     let onDeactivate;
     let onClose;
-
-    if (appData.element) {
-      element = appData.element;
-    } else if (Array.isArray(appData.sidebar) && appData.sidebar.length > 0) {
-      const sidebarInfo = constructAppWithSidebar(appData.sidebar, abortSignal);
-      element = sidebarInfo.element;
-      onActivate = sidebarInfo.focus;
-    } else if (typeof appData.then === "function") {
-      return launchAfterPromise(appData);
-    } else if (appData.website) {
-      const iframeContainer = createAppIframe(appData.website);
-      element = iframeContainer;
-      onActivate = iframeContainer.focus.bind(iframeContainer);
-    } else if (appData.lazyLoad) {
-      return launchAfterPromise(import(appData.lazyLoad));
+    if (appRet?.element == null) {
+      if (Array.isArray(appRet?.sidebar) && appRet.sidebar.length > 0) {
+        const sidebarInfo = constructAppWithSidebar(
+          appRet.sidebar,
+          abortSignal,
+        );
+        element = sidebarInfo.element;
+        onActivate = sidebarInfo.focus;
+      } else {
+        throw new Error("Application without a returned `element` property.");
+      }
     } else {
-      element = document.createElement("div");
+      element = appRet.element;
     }
 
-    if (!onActivate && typeof appData.onActivate === "function") {
-      onActivate = appData.onActivate.bind(appData);
+    if (!onActivate && typeof appRet.onActivate === "function") {
+      onActivate = appRet.onActivate.bind(appRet);
     }
-    if (!onDeactivate && typeof appData.onDeactivate === "function") {
-      onDeactivate = appData.onDeactivate.bind(appData);
+    if (!onDeactivate && typeof appRet.onDeactivate === "function") {
+      onDeactivate = appRet.onDeactivate.bind(appRet);
     }
-    if (!onClose && typeof appData.onClose === "function") {
-      onClose = appData.onClose.bind(appData);
+    if (!onClose && typeof appRet.onClose === "function") {
+      onClose = appRet.onClose.bind(appRet);
     }
     return { element, onActivate, onDeactivate, onClose };
   }
@@ -466,7 +490,8 @@ export default class AppsLauncher {
           providers.filePickerOpen[0],
           "object",
         );
-        const appObj = await this._launchApp(
+        const appObj = await this._launchAppFromAppData(
+          "createFileOpener",
           filePickerApp.data,
           [config],
           // TODO: More centralized and normalized env construction?
@@ -479,7 +504,6 @@ export default class AppsLauncher {
             filesystem,
           },
           fileOpenerAbortCtrl.signal,
-          "createFileOpener",
         );
         filePickerElt = appObj.element;
         appStack.push(appObj, appWindow.isActivated());

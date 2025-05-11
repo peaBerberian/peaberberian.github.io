@@ -145,31 +145,26 @@ export default class AppWindow extends EventEmitter {
     if (app.value.create) {
       const created = app.value.create(this._abortController.signal);
       if (created !== null) {
-        if (typeof created.then === "function") {
-          const spinnerPlaceholder = getSpinnerPlaceholder();
-          appElt = spinnerPlaceholder.element;
-          created.then((module) => {
-            clearTimeout(spinnerPlaceholder.timeout);
-            appElt.remove();
-            if (module && typeof module.create === "function") {
-              this.element.appendChild(
-                module.create(this._abortController.signal),
-              );
-            }
-          });
-        } else {
-          appElt = created;
-        }
+        appElt = created;
       }
     } else if (
       Array.isArray(app.value.sidebar) &&
       app.value.sidebar.length > 0
     ) {
-      const container = constructAppWithSidebar(
+      appElt = constructAppWithSidebar(
         app.value.sidebar,
         this._abortController.signal,
       );
-      appElt = container;
+    } else if (app.value.lazyLoad) {
+      const spinnerPlaceholder = getSpinnerPlaceholder();
+      appElt = spinnerPlaceholder.element;
+      app.value.lazyLoad().then((module) => {
+        clearTimeout(spinnerPlaceholder.timeout);
+        appElt.remove();
+        if (module && typeof module.create === "function") {
+          this.element.appendChild(module.create(this._abortController.signal));
+        }
+      });
     } else {
       appElt = document.createElement("div");
     }
@@ -826,7 +821,7 @@ function getSpinnerPlaceholder() {
     const spinnerElt = document.createElement("div");
     spinnerElt.className = "spinner";
     placeholderElt.appendChild(spinnerElt);
-  }, 500);
+  }, 200);
   return {
     element: placeholderElt,
     timeout,

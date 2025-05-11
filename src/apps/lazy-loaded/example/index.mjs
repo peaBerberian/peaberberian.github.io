@@ -1,5 +1,17 @@
-// To dynamically import, put `import("./lazy/example.js")`
-// See `app-utils.js` to see globally defined utils
+// To dynamically import, put `import("/lazy/example.js")` (the name of the
+// directory with a `.js` suffix) in your code.
+//
+// As an example for an app, you can export:
+// ```
+// export default function MyApp() {
+//   return {
+//     // ...
+//     lazyLoad: () => import("/lazy/example.js")`,
+//   };
+// }
+// ```
+//
+// Take a look at `app-utils.js` to see globally defined utils.
 export function create() {
   return window.strHtml`<div class="w-content">
 ${window.createAppTitle("Example application", {})}

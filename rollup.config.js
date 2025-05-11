@@ -3,6 +3,19 @@ import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
+const lazyAppPlugin = {
+  name: "preserve-dynamic-imports",
+  resolveDynamicImport(specifier) {
+    if (typeof specifier === "string" && specifier.startsWith("/lazy/")) {
+      return {
+        id: "." + specifier,
+        external: true,
+      };
+    }
+    return null;
+  },
+};
+
 const PROJECT_ROOT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 
 const OUTPUT_DIR = path.join(PROJECT_ROOT_DIRECTORY, "dist");
@@ -15,7 +28,7 @@ const LAZY_LOADED_APP_DIRECTORY = path.join(
   "lazy-loaded",
 );
 
-const LAZY_LOADED_DEST = path.join(OUTPUT_DIR, "apps", "lazy");
+const LAZY_LOADED_DEST = path.join(OUTPUT_DIR, "lazy");
 try {
   fs.rmSync(LAZY_LOADED_DEST, { recursive: true, force: true });
 } catch (err) {
@@ -42,8 +55,7 @@ export default [
     file: bundle.bundlePath,
     format: bundle.keepEsm ? "es" : "iife",
   },
-  external: (id) => id.startsWith("./lazy/"),
-  plugins: [process.env.MINIFY && terser()].filter(Boolean),
+  plugins: [process.env.MINIFY && terser(), lazyAppPlugin].filter(Boolean),
 }));
 
 function getLazyLoadedApps(baseDir, OUTPUT_DIR) {

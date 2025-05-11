@@ -247,23 +247,31 @@ export function create(_args, env, abortSignal) {
     startDrawing(e);
     draw(e);
   });
-  wrapperElt.addEventListener("touchstart", (e) => {
-    if (currentTool === "Cursor (no tool)") {
-      return;
-    }
-    const touch = e.touches[0];
-    startDrawing(touch);
-    draw(touch);
-  });
-  wrapperElt.addEventListener("touchmove", (e) => {
-    if (e.touches.length === 1) {
+  wrapperElt.addEventListener(
+    "touchstart",
+    (e) => {
       if (currentTool === "Cursor (no tool)") {
         return;
       }
       const touch = e.touches[0];
+      startDrawing(touch);
       draw(touch);
-    }
-  });
+    },
+    { passive: true },
+  );
+  wrapperElt.addEventListener(
+    "touchmove",
+    (e) => {
+      if (e.touches.length === 1) {
+        if (currentTool === "Cursor (no tool)") {
+          return;
+        }
+        const touch = e.touches[0];
+        draw(touch);
+      }
+    },
+    { passive: true },
+  );
 
   // Prevent the canvas from scrolling around on touch
   canvasContainerElt.addEventListener("touchmove", (e) => {

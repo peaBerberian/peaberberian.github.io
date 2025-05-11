@@ -323,9 +323,13 @@ function addMovingAroundListeners(icon, { baseLeft, baseTop }, abortSignal) {
     icon.style.left = `${baseLeft}px`;
     icon.style.top = `${baseTop}px`;
   };
-  addAbortableEventListener(icon, "touchstart", abortSignal, onTouchStart);
+  addAbortableEventListener(icon, "touchstart", abortSignal, onTouchStart, {
+    passive: true,
+  });
   addAbortableEventListener(icon, "touchend", abortSignal, onMouseUp);
-  addAbortableEventListener(icon, "touchmove", abortSignal, onTouchMove);
+  addAbortableEventListener(icon, "touchmove", abortSignal, onTouchMove, {
+    passive: true,
+  });
 
   // Safari just selects all over the place like some maniac without this
   addAbortableEventListener(icon, "selectstart", abortSignal, (e) => {

@@ -195,10 +195,16 @@ function handleMoveOnWindow(
       }
       stopDragging();
     };
-    addAbortableEventListener(header, "touchstart", abortSignal, (e) => {
-      const touch = e.touches[0];
-      startDraggingWindow(touch.clientX, touch.clientY);
-    });
+    addAbortableEventListener(
+      header,
+      "touchstart",
+      abortSignal,
+      (e) => {
+        const touch = e.touches[0];
+        startDraggingWindow(touch.clientX, touch.clientY);
+      },
+      { passive: true },
+    );
     addAbortableEventListener(
       header,
       "touchend",
@@ -206,12 +212,18 @@ function handleMoveOnWindow(
       validateWindowMovement,
     );
     addAbortableEventListener(header, "touchcancel", abortSignal, stopDragging);
-    addAbortableEventListener(header, "touchmove", abortSignal, (e) => {
-      if (e.touches.length === 1) {
-        const touch = e.touches[0];
-        moveDraggedWindow(touch.clientX, touch.clientY);
-      }
-    });
+    addAbortableEventListener(
+      header,
+      "touchmove",
+      abortSignal,
+      (e) => {
+        if (e.touches.length === 1) {
+          const touch = e.touches[0];
+          moveDraggedWindow(touch.clientX, touch.clientY);
+        }
+      },
+      { passive: true },
+    );
 
     // Safari just selects all over the place like some maniac without this
     addAbortableEventListener(header, "selectstart", abortSignal, (e) => {

@@ -13,8 +13,9 @@ export function addAbortableEventListener(
   event,
   abortSignal,
   callback,
+  options,
 ) {
-  target.addEventListener(event, callback);
+  target.addEventListener(event, callback, options);
   abortSignal.addEventListener("abort", () => {
     target.removeEventListener(event, callback);
   });

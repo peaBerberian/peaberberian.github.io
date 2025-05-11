@@ -7,13 +7,13 @@ export const pasteSvg = `<svg fill="currentColor" height="800px" width="800px" v
 export function showError(containerElt, message) {
   showAppMessage(containerElt, "❌ " + message, 5000);
 }
-export function pathJoin(...args) {
-  if (args.length === 0) {
+export function pathJoin(...paths) {
+  if (paths.length === 0) {
     return "";
   }
-  let curr = args[0];
-  for (let i = 1; i < args.length; i++) {
-    const newPart = args[i];
+  let curr = paths[0];
+  for (let i = 1; i < paths.length; i++) {
+    const newPart = paths[i];
     if (newPart.startsWith("/")) {
       curr = newPart;
     } else if (curr.endsWith("/")) {

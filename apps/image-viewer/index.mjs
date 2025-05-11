@@ -12,7 +12,7 @@ const zoomInSvg = `<svg width="800px" height="800px" viewBox="0 0 24 24" fill="n
 const zoomOutSvg = `<svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M4 11C4 7.13401 7.13401 4 11 4C14.866 4 18 7.13401 18 11C18 14.866 14.866 18 11 18C7.13401 18 4 14.866 4 11ZM11 2C6.02944 2 2 6.02944 2 11C2 15.9706 6.02944 20 11 20C13.125 20 15.078 19.2635 16.6177 18.0319L20.2929 21.7071C20.6834 22.0976 21.3166 22.0976 21.7071 21.7071C22.0976 21.3166 22.0976 20.6834 21.7071 20.2929L18.0319 16.6177C19.2635 15.078 20 13.125 20 11C20 6.02944 15.9706 2 11 2Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M7 11C7 10.4477 7.44772 10 8 10H14C14.5523 10 15 10.4477 15 11C15 11.5523 14.5523 12 14 12H8C7.44772 12 7 11.5523 7 11Z" fill="currentColor"/></svg>`;
 const zoomResetSvg = `<svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M4 11C4 7.13401 7.13401 4 11 4C14.866 4 18 7.13401 18 11C18 14.866 14.866 18 11 18C7.13401 18 4 14.866 4 11ZM11 2C6.02944 2 2 6.02944 2 11C2 15.9706 6.02944 20 11 20C13.125 20 15.078 19.2635 16.6177 18.0319L20.2929 21.7071C20.6834 22.0976 21.3166 22.0976 21.7071 21.7071C22.0976 21.3166 22.0976 20.6834 21.7071 20.2929L18.0319 16.6177C19.2635 15.078 20 13.125 20 11C20 6.02944 15.9706 2 11 2Z" fill="currentColor"/></svg>`;
 
-export function create(_args, env, parentAbortSignal) {
+export function create(args, env, parentAbortSignal) {
   const { constructAppHeaderLine } = env.appUtils;
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
@@ -66,80 +66,9 @@ export function create(_args, env, parentAbortSignal) {
             title: "Open an image from files stored on this Web Desktop",
             allowMultipleSelections: true,
           })
-          .then(
-            (files) => {
-              if (files.length === 0) {
-                updateDisplayedImage();
-                updateStatusBar();
-                return;
-              }
-              clear();
-              for (const file of files) {
-                const imgElt = document.createElement("img");
-                applyStyle(imgElt, {
-                  maxWidth: "100%",
-                  maxHeight: "100%",
-                  objectFit: "contain",
-                  userSelect: "none",
-                  position: "absolute",
-                });
-                imgElt.draggable = false;
-                imageTransformMap.set(imgElt, {
-                  scale: 1,
-                  rotation: 0,
-                  translateX: 0,
-                  translateY: 0,
-                });
-
-                const { filename, data: arrayBuffer } = file;
-                const mimeType = guessMimeType(filename, arrayBuffer);
-                const blob = new Blob([arrayBuffer], { type: mimeType });
-                const imgUrl = URL.createObjectURL(blob);
-                updateImageTransform(imgElt);
-                imgElt.src = imgUrl;
-
-                imgElt.onerror = () => {
-                  URL.revokeObjectURL(imgUrl);
-                  showAppMessage(
-                    appContentAreaElt,
-                    "❌ Error: Failed to load a file. Are you sure this is an image?",
-                  );
-                  imgElt.remove();
-
-                  for (let i = 0; i < loadedImages.length; i++) {
-                    if (loadedImages[i].imgElt === imgElt) {
-                      loadedImages.splice(i, 1);
-
-                      if (i !== currentImageIndex) {
-                        updateStatusBar();
-                      } else {
-                        if (currentImageIndex >= loadedImages.length) {
-                          currentImageIndex = 0;
-                        }
-                        updateDisplayedImage();
-                        updateStatusBar();
-                      }
-                    }
-                  }
-                };
-                imgContainerElt.appendChild(imgElt);
-                loadedImages.push({ imgElt, filename });
-                if (currentImageIndex === -1) {
-                  currentImageIndex = 0;
-                  enableButton("rotateLeft");
-                  enableButton("rotateRight");
-                } else {
-                  enableButton("previous");
-                  enableButton("next");
-                }
-                updateDisplayedImage();
-                updateStatusBar();
-              }
-            },
-            (err) => {
-              showAppMessage(appContentAreaElt, "❌ " + err.toString(), 10000);
-            },
-          );
+          .then(openFiles, (err) => {
+            showAppMessage(appContentAreaElt, "❌ " + err.toString(), 10000);
+          });
       },
     },
     { name: "separator" },
@@ -292,6 +221,18 @@ export function create(_args, env, parentAbortSignal) {
   });
 
   updateDisplayedImage();
+
+  {
+    const initialFiles = [];
+    for (const opt of args) {
+      if (opt.type === "file") {
+        initialFiles.push(opt);
+      }
+    }
+    if (initialFiles.length > 0) {
+      openFiles(initialFiles);
+    }
+  }
 
   return {
     element: containerElt,
@@ -645,6 +586,76 @@ export function create(_args, env, parentAbortSignal) {
   }
   function unhighlightDropZone() {
     imgContainerElt.style.backgroundColor = "var(--app-primary-bg)";
+  }
+
+  function openFiles(files) {
+    if (files.length === 0) {
+      updateDisplayedImage();
+      updateStatusBar();
+      return;
+    }
+    clear();
+    for (const file of files) {
+      const imgElt = document.createElement("img");
+      applyStyle(imgElt, {
+        maxWidth: "100%",
+        maxHeight: "100%",
+        objectFit: "contain",
+        userSelect: "none",
+        position: "absolute",
+      });
+      imgElt.draggable = false;
+      imageTransformMap.set(imgElt, {
+        scale: 1,
+        rotation: 0,
+        translateX: 0,
+        translateY: 0,
+      });
+
+      const { filename, data: arrayBuffer } = file;
+      const mimeType = guessMimeType(filename, arrayBuffer);
+      const blob = new Blob([arrayBuffer], { type: mimeType });
+      const imgUrl = URL.createObjectURL(blob);
+      updateImageTransform(imgElt);
+      imgElt.src = imgUrl;
+
+      imgElt.onerror = () => {
+        URL.revokeObjectURL(imgUrl);
+        showAppMessage(
+          appContentAreaElt,
+          "❌ Error: Failed to load a file. Are you sure this is an image?",
+        );
+        imgElt.remove();
+
+        for (let i = 0; i < loadedImages.length; i++) {
+          if (loadedImages[i].imgElt === imgElt) {
+            loadedImages.splice(i, 1);
+
+            if (i !== currentImageIndex) {
+              updateStatusBar();
+            } else {
+              if (currentImageIndex >= loadedImages.length) {
+                currentImageIndex = 0;
+              }
+              updateDisplayedImage();
+              updateStatusBar();
+            }
+          }
+        }
+      };
+      imgContainerElt.appendChild(imgElt);
+      loadedImages.push({ imgElt, filename });
+      if (currentImageIndex === -1) {
+        currentImageIndex = 0;
+        enableButton("rotateLeft");
+        enableButton("rotateRight");
+      } else {
+        enableButton("previous");
+        enableButton("next");
+      }
+      updateDisplayedImage();
+      updateStatusBar();
+    }
   }
 }
 

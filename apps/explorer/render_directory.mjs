@@ -155,14 +155,22 @@ export default function renderDirectory({
     // TODO: drag and drop
     itemElt.onmousedown = (e) => {
       e.preventDefault();
-      e.stopPropagation();
+      // e.stopPropagation();
+    };
+
+    itemElt.ontouchstart = () => {
+      onClick({
+        toggle: true,
+        keepPrevious: true,
+        includePath: false,
+      });
     };
 
     itemElt.onclick = (e) => {
       onClick({
         toggle: e.ctrlKey,
-        keepPrevious: e.ctrlKey,
-        countAsClick: true,
+        keepPrevious: e.pointerType === "touch" ? false : e.ctrlKey,
+        clickBehavior: e.pointerType === "touch" ? "double" : "single",
         includePath: e.shiftKey,
       });
     };
@@ -173,7 +181,7 @@ export default function renderDirectory({
 
     itemsParentElt.appendChild(itemElt);
 
-    function onClick({ includePath, toggle, keepPrevious, countAsClick }) {
+    function onClick({ includePath, toggle, keepPrevious, clickBehavior }) {
       if (includePath) {
         const lastSelected = [...selectedElts.elements].pop();
         if (lastSelected && lastSelected !== itemElt) {
@@ -200,7 +208,6 @@ export default function renderDirectory({
                   );
             selectItemElts(toSelect, {
               clearPrevious: false,
-              isClick: false,
             });
             return;
           }
@@ -209,7 +216,7 @@ export default function renderDirectory({
       onItemClick(itemElt, item, {
         toggle,
         keepPrevious,
-        countAsClick,
+        clickBehavior,
       });
     }
   }
@@ -231,30 +238,35 @@ export default function renderDirectory({
     signalCutAction,
   };
 
-  function onItemClick(itemElt, item, { toggle, keepPrevious, countAsClick }) {
+  function onItemClick(itemElt, item, { toggle, keepPrevious, clickBehavior }) {
+    if (clickBehavior === "double" || clickBehavior === "single") {
+      if (
+        clickBehavior === "double" ||
+        (lastClickInfo.element === itemElt &&
+          performance.now() - lastClickInfo.timeStamp <= 500)
+      ) {
+        if (item.isDirectory) {
+          navigateTo(item.path);
+        } else {
+          openFiles([item]);
+        }
+        return;
+      }
+      lastClickInfo.element = itemElt;
+      lastClickInfo.timeStamp = performance.now();
+    }
+
     if (toggle) {
       if (isItemEltSelected(itemElt)) {
         clearItemElts([itemElt]);
       } else {
         selectItemElts([itemElt], {
-          isClick: countAsClick,
           clearPrevious: !keepPrevious,
         });
-      }
-    } else if (
-      countAsClick &&
-      lastClickInfo.element === itemElt &&
-      performance.now() - lastClickInfo.timeStamp <= 500
-    ) {
-      if (item.isDirectory) {
-        navigateTo(item.path);
-      } else {
-        openFiles([item]);
       }
     } else {
       selectItemElts([itemElt], {
         clearPrevious: !keepPrevious,
-        isClick: countAsClick,
       });
       onSelectionChange(selectedElts.items);
     }
@@ -271,10 +283,7 @@ export default function renderDirectory({
     }, {});
   }
 
-  function selectItemElts(
-    itemElts,
-    { isClick = false, clearPrevious, preventScroll },
-  ) {
+  function selectItemElts(itemElts, { clearPrevious, preventScroll }) {
     if (clearPrevious) {
       for (const selectedElt of selectedElts.elements) {
         selectedElt.style.backgroundColor = "";
@@ -282,10 +291,6 @@ export default function renderDirectory({
       }
       selectedElts.elements.clear();
       selectedElts.items.length = 0;
-    }
-    if (isClick && itemElts.length > 0) {
-      lastClickInfo.element = itemElts[0];
-      lastClickInfo.timeStamp = performance.now();
     }
     for (const itemElt of itemElts) {
       const item = itemsMap.get(itemElt);
@@ -481,7 +486,6 @@ export default function renderDirectory({
           onItemClick(document.activeElement, item, {
             toggle: true,
             keepPrevious: true,
-            countAsClick: false,
           });
           break;
         }
@@ -629,6 +633,7 @@ function addMouseSelectInteractivity(
   { getSelectedItems, selectItemElts, clearItemElts, isItemEltSelected },
 ) {
   let isSelecting = false;
+  let hasSelectionStarted = false;
   let startX = 0;
   let startY = 0;
   let selectionBox;
@@ -640,13 +645,6 @@ function addMouseSelectInteractivity(
       return;
     }
     e.preventDefault();
-
-    if (e.ctrlKey) {
-      baseSelected = getSelectedItems();
-    } else {
-      baseSelected = [];
-      clearItemElts(getSelectedItems());
-    }
 
     isSelecting = true;
     startX = e.clientX;
@@ -711,6 +709,22 @@ function addMouseSelectInteractivity(
     selectionBox.style.width = `${width}px`;
     selectionBox.style.height = `${height}px`;
 
+    if (!hasSelectionStarted) {
+      if (
+        Math.abs(startX - currentX) < 15 &&
+        Math.abs(startY - currentY) < 15
+      ) {
+        return;
+      }
+      hasSelectionStarted = true;
+      if (e.ctrlKey) {
+        baseSelected = getSelectedItems();
+      } else {
+        baseSelected = [];
+        clearItemElts(getSelectedItems());
+      }
+    }
+
     // Check overlap with selectable items
     // TODO: could be more efficient also here
     const selectionRect = selectionBox.getBoundingClientRect();
@@ -751,6 +765,7 @@ function addMouseSelectInteractivity(
     clearItemElts(toClear);
   }
   function onMouseUp() {
+    hasSelectionStarted = false;
     if (!isSelecting) {
       return;
     }

@@ -42,11 +42,18 @@ function createExplorer(
   { appUtils, open, filesystem },
   abortSignal,
 ) {
+  let options = {};
+  for (const opt of args) {
+    if (opt.type === "options") {
+      options = opt;
+    }
+  }
+
   const {
     title,
     allowMultipleSelections,
     baseDirectory = "/userdata/",
-  } = args[0] ?? {};
+  } = options;
   const containerElt = createContainerElement();
   /**
    * Global HTML container for the file explorer.

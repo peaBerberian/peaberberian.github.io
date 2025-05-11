@@ -332,6 +332,20 @@ function writeGeneratedAppFile(baseDir) {
         "    provider: " + JSON.stringify(app.provider) + ",\n";
     }
 
+    if (Array.isArray(app.defaultForExtensions)) {
+      for (const ext of app.defaultForExtensions) {
+        if (typeof ext !== "string") {
+          throw new Error(
+            `Error in app "${app.id}": Indicates non-string extension as \`defaultForExtensions\``,
+          );
+        }
+      }
+      uglyHandWrittenJsObject +=
+        "    defaultForExtensions: " +
+        JSON.stringify(app.defaultForExtensions) +
+        ",\n";
+    }
+
     if (filePath) {
       // Here I will put the import path as a `lazyLoad` property.
       const importPath = `./lazy/${app.id}.js`;

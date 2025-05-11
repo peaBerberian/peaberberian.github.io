@@ -480,6 +480,17 @@ function handleResizeOnWindow(
      * in pixels.
      */
     let startTop;
+    /**
+     * Height of the container element. We assume that it cannot change while a
+     * window resize or window move is happening.
+     */
+    let containerWidth;
+
+    /**
+     * Height of the container element. We assume that it cannot change while a
+     * window resize or window move is happening.
+     */
+    let containerHeight;
 
     abortSignal.addEventListener("abort", () => {
       unblockElementsFromTakingPointerEvents();

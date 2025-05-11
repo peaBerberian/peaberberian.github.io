@@ -9,6 +9,9 @@
 // - if click out of the screen / mouseleave do not deactivate window?
 //
 // low priority:
+// - disable text shadows on icons if opacity big enough?
+// - text editor
+// - minesweeper game
 // - all images are their height and width defined to avoid repaint effects
 // - windows moving when moving taskbar to top/bottom. Could be cool to stay in
 //   place if possible
@@ -44,6 +47,7 @@ import StrHtml from "./apps/str-html.mjs";
 import SystemSettingsApp from "./apps/settings/App.mjs";
 import ThisWebsite from "./apps/ThisWebsite.mjs";
 import WaspHls from "./apps/WaspHls.mjs";
+import paintApp from "./apps/paint.mjs";
 
 import AppIcons from "./components/AppIcons.mjs";
 import StartMenu from "./components/StartMenu.mjs";
@@ -68,57 +72,61 @@ const apps = [
   {
     id: "this-website",
     value: ThisWebsite(),
-    inStartList: "Project descriptions",
+  },
+  {
+    id: "paint",
+    value: paintApp(),
+    inStartList: "Desktop Apps",
   },
   {
     id: "rx-player",
     value: RxPlayer(),
-    inStartList: "Project descriptions",
+    inStartList: "Other Projects",
   },
   {
     id: "wasp-hls-demo",
     value: WaspHls(),
-    inStartList: "Project descriptions",
+    inStartList: "Other Projects",
   },
   {
     id: "rx-paired",
     value: RxPaired(),
-    inStartList: "Project descriptions",
+    inStartList: "Other Projects",
   },
   {
     id: "eme-spy",
     value: EMESpy(),
-    inStartList: "Project descriptions",
+    inStartList: "Other Projects",
   },
   {
     id: "mse-spy",
     value: MSESpy(),
-    inStartList: "Project descriptions",
+    inStartList: "Other Projects",
   },
   {
     id: "isobmff-inspector",
     value: IsobmffInspector(),
-    inStartList: "Project descriptions",
+    inStartList: "Other Projects",
   },
   {
     id: "gif-renderer",
     value: GifRenderer(),
-    inStartList: "Project descriptions",
+    inStartList: "Other Projects",
   },
   {
     id: "str-html",
     value: StrHtml(),
-    inStartList: "Project descriptions",
+    inStartList: "Other Projects",
   },
   {
     id: "readme",
     value: ReadmeApp(),
-    inStartList: "Project descriptions",
+    inStartList: "Other Projects",
   },
   {
     id: "keyboard9",
     value: Keyboard9App(),
-    inStartList: "Project descriptions",
+    inStartList: "Other Projects",
   },
   {
     id: "passgen-demo",
@@ -128,7 +136,7 @@ const apps = [
   {
     id: "bif-inspector",
     value: BifInspectorApp(),
-    inStartList: "Project descriptions",
+    inStartList: "Other Projects",
   },
   {
     id: "clock",

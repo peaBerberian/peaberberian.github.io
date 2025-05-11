@@ -69,16 +69,19 @@ function createExplorer(explorerType, args, env, abortSignal) {
   } = options;
 
   /**
-   * Root element for this explorer.
-   * TODO: needed?
-   */
-  const containerElt = createContainerElement();
-
-  /**
-   * HTML container for the file explorer.
+   * HTML Wrapper for the whole explorer
    * @type {HTMLElement}
    */
   const explorerContainer = document.createElement("div");
+  applyStyle(explorerContainer, {
+    display: "flex",
+    flexDirection: "column",
+    position: "relative",
+    width: "100%",
+    height: "100%",
+    overflow: "hidden",
+    backgroundColor: "var(--window-content-bg)",
+  });
 
   /** `AbortController` linked to the currently-displayed directory. */
   let currentDirectoryAbortController = new AbortController();
@@ -223,18 +226,29 @@ function createExplorer(explorerType, args, env, abortSignal) {
 
   /**
    * Central element where the various files and directories will be displayed
-   * (or a message indicating that there's nothing!).
+   * and messages shown.
    * @type {HTMLElement}
    */
-  const directoryContainer = document.createElement("div");
-  applyStyle(directoryContainer, {
+  const directoryZoneElt = document.createElement("div");
+  applyStyle(directoryZoneElt, {
+    position: "relative",
     flex: "1",
     minHeight: "150px",
-    overflow: "auto",
     backgroundColor: "var(--window-content-bg)",
     border: "1px solid var(--window-line-color)",
   });
-  explorerElt.appendChild(directoryContainer);
+
+  /**
+   * Actual view containing just the directory listing.
+   * @type {HTMLElement}
+   */
+  const currentDirectoryElt = document.createElement("div");
+  applyStyle(currentDirectoryElt, {
+    overflow: "auto",
+    height: "100%",
+  });
+  directoryZoneElt.appendChild(currentDirectoryElt);
+  explorerElt.appendChild(directoryZoneElt);
 
   /**
    * Optional warning element that shows in yellow below the directory space.
@@ -290,7 +304,12 @@ function createExplorer(explorerType, args, env, abortSignal) {
   }
   explorerStatusBarElt.appendChild(statusLeftElt);
 
-  let validateButton;
+  /**
+   * Button used in file-pickers to validate the action.
+   * `undefined` for a "regular" explorer.
+   * @type {HTMLElement|null}
+   */
+  let validateButton = null;
   if (explorerType === "opener" || explorerType === "saver") {
     const buttonContainerElt = document.createElement("div");
     applyStyle(buttonContainerElt, {
@@ -321,7 +340,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
       if (explorerType === "opener") {
         env.onOpen(selectedItems.map((x) => x.path));
       } else if (!statusLeftElt.value) {
-        showError(directoryContainer, "No file name entered.");
+        showError(directoryZoneElt, "No file name entered.");
       } else {
         currentDirectoryComponent?.onDeactivate();
         const maskContainer = addBlockingMask(explorerElt);
@@ -350,7 +369,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
         } catch (err) {
           currentDirectoryComponent?.onActivate();
           removeBlockingMask(maskContainer, explorerElt);
-          showError(directoryContainer, err.toString());
+          showError(directoryZoneElt, err.toString());
         }
       }
     };
@@ -363,19 +382,14 @@ function createExplorer(explorerType, args, env, abortSignal) {
     buttonContainerElt.appendChild(cancelButton);
     buttonContainerElt.appendChild(validateButton);
     explorerStatusBarElt.appendChild(buttonContainerElt);
-  } else {
-    validateButton = null;
   }
   explorerElt.appendChild(explorerStatusBarElt);
-
   explorerContainer.appendChild(explorerElt);
-  containerElt.appendChild(explorerContainer);
 
-  updateButtons(currentPath, selectedItems);
   navigateToPath(currentPath);
 
   return {
-    element: containerElt,
+    element: explorerContainer,
     onActivate: () => {
       isAppActivated = true;
       currentDirectoryComponent?.onActivate();
@@ -439,10 +453,10 @@ function createExplorer(explorerType, args, env, abortSignal) {
       if (cuttedSelection.length > 0) {
         currentDirectoryComponent.signalCutAction(cuttedSelection);
       }
-      directoryContainer.innerHTML = "";
-      directoryContainer.appendChild(currentDirectoryComponent.element);
+      currentDirectoryElt.innerHTML = "";
+      currentDirectoryElt.appendChild(currentDirectoryComponent.element);
       if (!keepScroll) {
-        directoryContainer.scrollTo(0, 0);
+        currentDirectoryElt.scrollTo(0, 0);
       }
       if (isAppActivated) {
         currentDirectoryComponent.onActivate();
@@ -461,7 +475,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
         currentDirectoryAbortController.signal,
       );
     } catch (err) {
-      showError(directoryContainer, `Error loading directory: ${err.message}`);
+      showError(directoryZoneElt, `Error loading directory: ${err.message}`);
     }
     updateStatusElement(explorerType, statusLeftElt, []);
   }
@@ -481,7 +495,12 @@ function createExplorer(explorerType, args, env, abortSignal) {
       return;
     }
     currentDirectoryComponent?.onDeactivate();
-    await performItemsDeletion(filesystem, items, explorerElt);
+    await performItemsDeletion(
+      filesystem,
+      items,
+      explorerElt,
+      directoryZoneElt,
+    );
     currentDirectoryComponent?.onActivate();
   }
 
@@ -494,10 +513,10 @@ function createExplorer(explorerType, args, env, abortSignal) {
         removeBlockingMask(maskContainer, explorerElt);
         if (items.length > 0) {
           if (items.length === 1) {
-            showAppMessage(containerElt, `File uploaded successfully`);
+            showAppMessage(directoryZoneElt, `File uploaded successfully`);
           } else {
             showAppMessage(
-              containerElt,
+              directoryZoneElt,
               `${items.length} files uploaded successfully`,
             );
           }
@@ -506,7 +525,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
       (err) => {
         currentDirectoryComponent?.onActivate();
         removeBlockingMask(maskContainer, explorerElt);
-        showError(containerElt, err.message);
+        showError(directoryZoneElt, err.message);
       },
     );
   }
@@ -536,14 +555,22 @@ function createExplorer(explorerType, args, env, abortSignal) {
         removeBlockingMask(maskContainer, explorerElt);
       },
       (err) => {
-        showError(containerElt, `Failed to create download: ${err.message}`);
+        showError(
+          directoryZoneElt,
+          `Failed to create download: ${err.message}`,
+        );
       },
     );
   }
 
   async function onNewDirClick() {
     currentDirectoryComponent?.onDeactivate();
-    await createNewDirectory(filesystem, currentPath, explorerElt);
+    await createNewDirectory(
+      filesystem,
+      currentPath,
+      explorerElt,
+      directoryZoneElt,
+    );
     currentDirectoryComponent?.onActivate();
   }
 
@@ -558,6 +585,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
       selectedItems[0].name,
       selectedItems[0].isDirectory,
       explorerElt,
+      directoryZoneElt,
     );
     currentDirectoryComponent?.onActivate();
   }
@@ -575,7 +603,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
       filesystem,
       cuttedSelection,
       currentPath,
-      explorerElt,
+      directoryZoneElt,
     ).then(
       () => {
         cuttedSelection = [];
@@ -586,7 +614,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
         if (cuttedSelection.length > 0) {
           enableToolButton("paste");
         }
-        showError(containerElt, `Failed to create paste: ${err.message}`);
+        showError(directoryZoneElt, `Failed to create paste: ${err.message}`);
       },
     );
   }
@@ -671,7 +699,6 @@ function createExplorer(explorerType, args, env, abortSignal) {
         selectedItems.some((x) => x.isDirectory)
       ) {
         disableButton(validateButton);
-        validateButton.onclick = null;
       } else {
         if (!allowMultipleSelections && selectedItems.length > 1) {
           disableButton(validateButton);
@@ -697,7 +724,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
     switch (explorerType) {
       case "saver": {
         if (items.length > 1) {
-          showError(directoryContainer, `Choose only one file to replace.`);
+          showError(directoryZoneElt, `Choose only one file to replace.`);
           return;
         }
         currentDirectoryComponent?.onDeactivate();
@@ -721,7 +748,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
         } catch (err) {
           currentDirectoryComponent?.onActivate();
           removeBlockingMask(maskContainer, explorerElt);
-          showError(directoryContainer, err.toString());
+          showError(directoryZoneElt, err.toString());
         }
         break;
       }
@@ -732,7 +759,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
           !allowMultipleSelections &&
           items.length > 1
         ) {
-          showError(directoryContainer, `Choose only one file to open.`);
+          showError(directoryZoneElt, `Choose only one file to open.`);
         }
         env.onOpen(items.map((x) => x.path));
         break;
@@ -768,7 +795,7 @@ function updateStatusElement(explorerType, statusLeftElt, selectedItems) {
     status + (size > 0 ? ` <i>(${formatSize(size)})</i>` : "");
 }
 
-async function createNewDirectory(fs, path, containerElt) {
+async function createNewDirectory(fs, path, containerElt, msgContainerElt) {
   const maskContainer = addBlockingMask(containerElt);
   try {
     const dirName = await askForUserInput(
@@ -784,14 +811,25 @@ async function createNewDirectory(fs, path, containerElt) {
     const newDirPath = pathJoin(path, dirName);
     await fs.mkdir(newDirPath.endsWith("/") ? newDirPath : newDirPath + "/");
     removeBlockingMask(maskContainer, containerElt);
-    showAppMessage(containerElt, `Directory "${dirName}" created successfully`);
+    showAppMessage(
+      msgContainerElt,
+      `Directory "${dirName}" created successfully`,
+    );
+    debugger;
   } catch (error) {
     removeBlockingMask(maskContainer, containerElt);
-    showError(containerElt, `Failed to create directory: ${error.message}`);
+    showError(msgContainerElt, `Failed to create directory: ${error.message}`);
   }
 }
 
-async function renameItem(fs, dir, filename, isDirectory, containerElt) {
+async function renameItem(
+  fs,
+  dir,
+  filename,
+  isDirectory,
+  containerElt,
+  msgContainerElt,
+) {
   const maskContainer = addBlockingMask(containerElt);
   try {
     const newName = await askForUserInput(
@@ -812,21 +850,24 @@ async function renameItem(fs, dir, filename, isDirectory, containerElt) {
     );
     removeBlockingMask(maskContainer, containerElt);
     if (isDirectory) {
-      showAppMessage(containerElt, `Directory renamed successfully`);
+      showAppMessage(msgContainerElt, `Directory renamed successfully`);
     } else {
-      showAppMessage(containerElt, `File renamed successfully`);
+      showAppMessage(msgContainerElt, `File renamed successfully`);
     }
   } catch (error) {
     removeBlockingMask(maskContainer, containerElt);
     if (isDirectory) {
-      showError(containerElt, `Failed to rename directory: ${error.message}`);
+      showError(
+        msgContainerElt,
+        `Failed to rename directory: ${error.message}`,
+      );
     } else {
-      showError(containerElt, `Failed to rename file: ${error.message}`);
+      showError(msgContainerElt, `Failed to rename file: ${error.message}`);
     }
   }
 }
 
-async function performMoveOperation(fs, items, destDir, containerElt) {
+async function performMoveOperation(fs, items, destDir, msgContainerElt) {
   const normalizedDest = destDir.endsWith("/") ? destDir : destDir + "/";
   try {
     for (const item of items) {
@@ -839,13 +880,13 @@ async function performMoveOperation(fs, items, destDir, containerElt) {
         await fs.mv(item.path, normalizedDest);
       }
     }
-    showAppMessage(containerElt, `Files moved successfully`);
+    showAppMessage(msgContainerElt, `Files moved successfully`);
   } catch (error) {
-    showError(containerElt, `Failed to move files: ${error.message}`);
+    showError(msgContainerElt, `Failed to move files: ${error.message}`);
   }
 }
 
-async function performItemsDeletion(fs, items, containerElt) {
+async function performItemsDeletion(fs, items, containerElt, msgContainerElt) {
   const maskContainer = addBlockingMask(containerElt);
   try {
     let message = "You will delete ";
@@ -870,7 +911,7 @@ async function performItemsDeletion(fs, items, containerElt) {
       if (item.isDirectory) {
         if (item.path === "/system32/" || item.path === "/system32") {
           showError(
-            containerElt,
+            msgContainerElt,
             "I'm sorry, Dave. I'm afraid I can't do that 🦾",
           );
         } else {
@@ -883,7 +924,7 @@ async function performItemsDeletion(fs, items, containerElt) {
     removeBlockingMask(maskContainer, containerElt);
   } catch (error) {
     removeBlockingMask(maskContainer, containerElt);
-    showError(containerElt, `Failed to delete: ${error.message}`);
+    showError(msgContainerElt, `Failed to delete: ${error.message}`);
   }
 }
 
@@ -1030,18 +1071,4 @@ function removeBlockingMask(maskContainer, blockedElt) {
   for (const child of blockedElt.children) {
     child.removeAttribute("inert");
   }
-}
-
-function createContainerElement() {
-  const containerElt = document.createElement("div");
-  applyStyle(containerElt, {
-    display: "flex",
-    flexDirection: "column",
-    position: "relative",
-    width: "100%",
-    height: "100%",
-    overflow: "hidden",
-    backgroundColor: "var(--window-content-bg)",
-  });
-  return containerElt;
 }

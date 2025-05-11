@@ -146,7 +146,6 @@ export default function createWindowSection(settings, abortSignal) {
     ["Regular Background", settings.windowContentBgColor],
     ["Alternative App Color", settings.appPrimaryColorBg],
     ["Alternative App Background", settings.appPrimaryBgColor],
-    ["Window borders", settings.windowBorderColor],
     ["Application Lines", settings.windowLineColor],
     ["Sidebar Background", settings.windowSidebarBgColor],
     ["Sidebar Hover Background", settings.windowSidebarHoverBgColor],

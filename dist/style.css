@@ -15,7 +15,6 @@
   --window-text-color: #333;
   --window-content-bg: #ffffff;
   --window-line-color: #ddd;
-  --window-border-color: #000000;
   --app-primary-color: #3498db;
   --app-primary-bg: #efefef;
   --sidebar-hover-bg: "#c8c8c8";
@@ -321,7 +320,8 @@ html {
 .window {
   position: absolute;
   border-radius: 10px;
-  border: var(--window-border-size) solid var(--window-border-color);
+  border: var(--window-border-size) solid var(--window-inactive-header);
+	border-top: 0px;
   box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
@@ -472,6 +472,8 @@ html {
 
 .window.active {
   scrollbar-color: var(--window-active-header) var(--window-content-bg);
+  border: var(--window-border-size) solid var(--window-active-header);
+	border-top: 0px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
   z-index: 200;
 }

@@ -1,4 +1,5 @@
 dist/*.js
+dist/apps/
 !/dist/dinoeufdepaques.js
 
 # Logs

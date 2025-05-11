@@ -367,11 +367,11 @@ html {
 }
 
 .taskbar-resize-handle {
-	display: none;
+  display: none;
 }
 
 #taskbar.resizable .taskbar-resize-handle {
-	display: block;
+  display: block;
   position: absolute;
   z-index: 300;
   top: 0px;

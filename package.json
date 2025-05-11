@@ -4,9 +4,11 @@
   "description": "My personal homepage, emulating a desktop environment.",
   "author": "peaBerberian",
   "scripts": {
-    "build": "node bundle.mjs src/desktop.mjs --output dist/bundle.js"
+    "build": "rollup --config rollup.config.js",
+    "build:min": "rollup --config rollup.config.js --environment MINIFY:true"
   },
   "devDependencies": {
-    "esbuild": "^0.25.3"
+    "@rollup/plugin-terser": "^0.4.4",
+    "rollup": "^2.79.2"
   }
 }

@@ -295,14 +295,24 @@ export const SETTINGS = {
           "--taskbar-bg",
           SETTINGS.taskbarBgColor.getValue() + percentageToHex(opacityPercent),
         );
-        document.documentElement.style.setProperty(
-          "--taskbar-active-bg",
-          SETTINGS.taskbarActiveBgColor.getValue() +
-            percentageToHex(opacityPercent),
-        );
+        // NOTE: should inactive app share the same bg opacity?
         document.documentElement.style.setProperty(
           "--taskbar-inactive-bg",
           SETTINGS.taskbarInactiveBgColor.getValue() +
+            percentageToHex(opacityPercent),
+        );
+      });
+    },
+  ),
+
+  taskbarActiveAppOpacity: createRefForState(
+    "taskbar-active-opacity",
+    DEFAULT_TASKBAR_OPACITY,
+    (opacityPercent) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          "--taskbar-active-bg",
+          SETTINGS.taskbarActiveBgColor.getValue() +
             percentageToHex(opacityPercent),
         );
       });
@@ -359,7 +369,7 @@ export const SETTINGS = {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
           "--taskbar-active-bg",
-          color + percentageToHex(SETTINGS.taskbarOpacity.getValue()),
+          color + percentageToHex(SETTINGS.taskbarActiveAppOpacity.getValue()),
         );
       });
     },

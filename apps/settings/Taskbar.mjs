@@ -91,17 +91,30 @@ export default function createTaskbarSection(settings, abortSignal) {
   section.appendChild(manualGroup);
 
   const colorGroupElt = strHtml`<div class="w-group"><h3>Colors</h3></div>`;
-  const taskbarOpacitySlider = createNumericSliderOnRef(
-    {
-      ref: settings.taskbarOpacity,
-      label: "Taskbar Opacity",
-      min: 0,
-      max: 100,
-      valueToText: (val) => String(val) + "%",
-    },
-    abortSignal,
+  colorGroupElt.appendChild(
+    createNumericSliderOnRef(
+      {
+        ref: settings.taskbarOpacity,
+        label: "Taskbar Opacity",
+        min: 0,
+        max: 100,
+        valueToText: (val) => String(val) + "%",
+      },
+      abortSignal,
+    ),
   );
-  colorGroupElt.appendChild(taskbarOpacitySlider);
+  colorGroupElt.appendChild(
+    createNumericSliderOnRef(
+      {
+        ref: settings.taskbarActiveAppOpacity,
+        label: "Taskbar Active App Opacity",
+        min: 0,
+        max: 100,
+        valueToText: (val) => String(val) + "%",
+      },
+      abortSignal,
+    ),
+  );
 
   [
     ["Taskbar Background", settings.taskbarBgColor],

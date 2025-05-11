@@ -25,8 +25,8 @@ import { SETTINGS } from "../settings.mjs";
  * only the first objects of that array will be displayed.
  * Each of those objects correspond to what will be given to the `onOpen`
  * callback when clicked. They should have at least two properties:
- *   - `value.icon` (`string`): The icon representing that application
- *   - `value.title` (`string`): The title for that application
+ *   - `icon` (`string`): The icon representing that application
+ *   - `title` (`string`): The title for that application
  * @param {Function} onOpen - Callback that will be called when/if an app is
  * launched through its icon, with the corresponding element of the `apps`
  * object.
@@ -109,8 +109,8 @@ export default function AppIcons(apps, onOpen, parentAbortSignal) {
       nextIconPosition.y += iconHeight + ICON_MARGIN;
 
       icon.innerHTML = `
-<div class="icon-img">${app.value.icon}</div>
-<div class="icon-text">${app.value.title}</div>
+<div class="icon-img">${app.icon}</div>
+<div class="icon-text">${app.title}</div>
 `;
 
       let clickCount = 0;

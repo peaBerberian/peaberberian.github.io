@@ -1,0 +1,196 @@
+{
+  "apps": [
+    {
+      "id": "about",
+      "title": "About Me",
+      "icon": "🙋🏻‍♂️",
+      "defaultHeight": 600,
+      "defaultWidth": 855,
+      "preload": true,
+			"autoload": true,
+      "onlyOne": false,
+			"needsSettingsObject": false,
+      "inStartList": null,
+      "startMenuDir": null
+    },
+    {
+      "id": "settings",
+      "title": "Settings",
+      "icon": "⚙️",
+      "defaultHeight": 700,
+      "defaultWidth": 1000,
+      "preload": true,
+      "onlyOne": true,
+			"needsSettingsObject": true,
+      "inStartList": null,
+      "startMenuDir": null
+    },
+    {
+      "id": "this-website",
+      "title": "About This Website",
+      "icon": "🌐",
+      "defaultHeight": 600,
+      "defaultWidth": 855,
+      "preload": false,
+      "inStartList": null,
+      "startMenuDir": null
+    },
+    {
+      "id": "paint",
+      "title": "Paint",
+      "icon": "🖌️",
+      "defaultHeight": 950,
+      "defaultWidth": 1000,
+      "inStartList": "Desktop Apps",
+      "startMenuDir": null
+    },
+    {
+      "id": "editor",
+      "title": "Notes",
+      "icon": "📝",
+      "defaultHeight": 500,
+      "defaultWidth": 500,
+      "inStartList": "Desktop Apps",
+      "startMenuDir": null
+    },
+    {
+      "id": "table",
+      "title": "Sheets",
+      "icon": "📏",
+      "inStartList": "Desktop Apps",
+      "startMenuDir": null
+    },
+    {
+      "id": "bombsweeper",
+      "title": "BombSweeper!",
+      "icon": "💣",
+      "defaultHeight": 700,
+      "defaultWidth": 600,
+      "inStartList": "Desktop Apps",
+      "startMenuDir": null
+    },
+    {
+      "id": "pong",
+      "title": "Pong",
+      "icon": "🏓",
+      "defaultHeight": 400,
+      "defaultWidth": 600,
+      "inStartList": "Desktop Apps",
+      "startMenuDir": null
+    },
+    {
+      "id": "rx-player",
+      "title": "RxPlayer",
+      "icon": "⏯️",
+      "defaultHeight": 720,
+      "defaultWidth": 950,
+      "inStartList": "Other Projects",
+      "startMenuDir": "Other Projects"
+    },
+    {
+      "id": "wasp-hls",
+      "title": "WASP-HLS",
+      "icon": "🐝",
+      "defaultHeight": 720,
+      "defaultWidth": 950,
+      "inStartList": "Other Projects",
+      "startMenuDir": "Other Projects"
+    },
+    {
+      "id": "rx-paired",
+      "title": "RxPaired",
+      "icon": "📈",
+      "defaultHeight": 700,
+      "defaultWidth": 1000,
+      "inStartList": "Other Projects",
+      "startMenuDir": "Other Projects"
+    },
+    {
+      "id": "eme-spy",
+      "title": "EMESpy",
+      "icon": "🕵️",
+      "defaultHeight": 500,
+      "defaultWidth": 800,
+      "inStartList": "Other Projects",
+      "startMenuDir": "Other Projects"
+    },
+    {
+      "id": "mse-spy",
+      "title": "MSESpy",
+      "icon": "👓",
+      "defaultHeight": 500,
+      "defaultWidth": 800,
+      "inStartList": "Other Projects",
+      "startMenuDir": "Other Projects"
+    },
+    {
+      "id": "isobmff-inspector",
+      "title": "isobmff-inspector",
+      "icon": "📹",
+      "inStartList": "Other Projects",
+      "startMenuDir": "Other Projects"
+    },
+    {
+      "id": "gif-renderer",
+      "title": "gif-renderer.rs",
+      "icon": "🏇",
+      "inStartList": "Other Projects",
+      "startMenuDir": "Other Projects"
+    },
+    {
+      "id": "str-html",
+      "title": "str-html",
+      "icon": "📄",
+      "inStartList": "Other Projects",
+      "startMenuDir": "Other Projects"
+    },
+    {
+      "id": "readme",
+      "title": "README",
+      "icon": "📖",
+      "inStartList": "Other Projects",
+      "startMenuDir": "Other Projects"
+    },
+    {
+      "id": "keyboard9",
+      "title": "keyboard9",
+      "icon": "⌨️",
+      "inStartList": "Other Projects",
+      "startMenuDir": "Other Projects"
+    },
+    {
+      "id": "passgen",
+      "title": "passgen",
+      "icon": "🔑",
+      "defaultHeight": 300,
+      "defaultWidth": 450,
+      "inStartList": "Misc",
+      "startMenuDir": null
+    },
+    {
+      "id": "bif-inspector",
+      "title": "bif-inspector",
+      "icon": "🖼️",
+      "inStartList": "Other Projects",
+      "startMenuDir": "Other Projects"
+    },
+    {
+      "id": "clock",
+      "title": "Clock",
+      "icon": "🕒",
+      "defaultHeight": 250,
+      "defaultWidth": 250,
+      "inStartList": "Misc",
+      "startMenuDir": null
+    },
+    {
+      "id": "inception",
+      "title": "Inception",
+      "icon": "🧠",
+      "defaultHeight": 720,
+      "defaultWidth": 1280,
+      "inStartList": "Misc",
+      "startMenuDir": null
+    }
+  ]
+}

@@ -4,9 +4,9 @@
   "description": "My personal homepage, emulating a desktop environment.",
   "author": "peaBerberian",
   "scripts": {
-    "build": "rollup --config rollup.config.js",
-    "build:min": "rollup --config rollup.config.js --environment MINIFY:true",
-    "build:watch": "rollup --config rollup.config.js --watch",
+    "build": "rollup --config rollup.config.mjs",
+    "build:min": "rollup --config rollup.config.mjs --environment MINIFY:true",
+    "build:watch": "rollup --config rollup.config.mjs --watch",
     "serve": "node ./launch_static_server.mjs --directory dist"
   },
   "devDependencies": {

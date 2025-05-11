@@ -71,7 +71,7 @@ export default class AppWindow extends EventEmitter {
      * maximum width currently available.
      * @type {number|Function}
      */
-    this.defaultHeight = app.value.defaultHeight ?? DEFAULT_WINDOW_HEIGHT;
+    this.defaultHeight = app.defaultHeight ?? DEFAULT_WINDOW_HEIGHT;
     /**
      * The default width the window should have, in pixels.
      * Can be defined as a function for when the application wants to define
@@ -79,7 +79,7 @@ export default class AppWindow extends EventEmitter {
      * maximum width currently available.
      * @type {number|Function}
      */
-    this.defaultWidth = app.value.defaultWidth ?? DEFAULT_WINDOW_WIDTH;
+    this.defaultWidth = app.defaultWidth ?? DEFAULT_WINDOW_WIDTH;
     /**
      * Will allow to free resources linked to that window.
      * @private
@@ -92,7 +92,7 @@ export default class AppWindow extends EventEmitter {
      * @type {HTMLElement}
      */
     this.element = constructInitialWindowElement(
-      (app.value.icon ?? "") + " " + (app.value.title ?? ""),
+      (app.icon ?? "") + " " + (app.title ?? ""),
     );
 
     /**
@@ -144,7 +144,7 @@ export default class AppWindow extends EventEmitter {
       /* noop */
     };
 
-    this._setUpAppContent(app.value);
+    this._setUpAppContent(app.data, app.needsSettingsObject);
     this._setupWindowEvents();
     if (!skipAnim) {
       this._performWindowTransition("open");
@@ -312,9 +312,14 @@ export default class AppWindow extends EventEmitter {
     };
   }
 
-  _setUpAppContent(appVal) {
-    if (appVal.create) {
-      const app = appVal.create(this._abortController.signal);
+  _setUpAppContent(appData, needsSettingsObject) {
+    if (appData.create) {
+      let app;
+      if (needsSettingsObject) {
+        app = appData.create(SETTINGS, this._abortController.signal);
+      } else {
+        app = appData.create(this._abortController.signal);
+      }
       this.element.appendChild(app.element);
       if (app.focus) {
         this.focus = app.focus.bind(app);
@@ -325,9 +330,9 @@ export default class AppWindow extends EventEmitter {
       return;
     }
 
-    if (Array.isArray(appVal.sidebar) && appVal.sidebar.length > 0) {
+    if (Array.isArray(appData.sidebar) && appData.sidebar.length > 0) {
       const { element, focus } = constructAppWithSidebar(
-        appVal.sidebar,
+        appData.sidebar,
         this._abortController.signal,
       );
       this.element.appendChild(element);
@@ -335,14 +340,14 @@ export default class AppWindow extends EventEmitter {
       return;
     }
 
-    if (appVal.lazyLoad) {
+    if (appData.lazyLoad) {
       const spinnerPlaceholder = getSpinnerPlaceholder();
       const initialElement = spinnerPlaceholder.element;
       this.element.appendChild(initialElement);
-      appVal.lazyLoad().then((module) => {
+      appData.lazyLoad().then((module) => {
         clearTimeout(spinnerPlaceholder.timeout);
         initialElement.remove();
-        this._setUpAppContent(module);
+        this._setUpAppContent(module, needsSettingsObject);
       });
       return;
     }

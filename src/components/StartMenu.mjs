@@ -220,11 +220,11 @@ function refreshStartMenu(
 
     const startIconElt = document.createElement("div");
     startIconElt.className = "start-icon";
-    startIconElt.textContent = appObj.value.icon;
+    startIconElt.textContent = appObj.icon;
 
     const startTitleElt = document.createElement("div");
     startTitleElt.className = "start-title";
-    startTitleElt.textContent = appObj.value.title;
+    startTitleElt.textContent = appObj.title;
 
     startItemElt.appendChild(startIconElt);
     startItemElt.appendChild(startTitleElt);

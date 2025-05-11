@@ -145,18 +145,6 @@ export function create(_args, env, abortSignal) {
     },
     undo: { onClick: undo },
     redo: { onClick: redo },
-    clear: {
-      onClick: () => {
-        const hadSomethingWritten = textArea.value;
-        statusBar.textContent = "Cleared";
-        textArea.value = "";
-        disableButton("clear");
-        if (hadSomethingWritten) {
-          saveState(false);
-        }
-        updateLineNumbers();
-      },
-    },
     download: {
       title: "Download as CSV",
       onClick: () => {

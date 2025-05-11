@@ -320,7 +320,7 @@ function refreshStartMenu(
         //         ? "ArrowLeft"
         //         : "ArrowRight")
         //   ) {
-        //     listItemsWrapper.children[0].children[0].focus();
+        //     listItemsWrapper.children[0].children[0].focus({ preventScroll: true });
         //   }
         // });
         const listHeight = Math.min(

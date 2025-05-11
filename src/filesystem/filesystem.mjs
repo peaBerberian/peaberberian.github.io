@@ -103,10 +103,7 @@ class DesktopFileSystem {
     if (!srcPath.startsWith(USER_DATA_DIR) || srcPath === USER_DATA_DIR) {
       throw new Error("Permission denied: The source directory is read-only");
     }
-    if (
-      !baseDestPath.startsWith(USER_DATA_DIR) ||
-      baseDestPath === USER_DATA_DIR
-    ) {
+    if (!baseDestPath.startsWith(USER_DATA_DIR)) {
       throw new Error(
         "Permission denied: The destination directory is read-only",
       );
@@ -120,7 +117,17 @@ class DesktopFileSystem {
     }
 
     const segmentedDestPath = baseDestPath.split("/");
-    for (const segment of segmentedDestPath) {
+    for (let segmentI = 0; segmentI < segmentedDestPath.length; segmentI++) {
+      const segment = segmentedDestPath[segmentI];
+      if (segment === "") {
+        if (segmentI === 0) {
+          continue; // leading slash
+        } else if (segmentI === segmentedDestPath.length - 1) {
+          continue; // ending slash
+        } else {
+          throw new Error("Permission denied: Invalid path");
+        }
+      }
       if (RESERVED_NAMES.includes(segment)) {
         throw new Error(
           "Permission denied: Destination path contains a reserved name",
@@ -144,6 +151,11 @@ class DesktopFileSystem {
           : baseDestPath + "/";
         if (normalizedDest.startsWith(srcPath)) {
           throw new Error("Cannot move directory: moving inside itself");
+        }
+        if (normalizedDest === USER_DATA_DIR) {
+          throw new Error(
+            "Permission denied: The destination directory is read-only",
+          );
         }
 
         const destEntries = await this._readDirEntries(
@@ -218,6 +230,10 @@ class DesktopFileSystem {
               normalizedDest,
               entry.fullPath.slice(srcPath.length),
             );
+          }
+
+          if (entry.fullPath === newPath) {
+            return;
           }
 
           const newDir = getContainingDirectory(newPath);

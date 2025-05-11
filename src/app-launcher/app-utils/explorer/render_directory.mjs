@@ -1,6 +1,3 @@
-// TODO: Arrow key management with control could be much better handled with
-// some kept memory about the direction in which we were going
-
 import {
   applyStyle,
   getFileIcon,
@@ -11,14 +8,14 @@ import {
 export default function renderDirectory({
   entries: dirEntries,
   path,
-  allowMultipleSelections,
   callbacks: {
     navigateTo,
     openFiles,
     onSelectionChange,
     escape,
     deleteItems,
-    // moveItems,
+    cutItems,
+    pasteItems,
   },
 }) {
   const selectionZoneElt = document.createElement("div");
@@ -88,18 +85,30 @@ export default function renderDirectory({
       element: selectionZoneElt,
       onActivate,
       onDeactivate,
+      signalCutAction,
     };
   }
 
   for (const item of items) {
     const itemElt = document.createElement("div");
-    itemElt.className = "dash-focus";
     itemElt.tabIndex = "0";
     itemElt.onfocus = () => {
-      if (!isItemEltSelected(itemElt)) {
-        selectItemElts([itemElt], { clearPrevious: false });
+      if (!isItemEltSelected(itemElt) || getSelectedItems().size > 1) {
+        itemElt.className = "emphasis-focus";
+      } else {
+        itemElt.className = "";
       }
+      if (itemElt.dataset.ignoreNextFocusEvent) {
+        delete itemElt.dataset.ignoreNextFocusEvent;
+        return;
+      }
+      // TODO: Too hard in the end I abandoned that shit.
+      // Sorry people with disabilities, you're going to have to type space
+      // to toggle. I tried so hard (but in the end...)
+      // It may be simpler in the future when I clean other things up?
+      // selectItemElts([itemElt], { clearPrevious: true });
     };
+
     itemElt.style.outlineColor = "var(--sidebar-selected-bg-color)";
     applyStyle(itemElt, {
       display: "flex",
@@ -145,10 +154,10 @@ export default function renderDirectory({
 
     // TODO: drag and drop
     itemElt.onmousedown = (e) => {
+      e.preventDefault();
       e.stopPropagation();
-      if (document.activeElement !== itemElt) {
-        itemElt.focus({ preventScroll: true });
-      }
+    };
+    itemElt.onclick = (e) => {
       if (e.shiftKey) {
         const lastSelected = [...selectedElts.elements].pop();
         if (lastSelected && lastSelected !== itemElt) {
@@ -190,14 +199,31 @@ export default function renderDirectory({
     itemsParentElt.appendChild(itemElt);
   }
 
-  function onItemClick(itemElt, item, keepPreviousSelection) {
-    if (allowMultipleSelections && keepPreviousSelection) {
+  mouseSelectInteractivity =
+    itemsMap.size > 0
+      ? addMouseSelectInteractivity(selectionZoneElt, itemsMap, {
+          getSelectedItems: () => [...getSelectedItems()],
+          selectItemElts,
+          clearItemElts,
+          isItemEltSelected,
+        })
+      : null;
+
+  return {
+    element: selectionZoneElt,
+    onActivate,
+    onDeactivate,
+    signalCutAction,
+  };
+
+  function onItemClick(itemElt, item, ctrlKey) {
+    if (ctrlKey) {
       if (isItemEltSelected(itemElt)) {
         clearItemElts([itemElt]);
       } else {
         selectItemElts([itemElt], {
           isClick: true,
-          clearPrevious: !keepPreviousSelection,
+          clearPrevious: !ctrlKey,
         });
       }
       return;
@@ -217,17 +243,16 @@ export default function renderDirectory({
     }
   }
 
-  mouseSelectInteractivity =
-    itemsMap.size > 0
-      ? addMouseSelectInteractivity(selectionZoneElt, itemsMap, {
-          clearSelection,
-          selectItemElts,
-          clearItemElts,
-          isItemEltSelected,
-        })
-      : null;
-
-  return { element: selectionZoneElt, onActivate, onDeactivate };
+  function signalCutAction(cuttedItems) {
+    // NOTE: could be more performant. Here I didn't care much at this scale
+    itemsMap.entries().forEach(([key, value]) => {
+      if (cuttedItems.some((c) => c.path === value.path)) {
+        key.style.opacity = "0.6";
+      } else {
+        key.style.opacity = "";
+      }
+    }, {});
+  }
 
   function selectItemElts(
     itemElts,
@@ -259,6 +284,7 @@ export default function renderDirectory({
     }
     const lastSelectedElement = itemElts[itemElts.length - 1];
     if (lastSelectedElement && document.activeElement !== lastSelectedElement) {
+      lastSelectedElement.dataset.ignoreNextFocusEvent = true;
       lastSelectedElement.focus({ preventScroll });
     }
     onSelectionChange(selectedElts.items);
@@ -311,26 +337,21 @@ export default function renderDirectory({
           return;
         }
 
-        /** @type {Array.<HTMLElement>} */
-        const selectedElementsInOrder = [...selectedElts.elements];
-
-        while (true) {
-          const currentElementConsidered = selectedElementsInOrder.pop();
-          const prevSibling = currentElementConsidered.previousElementSibling;
-          if (!prevSibling) {
-            if (!e.ctrlKey && !e.shiftKey) {
-              selectItemElts([currentElementConsidered], {
-                clearPrevious: true,
-              });
-            }
-            break;
-          }
-          if (!isItemEltSelected(prevSibling)) {
-            selectItemElts([prevSibling], {
-              clearPrevious: !e.ctrlKey && !e.shiftKey,
-            });
-            break;
-          }
+        const currentElementConsidered = itemsMap.has(document.activeElement)
+          ? document.activeElement
+          : [...selectedElts.elements].pop();
+        if (!currentElementConsidered) {
+          break;
+        }
+        const prevSibling = currentElementConsidered.previousElementSibling;
+        if (prevSibling) {
+          selectItemElts([prevSibling], {
+            clearPrevious: !e.ctrlKey && !e.shiftKey,
+          });
+        } else {
+          selectItemElts([currentElementConsidered], {
+            clearPrevious: !e.ctrlKey && !e.shiftKey,
+          });
         }
         break;
       }
@@ -348,26 +369,21 @@ export default function renderDirectory({
           return;
         }
 
-        /** @type {Array.<HTMLElement>} */
-        const selectedElementsInOrder = [...selectedElts.elements];
-
-        while (true) {
-          const currentElementConsidered = selectedElementsInOrder.pop();
-          const nextSibling = currentElementConsidered.nextElementSibling;
-          if (!nextSibling) {
-            if (!e.ctrlKey && !e.shiftKey) {
-              selectItemElts([currentElementConsidered], {
-                clearPrevious: true,
-              });
-            }
-            break;
-          }
-          if (!isItemEltSelected(nextSibling)) {
-            selectItemElts([nextSibling], {
-              clearPrevious: !e.ctrlKey && !e.shiftKey,
-            });
-            break;
-          }
+        const currentElementConsidered = itemsMap.has(document.activeElement)
+          ? document.activeElement
+          : [...selectedElts.elements].pop();
+        if (!currentElementConsidered) {
+          break;
+        }
+        const nextSibling = currentElementConsidered.nextElementSibling;
+        if (nextSibling) {
+          selectItemElts([nextSibling], {
+            clearPrevious: !e.ctrlKey && !e.shiftKey,
+          });
+        } else {
+          selectItemElts([currentElementConsidered], {
+            clearPrevious: !e.ctrlKey && !e.shiftKey,
+          });
         }
         break;
       }
@@ -385,33 +401,25 @@ export default function renderDirectory({
           return;
         }
 
-        /** @type {Array.<HTMLElement>} */
-        const selectedElementsInOrder = [...selectedElts.elements];
+        const currentElementConsidered = itemsMap.has(document.activeElement)
+          ? document.activeElement
+          : [...selectedElts.elements].pop();
+        if (!currentElementConsidered) {
+          break;
+        }
+        const currentClientRect =
+          currentElementConsidered.getBoundingClientRect();
 
-        let found = false;
-        while (!found) {
-          const currentElementConsidered = selectedElementsInOrder.pop();
-          if (!currentElementConsidered) {
+        let nextSibling = currentElementConsidered.nextElementSibling;
+        while (nextSibling) {
+          const clientRect = nextSibling.getBoundingClientRect();
+          if (clientRect.left === currentClientRect.left) {
+            selectItemElts([nextSibling], {
+              clearPrevious: !e.ctrlKey && !e.shiftKey,
+            });
             break;
           }
-
-          const currentClientRect =
-            currentElementConsidered.getBoundingClientRect();
-
-          let nextSibling = currentElementConsidered.nextElementSibling;
-          while (nextSibling) {
-            const clientRect = nextSibling.getBoundingClientRect();
-            if (clientRect.left === currentClientRect.left) {
-              if (!isItemEltSelected(nextSibling)) {
-                selectItemElts([nextSibling], {
-                  clearPrevious: !e.ctrlKey && !e.shiftKey,
-                });
-                found = true;
-                break;
-              }
-            }
-            nextSibling = nextSibling.nextElementSibling;
-          }
+          nextSibling = nextSibling.nextElementSibling;
         }
         break;
       }
@@ -429,42 +437,43 @@ export default function renderDirectory({
           return;
         }
 
-        /** @type {Array.<HTMLElement>} */
-        const selectedElementsInOrder = [...selectedElts.elements];
+        const currentElementConsidered = itemsMap.has(document.activeElement)
+          ? document.activeElement
+          : [...selectedElts.elements].pop();
+        if (!currentElementConsidered) {
+          break;
+        }
+        const currentClientRect =
+          currentElementConsidered.getBoundingClientRect();
 
-        let found = false;
-        while (!found) {
-          const currentElementConsidered = selectedElementsInOrder.pop();
-          if (!currentElementConsidered) {
+        let previousSibling = currentElementConsidered.previousElementSibling;
+        while (previousSibling) {
+          const clientRect = previousSibling.getBoundingClientRect();
+          if (clientRect.left === currentClientRect.left) {
+            selectItemElts([previousSibling], {
+              clearPrevious: !e.ctrlKey && !e.shiftKey,
+            });
             break;
           }
-
-          const currentClientRect =
-            currentElementConsidered.getBoundingClientRect();
-
-          let previousSibling = currentElementConsidered.previousElementSibling;
-          while (previousSibling) {
-            const clientRect = previousSibling.getBoundingClientRect();
-            if (clientRect.left === currentClientRect.left) {
-              if (!isItemEltSelected(previousSibling)) {
-                selectItemElts([previousSibling], {
-                  clearPrevious: !e.ctrlKey && !e.shiftKey,
-                });
-                found = true;
-                break;
-              }
-            }
-            previousSibling = previousSibling.previousElementSibling;
-          }
+          previousSibling = previousSibling.previousElementSibling;
         }
         break;
       }
 
+      case " ": {
+        e.preventDefault();
+        if (itemsMap.has(document.activeElement)) {
+          const item = itemsMap.get(document.activeElement);
+          onItemClick(document.activeElement, item, true);
+          break;
+        }
+      }
+
       case "Enter": {
+        e.preventDefault();
         if (selectedElts.items.length === 0) {
           return;
         } else if (selectedElts.items.length === 1) {
-          e.preventDefault();
           const item = selectedElts.items[0];
           if (item.isDirectory) {
             navigateTo(item.path);
@@ -472,7 +481,6 @@ export default function renderDirectory({
             openFiles([item]);
           }
         } else {
-          e.preventDefault();
           const files = [];
           for (const item of selectedElts.items) {
             if (item.isDirectory) {
@@ -488,6 +496,7 @@ export default function renderDirectory({
       case "a":
         if (e.ctrlKey) {
           e.preventDefault();
+          e.preventDefault();
           selectedElts.elements.clear();
           selectedElts.items.length = 0;
           lastClickInfo.element = null;
@@ -496,6 +505,21 @@ export default function renderDirectory({
             clearPrevious: true,
           });
           onSelectionChange(selectedElts.items);
+        }
+        break;
+
+      case "x":
+        if (e.ctrlKey) {
+          e.preventDefault();
+          e.preventDefault();
+          cutItems(selectedElts.items);
+        }
+        break;
+      case "v":
+        if (e.ctrlKey) {
+          e.preventDefault();
+          e.preventDefault();
+          pasteItems();
         }
         break;
     }
@@ -520,16 +544,15 @@ export default function renderDirectory({
           lastSelectedElement &&
           document.activeElement !== lastSelectedElement
         ) {
+          lastSelectedElement.dataset.ignoreNextFocusEvent = true;
           lastSelectedElement.focus({ preventScroll: true });
         }
       }
     }
     onSelectionChange(selectedElts.items);
   }
-  function clearSelection() {
-    lastClickInfo.element = null;
-    lastClickInfo.timeStamp = -Infinity;
-    clearItemElts(selectedElts.elements);
+  function getSelectedItems() {
+    return selectedElts.elements;
   }
   function navigateToParent() {
     if (path === "/") {
@@ -585,12 +608,13 @@ function createEmptyDirMessage(path) {
 function addMouseSelectInteractivity(
   containerElt,
   itemsMap,
-  { clearSelection, selectItemElts, clearItemElts, isItemEltSelected },
+  { getSelectedItems, selectItemElts, clearItemElts, isItemEltSelected },
 ) {
   let isSelecting = false;
   let startX = 0;
   let startY = 0;
   let selectionBox;
+  let baseSelected;
 
   containerElt.addEventListener("mousedown", (e) => {
     if (e.button !== 0) {
@@ -599,10 +623,12 @@ function addMouseSelectInteractivity(
     }
     e.preventDefault();
 
-    // TODO: Keep in memory the already-selected items
-    // if (!e.ctrlKey) {
-    clearSelection();
-    // }
+    if (e.ctrlKey) {
+      baseSelected = getSelectedItems();
+    } else {
+      baseSelected = [];
+      clearItemElts(getSelectedItems());
+    }
 
     isSelecting = true;
     startX = e.clientX;
@@ -670,6 +696,8 @@ function addMouseSelectInteractivity(
     // Check overlap with selectable items
     // TODO: could be more efficient also here
     const selectionRect = selectionBox.getBoundingClientRect();
+    const toSelect = [];
+    const toClear = [];
     itemsMap.keys().forEach((itemElt) => {
       const item = itemsMap.get(itemElt);
       if (!item) {
@@ -683,18 +711,26 @@ function addMouseSelectInteractivity(
         selectionRect.top > itemRect.bottom
       );
 
-      if (isOverlapping) {
+      if (baseSelected.includes(itemElt)) {
+        if (isOverlapping) {
+          toClear.push(itemElt);
+        } else {
+          toSelect.push(itemElt);
+        }
+      } else if (isOverlapping) {
         if (isItemEltSelected(itemElt)) {
           return;
         }
-        selectItemElts([itemElt], {
-          clearPrevious: false,
-          preventScroll: true,
-        });
+        toSelect.push(itemElt);
       } else {
-        clearItemElts([itemElt]);
+        toClear.push(itemElt);
       }
     });
+    selectItemElts(toSelect, {
+      clearPrevious: false,
+      preventScroll: true,
+    });
+    clearItemElts(toClear);
   }
   function onMouseUp() {
     if (!isSelecting) {

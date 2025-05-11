@@ -720,7 +720,8 @@ html {
 }
 
 .w-tools {
-	scrollbar-color: var(--sidebar-hover-bg) var(--window-sidebar-bg);
+  scrollbar-color: var(--sidebar-hover-bg) var(--window-sidebar-bg);
+  scrollbar-width: thin;
 }
 
 .window ul,
@@ -1374,8 +1375,8 @@ input[type="range"]::-moz-range-thumb {
   background-color: var(--app-primary-bg);
 }
 
-.dash-focus:focus {
-	outline: 1px dashed;
+.emphasis-focus:focus {
+  outline: 2px dotted;
 }
 
 /* Animations */

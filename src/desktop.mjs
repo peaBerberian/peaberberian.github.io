@@ -19,6 +19,8 @@
 // - Sometimes the focus in on a desktop icon, not on the app
 // - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices
+// - If not clicking on start button or taskbar, the cursor is move when taskbar
+//   is not locked
 //
 // low priority:
 // - windows moving when moving taskbar to top/bottom. Could be cool to stay in

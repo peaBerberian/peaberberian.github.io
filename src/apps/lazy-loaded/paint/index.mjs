@@ -50,21 +50,21 @@ export function create(abortSignal) {
     width: "100%",
     overflow: "auto",
     display: "flex",
-    padding: "5px",
+    padding: "3px",
     gap: "5px",
     flexShrink: "0",
   });
   wrapperElt.appendChild(headerElt);
 
-  const undoButton = createButtonElt(undoSvg, 35, undo);
+  const undoButton = createButtonElt(undoSvg, 1, undo);
   headerElt.appendChild(undoButton);
   disableUndoButton();
 
-  const redoButton = createButtonElt(redoSvg, 35, redo);
+  const redoButton = createButtonElt(redoSvg, 1, redo);
   headerElt.appendChild(redoButton);
   disableRedoButton();
 
-  const clearButton = createButtonElt(clearSvg, 35, () => {
+  const clearButton = createButtonElt(clearSvg, 1, () => {
     const hadSomethingDrawn = hasSomethingDrawnOnCanvas;
     clearCanvas();
     if (hadSomethingDrawn) {
@@ -73,7 +73,7 @@ export function create(abortSignal) {
     }
   });
   headerElt.appendChild(clearButton);
-  const saveButton = createButtonElt(saveSvg, 28, saveImage);
+  const saveButton = createButtonElt(saveSvg, 0.75, saveImage);
   headerElt.appendChild(saveButton);
 
   const contentElt = document.createElement("div");
@@ -190,16 +190,28 @@ export function create(abortSignal) {
   );
 
   for (const [toolSvg, toolName, config] of [
-    [brushSvg, "brush", { height: 25, enableSizeSelection: true }],
-    [lineSvg, "line", { height: 25, enableSizeSelection: true }],
-    [squareSvg, "outline-rectangle", { height: 20, enableSizeSelection: true }],
-    [circleSvg, "outline-circle", { height: 20, enableSizeSelection: true }],
-    [filledSquareSvg, "rectangle", { height: 15, enableSizeSelection: false }],
-    [filledCircleSvg, "circle", { height: 25, enableSizeSelection: false }],
-    [eraserSvg, "eraser", { height: 25, enableSizeSelection: true }],
-    [cursorSvg, "cursor", { height: 25, enableSizeSelection: false }],
+    [brushSvg, "brush", { heightScale: 1, enableSizeSelection: true }],
+    [lineSvg, "line", { heightScale: 1, enableSizeSelection: true }],
+    [
+      squareSvg,
+      "outline-rectangle",
+      { heightScale: 0.8, enableSizeSelection: true },
+    ],
+    [
+      circleSvg,
+      "outline-circle",
+      { heightScale: 0.8, enableSizeSelection: true },
+    ],
+    [
+      filledSquareSvg,
+      "rectangle",
+      { heightScale: 0.6, enableSizeSelection: false },
+    ],
+    [filledCircleSvg, "circle", { heightScale: 1, enableSizeSelection: false }],
+    [eraserSvg, "eraser", { heightScale: 1, enableSizeSelection: true }],
+    [cursorSvg, "cursor", { heightScale: 1, enableSizeSelection: false }],
   ]) {
-    const toolElt = createToolElt(toolSvg, config.height, () => {
+    const toolElt = createToolElt(toolSvg, config.heightScale, () => {
       activateTool(toolElt, toolName);
       if (config.enableSizeSelection) {
         sizeSelectorElt.style.display = "block";
@@ -598,23 +610,23 @@ function createSizeSelector(sizes, defaultSize, onChange) {
   return sizeSelectorElt;
 }
 
-function createToolElt(toolSvg, height, onClick) {
+function createToolElt(toolSvg, heightScale, onClick) {
   const toolElt = getSvg(toolSvg);
   applyStyle(toolElt, {
-    width: "25px",
-    height: `${height}px`,
-    minHeight: `${height}px`,
+    width: "2rem",
+    height: `${heightScale * 2}rem`,
+    minHeight: `${heightScale * 2}rem`,
     margin: "10px",
     cursor: "pointer",
   });
   toolElt.onclick = onClick;
   return toolElt;
 }
-function createButtonElt(svg, height, onClick) {
+function createButtonElt(svg, heightScale, onClick) {
   const buttonElt = getSvg(svg);
   applyStyle(buttonElt, {
-    width: "35px",
-    height: `${height}px`,
+    width: "2.5rem",
+    height: `${heightScale * 2.5}rem`,
     cursor: "pointer",
     margin: "auto 0px",
   });

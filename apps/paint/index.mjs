@@ -13,6 +13,7 @@ import {
   saveSvg,
   clearSvg,
   crosshairCursor,
+  bucketSvg,
 } from "./svgs.mjs";
 
 const DEFAULT_CANVAS_HEIGHT = 800;
@@ -182,7 +183,7 @@ export function create(abortSignal) {
       }
     }
     currentTool = name;
-    if (currentTool === "cursor") {
+    if (currentTool === "Cursor (no tool)") {
       canvas.style.cursor = "auto";
     } else {
       canvas.style.cursor = `url("data:image/svg+xml;utf8,${encodeURIComponent(crosshairCursor)}") 10 10, crosshair`;
@@ -216,6 +217,7 @@ export function create(abortSignal) {
       { heightScale: 0.6, enableSizeSelection: false },
     ],
     [filledCircleSvg, "Circle", { heightScale: 1, enableSizeSelection: false }],
+    [bucketSvg, "Bucket", { heightScale: 1, enableSizeSelection: false }],
     [eraserSvg, "Eraser", { heightScale: 1, enableSizeSelection: true }],
     [
       cursorSvg,
@@ -326,6 +328,15 @@ export function create(abortSignal) {
           ctx.lineTo(currentX, currentY);
           ctx.stroke();
           if (isInCanvas) {
+            hasUpdatesToSave = true;
+            hasSomethingDrawnOnCanvas = true;
+            enableClearButton();
+          }
+        }
+        break;
+      case "Bucket":
+        {
+          if (isInCanvas && applyBucket(currentX, currentY, currentColor)) {
             hasUpdatesToSave = true;
             hasSomethingDrawnOnCanvas = true;
             enableClearButton();
@@ -473,6 +484,151 @@ export function create(abortSignal) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     hasSomethingDrawnOnCanvas = false;
     disableClearButton();
+  }
+
+  /**
+   * OK I hope you're ready for the real monster here.
+   * After aprox. 52000 attempts..., asking sometimes my friends the LLMs why
+   * the f* there were issues everywhere, I finished with some clever solutions,
+   * which though not perfect theoretically, do the job without I guess people
+   * seeing the diff.
+   *
+   * @param {number} initialX - The X position the mouse is in comparatively to
+   * the canvas' left.
+   * @param {number} initialY - The Y position the mouse is in comparatively to
+   * the canvas' top.
+   * @param {string} fillColor - The color you want to fill, as a 6-digit hex
+   * color.
+   */
+  function applyBucket(initialX, initialY, fillColor) {
+    const width = canvas.width;
+    const height = canvas.height;
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    const targetColor = getPixelColor(imageData, width, initialX, initialY);
+    const wantedRgb = hexToRgb(fillColor);
+
+    // If the currently selected pixel is already of the wanted color, there's
+    // no point of continuing.
+    if (areColorsEqual(targetColor, wantedRgb)) {
+      return false;
+    }
+
+    // OK, we begin simple: we just fill the pixel and its neighnours, in a
+    // queue, so far so good.
+
+    /**
+     * We maintain a shorter `Uint8Array` where in fact everything's either a `1`
+     * for `true` or a `0` for `false` just to keep track of which pixel has
+     * been visited.
+     * After comparing with an array of bools, it seems to be in the same
+     * ballpark performance-wise, so we optimize memory-wise.
+     */
+    const visited = new Uint8Array(width * height);
+
+    /**
+     * OK so a little foreshadowing here, we're going to track every damn pixel
+     * we filled in this initial phase, so we can do the complex work in the
+     * second phase.
+     */
+    const filledPixels = [];
+
+    /**
+     * Build a queue of pixels to check and increase an offset, we could use a
+     * popped stack but it was not performant at all.
+     */
+    const queue = [[initialX, initialY]];
+    let queueIndex = 0;
+
+    while (queueIndex < queue.length) {
+      const [x, y] = queue[queueIndex++];
+      const pixelPos = y * width + x;
+
+      if (x < 0 || x >= width || y < 0 || y >= height) {
+        // We're too far here, that's not an actual canvas pixel
+        continue;
+      }
+      if (visited[pixelPos]) {
+        // We've already seen that one
+        continue;
+      }
+
+      const currentColor = getPixelColor(imageData, width, x, y);
+      if (!areColorsEqual(currentColor, targetColor)) {
+        // Not the same color than the one clicked originally, we don't have
+        // to fill that one.
+        continue;
+      }
+
+      visited[pixelPos] = 1; // Like `true`, but in our `Uint8Array`
+      filledPixels.push([x, y]); // Useful for later
+
+      const currentPos = (y * width + x) * 4;
+      data[currentPos] = wantedRgb.r;
+      data[currentPos + 1] = wantedRgb.g;
+      data[currentPos + 2] = wantedRgb.b;
+
+      if (x + 1 < width) {
+        // One pixel right
+        queue.push([x + 1, y]);
+      }
+      if (x - 1 >= 0) {
+        // One pixel left
+        queue.push([x - 1, y]);
+      }
+      if (y + 1 < height) {
+        // One pixel down
+        queue.push([x, y + 1]);
+      }
+      if (y - 1 >= 0) {
+        // One pixel up
+        queue.push([x, y - 1]);
+      }
+    }
+
+    // OK so here you thought we won, NO!
+    //
+    // At the edges of lines and such drawn in a canvas, there may be diagonal
+    // lines.
+    // WORSE, canvas sometimes do subpixel rendering for a smoother look and
+    // this cannot be disabled. It breaks my bucket fill tool with a weirdly
+    // visible edge, but browser implems seem to weidly not care about the
+    // bucket in my personal website, prefering smoother graphics instead (this
+    // is war).
+    //
+    // So their searched for it, our bucket fill does not just fill the actual
+    // targeted pixel, it overflows a few pixels just so we believe it did its
+    // job perfectly. Don't tell the cops.
+
+    // NOTE: We browse each damn filled pixels, not just the ones at the border,
+    // because just tracking the ones at the border did not fix the issue for
+    // some reason I did not take yet time to resolve.
+    // This is inneficient, but not that visible, and it just werks, so, again
+    // just do not tell the pixel authorities about this.
+    for (const [px, py] of filledPixels) {
+      // One pixel around
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = px + dx;
+          const ny = py + dy;
+
+          // Skip if out of bounds
+          if (nx < 0 || nx >= width || ny < 0 || ny >= height) {
+            continue;
+          }
+
+          const neighborPos = ny * width + nx;
+          if (!visited[neighborPos]) {
+            const overflowPos = (ny * width + nx) * 4;
+            data[overflowPos] = wantedRgb.r;
+            data[overflowPos + 1] = wantedRgb.g;
+            data[overflowPos + 2] = wantedRgb.b;
+          }
+        }
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
+    return true;
   }
 
   function saveImage() {
@@ -706,4 +862,32 @@ async function saveFile(content) {
   } catch (err) {
     console.error(err);
   }
+}
+
+function getPixelColor(imageData, width, x, y) {
+  const pos = (y * width + x) * 4;
+  return {
+    r: imageData.data[pos],
+    g: imageData.data[pos + 1],
+    b: imageData.data[pos + 2],
+  };
+}
+
+function areColorsEqual(c1, c2, tolerance = 10) {
+  return (
+    Math.abs(c1.r - c2.r) <= tolerance &&
+    Math.abs(c1.g - c2.g) <= tolerance &&
+    Math.abs(c1.b - c2.b) <= tolerance
+  );
+}
+
+function hexToRgb(hex) {
+  hex = hex.replace("#", "");
+
+  // Parse r, g, b values
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  return { r, g, b };
 }

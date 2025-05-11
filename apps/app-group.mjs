@@ -35,7 +35,6 @@ export async function create(args, env) {
   }
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
-    // backgroundColor: "var(--window-sidebar-bg)",
     backgroundColor: "var(--app-primary-bg)",
     height: "100%",
     width: "100%",
@@ -45,10 +44,11 @@ export async function create(args, env) {
   });
   const iconsContainerElt = document.createElement("div");
   applyStyle(iconsContainerElt, {
-    display: "flex",
-    flexWrap: "wrap",
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, 100px)",
     gap: "5px",
-    alignItems: "center",
+    overflowX: "hidden",
+    justifyContent: "space-evenly",
   });
   containerElt.appendChild(iconsContainerElt);
 

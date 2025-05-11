@@ -69,7 +69,6 @@ export function create(abortSignal) {
    * @param {DOMRect} containerRect
    */
   function contructCanvas(containerRect) {
-    console.warn("REDRAWING");
     canvas = document.createElement("canvas");
     canvas.width = containerRect.width;
     canvas.height = containerRect.height;

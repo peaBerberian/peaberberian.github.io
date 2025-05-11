@@ -211,13 +211,22 @@ function getHumanReadableHours() {
  */
 function displayHelp() {
   console.log(
-    `bundle.mjs: Produce a RxPlayer bundle (a single JS file containing the RxPlayer).
+    `build.mjs: Produce the desktop bundles (of both the core desktop itself and
+of all the declared apps).
 
-Usage: node bundle.mjs <INPUT FILE> [OPTIONS]
+Will interpret the \`/apps/AppInfo.json\` first to find out all the apps it needs to
+bundle, and will advertise them to the desktop through a generated JS file.
+The bundled desktop will then be able to list those applications and load their app
+bundle when needed.
+
+For now, this script doesn't react to modifications of the \`/apps/AppInfo.json\` file,
+even in "watch" mode, meaning that this script should be relaunched anytime that json
+file is modified (which should mostly happen when adding new applications).
+
+Usage: node build.mjs [OPTIONS]
 
 Available options:
   -h, --help                  Display this help message.
-  -o <PATH>, --output <PATH>  Mandatory: Specify the output file.
   -m, --minify                Minify the built bundle.
   -s, --silent                Don't log to stdout/stderr when bundling.
   -w, --watch                 Re-build each time any of the files depended on changed.`,

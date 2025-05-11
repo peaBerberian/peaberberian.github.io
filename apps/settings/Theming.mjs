@@ -948,7 +948,7 @@ const themes = {
     // input, button background and range input's line)
     "#e3e3e3",
     // sidebar-hover-bg
-    "#ebebeb",
+    "#c0c0c0",
     // sidebar-selected-bg-color
     "#5a9b52",
     // sidebar-selected-text-color

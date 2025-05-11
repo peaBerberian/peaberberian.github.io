@@ -9,7 +9,7 @@
       "preload": true,
       "autoload": true,
       "onlyOne": false,
-      "needsSettingsObject": false,
+      "dependencies": [],
       "inStartList": null,
       "desktopDir": null,
       "website": null
@@ -24,17 +24,7 @@
         "after": 100
       },
       "onlyOne": true,
-      "needsSettingsObject": true,
-      "inStartList": null,
-      "desktopDir": null
-    },
-    {
-      "id": "this-website",
-      "title": "About This Website",
-      "icon": "🌐",
-      "defaultHeight": 600,
-      "defaultWidth": 855,
-      "preload": false,
+      "dependencies": ["settings"],
       "inStartList": null,
       "desktopDir": null
     },
@@ -87,8 +77,8 @@
       "icon": "⏯️",
       "defaultHeight": 720,
       "defaultWidth": 950,
-      "inStartList": "Other Projects",
-      "desktopDir": "Other Projects"
+      "inStartList": "My Other Projects",
+      "desktopDir": "My Other Projects"
     },
     {
       "id": "wasp-hls",
@@ -96,8 +86,8 @@
       "icon": "🐝",
       "defaultHeight": 720,
       "defaultWidth": 950,
-      "inStartList": "Other Projects",
-      "desktopDir": "Other Projects"
+      "inStartList": "My Other Projects",
+      "desktopDir": "My Other Projects"
     },
     {
       "id": "rx-paired",
@@ -105,8 +95,8 @@
       "icon": "📈",
       "defaultHeight": 700,
       "defaultWidth": 1000,
-      "inStartList": "Other Projects",
-      "desktopDir": "Other Projects"
+      "inStartList": "My Other Projects",
+      "desktopDir": "My Other Projects"
     },
     {
       "id": "eme-spy",
@@ -114,8 +104,8 @@
       "icon": "🕵️",
       "defaultHeight": 500,
       "defaultWidth": 800,
-      "inStartList": "Other Projects",
-      "desktopDir": "Other Projects"
+      "inStartList": "My Other Projects",
+      "desktopDir": "My Other Projects"
     },
     {
       "id": "mse-spy",
@@ -123,50 +113,50 @@
       "icon": "👓",
       "defaultHeight": 500,
       "defaultWidth": 800,
-      "inStartList": "Other Projects",
-      "desktopDir": "Other Projects"
+      "inStartList": "My Other Projects",
+      "desktopDir": "My Other Projects"
     },
     {
       "id": "isobmff-inspector",
       "title": "isobmff-inspector",
       "icon": "📹",
-      "inStartList": "Other Projects",
-      "desktopDir": "Other Projects"
+      "inStartList": "My Other Projects",
+      "desktopDir": "My Other Projects"
     },
     {
       "id": "gif-renderer",
       "title": "gif-renderer.rs",
       "icon": "🏇",
-      "inStartList": "Other Projects",
-      "desktopDir": "Other Projects"
+      "inStartList": "My Other Projects",
+      "desktopDir": "My Other Projects"
     },
     {
       "id": "str-html",
       "title": "str-html",
       "icon": "📄",
-      "inStartList": "Other Projects",
-      "desktopDir": "Other Projects"
+      "inStartList": "My Other Projects",
+      "desktopDir": "My Other Projects"
     },
     {
       "id": "readme",
       "title": "README",
       "icon": "📖",
-      "inStartList": "Other Projects",
-      "desktopDir": "Other Projects"
+      "inStartList": "My Other Projects",
+      "desktopDir": "My Other Projects"
     },
     {
       "id": "keyboard9",
       "title": "keyboard9",
       "icon": "⌨️",
-      "inStartList": "Other Projects",
-      "desktopDir": "Other Projects"
+      "inStartList": "My Other Projects",
+      "desktopDir": "My Other Projects"
     },
     {
       "id": "bif-inspector",
       "title": "bif-inspector",
       "icon": "🖼️",
-      "inStartList": "Other Projects",
-      "desktopDir": "Other Projects"
+      "inStartList": "My Other Projects",
+      "desktopDir": "My Other Projects"
     },
     {
       "id": "godbolt",
@@ -232,6 +222,16 @@
       "icon": "🧠",
       "defaultHeight": 720,
       "defaultWidth": 1280,
+      "inStartList": "Misc",
+      "desktopDir": null
+    },
+    {
+      "id": "this-website",
+      "title": "About This Website",
+      "icon": "🌐",
+      "defaultHeight": 600,
+      "defaultWidth": 855,
+      "preload": false,
       "inStartList": "Misc",
       "desktopDir": null
     }

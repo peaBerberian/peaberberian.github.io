@@ -9,7 +9,7 @@ const { applyStyle } = AppUtils;
  */
 let clockId = 0;
 
-export function create(abortSignal) {
+export function create(_args, _env, abortSignal) {
   const use12HourClockFormat = is12HourClockFormat();
   const wrapper = document.createElement("div");
   applyStyle(wrapper, {

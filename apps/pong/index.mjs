@@ -3,7 +3,7 @@ const { applyStyle } = AppUtils;
 const paddleWidth = 10;
 const paddleHeight = 80;
 
-export function create(abortSignal) {
+export function create(_args, _env, abortSignal) {
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
     backgroundColor: "var(--window-active-header)",

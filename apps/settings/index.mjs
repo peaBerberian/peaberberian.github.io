@@ -9,9 +9,12 @@ const { constructSidebarElt, strHtml } = AppUtils;
 
 /**
  * Generate content of the "System Settings" application.
+ * @param {Object} dependencies
+ * @param {Object} dependencies.settings
+ * @param {AbortSignal} abortSignal
  * @returns {Object}
  */
-export function create(settings, abortSignal) {
+export function create(_args, { settings }, abortSignal) {
   const sidebarItems = [
     { icon: "🖼️", text: "Wallpaper", section: "wallpaper", active: true },
     { icon: "🎨", text: "Theming", section: "theme", active: false },

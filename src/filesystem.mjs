@@ -1,4 +1,4 @@
-// TODO: Make base mostly work even without `IndexededDB` API (just do not store
+// TODO: Make base mostly work even without `IndexedDB` API (just do not store
 // long term in that case)
 // TODO: consistency check
 /**
@@ -598,22 +598,29 @@ export default fs;
 window.fs = fs;
 
 function openDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-
-      const store = db.createObjectStore(METADATA_STORE, { keyPath: "id" });
-      store.createIndex("directory", "directory");
-      store.createIndex("fullPath", "fullPath", { unique: true });
-
-      // Store content separately for efficiency
-      db.createObjectStore(CONTENT_STORE, { keyPath: "id" });
-    };
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+  return new Promise((_resolve, _reject) => {
+    // Disabling IndexedDB usage for now
+    // I chose to set a dangling promise because I'm monitoring **ALL**, even
+    // catched, errors to ensure I'm not doing bad stuff.
+    //
+    // Weird effect could be infinite loading when trying to access non-virtual
+    // filesystem, but this shouldn't happen.
+    //
+    //   const request = indexedDB.open(DB_NAME, DB_VERSION);
+    //
+    //   request.onupgradeneeded = (event) => {
+    //     const db = event.target.result;
+    //
+    //     const store = db.createObjectStore(METADATA_STORE, { keyPath: "id" });
+    //     store.createIndex("directory", "directory");
+    //     store.createIndex("fullPath", "fullPath", { unique: true });
+    //
+    //     // Store content separately for efficiency
+    //     db.createObjectStore(CONTENT_STORE, { keyPath: "id" });
+    //   };
+    //
+    //   request.onsuccess = () => resolve(request.result);
+    //   request.onerror = () => reject(request.error);
   });
 }
 

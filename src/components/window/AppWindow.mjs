@@ -338,6 +338,7 @@ export default class AppWindow extends EventEmitter {
     if (appVal.lazyLoad) {
       const spinnerPlaceholder = getSpinnerPlaceholder();
       const initialElement = spinnerPlaceholder.element;
+      this.element.appendChild(initialElement);
       appVal.lazyLoad().then((module) => {
         clearTimeout(spinnerPlaceholder.timeout);
         initialElement.remove();

@@ -245,6 +245,7 @@ export function create(abortSignal) {
     minHeight: "30px",
     margin: "8px",
   });
+  // colorInputElt.ontouchend = () => colorInputElt.click();
   colorInputElt.addEventListener("change", (e) => {
     currentColor = e.target.value;
   });
@@ -268,7 +269,6 @@ export function create(abortSignal) {
     if (currentTool === "Cursor (no tool)") {
       return;
     }
-    e.preventDefault();
     const touch = e.touches[0];
     startDrawing(touch);
     draw(touch);
@@ -278,9 +278,17 @@ export function create(abortSignal) {
       if (currentTool === "Cursor (no tool)") {
         return;
       }
-      e.preventDefault();
       const touch = e.touches[0];
       draw(touch);
+    }
+  });
+
+  // Prevent the canvas from scrolling around on touch
+  canvasContainerElt.addEventListener("touchmove", (e) => {
+    if (e.touches.length === 1) {
+      if (currentTool !== "Cursor (no tool)") {
+        e.preventDefault();
+      }
     }
   });
   // Safari just selects all over the place like some maniac without this
@@ -509,7 +517,14 @@ export function create(abortSignal) {
     const height = canvas.height;
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
-    const targetColor = getPixelColor(imageData, width, initialX, initialY);
+    const roundexInitX = Math.min(Math.round(initialX), canvas.width - 1);
+    const roundexInitY = Math.min(Math.round(initialY), canvas.height - 1);
+    const targetColor = getPixelColor(
+      imageData,
+      width,
+      roundexInitX,
+      roundexInitY,
+    );
     const wantedRgb = hexToRgb(fillColor);
 
     // If the currently selected pixel is already of the wanted color, there's
@@ -541,9 +556,8 @@ export function create(abortSignal) {
      * Build a queue of pixels to check and increase an offset, we could use a
      * popped stack but it was not performant at all.
      */
-    const queue = [[initialX, initialY]];
+    const queue = [[roundexInitX, roundexInitY]];
     let queueIndex = 0;
-
     while (queueIndex < queue.length) {
       const [x, y] = queue[queueIndex++];
       const pixelPos = y * width + x;
@@ -803,7 +817,7 @@ function createSizeSelector(sizes, defaultSize, onChange) {
       transition: "transform 0.1s",
     });
     sizeOptions.push(sizeOptionElt);
-    sizeOptionElt.onclick = () => {
+    const onClick = () => {
       for (const elt of sizeOptions) {
         if (elt === sizeOptionElt) {
           elt.style.background = "var(--app-primary-color)";
@@ -813,6 +827,8 @@ function createSizeSelector(sizes, defaultSize, onChange) {
       }
       onChange(size);
     };
+    sizeOptionElt.onclick = onClick;
+    // sizeOptionElt.ontouchend = onClick;
   }
   return sizeSelectorElt;
 }
@@ -830,6 +846,7 @@ function createToolElt(toolSvg, title, heightScale, onClick) {
   toolWrapperElt.style.cursor = "pointer";
   toolWrapperElt.appendChild(toolSvgElt);
   toolWrapperElt.onclick = onClick;
+  // toolWrapperElt.ontouchend = onClick;
   toolWrapperElt.title = title;
   return toolWrapperElt;
 }
@@ -844,6 +861,7 @@ function createButtonElt(svg, title, heightScale, onClick) {
   buttonWrapperElt.style.cursor = "pointer";
   buttonWrapperElt.appendChild(buttonSvgElt);
   buttonWrapperElt.onclick = onClick;
+  // buttonWrapperElt.ontouchend = onClick;
   buttonWrapperElt.title = title;
   return buttonWrapperElt;
 }

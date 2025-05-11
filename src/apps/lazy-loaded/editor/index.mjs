@@ -135,7 +135,9 @@ function createEditor() {
 
   let prevLineCount = 0;
   let debouncedTimeout;
-  textArea.addEventListener("input", () => {
+  textArea.addEventListener("input", onTextInput);
+  textArea.addEventListener("change", onTextInput);
+  function onTextInput() {
     statusBar.textContent = "Writing...";
     if (textArea.value === "") {
       disableButton(clearButton);
@@ -154,7 +156,7 @@ function createEditor() {
       saveState(true);
     }, 500);
     updateLineNumbers();
-  });
+  }
   textArea.addEventListener("scroll", () => syncScroll());
   updateLineNumbers();
 

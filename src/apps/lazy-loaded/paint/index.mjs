@@ -12,6 +12,7 @@ import {
   redoSvg,
   saveSvg,
   clearSvg,
+  crosshairCursor,
 } from "./svgs.mjs";
 
 const DEFAULT_CANVAS_HEIGHT = 800;
@@ -182,7 +183,7 @@ export function create(abortSignal) {
     if (currentTool === "cursor") {
       canvas.style.cursor = "auto";
     } else {
-      canvas.style.cursor = "crosshair";
+      canvas.style.cursor = `url("data:image/svg+xml;utf8,${encodeURIComponent(crosshairCursor)}") 10 10, crosshair`;
     }
   }
 

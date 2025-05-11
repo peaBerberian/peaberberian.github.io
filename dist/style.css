@@ -488,6 +488,7 @@ html {
 	display: grid;
   grid-template-columns: auto auto 1fr;
   grid-auto-flow: dense;
+  /* transition: background-color 0.2s ease; */
 }
 
 .window.active .w-header {

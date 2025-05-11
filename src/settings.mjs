@@ -13,17 +13,19 @@
  */
 
 import {
+  IMAGE_ROOT_PATH,
   TASKBAR_MAX_HORIZONTAL_SIZE,
   TASKBAR_MAX_VERTICAL_SIZE,
   TASKBAR_MIN_HORIZONTAL_SIZE,
   TASKBAR_MIN_VERTICAL_SIZE,
-  WALLPAPERS,
 } from "./constants.mjs";
 import { SharedReference } from "./utils.mjs";
 
 // Values copied from CSS:
 // TODO: read from CSS directly?
 
+const DEFAULT_WALLPAPER =
+  IMAGE_ROOT_PATH + "photo-1464822759023-fed622ff2c3b.jpg";
 const DEFAULT_FONT_SIZE = 14;
 const DEFAULT_TASKBAR_OPACITY = 57;
 const DEFAULT_ICON_IMAGE_OPACITY = 25;
@@ -261,17 +263,12 @@ export const SETTINGS = {
    */
   desktopBackground: createRefForState(
     "desktop-bg",
-    WALLPAPERS.length > 0
-      ? {
-          // Can be "image" or "color"
-          type: "image",
-          value: WALLPAPERS[0],
-        }
-      : {
-          type: "color",
-          value: "#1e88e5",
-        },
-
+    {
+      // Can be "image" or "color"
+      type: "image",
+      // For now it is hardcoded, sadly, following a refacto.
+      value: DEFAULT_WALLPAPER,
+    },
     (bg) => {
       window.requestAnimationFrame(() => {
         if (bg.type === "image") {

@@ -1,20 +1,19 @@
-const { IMAGE_ROOT_PATH, strHtml, createAppTitle, applyStyle } =
-  window.AppUtils;
-
 const GITHUB_LINK = "https://github.com/canalplus/RxPaired";
 
 const IMAGE_HEIGHT = 580;
 const IMAGE_WIDTH = 1000;
 
-const sidebar = [
-  { text: "Overview", render: getOverview },
-  { text: "Why this project", centered: true, render: getWhy },
-];
+export function create(_args, env) {
+  const { strHtml, createAppTitle, applyStyle } = env.appUtils;
+  return {
+    sidebar: [
+      { text: "Overview", render: getOverview },
+      { text: "Why this project", centered: true, render: getWhy },
+    ],
+  };
 
-export { sidebar };
-
-function getOverview() {
-  return strHtml`<div>
+  function getOverview() {
+    return strHtml`<div>
 ${createAppTitle("RxPaired", { github: GITHUB_LINK })}
 
 <p><a href="${GITHUB_LINK}" target="_blank">RxPaired</a> is a remote debugger lightweight on resources, with an RxPlayer specialization.<br>
@@ -25,9 +24,9 @@ We use it daily at Canal+ Group to debug our applications.</p>
 ${getRxPairedImg()}
 
 </div>`;
-}
-function getWhy() {
-  return strHtml`<div>
+  }
+  function getWhy() {
+    return strHtml`<div>
 	${createAppTitle("Why creating this?", {})}
 
 	<p>This project is linked to Canal+' media player: the RxPlayer.</p>
@@ -42,25 +41,26 @@ function getWhy() {
 
 	<p>We even saw usage for cases which do not rely on the RxPlayer, where it is used as a lightweight log server when the browser's own debugger is not reliable / easily usable.</p>
 </div>`;
-}
+  }
 
-function getRxPairedImg() {
-  // Some way to add a placeholder to remove reflow
-  // TODO: A less hacky way may be found
-  const placeholder = strHtml`<div />`;
-  applyStyle(placeholder, {
-    border: "2px dotted var(--window-line-color)",
-    paddingTop: String((IMAGE_HEIGHT / IMAGE_WIDTH) * 100) + "%",
-    position: "relative",
-    display: "block",
-  });
-  const imgElt = strHtml`<img style="width: 100%; position: absolute; top: 0" src="${IMAGE_ROOT_PATH + "rx-paired-screenshot.png"}" alt="RxPaired's screenshot" />`;
-  applyStyle(imgElt, {
-    width: "100%",
-    // In front of placeholder,
-    position: "absolute",
-    top: "0",
-  });
-  placeholder.appendChild(imgElt);
-  return placeholder;
+  function getRxPairedImg() {
+    // Some way to add a placeholder to remove reflow
+    // TODO: A less hacky way may be found
+    const placeholder = strHtml`<div />`;
+    applyStyle(placeholder, {
+      border: "2px dotted var(--window-line-color)",
+      paddingTop: String((IMAGE_HEIGHT / IMAGE_WIDTH) * 100) + "%",
+      position: "relative",
+      display: "block",
+    });
+    const imgElt = strHtml`<img style="width: 100%; position: absolute; top: 0" src="${env.getImageRootPath() + "rx-paired-screenshot.png"}" alt="RxPaired's screenshot" />`;
+    applyStyle(imgElt, {
+      width: "100%",
+      // In front of placeholder,
+      position: "absolute",
+      top: "0",
+    });
+    placeholder.appendChild(imgElt);
+    return placeholder;
+  }
 }

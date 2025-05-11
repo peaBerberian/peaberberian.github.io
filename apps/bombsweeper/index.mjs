@@ -1,20 +1,16 @@
-const { applyStyle } = AppUtils;
-
-// TODO: configuration
-
 const HIDDEN_CELL_VALUE = "⬛";
 const FLAG_CELL_VALUE = "🚩";
 const BOMB_CELL_VALUE = "💣";
 const EXPLODED_BOMB_CELL_VALUE = "💥";
 const NUMBER_VALUES = ["⬜", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣"];
 
-export function create() {
-  const config = {
-    rows: 10,
-    cols: 10,
-    numberOfBombs: 15,
-  };
+// TODO: configurable
+const NUMBER_OF_ROWS = 10;
+const NUMBER_OF_COLS = 10;
+const NUMBER_OF_BOMBS = 10;
 
+export function create(_args, env) {
+  const { applyStyle } = env.appUtils;
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
     backgroundColor: "var(--window-sidebar-bg)",
@@ -30,9 +26,9 @@ export function create() {
   });
 
   let hasGameOvered = false;
-  let firstClick = true;
-  let nbOfFlagsPlaced = 0;
-  let nbOfCellsRevealed = 0;
+  let hasClickedInCurrGame = true;
+  let nbFlagsPlaced = 0;
+  let nbCellsRevealed = 0;
 
   const titleElt = document.createElement("h1");
   titleElt.textContent = "💣 BombSweeper!";
@@ -54,7 +50,7 @@ export function create() {
   applyStyle(infoBombValueElt, {
     fontWeight: "bold",
   });
-  infoBombValueElt.textContent = config.numberOfBombs;
+  infoBombValueElt.textContent = NUMBER_OF_BOMBS;
 
   infoBombElt.appendChild(infoBombTitleElt);
   infoBombElt.appendChild(infoBombValueElt);
@@ -76,8 +72,8 @@ export function create() {
   const board = document.createElement("div");
   applyStyle(board, {
     display: "inline-grid",
-    gridTemplateColumns: `repeat(${config.cols}, 36px)`,
-    gridTemplateRows: `repeat(${config.rows}, 36px)`,
+    gridTemplateColumns: `repeat(${NUMBER_OF_COLS}, 36px)`,
+    gridTemplateRows: `repeat(${NUMBER_OF_ROWS}, 36px)`,
     gap: "2px",
     margin: "0 auto",
     border: "6px solid var(--window-line-color)",
@@ -95,12 +91,12 @@ export function create() {
 
     for (
       let r = Math.max(0, row - 1);
-      r <= Math.min(config.rows - 1, row + 1);
+      r <= Math.min(NUMBER_OF_ROWS - 1, row + 1);
       r++
     ) {
       for (
         let c = Math.max(0, col - 1);
-        c <= Math.min(config.cols - 1, col + 1);
+        c <= Math.min(NUMBER_OF_COLS - 1, col + 1);
         c++
       ) {
         if (r === row && c === col) continue;
@@ -115,7 +111,7 @@ export function create() {
   }
 
   function getCellElementAt(row, col) {
-    // TODO?:
+    // For now, just do this.
     return containerElt.querySelector(`[data-row="${row}"][data-col="${col}"]`);
   }
 
@@ -127,16 +123,16 @@ export function create() {
     if (cell.dataset.flagged === "true") {
       cell.dataset.flagged = "false";
       cell.textContent = HIDDEN_CELL_VALUE;
-      nbOfFlagsPlaced--;
-    } else if (nbOfFlagsPlaced >= config.numberOfBombs) {
+      nbFlagsPlaced--;
+    } else if (nbFlagsPlaced >= NUMBER_OF_BOMBS) {
       return;
     } else {
       cell.dataset.flagged = "true";
       cell.textContent = FLAG_CELL_VALUE;
-      nbOfFlagsPlaced++;
+      nbFlagsPlaced++;
     }
 
-    infoBombValueElt.textContent = config.numberOfBombs - nbOfFlagsPlaced;
+    infoBombValueElt.textContent = NUMBER_OF_BOMBS - nbFlagsPlaced;
     checkGameStatus();
   }
 
@@ -147,7 +143,7 @@ export function create() {
 
     cell.dataset.revealed = "true";
     cell.style.cursor = "auto";
-    nbOfCellsRevealed++;
+    nbCellsRevealed++;
 
     const row = parseInt(cell.dataset.row);
     const col = parseInt(cell.dataset.col);
@@ -164,12 +160,12 @@ export function create() {
     if (neighborCount === 0) {
       for (
         let r = Math.max(0, row - 1);
-        r <= Math.min(config.rows - 1, row + 1);
+        r <= Math.min(NUMBER_OF_ROWS - 1, row + 1);
         r++
       ) {
         for (
           let c = Math.max(0, col - 1);
-          c <= Math.min(config.cols - 1, col + 1);
+          c <= Math.min(NUMBER_OF_COLS - 1, col + 1);
           c++
         ) {
           if (r === row && c === col) continue;
@@ -184,10 +180,10 @@ export function create() {
   }
 
   function checkGameStatus() {
-    const totalCells = config.rows * config.cols;
-    const safeCells = totalCells - config.numberOfBombs;
+    const totalCells = NUMBER_OF_ROWS * NUMBER_OF_COLS;
+    const safeCells = totalCells - NUMBER_OF_BOMBS;
 
-    if (nbOfCellsRevealed === safeCells) {
+    if (nbCellsRevealed === safeCells) {
       endGame(true);
     }
   }
@@ -195,7 +191,6 @@ export function create() {
   function endGame(hasWon) {
     hasGameOvered = true;
 
-    // TODO:
     containerElt.querySelectorAll('[data-bomb="true"]').forEach((cell) => {
       if (cell.dataset.revealed !== "true") {
         cell.textContent = BOMB_CELL_VALUE;
@@ -212,20 +207,26 @@ export function create() {
 
   function initializeGame() {
     hasGameOvered = false;
-    firstClick = true;
-    nbOfFlagsPlaced = 0;
-    nbOfCellsRevealed = 0;
+    hasClickedInCurrGame = true;
+    nbFlagsPlaced = 0;
+    nbCellsRevealed = 0;
 
-    infoBombValueElt.textContent = config.numberOfBombs;
+    infoBombValueElt.textContent = NUMBER_OF_BOMBS;
+    // NOTE: It's actually not really "right click" but more about the "context"
+    // button (e.g. long press on android etc.).
+    // I don't know how to word it right so for now I call it "right click".
     statusElt.textContent =
       "Left click to reveal a cell, right click to place a flag";
     resetBtn.textContent = "Generate new grid";
 
     board.innerHTML = "";
 
-    for (let row = 0; row < config.rows; row++) {
-      for (let col = 0; col < config.cols; col++) {
+    for (let row = 0; row < NUMBER_OF_ROWS; row++) {
+      for (let col = 0; col < NUMBER_OF_COLS; col++) {
         const cell = document.createElement("div");
+        // NOTE: `dataset` is convenient but I'm not sure about its
+        // discoverability.
+        // Though for an app as simple as bombsweeper we may not care at all
         cell.dataset.row = row;
         cell.dataset.col = col;
         cell.dataset.revealed = "false";
@@ -255,8 +256,8 @@ export function create() {
           const row = parseInt(cell.dataset.row);
           const col = parseInt(cell.dataset.col);
 
-          if (firstClick) {
-            firstClick = false;
+          if (hasClickedInCurrGame) {
+            hasClickedInCurrGame = false;
             initializeBombsPlacement(row, col);
           }
           revealCell(cell);
@@ -276,9 +277,9 @@ export function create() {
   function initializeBombsPlacement(firstRow, firstCol) {
     let bombsPlaced = 0;
 
-    while (bombsPlaced < config.numberOfBombs) {
-      const row = Math.floor(Math.random() * config.rows);
-      const col = Math.floor(Math.random() * config.cols);
+    while (bombsPlaced < NUMBER_OF_BOMBS) {
+      const row = Math.floor(Math.random() * NUMBER_OF_ROWS);
+      const col = Math.floor(Math.random() * NUMBER_OF_COLS);
 
       if (
         (row === firstRow && col === firstCol) ||
@@ -291,8 +292,8 @@ export function create() {
       bombsPlaced++;
     }
 
-    for (let row = 0; row < config.rows; row++) {
-      for (let col = 0; col < config.cols; col++) {
+    for (let row = 0; row < NUMBER_OF_ROWS; row++) {
+      for (let col = 0; col < NUMBER_OF_COLS; col++) {
         const cell = getCellElementAt(row, col);
         if (cell.dataset.bomb !== "true") {
           const count = getNumberOfBombsAroundCell(row, col);

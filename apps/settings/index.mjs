@@ -5,8 +5,6 @@ import createThemeSection from "./Theming.mjs";
 import createWindowSection from "./Window.mjs";
 import createDesktopIconsSection from "./DesktopIcons.mjs";
 
-const { constructSidebarElt, strHtml } = AppUtils;
-
 /**
  * Generate content of the "System Settings" application.
  * @param {Object} dependencies
@@ -14,7 +12,9 @@ const { constructSidebarElt, strHtml } = AppUtils;
  * @param {AbortSignal} abortSignal
  * @returns {Object}
  */
-export function create(_args, { settings }, abortSignal) {
+export function create(_args, env, abortSignal) {
+  const { settings } = env;
+  const { constructSidebarElt, strHtml } = env.appUtils;
   const sidebarItems = [
     { icon: "🖼️", text: "Wallpaper", section: "wallpaper", active: true },
     { icon: "🎨", text: "Theming", section: "theme", active: false },
@@ -45,7 +45,8 @@ export function create(_args, { settings }, abortSignal) {
     content: contentElt,
     sidebar: sidebarElt,
   } = constructAppWithSidebar(sidebarItems, onSidebarSelectionChange);
-  contentElt.appendChild(createWallpaperSection(settings, abortSignal));
+  contentElt.appendChild(createWallpaperSection(env, abortSignal));
+  contentElt.scrollTo(0, 0);
 
   let lastSidebarElemnt = sidebarElt;
   settings.startMenuPic.onUpdate(
@@ -74,32 +75,32 @@ export function create(_args, { settings }, abortSignal) {
     switch (sectionName) {
       case "wallpaper":
         contentElt.appendChild(
-          createWallpaperSection(settings, childAbortController.signal),
+          createWallpaperSection(env, childAbortController.signal),
         );
         break;
       case "theme":
         contentElt.appendChild(
-          createThemeSection(settings, childAbortController.signal),
+          createThemeSection(env, childAbortController.signal),
         );
         break;
       case "taskbar":
         contentElt.appendChild(
-          createTaskbarSection(settings, childAbortController.signal),
+          createTaskbarSection(env, childAbortController.signal),
         );
         break;
       case "system":
         contentElt.appendChild(
-          createSystemSection(settings, childAbortController.signal),
+          createSystemSection(env, childAbortController.signal),
         );
         break;
       case "window":
         contentElt.appendChild(
-          createWindowSection(settings, childAbortController.signal),
+          createWindowSection(env, childAbortController.signal),
         );
         break;
       case "icons":
         contentElt.appendChild(
-          createDesktopIconsSection(settings, childAbortController.signal),
+          createDesktopIconsSection(env, childAbortController.signal),
         );
         break;
     }
@@ -112,36 +113,35 @@ export function create(_args, { settings }, abortSignal) {
       }
     }
   }
-}
 
-// TODO: This is a previous implementation of the utils
-// We could merge with the new one, but it misses automatic section updates
-/**
- * Construct the content part of an app with a sidebar corresponding to the
- * given `sections` object.
- *
- * @param {Array.<Object>} sections - Array of objects, each of which describes
- * a single sidebar section.
- * Each object have the following properties:
- * -  `section` (`string`): identifier for the section, that will be
- *    communicated through `onChangeSection`.
- * -  `active` (`boolean`): If `true`, this is the active section.
- * -  `icon` (`string|undefined`): Optional icon describing the section.
- * -  `text` (`string`): Title describing the section.
- * @returns {HTMLElement} - The application's content, with a sidebar.
- */
-function constructAppWithSidebar(sections, onChangeSection) {
-  // const sidebarTitle = strHtml`<div class="sidebar-title">System Settings</div>`;
-  const container = strHtml`<div class="w-container" />`;
-  const content = strHtml`<div class="w-content"></div>`;
-  const sidebar = constructSidebarElt(sections, (section) => {
-    onChangeSection(section);
-  });
-  container.appendChild(sidebar);
-  container.appendChild(content);
-  return {
-    container,
-    sidebar,
-    content,
-  };
+  // TODO: This is a previous implementation of the utils
+  // We could merge with the new one, but it misses automatic section updates
+  /**
+   * Construct the content part of an app with a sidebar corresponding to the
+   * given `sections` object.
+   *
+   * @param {Array.<Object>} sections - Array of objects, each of which describes
+   * a single sidebar section.
+   * Each object have the following properties:
+   * -  `section` (`string`): identifier for the section, that will be
+   *    communicated through `onChangeSection`.
+   * -  `active` (`boolean`): If `true`, this is the active section.
+   * -  `icon` (`string|undefined`): Optional icon describing the section.
+   * -  `text` (`string`): Title describing the section.
+   * @returns {HTMLElement} - The application's content, with a sidebar.
+   */
+  function constructAppWithSidebar(sections, onChangeSection) {
+    const container = strHtml`<div class="w-container" />`;
+    const content = strHtml`<div class="w-content"></div>`;
+    const sidebar = constructSidebarElt(sections, (section) => {
+      onChangeSection(section);
+    });
+    container.appendChild(sidebar);
+    container.appendChild(content);
+    return {
+      container,
+      sidebar,
+      content,
+    };
+  }
 }

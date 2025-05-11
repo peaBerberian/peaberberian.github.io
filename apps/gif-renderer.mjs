@@ -1,14 +1,15 @@
-const { strHtml, createAppTitle } = window.AppUtils;
-
 const GITHUB_LINK = "https://github.com/peaberberian/gif-renderer.rs";
 
-const sidebar = [
-  {
-    text: "Overview",
-    icon: "🧑‍🏫",
-    centered: true,
-    render: () => {
-      return strHtml`<div>
+export function create(_args, env) {
+  const { strHtml, createAppTitle } = env.appUtils;
+  return {
+    sidebar: [
+      {
+        text: "Overview",
+        icon: "🧑‍🏫",
+        centered: true,
+        render: () => {
+          return strHtml`<div>
 	${createAppTitle("gif-renderer.rs", { github: GITHUB_LINK })}
 
 	<p>gif-renderer.rs is a simple GIF renderer in Rust.</p>
@@ -20,8 +21,8 @@ const sidebar = [
 	<p>I initially planned to add a secondary platform where it could run through WebAssembly rendering the GIF inside a canvas on the page.<br>The idea was even to add some controls, for example to navigate frame-to-frame or go in reverse. However, I grew bored and more inclined to do other projects right when I could have started doing that, so mayber for later!</p>
 
 </div>`;
-    },
-  },
-];
-
-export { sidebar };
+        },
+      },
+    ],
+  };
+}

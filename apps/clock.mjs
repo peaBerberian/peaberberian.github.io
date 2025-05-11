@@ -1,5 +1,3 @@
-const { applyStyle } = AppUtils;
-
 /**
  * Identifier unique to a created clock App.
  * Allows to avoid SVG collisions in a very simple way.
@@ -9,7 +7,8 @@ const { applyStyle } = AppUtils;
  */
 let clockId = 0;
 
-export function create(_args, _env, abortSignal) {
+export function create(_args, env, abortSignal) {
+  const { applyStyle } = env.appUtils;
   const use12HourClockFormat = is12HourClockFormat();
   const wrapper = document.createElement("div");
   applyStyle(wrapper, {

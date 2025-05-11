@@ -7,7 +7,6 @@
       "defaultHeight": 600,
       "defaultWidth": 855,
       "preload": true,
-      "autoload": true,
       "onlyOne": false,
       "dependencies": [],
       "inStartList": null,

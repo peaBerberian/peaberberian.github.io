@@ -1,14 +1,15 @@
-const { strHtml, createAppTitle } = window.AppUtils;
-
 const GITHUB_LINK = "https://github.com/peaberberian/str-html";
 
-const sidebar = [
-  {
-    text: "Overview",
-    icon: "🧑‍🏫",
-    centered: true,
-    render: () => {
-      return strHtml`<div>
+export function create(_args, env) {
+  const { strHtml, createAppTitle } = env.appUtils;
+  return {
+    sidebar: [
+      {
+        text: "Overview",
+        icon: "🧑‍🏫",
+        centered: true,
+        render: () => {
+          return strHtml`<div>
 	${createAppTitle("str-html", { github: GITHUB_LINK })}
 	<p>str-html is a very fast and lightweight UI library allowing to write HTML-in-JS without needing to bring an heavy library or transpilation step (unlike most popular attempts at simplifying HTML-in-JS like JSX or svelte).</p>
 
@@ -25,7 +26,8 @@ const sidebar = [
 		<p>Thanks to its simplicity, I now consider this project complete: I do not see how I could improve it without making its API needlessly more complex.</p> 
 
 </div>`;
-    },
-  },
-];
-export { sidebar };
+        },
+      },
+    ],
+  };
+}

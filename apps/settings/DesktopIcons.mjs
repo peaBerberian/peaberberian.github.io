@@ -1,8 +1,10 @@
 import { createColorPickerOnRef, createNumericSliderOnRef } from "./utils.mjs";
 
-const { createAppTitle, strHtml } = AppUtils;
-
-export default function createDesktopIconsSection(settings, abortSignal) {
+export default function createDesktopIconsSection(
+  { settings, appUtils },
+  abortSignal,
+) {
+  const { createAppTitle, strHtml } = appUtils;
   const section = strHtml`<div>${createAppTitle("Desktop Icons", {})}</div>`;
   section.dataset.section = "icons";
   const colorGroupElt = strHtml`<div class="w-group"><h3>Colors</h3></div>`;
@@ -14,6 +16,7 @@ export default function createDesktopIconsSection(settings, abortSignal) {
       max: 100,
       valueToText: (val) => String(val) + "%",
     },
+    appUtils,
     abortSignal,
   );
   colorGroupElt.appendChild(imgBgIconOpacitySlider);
@@ -25,6 +28,7 @@ export default function createDesktopIconsSection(settings, abortSignal) {
       max: 100,
       valueToText: (val) => String(val) + "%",
     },
+    appUtils,
     abortSignal,
   );
   colorGroupElt.appendChild(hoverOpacitySlider);
@@ -36,6 +40,7 @@ export default function createDesktopIconsSection(settings, abortSignal) {
       max: 100,
       valueToText: (val) => String(val) + "%",
     },
+    appUtils,
     abortSignal,
   );
   colorGroupElt.appendChild(activeIconOpacitySlider);
@@ -47,7 +52,9 @@ export default function createDesktopIconsSection(settings, abortSignal) {
     ["Active Icon Background", settings.iconActiveBgColor],
     ["Active Icon Text", settings.iconActiveTextColor],
   ].forEach(([text, ref]) => {
-    colorGroupElt.appendChild(createColorPickerOnRef(ref, text, abortSignal));
+    colorGroupElt.appendChild(
+      createColorPickerOnRef(ref, text, appUtils, abortSignal),
+    );
   });
   section.appendChild(colorGroupElt);
   return section;

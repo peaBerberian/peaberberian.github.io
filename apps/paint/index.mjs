@@ -15,11 +15,11 @@ import {
 const DEFAULT_CANVAS_HEIGHT = 800;
 const DEFAULT_CANVAS_WIDTH = 800;
 
-const { strHtml, applyStyle, constructAppHeaderLine } = window.AppUtils;
-
 // TODO: clean-up code!
+// TODO: bucket (or all operations really) in a Worker with a canvas delocalized to it?
 
-export function create(_args, _env, abortSignal) {
+export function create(_args, env, abortSignal) {
+  const { strHtml, applyStyle, constructAppHeaderLine } = env.appUtils;
   let lastX = 0;
   let lastY = 0;
   let startX = 0;
@@ -59,7 +59,7 @@ export function create(_args, _env, abortSignal) {
         }
       },
     },
-    save: { onClick: saveImage },
+    download: { onClick: saveImage },
   });
   disableButton("undo");
   disableButton("redo");
@@ -142,6 +142,7 @@ export function create(_args, _env, abortSignal) {
         isResizing = false;
       },
     },
+    applyStyle,
     abortSignal,
   );
 
@@ -713,126 +714,126 @@ export function create(_args, _env, abortSignal) {
       }
     }
   }
+
+  function createSizeSelector(sizes, defaultSize, onChange) {
+    const sizeSelectorElt = strHtml`<div class="size-selector" />`;
+    applyStyle(sizeSelectorElt, {
+      padding: "12px 5px",
+      background: "var(--window-content-bg)",
+      border: "5px solid var(--window-line-color)",
+    });
+    const sizeOptionsElt = strHtml`<div class="size-options" />`;
+    applyStyle(sizeOptionsElt, {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: "10px",
+    });
+    sizeSelectorElt.appendChild(sizeOptionsElt);
+    const sizeOptions = [];
+    for (const size of sizes) {
+      const sizeOptionElt = strHtml`<button class="size-option" data-size="${size}" title="${size}px"></button>`;
+      sizeOptionsElt.appendChild(sizeOptionElt);
+      applyStyle(sizeOptionElt, {
+        width: size + "px",
+        height: size + "px",
+        borderRadius: "50%",
+        border: "1px solid var(--window-line-color)",
+        background:
+          size === defaultSize
+            ? "var(--app-primary-color)"
+            : "var(--window-text-color)",
+        cursor: "pointer",
+        transition: "transform 0.1s",
+      });
+      sizeOptions.push(sizeOptionElt);
+      const onClick = () => {
+        for (const elt of sizeOptions) {
+          if (elt === sizeOptionElt) {
+            elt.style.background = "var(--app-primary-color)";
+          } else {
+            elt.style.background = "var(--window-text-color)";
+          }
+        }
+        onChange(size);
+      };
+      sizeOptionElt.onclick = onClick;
+      // sizeOptionElt.ontouchend = onClick;
+    }
+    return sizeSelectorElt;
+  }
+
+  function createToolElt(toolSvg, title, heightScale, onClick) {
+    const toolSvgElt = getSvg(toolSvg);
+    applyStyle(toolSvgElt, {
+      width: "2rem",
+      height: `${heightScale * 2}rem`,
+      minHeight: `${heightScale * 2}rem`,
+      margin: "10px",
+      overflow: "visible",
+    });
+    const toolWrapperElt = document.createElement("span");
+    toolWrapperElt.style.margin = "0 auto";
+    toolWrapperElt.style.cursor = "pointer";
+    toolWrapperElt.appendChild(toolSvgElt);
+    toolWrapperElt.onclick = onClick;
+    // toolWrapperElt.ontouchend = onClick;
+    toolWrapperElt.title = title;
+    return toolWrapperElt;
+  }
+
+  async function saveFile(content) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: "painting.png",
+        types: [
+          {
+            description: "Image",
+            accept: { "image/png": [".png"] },
+          },
+        ],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      return handle;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function getPixelColor(imageData, width, x, y) {
+    const pos = (y * width + x) * 4;
+    return {
+      r: imageData.data[pos],
+      g: imageData.data[pos + 1],
+      b: imageData.data[pos + 2],
+    };
+  }
+
+  function areColorsEqual(c1, c2, tolerance = 10) {
+    return (
+      Math.abs(c1.r - c2.r) <= tolerance &&
+      Math.abs(c1.g - c2.g) <= tolerance &&
+      Math.abs(c1.b - c2.b) <= tolerance
+    );
+  }
+
+  function hexToRgb(hex) {
+    hex = hex.replace("#", "");
+
+    // Parse r, g, b values
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    return { r, g, b };
+  }
 }
 
 function getSvg(svg) {
-  const svgWrapperElt = strHtml`<div />`;
+  const svgWrapperElt = document.createElement("div");
   svgWrapperElt.innerHTML = svg;
   const svgElt = svgWrapperElt.children[0];
   return svgElt;
-}
-
-function createSizeSelector(sizes, defaultSize, onChange) {
-  const sizeSelectorElt = strHtml`<div class="size-selector" />`;
-  applyStyle(sizeSelectorElt, {
-    padding: "12px 5px",
-    background: "var(--window-content-bg)",
-    border: "5px solid var(--window-line-color)",
-  });
-  const sizeOptionsElt = strHtml`<div class="size-options" />`;
-  applyStyle(sizeOptionsElt, {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "10px",
-  });
-  sizeSelectorElt.appendChild(sizeOptionsElt);
-  const sizeOptions = [];
-  for (const size of sizes) {
-    const sizeOptionElt = strHtml`<button class="size-option" data-size="${size}" title="${size}px"></button>`;
-    sizeOptionsElt.appendChild(sizeOptionElt);
-    applyStyle(sizeOptionElt, {
-      width: size + "px",
-      height: size + "px",
-      borderRadius: "50%",
-      border: "1px solid var(--window-line-color)",
-      background:
-        size === defaultSize
-          ? "var(--app-primary-color)"
-          : "var(--window-text-color)",
-      cursor: "pointer",
-      transition: "transform 0.1s",
-    });
-    sizeOptions.push(sizeOptionElt);
-    const onClick = () => {
-      for (const elt of sizeOptions) {
-        if (elt === sizeOptionElt) {
-          elt.style.background = "var(--app-primary-color)";
-        } else {
-          elt.style.background = "var(--window-text-color)";
-        }
-      }
-      onChange(size);
-    };
-    sizeOptionElt.onclick = onClick;
-    // sizeOptionElt.ontouchend = onClick;
-  }
-  return sizeSelectorElt;
-}
-
-function createToolElt(toolSvg, title, heightScale, onClick) {
-  const toolSvgElt = getSvg(toolSvg);
-  applyStyle(toolSvgElt, {
-    width: "2rem",
-    height: `${heightScale * 2}rem`,
-    minHeight: `${heightScale * 2}rem`,
-    margin: "10px",
-    overflow: "visible",
-  });
-  const toolWrapperElt = document.createElement("span");
-  toolWrapperElt.style.margin = "0 auto";
-  toolWrapperElt.style.cursor = "pointer";
-  toolWrapperElt.appendChild(toolSvgElt);
-  toolWrapperElt.onclick = onClick;
-  // toolWrapperElt.ontouchend = onClick;
-  toolWrapperElt.title = title;
-  return toolWrapperElt;
-}
-
-async function saveFile(content) {
-  try {
-    const handle = await window.showSaveFilePicker({
-      suggestedName: "painting.png",
-      types: [
-        {
-          description: "Image",
-          accept: { "image/png": [".png"] },
-        },
-      ],
-    });
-    const writable = await handle.createWritable();
-    await writable.write(content);
-    await writable.close();
-    return handle;
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-function getPixelColor(imageData, width, x, y) {
-  const pos = (y * width + x) * 4;
-  return {
-    r: imageData.data[pos],
-    g: imageData.data[pos + 1],
-    b: imageData.data[pos + 2],
-  };
-}
-
-function areColorsEqual(c1, c2, tolerance = 10) {
-  return (
-    Math.abs(c1.r - c2.r) <= tolerance &&
-    Math.abs(c1.g - c2.g) <= tolerance &&
-    Math.abs(c1.b - c2.b) <= tolerance
-  );
-}
-
-function hexToRgb(hex) {
-  hex = hex.replace("#", "");
-
-  // Parse r, g, b values
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-
-  return { r, g, b };
 }

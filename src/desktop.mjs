@@ -9,11 +9,11 @@
 // - notification system
 //
 // medium priority:
+// - confirmation alert when closing window with unsaved file.
 // - image viewer touch controls
 // - Actually enforce permissions by adding iframe with sandbox="allow-scripts"
 // - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices
-// - paint can open images
 //
 // low priority:
 // - explorer: when going to parent directory, focus the previous one by default?

@@ -65,7 +65,7 @@
       "icon": "🖌️",
       "defaultHeight": 950,
       "defaultWidth": 1000,
-      "dependencies": ["filePickerSave", "quickSave"],
+      "dependencies": ["filePickerOpen", "filePickerSave", "quickSave"],
       "startMenu": {
         "list": "Desktop Apps"
       },
@@ -77,8 +77,8 @@
       "id": "notes",
       "title": "Notes",
       "icon": "📝",
-      "defaultHeight": 600,
-      "defaultWidth": 600,
+      "defaultHeight": 700,
+      "defaultWidth": 700,
       "dependencies": ["filePickerOpen", "filePickerSave", "quickSave"],
       "startMenu": {
         "list": "Desktop Apps"

@@ -106,7 +106,7 @@ export function create(abortSignal) {
     // As a quick win to make the game more alive, I just randomize the enemy
     // speed each collision with the user
     // This may be totally nonsensical, I'm not too used to that type of dev.
-    let currEnemySpeed = 1;
+    let currEnemySpeed = 15;
 
     drawTheObjects(false, false);
 
@@ -130,10 +130,10 @@ export function create(abortSignal) {
       // Move the enemy paddle
       // TODO: Stop iterating with insane logic and find a good smart one :D
       const paddleCenter = enemyPaddle.y + paddleHeight / 2;
-      if (paddleCenter < ball.y - 20) {
-        enemyPaddle.y += 5 + currEnemySpeed;
-      } else if (paddleCenter > ball.y + 20) {
-        enemyPaddle.y -= 5 + currEnemySpeed;
+      if (paddleCenter < ball.y - 10) {
+        enemyPaddle.y += Math.min(2 + currEnemySpeed, ball.y - paddleCenter);
+      } else if (paddleCenter > ball.y + 10) {
+        enemyPaddle.y -= Math.min(paddleCenter - ball.y, 2 + currEnemySpeed);
       } else if (paddleCenter < ball.y - 5) {
         enemyPaddle.y += 1;
       } else if (paddleCenter > ball.y + 5) {
@@ -162,15 +162,15 @@ export function create(abortSignal) {
         if (checkPaddleBallCollision(userPaddle, ball)) {
           // Mario Kart that thing
           if (rightScore - leftScore > 3) {
-            currEnemySpeed = 13;
+            currEnemySpeed = 15;
           } else if (rightScore - leftScore >= 2) {
             currEnemySpeed = getRandomNumber(9, 13);
           } else if (rightScore - leftScore <= -1) {
-            currEnemySpeed = getRandomNumber(5, 11);
+            currEnemySpeed = getRandomNumber(0, 5);
           } else if (rightScore - leftScore <= -3) {
             currEnemySpeed = 0;
           } else {
-            currEnemySpeed = getRandomNumber(7, 13);
+            currEnemySpeed = getRandomNumber(0, 10);
           }
         }
       }
@@ -231,7 +231,7 @@ export function create(abortSignal) {
     }
 
     function resetBall() {
-      currEnemySpeed = 13;
+      currEnemySpeed = 15;
       ball.x = canvas.width / 2;
       ball.y = canvas.height / 2;
       ball.prevX = ball.x;

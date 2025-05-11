@@ -300,6 +300,12 @@ html {
   position: relative;
 }
 
+.start-title {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 .right-taskbar .start-item {
   /* make place for s-list arrows on the left. */
   padding: 10px 15px 10px 25px;

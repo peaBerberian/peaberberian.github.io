@@ -500,17 +500,7 @@ export default class AppsLauncher {
         const onFilesOpened = (files) => {
           fileOpenerAbortCtrl.abort();
           appStack.popElement(filePickerElt, appWindow.isActivated());
-          const proms = files.map(async (filePath) => {
-            const data = await filesystem.readFile(filePath, "arraybuffer");
-            const handle = {};
-            this._fileHandles.set(handle, filePath);
-            return {
-              filename: getName(filePath),
-              data,
-              handle,
-            };
-          });
-          Promise.all(proms).then(resolveFilePicker, rejectFilePicker);
+          resolveFilePicker(files);
         };
 
         const env = {
@@ -569,13 +559,7 @@ export default class AppsLauncher {
           }
           fileSaverAbortCtrl.abort();
           appStack.popElement(filePickerElt, appWindow.isActivated());
-
-          const handle = {};
-          this._fileHandles.set(handle, fileInfo.path);
-          resolveFilePicker({
-            filename: getName(fileInfo.path),
-            handle,
-          });
+          resolveFilePicker(fileInfo);
         };
         const env = {
           ...this._constructEnvObject(
@@ -697,6 +681,7 @@ export default class AppsLauncher {
         this._taskbarManager.updateTitle(appWindow, newIcon, newTitle);
       },
       CONSTANTS,
+      closeApp: () => appWindow.close(),
     };
 
     if (Array.isArray(dependencies)) {
@@ -705,6 +690,9 @@ export default class AppsLauncher {
       }
       if (dependencies.includes("filesystem")) {
         env.filesystem = filesystem;
+      }
+      if (dependencies.includes("notificationEmitter")) {
+        env.notificationEmitter = notificationEmitter;
       }
       if (dependencies.includes("quickSave")) {
         env.quickSave = (handle, content) => {
@@ -732,6 +720,22 @@ export default class AppsLauncher {
             appStack,
             appWindow,
             abortSignal,
+          ).then((files) =>
+            Promise.all(
+              files.map(async (filePath) => {
+                const data = await filesystem.readFile(filePath, "arraybuffer");
+                const handle = {};
+                this._fileHandles.set(handle, filePath);
+                return {
+                  filename: getName(filePath),
+                  handle,
+                  filePath: dependencies.includes("filesystem")
+                    ? filePath
+                    : null,
+                  data,
+                };
+              }),
+            ),
           );
       }
       if (dependencies.includes("filePickerSave")) {
@@ -741,7 +745,18 @@ export default class AppsLauncher {
             appStack,
             appWindow,
             abortSignal,
-          );
+          ).then((fileInfo) => {
+            if (!fileInfo) {
+              return;
+            }
+            const handle = {};
+            this._fileHandles.set(handle, fileInfo.path);
+            return {
+              filename: getName(fileInfo.path),
+              filePath: dependencies.includes("filesystem") ? filePath : null,
+              handle,
+            };
+          });
       }
     }
     return env;

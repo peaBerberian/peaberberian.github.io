@@ -74,7 +74,7 @@ export function create(args, env) {
               showMessage(
                 editorContentElt,
                 `❌ File too big, there's a limit for now to ${MAX_FILE_MB} MB maximum.`,
-                10000,
+                7000,
               );
               return;
             }
@@ -84,14 +84,14 @@ export function create(args, env) {
               showMessage(
                 editorContentElt,
                 `❌ File too big, there's a limit for now to ${MAX_FILE_MB} MB maximum.`,
-                10000,
+                7000,
               );
               return;
             }
             loadFile({ data, filename: files[0].name });
           } catch (err) {
             clearAndRestart();
-            showMessage(editorContentElt, "❌ " + err.toString(), 10000);
+            showMessage(editorContentElt, "❌ " + err.toString(), 7000);
           }
           spinnerContainerElt.style.display = "none";
           statusBar.textContent = "Ready";
@@ -121,7 +121,7 @@ export function create(args, env) {
                 showMessage(
                   editorContentElt,
                   `❌ File too big, there's a limit for now to ${MAX_FILE_MB} MB maximum.`,
-                  10000,
+                  7000,
                 );
                 return;
               }
@@ -129,7 +129,7 @@ export function create(args, env) {
                 loadFile(files[0]);
               } catch (err) {
                 clearAndRestart();
-                showMessage(editorContentElt, "❌ " + err.toString(), 10000);
+                showMessage(editorContentElt, "❌ " + err.toString(), 7000);
               }
               spinnerContainerElt.style.display = "none";
               statusBar.textContent = "Ready";
@@ -138,7 +138,7 @@ export function create(args, env) {
             },
             (err) => {
               clearAndRestart();
-              showMessage(editorContentElt, "❌ " + err.toString(), 10000);
+              showMessage(editorContentElt, "❌ " + err.toString(), 7000);
             },
           );
       },
@@ -290,21 +290,26 @@ export function create(args, env) {
     try {
       const data = textDecoder.decode(file.data);
       textArea.value = data;
-    } catch (_err) {
-      // TODO: signal error
+    } catch (err) {
+      showMessage(
+        editorContentElt,
+        "❌ Failed to load file:" + err.toString(),
+        7000,
+      );
+      return;
     }
+    textArea.scrollTo(0, 0);
     currentFileHandle = file.handle ?? null;
     history.length = 0;
     historyIndex = -1;
     lastSavedContent = null;
     updateFilename(file.filename);
+    updateLineNumbers();
+    saveState(false);
     disableButton("undo");
     disableButton("redo");
     disableButton("clear");
     disableButton("quick-save");
-    textArea.scrollTo(0, 0);
-    updateLineNumbers();
-    saveState(false);
   }
 
   function clearAndRestart() {
@@ -466,6 +471,11 @@ export function create(args, env) {
         savedFileData,
         savedFileName: currentFilename ?? "new_note.txt",
       });
+      if (!saveData) {
+        spinnerContainerElt.style.display = "none";
+        statusBar.textContent = "Ready";
+        return;
+      }
       currentFileHandle = saveData?.handle ?? null;
       spinnerContainerElt.style.display = "none";
       statusBar.textContent = "Ready";
@@ -477,7 +487,7 @@ export function create(args, env) {
     } catch (err) {
       spinnerContainerElt.style.display = "none";
       statusBar.textContent = "Ready";
-      showMessage(editorContentElt, "❌ " + err.toString(), 10000);
+      showMessage(editorContentElt, "❌ " + err.toString(), 7000);
     }
     disableButton("quick-save");
   }
@@ -503,7 +513,7 @@ export function create(args, env) {
     } catch (err) {
       spinnerContainerElt.style.display = "none";
       statusBar.textContent = "Ready";
-      showMessage(editorContentElt, "❌ " + err.toString(), 10000);
+      showMessage(editorContentElt, "❌ " + err.toString(), 7000);
     }
   }
 

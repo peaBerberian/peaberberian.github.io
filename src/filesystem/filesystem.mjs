@@ -45,13 +45,10 @@ export { getName, getDirPath, pathJoin };
 class DesktopFileSystem {
   constructor() {
     this._apps = apps;
+    this._watchedPaths = new Map();
     const setUpDb = () => {
-      this._dbProm = openDB().then((db) => {
-        setTimeout(() => {
-          this._scheduleLockingOperation(() => {
-            return checkAndRepairIntegrity(db);
-          });
-        }, 500);
+      this._dbProm = openDB().then(async (db) => {
+        await checkAndRepairIntegrity(db);
         db.addEventListener("close", () => {
           // TODO: If I wasn't lazy, I would have done that sweet exponential
           // backoff stuff.
@@ -67,11 +64,43 @@ class DesktopFileSystem {
     this._queue = [];
   }
 
+  /**
+   * NOTE: If watching a directory, the callback will trigger only if its
+   * content changes or if the directory itself is added/removed/overwritten.
+   *
+   * @param {string} path
+   * @param {Function} cb
+   * @param {AbortSignal} abortSignal
+   */
+  watch(path, cb, abortSignal) {
+    if (abortSignal.aborted) {
+      return;
+    }
+    const cbList = this._watchedPaths.get(path);
+    if (!cbList) {
+      const cbList = [cb];
+      this._watchedPaths.set(path, cbList);
+    } else {
+      cbList.push(cb);
+      this._watchedPaths.set(path, cbList);
+    }
+    abortSignal.addEventListener("abort", () => {
+      const cbList = this._watchedPaths.get(path);
+      for (let i = cbList.length - 1; i >= 0; i--) {
+        if (cbList[i] === cb) {
+          cbList.splice(i, 1);
+        }
+      }
+    });
+  }
+
   async writeFile(path, content) {
     checkWrittenFilePath(path);
     const contentAb = formatWrittenFileContent(content);
     return this._scheduleLockingOperation(() =>
-      this._writeFileUnchecked(path, contentAb),
+      this._writeFileUnchecked(path, contentAb).then(() =>
+        this._triggerWatchers([path]),
+      ),
     );
   }
 
@@ -121,7 +150,9 @@ class DesktopFileSystem {
   async rmFile(filePath) {
     checkWrittenFilePath(filePath);
     return this._scheduleLockingOperation(async () =>
-      this._rmFileUnchecked(filePath),
+      this._rmFileUnchecked(filePath).then(() => {
+        this._triggerWatchers([filePath]);
+      }),
     );
   }
 
@@ -203,6 +234,7 @@ class DesktopFileSystem {
       }
     }
 
+    const updatedNormalizedPaths = [];
     return this._scheduleLockingOperation(async () => {
       let allEntries;
       if (srcPath.endsWith("/")) {
@@ -234,7 +266,7 @@ class DesktopFileSystem {
       }
 
       const db = await this._dbProm;
-      return new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         const tx = db.transaction([METADATA_STORE, CONTENT_STORE], "readwrite");
         tx.onerror = () =>
           reject(
@@ -274,15 +306,23 @@ class DesktopFileSystem {
             );
           }
 
-          const normalizedNewPath = entry.isDirectory
-            ? newFullPath + "/"
-            : newFullPath;
+          const normalizedNewPath =
+            entry.type === "directory" ? newFullPath + "/" : newFullPath;
           if (isEntryPath(entry, normalizedNewPath)) {
             return;
           }
 
           const newDir = getContainingDirectory(newFullPath);
           const newId = pathToId(newFullPath);
+
+          if (entry.type !== "system") {
+            updatedNormalizedPaths.push(
+              entry.type === "directory"
+                ? entry.fullPath + "/"
+                : entry.fullPath,
+            );
+            updatedNormalizedPaths.push(normalizedNewPath);
+          }
           metadataStore.put({
             ...entry,
             id: newId,
@@ -306,6 +346,8 @@ class DesktopFileSystem {
           }
         });
       });
+    }).then(() => {
+      this._triggerWatchers(updatedNormalizedPaths);
     });
   }
 
@@ -318,6 +360,7 @@ class DesktopFileSystem {
       );
     }
 
+    const updatedNormalizedPaths = [];
     return this._scheduleLockingOperation(async () => {
       const db = await this._dbProm;
 
@@ -337,6 +380,13 @@ class DesktopFileSystem {
         const contentStore = tx.objectStore(CONTENT_STORE);
         allEntries.forEach((entry) => {
           const originalId = pathToId(entry.fullPath);
+          if (entry.type !== "system") {
+            updatedNormalizedPaths.push(
+              entry.type === "directory"
+                ? entry.fullPath + "/"
+                : entry.fullPath,
+            );
+          }
           metadataStore.delete(originalId);
 
           if (entry.type !== "directory") {
@@ -349,6 +399,8 @@ class DesktopFileSystem {
           }
         });
       });
+    }).then(() => {
+      this._triggerWatchers(updatedNormalizedPaths);
     });
   }
 
@@ -519,6 +571,8 @@ class DesktopFileSystem {
           modified: now,
           size: 0,
         });
+      }).then(() => {
+        this._triggerWatchers([normalizedPath]);
       });
     });
   }
@@ -779,6 +833,31 @@ class DesktopFileSystem {
       metadataStore.delete(id);
       contentStore.delete(id);
     });
+  }
+
+  _triggerWatchers(updatedPaths) {
+    const paths = new Set();
+    updatedPaths.forEach((p) => {
+      paths.add(p);
+      paths.add(getContainingDirectory(p));
+    });
+    for (const path of paths) {
+      const watchers = this._watchedPaths.get(path);
+      if (watchers) {
+        watchers.slice().forEach((cb) => {
+          cb({});
+        });
+      }
+    }
+
+    // NOTE: I made it initially fully-recursive but I'm not sure that some
+    // code watching e.g. `/`  would like to hear about deeply nested-dirs.
+    // So not it's only a direct relation
+    // if (path === "/") {
+    //   return;
+    // }
+    // const parentDir = getContainingDirectory(path);
+    // return this._triggerWatchers(parentDir, arg);
   }
 }
 

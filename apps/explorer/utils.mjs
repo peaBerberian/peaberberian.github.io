@@ -65,6 +65,7 @@ export function getFileIcon({ extension, icon }) {
     ppt: "📊",
     pptx: "📊",
     csv: "📊",
+    run: "🚀",
   };
   return iconMap[extension] || "📄";
 }

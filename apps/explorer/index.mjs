@@ -1,6 +1,4 @@
 // TODO: Pathbar transforms into input element when clicked
-// TODO: after refresh, reselect and re-scroll
-// TODO: reload or watch dir
 // TODO: image thumbnails
 // TODO: Drag and drop in directory and other apps
 // TODO: Better touch handling
@@ -389,33 +387,38 @@ function createExplorer(explorerType, args, env, abortSignal) {
   };
 
   async function navigateToPath(path) {
-    currentDirectoryComponent?.onDeactivate();
-    currentDirectoryAbortController.abort();
-    currentDirectoryAbortController = new AbortController();
-    linkAbortControllerToSignal(currentDirectoryAbortController, abortSignal);
-
-    if (path.startsWith("/userdata/") || path === "/userdata") {
-      warningElt.style.display = "none";
-    } else {
-      warningElt.style.display = "block";
-    }
-
-    currentPath = path.endsWith("/") ? path : path + "/";
-    selectedItems = [];
-    const newPathBarElt = constructPathBarElement(path, navigateToPath);
-    pathBarElt.replaceWith(newPathBarElt);
-    pathBarElt = newPathBarElt;
-
-    updateButtons(currentPath, selectedItems);
-    const entries = await filesystem.readDir(path);
-    if (currentDirectoryAbortController.signal.aborted) {
-      return;
-    }
-
     try {
+      const normalizedPath = path.endsWith("/") ? path : path + "/";
+      const entries = await filesystem.readDir(normalizedPath);
+      if (currentDirectoryAbortController.signal.aborted) {
+        return;
+      }
+
+      currentDirectoryComponent?.onDeactivate();
+      currentDirectoryAbortController.abort();
+      currentDirectoryAbortController = new AbortController();
+      linkAbortControllerToSignal(currentDirectoryAbortController, abortSignal);
+
+      if (normalizedPath.startsWith("/userdata/")) {
+        warningElt.style.display = "none";
+      } else {
+        warningElt.style.display = "block";
+      }
+
+      currentPath = normalizedPath;
+      selectedItems = [];
+      const newPathBarElt = constructPathBarElement(
+        normalizedPath,
+        navigateToPath,
+      );
+      pathBarElt.replaceWith(newPathBarElt);
+      pathBarElt = newPathBarElt;
+
+      updateButtons(currentPath, selectedItems);
+
       currentDirectoryComponent = renderDirectory({
         entries,
-        path,
+        path: normalizedPath,
         callbacks: {
           navigateTo: navigateToPath,
           escape: onDirectoryEscape,
@@ -440,6 +443,17 @@ function createExplorer(explorerType, args, env, abortSignal) {
       } else {
         currentDirectoryComponent.onDeactivate();
       }
+
+      filesystem.watch(
+        normalizedPath,
+        async () => {
+          // Refresh
+          const toSelect = selectedItems;
+          await navigateToPath(currentPath);
+          currentDirectoryComponent?.selectItems(toSelect);
+        },
+        currentDirectoryAbortController.signal,
+      );
     } catch (err) {
       showError(directoryContainer, `Error loading directory: ${err.message}`);
     }
@@ -456,17 +470,13 @@ function createExplorer(explorerType, args, env, abortSignal) {
     navigateToPath(currentPath.substring(0, currentPath.lastIndexOf("/") + 1));
   }
 
-  function deleteItems(items) {
+  async function deleteItems(items) {
     if (items.length === 0) {
       return;
     }
     currentDirectoryComponent?.onDeactivate();
-    performItemsDeletion(filesystem, items, explorerElt).then((refresh) => {
-      currentDirectoryComponent?.onActivate();
-      if (refresh) {
-        navigateToPath(currentPath);
-      }
-    });
+    await performItemsDeletion(filesystem, items, explorerElt);
+    currentDirectoryComponent?.onActivate();
   }
 
   function onUploadClick() {
@@ -526,33 +536,25 @@ function createExplorer(explorerType, args, env, abortSignal) {
     );
   }
 
-  function onNewDirClick() {
+  async function onNewDirClick() {
     currentDirectoryComponent?.onDeactivate();
-    createNewDirectory(filesystem, currentPath, explorerElt).then((refresh) => {
-      currentDirectoryComponent?.onActivate();
-      if (refresh) {
-        navigateToPath(currentPath);
-      }
-    });
+    await createNewDirectory(filesystem, currentPath, explorerElt);
+    currentDirectoryComponent?.onActivate();
   }
 
-  function onRenameClick() {
+  async function onRenameClick() {
     if (selectedItems.length === 0) {
       return;
     }
     currentDirectoryComponent?.onDeactivate();
-    renameItem(
+    await renameItem(
       filesystem,
       currentPath,
       selectedItems[0].name,
       selectedItems[0].isDirectory,
       explorerElt,
-    ).then((refresh) => {
-      currentDirectoryComponent?.onActivate();
-      if (refresh) {
-        navigateToPath(currentPath);
-      }
-    });
+    );
+    currentDirectoryComponent?.onActivate();
   }
 
   function cutItems(cuttedItems) {
@@ -752,16 +754,15 @@ function updateStatusElement(explorerType, statusLeftElt, selectedItems) {
 
 async function createNewDirectory(fs, path, containerElt) {
   const maskContainer = addBlockingMask(containerElt);
-  const dirName = await askForUserInput(
-    maskContainer,
-    "New Directory",
-    "Enter new directory name:",
-  );
-
   try {
+    const dirName = await askForUserInput(
+      maskContainer,
+      "New Directory",
+      "Enter new directory name:",
+    );
     if (!dirName) {
       removeBlockingMask(maskContainer, containerElt);
-      return false;
+      return;
     }
 
     const newDirPath = pathJoin(path, dirName);
@@ -772,22 +773,21 @@ async function createNewDirectory(fs, path, containerElt) {
     removeBlockingMask(maskContainer, containerElt);
     showError(containerElt, `Failed to create directory: ${error.message}`);
   }
-  return true;
 }
 
 async function renameItem(fs, dir, filename, isDirectory, containerElt) {
   const maskContainer = addBlockingMask(containerElt);
-  const newName = await askForUserInput(
-    maskContainer,
-    "Renaming " + (isDirectory ? "directory" : "file"),
-    "Enter the new name wanted:",
-    filename,
-  );
-
   try {
+    const newName = await askForUserInput(
+      maskContainer,
+      "Renaming " + (isDirectory ? "directory" : "file"),
+      "Enter the new name wanted:",
+      filename,
+    );
+
     if (!newName) {
       removeBlockingMask(maskContainer, containerElt);
-      return false;
+      return;
     }
 
     await fs.mv(
@@ -808,7 +808,6 @@ async function renameItem(fs, dir, filename, isDirectory, containerElt) {
       showError(containerElt, `Failed to rename file: ${error.message}`);
     }
   }
-  return true;
 }
 
 async function performMoveOperation(fs, items, destDir, containerElt) {
@@ -832,14 +831,14 @@ async function performMoveOperation(fs, items, destDir, containerElt) {
 
 async function performItemsDeletion(fs, items, containerElt) {
   const maskContainer = addBlockingMask(containerElt);
-  let message = "You will delete ";
-  if (items.length === 1) {
-    message += `"${items[0].name}"`;
-  } else {
-    message += `${items.length} items from this directory.`;
-  }
-
   try {
+    let message = "You will delete ";
+    if (items.length === 1) {
+      message += `"${items[0].name}"`;
+    } else {
+      message += `${items.length} items from this directory.`;
+    }
+
     const doIt = await spawnConfirmDialog(
       maskContainer,
       "Are you sure?",
@@ -848,7 +847,7 @@ async function performItemsDeletion(fs, items, containerElt) {
 
     if (!doIt) {
       removeBlockingMask(maskContainer, containerElt);
-      return false;
+      return;
     }
 
     for (const item of items) {
@@ -863,7 +862,6 @@ async function performItemsDeletion(fs, items, containerElt) {
     removeBlockingMask(maskContainer, containerElt);
     showError(containerElt, `Failed to delete: ${error.message}`);
   }
-  return true;
 }
 
 function constructPathBarElement(currentPath, navigateTo) {

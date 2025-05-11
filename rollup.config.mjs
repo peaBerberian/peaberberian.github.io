@@ -3,75 +3,130 @@ import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
+const PROJECT_ROOT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
+
+const DESKTOP_SRC_DIR = path.join(PROJECT_ROOT_DIRECTORY, "src");
+const APPS_SRC_DIR = path.join(PROJECT_ROOT_DIRECTORY, "apps");
+
+const GENERATED_APP_PATH = path.join(DESKTOP_SRC_DIR, "__generated_apps.mjs");
+
+const OUTPUT_DIR = path.join(PROJECT_ROOT_DIRECTORY, "dist");
+const OUTPUT_LAZY_LOADED_APPS = path.join(OUTPUT_DIR, "lazy");
+
+/**
+ * Rollup is too smart and just *WANT* to resolve+rewrite a dynamic import's
+ * path, even with the right options it seems...
+ *
+ * The work-around here, is to first write dynamic imports as absolute path -
+ * that rollup won't dare to ever rewrite - and use this plugin to add the `.`
+ * prefix to indicate this is actually relative.
+ *
+ * That's so dumb, even more when considering that being unable to tell esbuild
+ * to ignore dynamic imports was the whole reason I tried rollup.
+ *
+ * Note that I'm sure that I could make the same thing I'm manually doing here
+ * with JS chunks, even probably in a more-supported / less clunky way.
+ * But I'm not doing this project to depend too much on bundlers and their
+ * locked ways of doing things.
+ */
 const lazyAppPlugin = {
   name: "preserve-dynamic-imports",
+
   resolveDynamicImport(specifier) {
     if (typeof specifier === "string" && specifier.startsWith("/lazy/")) {
+      // We have to both add the `.` indicating this will be relative at runtime
+      // now (see comment above) and to also tell rollup to not resolve it with
+      // `external` set to `true`.
       return {
         id: "." + specifier,
         external: true,
       };
     }
+    // Resolve this one I guess...
     return null;
   },
 };
 
-const PROJECT_ROOT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
+// We'll create `GENERATED_APP_PATH` here:
+const lazyLoadedApps = writeGeneratedAppFile(APPS_SRC_DIR);
 
-const OUTPUT_DIR = path.join(PROJECT_ROOT_DIRECTORY, "dist");
-
-const SRC_DIR = path.join(PROJECT_ROOT_DIRECTORY, "src");
-const MAIN_FILE = path.join(SRC_DIR, "desktop.mjs");
-const APPS_DIRECTORY = path.join(PROJECT_ROOT_DIRECTORY, "apps");
-
-const GENERATED_APP_DIR = path.join(
-  PROJECT_ROOT_DIRECTORY,
-  "src",
-  "__generated_apps.mjs",
-);
-
-const LAZY_LOADED_DEST = path.join(OUTPUT_DIR, "lazy");
+// Re-create the lazy-loaded destination folder, just to clean-up.
 try {
-  fs.rmSync(LAZY_LOADED_DEST, { recursive: true, force: true });
+  fs.rmSync(OUTPUT_LAZY_LOADED_APPS, { recursive: true, force: true });
 } catch (err) {
   if (err.code !== "ENOENT") {
     throw err;
   }
 }
-fs.mkdirSync(LAZY_LOADED_DEST, { recursive: true });
-const lazyLoadedApps = createAppImports(APPS_DIRECTORY);
+fs.mkdirSync(OUTPUT_LAZY_LOADED_APPS, { recursive: true });
 
+// Produce all bundles. First the apps (the desktop might depend statically on
+// some), then the desktop
+// NOTE: We for now have to kill and re-launch the build script when
+// adding/removing apps in `AppInfo.json` (and only in that case), even with
+// rollup's `watch` option, because of this setup.
+// We could watch that `AppInfo.json` file and restart the logic on change but
+// this would mean using rollup's JS API and it is subpar / not recommended for
+// some reasons (I don't know what it is with JS tools not wanting us to rely on
+// a JS API - even TypeScript has this issue, though esbuild's JS API is very
+// nice despite not being its main language).
 export default [
   ...lazyLoadedApps,
   {
-    bundlePath: path.join(OUTPUT_DIR, "bundle.js"),
-    input: MAIN_FILE,
-    keepEsm: false,
+    outputFile: path.join(OUTPUT_DIR, "bundle.js"),
+    input: path.join(DESKTOP_SRC_DIR, "desktop.mjs"),
+    intoEsm: false,
   },
 ].map((bundle) => ({
   input: bundle.input,
   output: {
-    file: bundle.bundlePath,
-    format: bundle.keepEsm ? "es" : "iife",
+    file: bundle.outputFile,
+    format: bundle.intoEsm ? "es" : "iife",
   },
   plugins: [process.env.MINIFY && terser(), lazyAppPlugin].filter(Boolean),
 }));
 
-function createAppImports(baseDir) {
-  const fileContent = fs.readFileSync(path.join(baseDir, "AppInfo.json"), {
-    encoding: "utf8",
-  });
-  const json = JSON.parse(fileContent);
+/**
+ * Write the app file inside the desktop's code, based on the apps defined in
+ * `baseDir`.
+ * @param {string} baseDir
+ * @returns {Array.<Object>} - Defines the bundles to produce all apps, and
+ * where to put them.
+ */
+function writeGeneratedAppFile(baseDir) {
+  let fileContent;
+  try {
+    fileContent = fs.readFileSync(path.join(baseDir, "AppInfo.json"), {
+      encoding: "utf8",
+    });
+  } catch (err) {
+    throw new Error(`Failed to read "AppInfo.json": ${e}`);
+  }
+
+  let json;
+  try {
+    json = JSON.parse(fileContent);
+  } catch (err) {
+    throw new Error(`Failed to parse "AppInfo.json": ${err}`);
+  }
+
   if (!Array.isArray(json?.apps)) {
     throw new Error("Invalid AppInfo.json: no apps Array");
   }
 
+  /** Information on the bundles to create for apps. */
   const bundlesToMake = [];
+  /** Static imports to write in the generated file. */
   const importsToWrite = [];
+  /** Dynamic imports to write in the generated file to be imported after a timer. */
   const automaticDynImportsAfterTimer = [];
+
+  /** I'll uglily write manually the JS code, being careful with it. */
   let uglyHandWrittenJsObject = "export default [";
+
   for (let i = 0; i < json.apps.length; i++) {
     const app = json.apps[i];
+
     let hasRemoteUrl = !!app.website;
     let filePath;
 
@@ -82,6 +137,19 @@ function createAppImports(baseDir) {
       );
     }
 
+    if (typeof app.title !== "string" || app.title === "") {
+      throw new Error(
+        `Invalid title for app id: "${app.id}". Title should be non-empty strings`,
+      );
+    }
+
+    // Find the corresponding app. Either:
+    // 1. <APPID>.mjs
+    // 2. <APPID>/index.mjs
+    // 3. <APPID>.js
+    // 4. <APPID>/index.js
+    //
+    // In that order
     for (const ext of [".mjs", ".js"]) {
       const fileName = path.join(baseDir, app.id + ext);
       if (fs.existsSync(fileName)) {
@@ -98,60 +166,88 @@ function createAppImports(baseDir) {
     if (!filePath && !hasRemoteUrl) {
       throw new Error(`Failed to find app ${app.id}`);
     }
+
+    // TODO: I don't even know if `JSON.stringify` is sufficient here for all
+    // chars, or if I could find some case where the inner string outputed by
+    // `JSON.stringify` could contain a special char that doesn't work as a JS
+    // string. This should however not happen for now unless I'm trying to hack
+    // myself.
     uglyHandWrittenJsObject += `
   {
     id: ${JSON.stringify(app.id)},
 		title: ${JSON.stringify(app.title ?? "Unnamed Application")},
 `;
-    if (app.icon) {
+
+    if (typeof app.icon === "string") {
       uglyHandWrittenJsObject +=
         "    icon: " + JSON.stringify(app.icon) + ",\n";
     }
-    if (app.inStartList) {
+
+    if (typeof app.inStartList === "string") {
       uglyHandWrittenJsObject +=
         "    inStartList: " + JSON.stringify(app.inStartList) + ",\n";
     }
-    if (app.desktopDir) {
+
+    if (typeof app.desktopDir === "string") {
       uglyHandWrittenJsObject +=
         "    desktopDir: " + JSON.stringify(app.desktopDir) + ",\n";
     }
-    if (app.defaultHeight && typeof app.defaultHeight === "number") {
+
+    if (typeof app.defaultHeight === "number") {
       uglyHandWrittenJsObject +=
         "    defaultHeight: " + app.defaultHeight + ",\n";
     }
-    if (app.defaultWidth && typeof app.defaultWidth === "number") {
+
+    if (typeof app.defaultWidth === "number") {
       uglyHandWrittenJsObject +=
         "    defaultWidth: " + app.defaultWidth + ",\n";
     }
+
     if (!!app.onlyOne) {
       uglyHandWrittenJsObject += "    onlyOne: true,\n";
     }
+
     if (!!app.needsSettingsObject) {
       uglyHandWrittenJsObject += "    needsSettingsObject: true,\n";
     }
+
     if (!!app.autoload) {
       uglyHandWrittenJsObject += "    autoload: true,\n";
     }
+
     if (filePath) {
       if (app.preload === true) {
+        // Here I will just write a regular static import statement on top of
+        // the generated file toward this file.
         uglyHandWrittenJsObject += "    data: __APP__" + String(i) + ",\n";
         importsToWrite.push({
           name: "__APP__" + String(i),
-          filePath: path.relative(SRC_DIR, filePath),
+          filePath: path.relative(DESKTOP_SRC_DIR, filePath),
         });
       } else {
+        // Here I will just write a dynamic import
+        // NOTE: Sadly rollup just keep rewriting the dynamic import's path,
+        // unless it's absolute (where I would have prefered to link relatively
+        // to `.lazy/`). So the ugly trick is to first write it as if it was an
+        // absolute path, and then use a plugin to rewrite it after rollup did
+        // its resolution to an actual relative import.
+        // SMH MY HEAD
         const importPath = `/lazy/${app.id}.js`;
         uglyHandWrittenJsObject += `    data: {
 			lazyLoad: () => import(${JSON.stringify(importPath)}),
 		},
 `;
-        const bundlePath = path.join(OUTPUT_DIR, "lazy", `${app.id}.js`);
+        const outputFile = path.join(OUTPUT_LAZY_LOADED_APPS, `${app.id}.js`);
         bundlesToMake.push({
-          bundlePath,
+          outputFile,
           input: filePath,
-          keepEsm: true,
+          intoEsm: true,
         });
 
+        // The preload.after idea is to preload the app only after a low
+        // timeout.
+        // Browsers are smart enough to not load a given import multiple times (I
+        // would even guess this is ECMAScript-defined).
         if (typeof app.preload?.after === "number") {
           automaticDynImportsAfterTimer.push({
             importPath,
@@ -170,7 +266,10 @@ function createAppImports(baseDir) {
   }
   uglyHandWrittenJsObject += "];";
 
-  let jsFile = "";
+  let jsFile = `// NOTE: This is a generated file by this project's build script.
+// Manually updating it is futile!
+
+`;
 
   for (const importStmt of importsToWrite) {
     jsFile += `import * as ${importStmt.name} from ${JSON.stringify(importStmt.filePath)};\n`;
@@ -187,6 +286,6 @@ setTimeout(
 `;
   }
 
-  fs.writeFileSync(GENERATED_APP_DIR, jsFile);
+  fs.writeFileSync(GENERATED_APP_PATH, jsFile);
   return bundlesToMake;
 }

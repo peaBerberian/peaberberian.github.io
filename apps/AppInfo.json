@@ -46,6 +46,18 @@
       }
     },
     {
+      "id": "explorer",
+      "title": "File Explorer",
+      "icon": "🐋",
+      "defaultHeight": 700,
+      "defaultWidth": 1000,
+      "desktop": {
+        "display": true
+      },
+      "dependencies": ["filesystem"],
+      "provider": ["filePickerOpen"]
+    },
+    {
       "id": "paint",
       "title": "Paint",
       "icon": "🖌️",

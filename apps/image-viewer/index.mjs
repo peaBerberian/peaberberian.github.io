@@ -136,12 +136,8 @@ export function create(_args, env, parentAbortSignal) {
                 updateStatusBar();
               }
             },
-            (_err) => {
-              showAppMessage(
-                appContentAreaElt,
-                "❌ Error: Failed to read those files from the file system :(",
-                10000,
-              );
+            (err) => {
+              showAppMessage(appContentAreaElt, "❌ " + err.toString(), 10000);
             },
           );
       },

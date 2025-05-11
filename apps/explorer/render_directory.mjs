@@ -138,15 +138,15 @@ export default function renderDirectory({
       flexGrow: "1",
       overflow: "hidden",
       whiteSpace: "normal",
+      wordBreak: "break-word",
+      display: "flex",
+      justifyContent: "center",
+      // display: "-webkit-box",
+      // alignItems: "center",
       // textOverflow: "ellipsis",
       // WebkitLineClamp: "2",
       // WebkitBoxOrient: "vertical",
       // overflowWrap: "break-word",
-      wordBreak: "break-word",
-      // display: "-webkit-box",
-      display: "flex",
-      justifyContent: "center",
-      // alignItems: "center",
     });
 
     itemElt.appendChild(icon);
@@ -157,8 +157,24 @@ export default function renderDirectory({
       e.preventDefault();
       e.stopPropagation();
     };
+
     itemElt.onclick = (e) => {
-      if (e.shiftKey) {
+      onClick({
+        toggle: e.ctrlKey,
+        keepPrevious: e.ctrlKey,
+        countAsClick: true,
+        includePath: e.shiftKey,
+      });
+    };
+
+    // Prevent Safari from selecting everything on earth
+    itemElt.onselectstart = (e) => e.preventDefault();
+    itemsMap.set(itemElt, item);
+
+    itemsParentElt.appendChild(itemElt);
+
+    function onClick({ includePath, toggle, keepPrevious, countAsClick }) {
+      if (includePath) {
         const lastSelected = [...selectedElts.elements].pop();
         if (lastSelected && lastSelected !== itemElt) {
           let currentItemIdx = -1;
@@ -184,19 +200,18 @@ export default function renderDirectory({
                   );
             selectItemElts(toSelect, {
               clearPrevious: false,
+              isClick: false,
             });
             return;
           }
         }
       }
-      onItemClick(itemElt, item, e.ctrlKey);
-    };
-
-    // Prevent Safari from selecting everything on earth
-    itemElt.onselectstart = (e) => e.preventDefault();
-    itemsMap.set(itemElt, item);
-
-    itemsParentElt.appendChild(itemElt);
+      onItemClick(itemElt, item, {
+        toggle,
+        keepPrevious,
+        countAsClick,
+      });
+    }
   }
 
   mouseSelectInteractivity =
@@ -216,19 +231,18 @@ export default function renderDirectory({
     signalCutAction,
   };
 
-  function onItemClick(itemElt, item, ctrlKey) {
-    if (ctrlKey) {
+  function onItemClick(itemElt, item, { toggle, keepPrevious, countAsClick }) {
+    if (toggle) {
       if (isItemEltSelected(itemElt)) {
         clearItemElts([itemElt]);
       } else {
         selectItemElts([itemElt], {
-          isClick: true,
-          clearPrevious: !ctrlKey,
+          isClick: countAsClick,
+          clearPrevious: !keepPrevious,
         });
       }
-      return;
-    }
-    if (
+    } else if (
+      countAsClick &&
       lastClickInfo.element === itemElt &&
       performance.now() - lastClickInfo.timeStamp <= 500
     ) {
@@ -238,7 +252,10 @@ export default function renderDirectory({
         openFiles([item]);
       }
     } else {
-      selectItemElts([itemElt], { clearPrevious: true, isClick: true });
+      selectItemElts([itemElt], {
+        clearPrevious: !keepPrevious,
+        isClick: countAsClick,
+      });
       onSelectionChange(selectedElts.items);
     }
   }
@@ -269,9 +286,6 @@ export default function renderDirectory({
     if (isClick && itemElts.length > 0) {
       lastClickInfo.element = itemElts[0];
       lastClickInfo.timeStamp = performance.now();
-    } else {
-      lastClickInfo.element = null;
-      lastClickInfo.timeStamp = -Infinity;
     }
     for (const itemElt of itemElts) {
       const item = itemsMap.get(itemElt);
@@ -464,7 +478,11 @@ export default function renderDirectory({
         e.preventDefault();
         if (itemsMap.has(document.activeElement)) {
           const item = itemsMap.get(document.activeElement);
-          onItemClick(document.activeElement, item, true);
+          onItemClick(document.activeElement, item, {
+            toggle: true,
+            keepPrevious: true,
+            countAsClick: false,
+          });
           break;
         }
       }

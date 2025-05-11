@@ -320,6 +320,18 @@ function writeGeneratedAppFile(baseDir) {
         "    dependencies: " + JSON.stringify(app.dependencies) + ",\n";
     }
 
+    if (Array.isArray(app.provider)) {
+      for (const feature of app.provider) {
+        if (!["filePickerOpen"].includes(feature)) {
+          throw new Error(
+            `Error in app "${app.id}". Provider of unknown feature: ${feature}`,
+          );
+        }
+      }
+      uglyHandWrittenJsObject +=
+        "    provider: " + JSON.stringify(app.provider) + ",\n";
+    }
+
     if (filePath) {
       // Here I will put the import path as a `lazyLoad` property.
       const importPath = `./lazy/${app.id}.js`;

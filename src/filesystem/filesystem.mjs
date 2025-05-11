@@ -24,6 +24,7 @@ const USER_DATA_DIR = "/userdata/";
 
 const DESKTOP_CONFIG = "desktop.config.json";
 const START_MENU_CONFIG = "start_menu.config.json";
+const PROVIDERS_CONFIG = "providers.config.json";
 
 const DIR_CONFIG_FILENAME = ".dir_config";
 
@@ -337,6 +338,10 @@ class DesktopFileSystem {
           const startMenuConfig = generateStartMenuConfig();
           return parseToWantedFormat(startMenuConfig, format);
         }
+        if (wantedFile === PROVIDERS_CONFIG) {
+          const providersConfig = generateProvidersConfig();
+          return parseToWantedFormat(providersConfig, format);
+        }
       } catch (err) {
         throw new Error("Impossible to read corrupted file: " + path);
       }
@@ -512,18 +517,20 @@ class DesktopFileSystem {
         });
       }
       if (dirPath === SYSTEM_DIR) {
-        return [DESKTOP_CONFIG, START_MENU_CONFIG].map((filename) => {
-          const fullPath = SYSTEM_DIR + filename;
-          return {
-            id: pathToId(fullPath),
-            fullPath,
-            directory: SYSTEM_DIR,
-            name: filename,
-            type: "file",
-            modified: DEFAULT_MODIFIED_DATE,
-            size: 0,
-          };
-        });
+        return [DESKTOP_CONFIG, START_MENU_CONFIG, PROVIDERS_CONFIG].map(
+          (filename) => {
+            const fullPath = SYSTEM_DIR + filename;
+            return {
+              id: pathToId(fullPath),
+              fullPath,
+              directory: SYSTEM_DIR,
+              name: filename,
+              type: "file",
+              modified: DEFAULT_MODIFIED_DATE,
+              size: 0,
+            };
+          },
+        );
       }
       throw new Error("Invalid directory: " + dirPath);
     }
@@ -711,9 +718,7 @@ function parseToWantedFormat(data, format) {
     } else if (typeof data === "object") {
       return textEncoder.encode(JSON.stringify(data));
     } else {
-      throw new Error(
-        "Impossible to parse to ArrayBuffer the following file: " + path,
-      );
+      throw new Error("Impossible to parse to ArrayBuffer the wanted file");
     }
   }
 
@@ -721,15 +726,12 @@ function parseToWantedFormat(data, format) {
     if (typeof data === "string") {
       return JSON.parse(data);
     } else if (data instanceof ArrayBuffer) {
-      throw new Error(
-        "Impossible to parse to Object the following file: " + path,
-      );
+      const decoded = textDecoder.decode(data);
+      return JSON.parse(decoded);
     } else if (typeof data === "object") {
       return data;
     } else {
-      throw new Error(
-        "Impossible to parse to Object the following file: " + path,
-      );
+      throw new Error("Impossible to parse to Object the wanted file");
     }
   }
 
@@ -821,6 +823,27 @@ function generateStartMenuConfig() {
       return acc;
     }, []),
   };
+}
+
+/**
+ * Generate config object of app "providers".
+ * @returns {Object}
+ */
+function generateProvidersConfig() {
+  return apps.reduce((acc, app) => {
+    if (!Array.isArray(app.provider)) {
+      return acc;
+    }
+    const path = `/apps/${app.id}.run`;
+    for (const feature of app.provider) {
+      if (acc[feature] !== undefined) {
+        acc[feature].push(path);
+      } else {
+        acc[feature] = [path];
+      }
+    }
+    return acc;
+  }, {});
 }
 
 function checkWrittenFilePath(path) {

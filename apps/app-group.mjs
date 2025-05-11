@@ -28,7 +28,7 @@
  * `HTMLElement`.
  * @returns {Promise.<Object>}
  */
-export async function create(args, env) {
+export async function create(args = [], env) {
   const applyStyle = env.appUtils.applyStyle;
   if (args.length > 1) {
     env.updateTitle(args[0], "Apps: " + args[1]);

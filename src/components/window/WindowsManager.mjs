@@ -156,7 +156,6 @@ export default class WindowsManager {
     if (options.activate) {
       appWindow.activate();
       this._taskbarManager.setActiveWindow(windowId);
-      appWindow.focus();
     } else {
       appWindow.deActivate();
     }

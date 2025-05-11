@@ -140,6 +140,9 @@ export default class AppWindow extends EventEmitter {
     });
 
     this.element.className = "window";
+    this.focus = () => {
+      /* noop */
+    };
 
     let appElt;
     if (app.value.create) {
@@ -162,7 +165,18 @@ export default class AppWindow extends EventEmitter {
         clearTimeout(spinnerPlaceholder.timeout);
         appElt.remove();
         if (module && typeof module.create === "function") {
-          this.element.appendChild(module.create(this._abortController.signal));
+          const app = module.create(this._abortController.signal);
+          this.element.appendChild(app.element);
+          if (app.focus) {
+            this.focus = app.focus.bind(app);
+            if (this.isActivated()) {
+              app.focus();
+            }
+          } else {
+            this.focus = () => {
+              /* noop */
+            };
+          }
         }
       });
     } else {
@@ -255,6 +269,7 @@ export default class AppWindow extends EventEmitter {
     keepWindowActiveInCurrentEventLoopIteration(this.element);
     this.element.classList.add("active");
     this.trigger("activated");
+    this.focus();
   }
 
   /**

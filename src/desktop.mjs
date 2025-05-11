@@ -29,6 +29,8 @@
 //   due to a window resize, we lose the "wanted" percentage size and position
 //   of that element
 // - prevent a click on a button from allowing to move the window?
+// - paint app: Post resize canvas can be improved when you remove some content
+//   while resizing
 
 import AboutMe from "./apps/about-me.mjs";
 import BifInspectorApp from "./apps/BifInspector.mjs";
@@ -48,6 +50,7 @@ import SystemSettingsApp from "./apps/settings/App.mjs";
 import ThisWebsite from "./apps/ThisWebsite.mjs";
 import WaspHls from "./apps/WaspHls.mjs";
 import paintApp from "./apps/paint.mjs";
+import TextEditorApp from "./apps/editor.mjs";
 
 import AppIcons from "./components/AppIcons.mjs";
 import StartMenu from "./components/StartMenu.mjs";
@@ -76,6 +79,11 @@ const apps = [
   {
     id: "paint",
     value: paintApp(),
+    inStartList: "Desktop Apps",
+  },
+  {
+    id: "editor",
+    value: TextEditorApp(),
     inStartList: "Desktop Apps",
   },
   {

@@ -44,7 +44,6 @@ const DEFAULT_WINDOW_INACTIVE_HEADER = "#737373";
 const DEFAULT_WINDOW_INACTIVE_HEADER_TEXT = "#FFFFFF";
 const DEFAULT_WINDOW_TEXT_COLOR = "#333333";
 const DEFAULT_WINDOW_CONTENT_BG = "#FFFFFF";
-const DEFAULT_WINDOW_BORDER_COLOR = "#000000";
 const DEFAULT_WINDOW_LINE_COLOR = "#dddddd";
 const DEFAULT_APP_PRIMARY_COLOR = "#3498db";
 const DEFAULT_APP_PRIMARY_BG_COLOR = "#efefef";
@@ -619,20 +618,6 @@ export const SETTINGS = {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
           "--window-content-bg",
-          color,
-        );
-      });
-    },
-  ),
-
-  /** Defines the border color around windows, as an hex-encoded 24 bits color. */
-  windowBorderColor: createRefForState(
-    "window-border-color",
-    DEFAULT_WINDOW_BORDER_COLOR,
-    (color) => {
-      window.requestAnimationFrame(() => {
-        document.documentElement.style.setProperty(
-          "--window-border-color",
           color,
         );
       });

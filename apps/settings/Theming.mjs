@@ -32,8 +32,6 @@ const themes = {
     "#ffffff",
     // window-line-color (used for very thin lines inside windows)
     "#dddddd",
-    // window-border-color (border around windows if enabled)
-    "#000000",
     // app-primary-color (user by a windows UI elements)
     "#3498db",
     // app-primary-bg (when a UI element should be discrete, e.g. disabled
@@ -93,8 +91,6 @@ const themes = {
     "#2b3342",
     // window-line-color
 
-    "#404755",
-    // window-border-color
     "#404755",
     // app-primary-color
     "#4a99d9",
@@ -156,8 +152,6 @@ const themes = {
     // window-line-color
 
     "#d7d1f0",
-    // window-border-color
-    "#b8c6db",
     // app-primary-color
     "#8a76dc",
     // app-primary-bg
@@ -217,8 +211,6 @@ const themes = {
     "#f2f9fa",
     // window-line-color (used for very thin lines inside windows)
     "#b3d6dd",
-    // window-border-color (border around windows if enabled)
-    "#2c5f70",
     // app-primary-color (user by a windows UI elements)
     "#3a96ab",
     // app-primary-bg (when a UI element should be discrete, e.g. disabled
@@ -281,8 +273,6 @@ const themes = {
     // window-line-color
 
     "#c1e0fe",
-    // window-border-color
-    "#90e0ef",
     // app-primary-color
     "#0096c7",
     // app-primary-bg
@@ -342,8 +332,6 @@ const themes = {
     "#fff6e9",
     // window-line-color
     "#e5cba9",
-    // window-border-color
-    "#6d3b1c",
     // app-primary-color
     "#e07a3d",
     // app-primary-bg
@@ -403,8 +391,6 @@ const themes = {
     "#f9f5f5",
     // window-line-color (used for very thin lines inside windows)
     "#ddebdd",
-    // window-border-color (border around windows if enabled)
-    "#4d6a4d",
     // app-primary-color (user by a windows UI elements)
     "#e15b64",
     // app-primary-bg (when a UI element should be discrete, e.g. disabled
@@ -464,8 +450,6 @@ const themes = {
     "#fff9fa",
     // window-line-color (used for very thin lines inside windows)
     "#ffd3d9",
-    // window-border-color (border around windows if enabled)
-    "#8c2134",
     // app-primary-color (user by a windows UI elements)
     "#e63553",
     // app-primary-bg (when a UI element should be discrete, e.g. disabled
@@ -525,8 +509,6 @@ const themes = {
     "#faf5f0",
     // window-line-color (used for very thin lines inside windows)
     "#e1d4c7",
-    // window-border-color (border around windows if enabled)
-    "#40291e",
     // app-primary-color (user by a windows UI elements)
     "#8f5e3c",
     // app-primary-bg (when a UI element should be discrete, e.g. disabled
@@ -586,8 +568,6 @@ const themes = {
     "#fdf8ea",
     // window-line-color (used for very thin lines inside windows)
     "#e5d6b0",
-    // window-border-color (border around windows if enabled)
-    "#6a4615",
     // app-primary-color (user by a windows UI elements)
     "#d89b28",
     // app-primary-bg (when a UI element should be discrete, e.g. disabled
@@ -647,8 +627,6 @@ const themes = {
     "#fff9fb",
     // window-line-color (used for very thin lines inside windows)
     "#ffe0ec",
-    // window-border-color (border around windows if enabled)
-    "#c14775",
     // app-primary-color (user by a windows UI elements)
     "#ff5c99",
     // app-primary-bg (when a UI element should be discrete, e.g. disabled
@@ -708,8 +686,6 @@ const themes = {
     "#ffffff",
     // window-line-color (used for very thin lines inside windows)
     "#e5e5e5",
-    // window-border-color (border around windows if enabled)
-    "#303030",
     // app-primary-color (user by a windows UI elements)
     "#5a9b52",
     // app-primary-bg (when a UI element should be discrete, e.g. disabled
@@ -769,8 +745,6 @@ const themes = {
     "#ffffff",
     // window-line-color
     "#dddddd",
-    // window-border-color
-    "#000000",
     // app-primary-color
     "#4d8b4d",
     // app-primary-bg
@@ -818,7 +792,6 @@ export default function createThemeSection(settings, abortSignal) {
     settings.windowTextColor,
     settings.windowContentBgColor,
     settings.windowLineColor,
-    settings.windowBorderColor,
     settings.appPrimaryColorBg,
     settings.appPrimaryBgColor,
     settings.windowSidebarHoverBgColor,
@@ -872,7 +845,6 @@ export default function createThemeSection(settings, abortSignal) {
     ["Regular Background", settings.windowContentBgColor],
     ["Alternative App Color", settings.appPrimaryColorBg],
     ["Alternative App Background", settings.appPrimaryBgColor],
-    ["Window borders", settings.windowBorderColor],
     ["Application Lines", settings.windowLineColor],
     ["Sidebar Background", settings.windowSidebarBgColor],
     ["Sidebar Hover Background", settings.windowSidebarHoverBgColor],

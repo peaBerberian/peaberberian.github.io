@@ -200,14 +200,7 @@ export function getMinWindowPositions(windowElt) {
   }
   return {
     minX: 0 - getWindowWidth(windowElt) + WINDOW_OOB_SECURITY_PIX,
-    minY:
-      0 -
-      Math.max(
-        SETTINGS.windowBorderSize.getValue() +
-          SETTINGS.windowHeaderHeight.getValue() -
-          15,
-        0,
-      ),
+    minY: 0 - Math.max(SETTINGS.windowHeaderHeight.getValue() - 15, 0),
     minXBound: 0,
     minYBound: 0,
   };

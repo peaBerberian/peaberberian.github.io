@@ -665,9 +665,7 @@ export default class AppWindow extends EventEmitter {
       }
 
       const oobsafetyTop = Math.max(
-        SETTINGS.windowBorderSize.getValue() +
-          SETTINGS.windowHeaderHeight.getValue() -
-          15,
+        SETTINGS.windowHeaderHeight.getValue() - 15,
         0,
       );
       if (
@@ -789,9 +787,6 @@ export default class AppWindow extends EventEmitter {
       clearSignal: this._abortController.signal,
     });
     SETTINGS.taskbarSize.onUpdate(reCheckPlacement, {
-      clearSignal: this._abortController.signal,
-    });
-    SETTINGS.windowBorderSize.onUpdate(reCheckPlacement, {
       clearSignal: this._abortController.signal,
     });
     SETTINGS.oobWindows.onUpdate(reCheckPlacement, {

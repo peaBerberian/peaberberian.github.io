@@ -33,6 +33,7 @@
 
 import AboutMe from "./apps/about-me.mjs";
 import BifInspectorApp from "./apps/BifInspector.mjs";
+import BombSweeperApp from "./apps/bombsweeper.mjs";
 import ClockApp from "./apps/Clock.mjs";
 import EMESpy from "./apps/EMESpy.mjs";
 import GifRenderer from "./apps/GifRenderer.mjs";
@@ -41,18 +42,18 @@ import IsobmffInspector from "./apps/isobmff-inspector.mjs";
 import Keyboard9App from "./apps/keyboard9.mjs";
 import MSESpy from "./apps/MSESpy.mjs";
 import PassGenDemoApp from "./apps/passgen.mjs";
+import PongApp from "./apps/Pong.mjs";
 import ReadmeApp from "./apps/README.mjs";
 import RxPaired from "./apps/RxPaired.mjs";
 import RxPlayer from "./apps/rx-player.mjs";
 import StrHtml from "./apps/str-html.mjs";
 import SystemSettingsApp from "./apps/special/settings/App.mjs";
+import TableApp from "./apps/table.mjs";
+import TextEditorApp from "./apps/editor.mjs";
 import ThisWebsite from "./apps/ThisWebsite.mjs";
 import WaspHls from "./apps/WaspHls.mjs";
-import paintApp from "./apps/paint.mjs";
-import TextEditorApp from "./apps/editor.mjs";
 import generateDirectoryApp from "./apps/special/directory.mjs";
-import PongApp from "./apps/Pong.mjs";
-import TableApp from "./apps/table.mjs";
+import paintApp from "./apps/paint.mjs";
 
 import AppIcons from "./components/AppIcons.mjs";
 import StartMenu from "./components/StartMenu.mjs";
@@ -91,6 +92,11 @@ const apps = [
   {
     id: "table",
     value: TableApp(),
+    inStartList: "Desktop Apps",
+  },
+  {
+    id: "bombsweeper",
+    value: BombSweeperApp(),
     inStartList: "Desktop Apps",
   },
   {

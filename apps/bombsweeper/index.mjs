@@ -7,7 +7,7 @@ const NUMBER_VALUES = ["⬜", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️�
 // TODO: configurable
 const NUMBER_OF_ROWS = 10;
 const NUMBER_OF_COLS = 10;
-const NUMBER_OF_BOMBS = 10;
+const NUMBER_OF_BOMBS = 15;
 
 export function create(_args, env) {
   const { applyStyle } = env.appUtils;

@@ -1,6 +1,10 @@
-import { codeImgSvg, demoImgSvg, docImgSvg } from "../constants.mjs";
-import { applyStyle, constructSidebarElt, createAppIframe } from "../utils.mjs";
-import strHtml from "../str-html.mjs";
+import { codeImgSvg, demoImgSvg, docImgSvg } from "../../constants.mjs";
+import {
+  applyStyle,
+  constructSidebarElt,
+  createAppIframe,
+} from "../../utils.mjs";
+import strHtml from "../../str-html.mjs";
 import { constructAppHeaderLine } from "./header-line.mjs";
 
 // ==== Utils for lazy-loaded applications ====

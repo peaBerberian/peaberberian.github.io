@@ -591,3 +591,20 @@ export class EventEmitter {
     });
   }
 }
+
+export function createLinkedAbortController(parentAbortSignal) {
+  const abortController = new AbortController();
+  linkAbortControllerToSignal(abortController, parentAbortSignal);
+  return abortController;
+}
+
+export function linkAbortControllerToSignal(
+  abortController,
+  parentAbortSignal,
+) {
+  const onParentAbort = () => abortController.abort();
+  parentAbortSignal.addEventListener("abort", onParentAbort);
+  abortController.signal.addEventListener("abort", () => {
+    parentAbortSignal.removeEventListener("abort", onParentAbort);
+  });
+}

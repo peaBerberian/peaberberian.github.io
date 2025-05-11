@@ -1,14 +1,17 @@
-import appUtils from "./app-utils/index.mjs";
+import * as CONSTANTS from "../constants.mjs";
+import { SETTINGS } from "../settings.mjs";
+import filesystem, { getName } from "../filesystem/filesystem.mjs";
+import AppWindow from "../components/window/AppWindow.mjs";
 import {
   applyStyle,
   constructSidebarElt,
   createAppIframe,
+  createLinkedAbortController,
   getMaxDesktopDimensions,
-} from "./utils.mjs";
-import * as CONSTANTS from "./constants.mjs";
-import { SETTINGS } from "./settings.mjs";
-import filesystem from "./filesystem/filesystem.mjs";
-import AppWindow from "./components/window/AppWindow.mjs";
+} from "../utils.mjs";
+import appUtils from "./app-utils/index.mjs";
+import { createFileOpener } from "./app-utils/explorer/file-picker.mjs";
+import WindowedApplicationStack from "./windowed_application_stack.mjs";
 
 const { BASE_WINDOW_Z_INDEX, IMAGE_ROOT_PATH, __VERSION__ } = CONSTANTS;
 
@@ -98,17 +101,18 @@ export default class AppsLauncher {
     }
 
     /** `AbortController` linked to the life of this application. */
-    const abortController = new AbortController();
+    const applicationAbortCtrl = new AbortController();
 
     /**
-     * Information on spinner prepared just in case the application takes time
-     * to create.
-     * This is actually an object.
+     * Object defining metadata on the application currently visible and
+     * interactive in the window.
+     * We begin by placing the spinner app in it, just in case the application
+     * takes time to load.
      */
-    const spinnerPlaceholder = getSpinnerPlaceholder();
+    const appStack = new WindowedApplicationStack(getSpinnerApp(), true);
 
-    let appElement = spinnerPlaceholder.element;
-    const appWindow = new AppWindow(app, appElement, options);
+    /** Window containing the application. */
+    const appWindow = new AppWindow(app, appStack.element, options);
 
     // TODO: here instead?
     // The `AppWindow` doesn't really need to know about the app metadata
@@ -128,7 +132,7 @@ export default class AppsLauncher {
     });
 
     appWindow.addEventListener("closing", () => {
-      abortController.abort();
+      applicationAbortCtrl.abort();
       const windowIndex = this._windows.indexOf(appWindow);
       if (windowIndex !== -1) {
         // Remove from array and activate next window
@@ -136,6 +140,7 @@ export default class AppsLauncher {
         this.activateMostVisibleWindow();
       }
       this._taskbarManager.remove(windowId);
+      appStack.onClose();
     });
 
     appWindow.addEventListener("minimizing", () => {
@@ -192,10 +197,13 @@ export default class AppsLauncher {
       appWindow.element.style.zIndex =
         BASE_WINDOW_Z_INDEX + windowEltsWithZIndex.length + 1;
       this._taskbarManager.setActiveWindow(windowId);
+
+      appStack.onActivate();
     });
 
     appWindow.addEventListener("deactivated", () => {
       this._taskbarManager.deActiveWindow(windowId);
+      appStack.onDeactivate();
     });
 
     appWindow.activate();
@@ -204,6 +212,41 @@ export default class AppsLauncher {
     if (options.fullscreen) {
       appWindow.setFullscreen();
     }
+
+    // TODO: Move this elsewhere
+    const filePickerOpen = (config) => {
+      return new Promise(async (resolveFilePicker, rejectFilePicker) => {
+        let filePickerElt;
+        const fileOpenerAbortCtrl = createLinkedAbortController(
+          applicationAbortCtrl.signal,
+        );
+        try {
+          const appObj = await this._launchApp(
+            createFileOpener,
+            config,
+            { onFilesOpened, filesystem }, // TODO: real env construction
+            fileOpenerAbortCtrl.signal,
+          );
+          filePickerElt = appObj.element;
+          appStack.push(appObj, appWindow.isActivated());
+        } catch (err) {
+          rejectFilePicker(err);
+        }
+
+        function onFilesOpened(files) {
+          fileOpenerAbortCtrl.abort();
+          appStack.popElement(filePickerElt, appWindow.isActivated());
+          const proms = files.map(async (filePath) => {
+            const data = await filesystem.readFile(filePath, "arraybuffer");
+            return {
+              filename: getName(filePath),
+              data,
+            };
+          });
+          Promise.all(proms).then(resolveFilePicker, rejectFilePicker);
+        }
+      });
+    };
 
     /**
      * Construct `env` object that is given to application as their link to the
@@ -231,41 +274,21 @@ export default class AppsLauncher {
       if (app.dependencies.includes("filesystem")) {
         env.filesystem = filesystem;
       }
+      if (app.dependencies.includes("filePickerOpen")) {
+        env.filePickerOpen = filePickerOpen;
+      }
     }
 
     // Actually launch the application
-    this._launchApp(app.data, appArgs, env, abortController.signal).then(
-      ({ element, onActivate, onDeactivate }) => {
-        clearTimeout(spinnerPlaceholder.timeout);
-
-        if (abortController.signal.aborted) {
+    this._launchApp(app.data, appArgs, env, applicationAbortCtrl.signal).then(
+      (appObj) => {
+        if (applicationAbortCtrl.signal.aborted) {
+          appStack.onClose();
           return;
         }
-
         // /!\ Note that we replace here, the element communicated to the
         // `AppWindow` is stale now. Hopefully, it shouldn't care.
-        appElement.replaceWith(element);
-        appElement = element;
-
-        if (typeof onActivate === "function") {
-          if (appWindow.isActivated()) {
-            onActivate();
-          }
-          appWindow.addEventListener("activated", () => {
-            onActivate();
-          });
-        }
-        if (typeof onDeactivate === "function") {
-          if (!appWindow.isActivated()) {
-            onDeactivate();
-          }
-          appWindow.addEventListener("deactivated", () => {
-            onDeactivate();
-          });
-          appWindow.addEventListener("closing", () => {
-            onDeactivate();
-          });
-        }
+        appStack.replaceAll(appObj, appWindow.isActivated());
       },
     );
 
@@ -301,6 +324,12 @@ export default class AppsLauncher {
   /**
    * Actually launch the application and get its return values (element and
    * various lifecycle functions).
+   *
+   * NOTE: This method may be a little too magic in what it accepts: function,
+   * object with a create function, object with an `element`, Promise etc.
+   * It's kind of the fruit of adding stuff on top of other stuff, but I should
+   * probably have to simplify that at some point.
+   *
    * @param {Object} appData - The `data` property from executable, which
    * describes how to actually launch the application.
    * @param {Array.<string>} - The arguments that should be communicated to the
@@ -323,11 +352,14 @@ export default class AppsLauncher {
     if (appData.create) {
       const ret = appData.create(appArgs, env, abortSignal);
       return this._launchApp(ret, appArgs, env, abortSignal);
+    } else if (typeof appData === "function") {
+      return this._launchApp(appData(appArgs, env, abortSignal));
     }
 
     let element;
     let onActivate;
     let onDeactivate;
+    let onClose;
 
     if (appData.element) {
       element = appData.element;
@@ -353,7 +385,10 @@ export default class AppsLauncher {
     if (!onDeactivate && typeof appData.onDeactivate === "function") {
       onDeactivate = appData.onDeactivate.bind(appData);
     }
-    return { element, onActivate, onDeactivate };
+    if (!onClose && typeof appData.onClose === "function") {
+      onClose = appData.onClose.bind(appData);
+    }
+    return { element, onActivate, onDeactivate, onClose };
   }
 
   /**
@@ -428,18 +463,20 @@ export default class AppsLauncher {
 }
 
 /**
- * @typedef {Object} SpinnerPlaceholderInfo
+ * @typedef {Object} SpinnerPlaceholderApp
  * @property {HTMLElement} element - The container element in which the
  * spinner is shown. Will be given as the initial element the window should
  * display, that may then be replaced by the real window content.
- * @param {number} timeout - The spinner is only displayed after a timer, this
- * is the `setTimeout` id for this timer.
+ * @param {Function} onClose - The spinner is only displayed after a timer, this
+ * function clears this timer.
  */
 
 /**
- * @returns {SpinnerPlaceholderInfo}
+ * Information on spinner prepared just in case the application takes time
+ * to create.
+ * @returns {SpinnerPlaceholderApp}
  */
-function getSpinnerPlaceholder() {
+function getSpinnerApp() {
   const placeholderElt = document.createElement("div");
   applyStyle(placeholderElt, {
     height: "100%",
@@ -457,7 +494,7 @@ function getSpinnerPlaceholder() {
   }, 200);
   return {
     element: placeholderElt,
-    timeout,
+    onClose: () => clearTimeout(timeout),
   };
 }
 

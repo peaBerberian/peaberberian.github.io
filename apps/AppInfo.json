@@ -86,6 +86,7 @@
       "id": "image-viewer",
       "title": "Image Viewer",
       "icon": "🏞️",
+      "dependencies": ["filePickerOpen"],
       "defaultHeight": 600,
       "defaultWidth": 900,
       "startMenu": {

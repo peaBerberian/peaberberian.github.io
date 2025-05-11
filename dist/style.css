@@ -719,6 +719,10 @@ html {
   margin: auto;
 }
 
+.w-tools {
+	scrollbar-color: var(--sidebar-hover-bg) var(--window-sidebar-bg);
+}
+
 .window ul,
 ol {
   padding-left: 20px; /* Increase or decrease this value as needed */

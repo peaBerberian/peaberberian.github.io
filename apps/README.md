@@ -122,7 +122,8 @@ depending on the application's needs:
     Contains the following properties:
 
     - `appUtils` (`Object`): the standard desktop libraries (look at
-      `../src/app-utils` for more information on what utils there is)
+      `../src/app-launcher/app-utils` for more information on what utils there
+      is)
 
     - The `getImageRootPath` function, which returns the base URL where static
       images will be served.

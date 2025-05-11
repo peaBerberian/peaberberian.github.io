@@ -19,6 +19,7 @@
 // - copy svg in passgen is broken on multiple devices
 // - What do if App creation errors or rejects?
 // - image viewer touch controls
+// - Sometimes the focus in on a desktop icon, not on the app
 //
 // low priority:
 // - windows moving when moving taskbar to top/bottom. Could be cool to stay in
@@ -53,7 +54,7 @@ import fs from "./filesystem/filesystem.mjs";
 import DesktopAppIcons from "./components/DesktopAppIcons.mjs";
 import StartMenu from "./components/StartMenu.mjs";
 import Taskbar from "./components/Taskbar.mjs";
-import AppsLauncher from "./AppsLauncher.mjs";
+import AppsLauncher from "./app-launcher/AppsLauncher.mjs";
 import initializeClockApplet from "./clock_applet.mjs";
 
 // Fragment is only used for in-app anchors for now.

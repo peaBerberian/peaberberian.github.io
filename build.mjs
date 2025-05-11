@@ -310,7 +310,7 @@ function writeGeneratedAppFile(baseDir) {
 
     if (Array.isArray(app.dependencies)) {
       for (const dep of app.dependencies) {
-        if (dep !== "settings" && dep !== "filesystem") {
+        if (!["settings", "filesystem", "filePickerOpen"].includes(dep)) {
           throw new Error(
             `Error in app "${app.id}". One of the asked dependency does not exist: ${dep}`,
           );

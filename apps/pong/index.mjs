@@ -73,8 +73,6 @@ export function create(_args, env, abortSignal) {
    * @param {KeyboardEvent} e
    */
   function onKeyDown(e) {
-    // TODO: It might be more usable/fun by re-checking each frame is the key is
-    // maintained and move accordingly as an accessible alternative to the mouse
     switch (e.key) {
       case "ArrowUp":
         isTopPressed = true;

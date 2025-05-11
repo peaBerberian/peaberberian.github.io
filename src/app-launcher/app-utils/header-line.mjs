@@ -1,4 +1,4 @@
-import { applyStyle } from "../utils.mjs";
+import { applyStyle } from "../../utils.mjs";
 
 const openSvg = `<svg width="800px" height="800px" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><g transform="translate(-60.000000, -1879.000000)" fill="currentColor"><g transform="translate(56.000000, 160.000000)"><path d="M13.978,1730.401 L12.596,1729.007 L6,1735.656 L6,1733 L4,1733 L4,1739 L10.071,1739 L10.101,1737 L7.344,1737 L13.978,1730.401 Z M24,1725.08 L24,1739 L12,1739 L12,1737 L22,1737 L22,1727 L16,1727 L16,1721 L6,1721 L6,1731 L4,1731 L4,1719 L18,1719 L24,1725.08 Z"></path></g></g></g></svg>`;
 
@@ -74,6 +74,7 @@ const BUTTONS_BY_NAME = BUTTONS_LIST.reduce((acc, val) => {
 
 export function constructAppHeaderLine(buttonConfigs) {
   const headerElt = document.createElement("div");
+  headerElt.className = "w-tools";
   applyStyle(headerElt, {
     backgroundColor: "var(--window-sidebar-bg)",
     width: "100%",
@@ -81,7 +82,7 @@ export function constructAppHeaderLine(buttonConfigs) {
     overflowY: "hidden",
     display: "flex",
     padding: "5px",
-    gap: "5px",
+    gap: "12px",
     flexShrink: "0",
     borderBottom: "1px solid var(--window-line-color)",
   });
@@ -178,10 +179,8 @@ function createButtonElt(svg, title, height = "1.7rem", onClick) {
     display: "flex",
     height: "100%",
     alignItems: "center",
-    alignItems: "center",
   });
   const svgWrapperElt = document.createElement("span");
-  svgWrapperElt.setAttribute("tabindex", "0");
   applyStyle(svgWrapperElt, {
     // flex: "1 0 0",
     height: height,
@@ -197,17 +196,25 @@ function createButtonElt(svg, title, height = "1.7rem", onClick) {
     svgWrapperElt.appendChild(buttonSvgElt);
   }
   buttonWrapperElt.appendChild(svgWrapperElt);
-  buttonWrapperElt.onclick = onClick;
+  buttonWrapperElt.onclick = (e) => {
+    if (buttonWrapperElt.classList.contains("disabled")) {
+      return;
+    }
+    return onClick(e);
+  };
   buttonWrapperElt.onkeydown = (e) => {
+    if (buttonWrapperElt.classList.contains("disabled")) {
+      return;
+    }
     if (e.key === " " || e.key === "Enter") {
-      onClick(e);
+      return onClick(e);
     }
   };
   buttonWrapperElt.title = title;
   const titleElt = document.createElement("span");
   applyStyle(titleElt, {
     fontSize: "0.9em",
-    padding: "0 5px",
+    padding: "0 2px",
     // flex: "1 0 auto",
     display: "-webkit-box",
     WebkitLineClamp: "2",
@@ -220,6 +227,7 @@ function createButtonElt(svg, title, height = "1.7rem", onClick) {
   });
   titleElt.textContent = title;
   buttonWrapperElt.appendChild(titleElt);
+  buttonWrapperElt.setAttribute("tabindex", "0");
   return buttonWrapperElt;
 }
 

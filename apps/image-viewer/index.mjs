@@ -1,4 +1,7 @@
 // TODO: experience is shit on tactile devices: implement swipe+zoom with gestures?
+// TODO: Zoom reset also centers (just renamed reset?)
+// TODO: update title with image name
+// TODO: Better error is this an image
 
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 10;
@@ -10,7 +13,7 @@ const zoomOutSvg = `<svg width="800px" height="800px" viewBox="0 0 24 24" fill="
 const zoomResetSvg = `<svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M4 11C4 7.13401 7.13401 4 11 4C14.866 4 18 7.13401 18 11C18 14.866 14.866 18 11 18C7.13401 18 4 14.866 4 11ZM11 2C6.02944 2 2 6.02944 2 11C2 15.9706 6.02944 20 11 20C13.125 20 15.078 19.2635 16.6177 18.0319L20.2929 21.7071C20.6834 22.0976 21.3166 22.0976 21.7071 21.7071C22.0976 21.3166 22.0976 20.6834 21.7071 20.2929L18.0319 16.6177C19.2635 15.078 20 13.125 20 11C20 6.02944 15.9706 2 11 2Z" fill="currentColor"/></svg>`;
 
 export function create(_args, env, parentAbortSignal) {
-  const { applyStyle, strHtml, constructAppHeaderLine } = env.appUtils;
+  const { constructAppHeaderLine } = env.appUtils;
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
     display: "flex",
@@ -53,6 +56,94 @@ export function create(_args, env, parentAbortSignal) {
           const files = e.target.files;
           handleInputedFiles(files);
         });
+      },
+    },
+    {
+      name: "open",
+      onClick: () => {
+        env
+          .filePickerOpen({
+            title: "Open an image from files stored on this Web Desktop",
+            allowMultipleSelections: true,
+          })
+          .then(
+            (files) => {
+              clear();
+              if (files.length === 0) {
+                updateDisplayedImage();
+                updateStatusBar();
+                return;
+              }
+              for (const file of files) {
+                const imgElt = document.createElement("img");
+                applyStyle(imgElt, {
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  objectFit: "contain",
+                  userSelect: "none",
+                  position: "absolute",
+                });
+                imgElt.draggable = false;
+                imageTransformMap.set(imgElt, {
+                  scale: 1,
+                  rotation: 0,
+                  translateX: 0,
+                  translateY: 0,
+                });
+
+                const { filename, data: arrayBuffer } = file;
+                const mimeType = guessMimeType(filename, arrayBuffer);
+                const blob = new Blob([arrayBuffer], { type: mimeType });
+                const imgUrl = URL.createObjectURL(blob);
+                updateImageTransform(imgElt);
+                imgElt.src = imgUrl;
+
+                imgElt.onerror = () => {
+                  URL.revokeObjectURL(imgUrl);
+                  showAppMessage(
+                    appContentAreaElt,
+                    "❌ Error: Failed to load a file. Are you sure this is an image?",
+                  );
+                  imgElt.remove();
+
+                  for (let i = 0; i < loadedImages.length; i++) {
+                    if (loadedImages[i].imgElt === imgElt) {
+                      loadedImages.splice(i, 1);
+
+                      if (i !== currentImageIndex) {
+                        updateStatusBar();
+                      } else {
+                        if (currentImageIndex >= loadedImages.length) {
+                          currentImageIndex = 0;
+                        }
+                        updateDisplayedImage();
+                        updateStatusBar();
+                      }
+                    }
+                  }
+                };
+                imgContainerElt.appendChild(imgElt);
+                loadedImages.push({ imgElt, filename });
+                if (currentImageIndex === -1) {
+                  currentImageIndex = 0;
+                  enableButton("rotateLeft");
+                  enableButton("rotateRight");
+                } else {
+                  enableButton("previous");
+                  enableButton("next");
+                }
+                updateDisplayedImage();
+                updateStatusBar();
+              }
+            },
+            (_err) => {
+              showAppMessage(
+                appContentAreaElt,
+                "❌ Error: Failed to read those files from the file system :(",
+                10000,
+              );
+            },
+          );
       },
     },
     { name: "separator" },
@@ -266,7 +357,8 @@ export function create(_args, env, parentAbortSignal) {
     updateImageTransform(imgElt);
   }
 
-  function handleInputedFiles(files) {
+  function clear() {
+    imgContainerElt.innerHTML = "";
     loadedImages.length = 0;
     currentImageIndex = -1;
     disableButton("previous");
@@ -276,8 +368,10 @@ export function create(_args, env, parentAbortSignal) {
     disableButton("zoomOut");
     disableButton("zoomReset");
     disableButton("zoomIn");
+  }
 
-    imgContainerElt.innerHTML = "";
+  function handleInputedFiles(files) {
+    clear();
     if (files.length === 0) {
       updateDisplayedImage();
       updateStatusBar();
@@ -287,6 +381,7 @@ export function create(_args, env, parentAbortSignal) {
     let remainingToLoad = 0;
     for (const file of files) {
       disableButton("upload");
+      disableButton("open");
       remainingToLoad++;
       const imgElt = document.createElement("img");
       applyStyle(imgElt, {
@@ -310,13 +405,14 @@ export function create(_args, env, parentAbortSignal) {
         remainingToLoad--;
         if (remainingToLoad === 0) {
           enableButton("upload");
+          enableButton("open");
         }
 
         imgElt.src = event.target.result;
         imgElt.onerror = () => {
           showAppMessage(
             appContentAreaElt,
-            "❌ Error: Failed to load an image",
+            "❌ Error: Failed to load a file. Are you sure this is an image?",
           );
           imgElt.remove();
 
@@ -491,7 +587,9 @@ export function create(_args, env, parentAbortSignal) {
     if (loadedImages.length === 0) {
       imgContainerElt.innerHTML = "";
       currentImageIndex = -1;
-      const noImgTextElt = strHtml`<div>No image loaded<br>Load one (or multiple) image(s) first.</div>`;
+      const noImgTextElt = document.createElement("div");
+      noImgTextElt.innerHTML =
+        "No image loaded<br>Load one (or multiple) image(s) first.";
       applyStyle(noImgTextElt, {
         display: "flex",
         flexDirection: "column",
@@ -648,4 +746,59 @@ function linkAbortControllerToSignal(abortController, parentAbortSignal) {
   abortController.signal.addEventListener("abort", () => {
     parentAbortSignal.removeEventListener("abort", onParentAbort);
   });
+}
+
+function guessMimeType(filename, arrayBuffer) {
+  const uint8Array = new Uint8Array(arrayBuffer.slice(0, 4)); // Check first 4 bytes
+  const signature = Array.from(uint8Array)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .toUpperCase();
+
+  switch (signature) {
+    case "89504E47":
+      return "image/png";
+    case "FFD8FFDB":
+    case "FFD8FFE0":
+    case "FFD8FFE1":
+      return "image/jpeg";
+    case "47494638":
+      return "image/gif";
+    case "52494646":
+      return "image/webp";
+    case "49492A00":
+    case "4D4D002A":
+      return "image/tiff";
+    default: {
+      const extension = getFileExtension(filename);
+      if (extension) {
+        if (extension === "svg") {
+          return "image/svg+xml";
+        }
+        if (extension === "ico") {
+          return "image/x-icon";
+        }
+        return `image/${extension}`;
+      }
+      return "application/octet-stream"; // Fallback
+    }
+  }
+}
+function getFileExtension(filename) {
+  const dotIndex = filename.lastIndexOf(".");
+  return dotIndex === -1 ? "" : filename.slice(dotIndex + 1).toLowerCase();
+}
+
+/**
+ * Apply multiple style attributes on a given element.
+ * @param {HTMLElement} element - The `HTMLElement` on which the style should be
+ * aplied.
+ * @param {Object} style - The dictionnary where keys are style names (JSified,
+ * e.g. `backgroundColor` not `background-color`) and values are the
+ * corresponding syle values.
+ */
+export function applyStyle(element, style) {
+  for (const key of Object.keys(style)) {
+    element.style[key] = style[key];
+  }
 }

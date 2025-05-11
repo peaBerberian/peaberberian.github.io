@@ -47,7 +47,7 @@ export default async function DesktopAppIcons(
   parentAbortSignal,
 ) {
   const { list: apps } = await fs.readFile(
-    "/system/desktop.config.json",
+    "/system32/desktop.config.json",
     "object",
   );
   let abortController;

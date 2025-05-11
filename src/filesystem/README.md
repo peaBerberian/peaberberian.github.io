@@ -49,10 +49,10 @@ It's basically the executable format of this desktop: a JSON/JS object with
 some set properties defining different aspects of the app (wanted
 width/height, where to find its code etc.).
 
-### `/system/`
+### `/system32/`
 
-`/system/` is also a read-only root directory. It contains basically
-virtual "config files" for the desktop.
+`/system32/` (the name itself being a nonsensical joke) is also a read-only
+root directory. It contains basically virtual "config files" for the desktop.
 
 It is for now read-only, as well as all its content. However the whole point
 is here to make it configurable in the future, I just didn't take the time
@@ -61,7 +61,7 @@ yet.
 For now it contains the following files (with the `type` set to `file`), they
 can be discovered through `readDir`, but they should be always there:
 
-- `/system/desktop.config.json`: Contains metadata on the wanted arrangement
+- `/system32/desktop.config.json`: Contains metadata on the wanted arrangement
   for the desktop icons.
 
   Reading that file will return you a JSON object.
@@ -80,7 +80,7 @@ can be discovered through `readDir`, but they should be always there:
 
   - `icon` (`string|undefined`): The icon to show for the application.
 
-- `system/start_menu.config.json`: Contains metadata for the arrangement of
+- `system32/start_menu.config.json`: Contains metadata for the arrangement of
   apps in the start menu
 
   Reading that file will return you a JSON object,
@@ -116,11 +116,11 @@ can be discovered through `readDir`, but they should be always there:
   - `list` (`Array.<Object>`): The application objects inside that sublist.
     A sublist cannot contain another sublist.
 
-- `system/default_apps.config.json`: Contains object where the keys are files
+- `system32/default_apps.config.json`: Contains object where the keys are files
   extensions and the value is the path of the corresponding application to
   launch by default for that type of file (with that file in argument).
 
-- `system/providers.config.json`: Contain metadata on "providers", which are
+- `system32/providers.config.json`: Contain metadata on "providers", which are
   application with supplementary features.
 
   One example of such features would be `"filePickerOpen"`, allowing an

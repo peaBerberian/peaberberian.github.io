@@ -8,7 +8,7 @@ export const METADATA_STORE = "files";
 export const CONTENT_STORE = "files_content";
 
 export const APPS_DIR = "/apps/";
-export const SYSTEM_DIR = "/system/";
+export const SYSTEM_DIR = "/system32/";
 export const USER_DATA_DIR = "/userdata/";
 export const USER_CONFIG_DIR = "/userconfig/";
 

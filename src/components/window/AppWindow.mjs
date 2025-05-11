@@ -91,9 +91,11 @@ export default class AppWindow extends EventEmitter {
      * Including title bar, content and borders.
      * @type {HTMLElement}
      */
-    this.element = constructInitialWindowElement(
+    const appContainer = constructVisibleWindowScaffolding(
       (app.icon ?? "") + " " + (app.title ?? ""),
     );
+    this.element = document.createElement("div");
+    this.element.appendChild(appContainer);
 
     /**
      * Stores coordinates and dimensions for later retrieval.
@@ -144,7 +146,7 @@ export default class AppWindow extends EventEmitter {
       /* noop */
     };
 
-    this._setUpAppContent(app.data, app.needsSettingsObject);
+    this._setUpAppContent(appContainer, app.data, app.needsSettingsObject);
     this._setupWindowEvents();
     if (!skipAnim) {
       this._performWindowTransition("open");
@@ -312,7 +314,7 @@ export default class AppWindow extends EventEmitter {
     };
   }
 
-  _setUpAppContent(appData, needsSettingsObject) {
+  _setUpAppContent(container, appData, needsSettingsObject) {
     if (appData.create) {
       let app;
       if (needsSettingsObject) {
@@ -320,7 +322,7 @@ export default class AppWindow extends EventEmitter {
       } else {
         app = appData.create(this._abortController.signal);
       }
-      this.element.appendChild(app.element);
+      container.appendChild(app.element);
       if (app.focus) {
         this.focus = app.focus.bind(app);
         if (this.isActivated()) {
@@ -335,7 +337,7 @@ export default class AppWindow extends EventEmitter {
         appData.sidebar,
         this._abortController.signal,
       );
-      this.element.appendChild(element);
+      container.appendChild(element);
       this.focus = focus;
       return;
     }
@@ -343,15 +345,15 @@ export default class AppWindow extends EventEmitter {
     if (appData.lazyLoad) {
       const spinnerPlaceholder = getSpinnerPlaceholder();
       const initialElement = spinnerPlaceholder.element;
-      this.element.appendChild(initialElement);
+      container.appendChild(initialElement);
       appData.lazyLoad().then((module) => {
         clearTimeout(spinnerPlaceholder.timeout);
         initialElement.remove();
-        this._setUpAppContent(module, needsSettingsObject);
+        this._setUpAppContent(container, module, needsSettingsObject);
       });
       return;
     }
-    this.element.appendChild(document.createElement("div"));
+    container.appendChild(document.createElement("div"));
   }
 
   _onMaximizeButton() {
@@ -754,6 +756,22 @@ export default class AppWindow extends EventEmitter {
         this.close();
       });
     }
+
+    // Block clicks clearly on buttons from allowing to move or resize windows.
+    [minimizeBtn, maximizeBtn, closeBtn].forEach((btn) => {
+      if (btn) {
+        addEventListener(btn, "touchstart", abortSignal, (e) => {
+          e.stopPropagation();
+        });
+        addEventListener(btn, "mousedown", abortSignal, (e) => {
+          if (e.button !== 0) {
+            // not left click
+            return;
+          }
+          e.stopPropagation();
+        });
+      }
+    });
     addEventListener(document, "click", abortSignal, (evt) => {
       if (
         windowElt.classList.contains("active") &&
@@ -804,17 +822,18 @@ export default class AppWindow extends EventEmitter {
   }
 }
 
-function constructInitialWindowElement(title) {
-  return strHtml`<div>
-	<div class="w-header">
-		<div class="w-title">${title}</div>
-		<div class="w-controls">
-			<div class="w-button w-minimize" title="Minimize"><span class="w-button-icon"></span></div>
-			<div class="w-button w-maximize" title="Maximize"><span class="w-button-icon"></span></div>
-			<div class="w-button w-close" title="Close"><span class="w-button-icon"></span></div>
+function constructVisibleWindowScaffolding(title) {
+  return strHtml`
+  <div class="w-visible">
+		<div class="w-header">
+			<div class="w-title">${title}</div>
+			<div class="w-controls">
+				<div class="w-button w-minimize" title="Minimize"><span class="w-button-icon"></span></div>
+				<div class="w-button w-maximize" title="Maximize"><span class="w-button-icon"></span></div>
+				<div class="w-button w-close" title="Close"><span class="w-button-icon"></span></div>
+			</div>
 		</div>
-	</div>
-</div>`;
+  </div>`;
 }
 
 function getSpinnerPlaceholder() {

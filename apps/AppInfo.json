@@ -13,8 +13,7 @@
       },
       "desktop": {
         "display": true
-      },
-      "website": null
+      }
     },
     {
       "id": "settings",
@@ -40,7 +39,7 @@
       "icon": "💽",
       "defaultHeight": 400,
       "defaultWidth": 460,
-      "dependencies": ["filesystem"],
+      "dependencies": ["open"],
       "preload": {
         "after": 150
       }
@@ -51,10 +50,13 @@
       "icon": "🐋",
       "defaultHeight": 700,
       "defaultWidth": 1000,
+      "startMenu": {
+        "display": true
+      },
       "desktop": {
         "display": true
       },
-      "dependencies": ["filesystem"],
+      "dependencies": ["filesystem", "open"],
       "provider": ["filePickerOpen"]
     },
     {

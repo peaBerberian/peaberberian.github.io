@@ -661,11 +661,14 @@ async function performMoveOperation(fs, items, destDir, containerElt) {
   const normalizedDest = destDir.endsWith("/") ? destDir : destDir + "/";
   try {
     for (const item of items) {
-      const normalizedPath =
-        item.isDirectory && !item.path.endsWith("/")
+      if (item.isDirectory) {
+        const normalizedPath = !item.path.endsWith("/")
           ? item.path + "/"
           : item.path;
-      await fs.mv(normalizedPath, normalizedDest);
+        await fs.mv(normalizedPath, normalizedDest + item.name);
+      } else {
+        await fs.mv(item.path, normalizedDest);
+      }
     }
     showAppMessage(containerElt, `Files moved successfully`);
   } catch (error) {

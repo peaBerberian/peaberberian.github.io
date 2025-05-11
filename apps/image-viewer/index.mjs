@@ -437,8 +437,9 @@ export function create(args, env, parentAbortSignal) {
     } else {
       imageCounterElt.textContent = `Image ${currentImageIndex + 1} / ${loadedImages.length}`;
       const imageNameElt = document.createElement("div");
-      imageNameElt.textContent =
-        loadedImages[currentImageIndex]?.filename ?? "Untitled";
+      const filename = loadedImages[currentImageIndex]?.filename ?? "Untitled";
+      imageNameElt.textContent = filename;
+      env.updateTitle("🏞️", filename + " - Image Viewer");
       statusBarElt.appendChild(imageCounterElt);
       statusBarElt.appendChild(imageNameElt);
     }

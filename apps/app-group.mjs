@@ -1,5 +1,3 @@
-const textDecoder = new TextDecoder();
-
 /**
  * This is just an application which displays other applications and files
  * listed in arguments.
@@ -12,12 +10,12 @@ const textDecoder = new TextDecoder();
  * @returns {Promise.<Object>}
  */
 export async function create(args = [], env) {
-  const apps = [];
+  let apps = [];
   for (const opt of args) {
     if (opt.type === "options" && opt.icon && opt.title) {
       env.updateTitle(opt.icon, "Apps: " + opt.title);
-    } else if (opt.type === "file" && opt.data) {
-      apps.push(JSON.parse(textDecoder.decode(opt.data)));
+      apps = opt.apps;
+      break;
     }
   }
 
@@ -107,14 +105,14 @@ export async function create(args = [], env) {
         // Double click to open app
         if (clickCount && performance.now() - lastClickTs < 300) {
           clickCount = 0;
-          env.open(app, []);
+          env.open(app.path, []);
         } else {
           clickCount = 1;
           lastClickTs = performance.now();
         }
       } else {
         clickCount = 0;
-        env.open(app, []);
+        env.open(app.path, []);
       }
     });
     icon.addEventListener("mouseover", () => {

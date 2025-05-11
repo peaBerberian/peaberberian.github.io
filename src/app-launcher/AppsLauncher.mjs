@@ -68,15 +68,6 @@ export default class AppsLauncher {
      * @private
      */
     this._taskbarManager = taskbarManager;
-
-    /**
-     * Promise giving the list of application for each "provided" (by apps)
-     * features.
-     */
-    this._providersPromise = filesystem.readFile(
-      "/system/providers.config.json",
-      "object",
-    );
   }
 
   /**
@@ -241,13 +232,6 @@ export default class AppsLauncher {
         appWindow.updateTitle(newIcon, newTitle);
         this._taskbarManager.updateTitle(windowId, newIcon, newTitle);
       },
-      open: (path, args) => {
-        if (Array.isArray(path)) {
-          path.forEach((p) => this.open(p, args));
-        } else {
-          this.open(path, args);
-        }
-      },
       CONSTANTS,
     };
 
@@ -257,6 +241,16 @@ export default class AppsLauncher {
       }
       if (app.dependencies.includes("filesystem")) {
         env.filesystem = filesystem;
+      }
+      if (app.dependencies.includes("open")) {
+        env.open = (path) => {
+          if (Array.isArray(path)) {
+            // TODO: multiple open in same app
+            path.forEach((p) => this.open(p));
+          } else {
+            this.open(path);
+          }
+        };
       }
       if (app.dependencies.includes("filePickerOpen")) {
         env.filePickerOpen = (config) =>
@@ -291,24 +285,25 @@ export default class AppsLauncher {
 
   /**
    * General open function for when the type of data to open is unknown.
-   * Optionally takes arguments in case a function is opened.
-   * TODO: is args actually used?
+   * @param {string|Object} data - Either path to the file to open or executable
+   * object directly.
+   * @returns {Promise}
    */
-  async open(data, args) {
-    // For now only open "executables"....
-    // TODO: More should be doable
+  async open(data) {
     if (typeof data === "string") {
       if (data.endsWith(".run")) {
-        return this.openApp(data, args ?? []);
+        return this.openApp(data, []);
       }
 
       const lastIdxOfDot = data.lastIndexOf(".");
       if (lastIdxOfDot < 0) {
-        // TODO: notification?
+        // No extension found
+        // TODO: notification? Try executing it?
         return;
       }
       const extension = data.substring(lastIdxOfDot + 1);
       if (!extension || extension.includes("/")) {
+        // Empty extension or not a path
         // TODO: notification?
         return;
       }
@@ -317,6 +312,7 @@ export default class AppsLauncher {
         "object",
       );
       if (!defaultApps[extension]) {
+        // No default app for this extension
         // TODO: notification?
         return;
       }
@@ -331,7 +327,6 @@ export default class AppsLauncher {
           filename: getName(data),
           data: openedFile,
         },
-        ...(args ?? []),
       ]);
     }
 
@@ -339,7 +334,7 @@ export default class AppsLauncher {
     if (typeof data === "object" && data !== null) {
       if (typeof data.id === "string" && typeof data.data === "object") {
         // May be an executable
-        return this.openApp(data, args ?? []);
+        return this.openApp(data, []);
       }
     }
   }
@@ -455,7 +450,10 @@ export default class AppsLauncher {
       let filePickerElt;
       const fileOpenerAbortCtrl = createLinkedAbortController(appAbortSignal);
       try {
-        const providers = await this._providersPromise;
+        const providers = await filesystem.readFile(
+          "/system/providers.config.json",
+          "object",
+        );
         if (
           !providers.filePickerOpen ||
           providers.filePickerOpen.length === 0

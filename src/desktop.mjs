@@ -40,7 +40,7 @@ import Inception from "./apps/Inception.mjs";
 import IsobmffInspector from "./apps/isobmff-inspector.mjs";
 import Keyboard9App from "./apps/keyboard9.mjs";
 import MSESpy from "./apps/MSESpy.mjs";
-import PassGenDemoApp from "./apps/passgen-demo.mjs";
+import PassGenDemoApp from "./apps/passgen.mjs";
 import ReadmeApp from "./apps/README.mjs";
 import RxPaired from "./apps/RxPaired.mjs";
 import RxPlayer from "./apps/rx-player.mjs";
@@ -153,7 +153,7 @@ const apps = [
     startMenuDir: "Other Projects",
   },
   {
-    id: "passgen-demo",
+    id: "passgen",
     value: PassGenDemoApp(),
     inStartList: "Misc",
   },

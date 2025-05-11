@@ -1,3 +1,4 @@
+// TODO: Pathbar transforms into input element when clicked
 // TODO: after refresh, reselect and re-scroll
 // TODO: reload or watch dir
 // TODO: image thumbnails

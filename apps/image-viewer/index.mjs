@@ -71,14 +71,14 @@ export function create(_args, env, parentAbortSignal) {
       name: "rotateLeft",
       svg: rotateLeftSvg,
       height: "1.4rem",
-      title: "Rotate 90° to the left",
+      title: "Rotate left",
       onClick: rotateLeft,
     },
     {
       name: "rotateRight",
       svg: rotateRightSvg,
       height: "1.4rem",
-      title: "Rotate 90° to the right",
+      title: "Rotate right",
       onClick: rotateRight,
     },
     {
@@ -614,16 +614,19 @@ function handleImageDragging(
 function showAppMessage(containerElt, message, duration = 5000) {
   const messageElt = document.createElement("div");
   messageElt.textContent = message;
-  messageElt.style.position = "absolute";
-  messageElt.style.top = "10px";
-  messageElt.style.left = "50%";
-  messageElt.style.transform = "translateX(-50%)";
-  messageElt.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
-  messageElt.style.color = "white";
-  messageElt.style.padding = "10px 20px";
-  messageElt.style.borderRadius = "4px";
-  messageElt.style.zIndex = "1000";
-  messageElt.style.transition = "opacity 0.3s";
+  applyStyle(messageElt, {
+    position: "absolute",
+    top: "10px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    color: "white",
+    padding: "10px 20px",
+    borderRadius: "4px",
+    zIndex: "1000",
+    transition: "opacity 0.3s",
+    textAlign: "center",
+  });
 
   containerElt.appendChild(messageElt);
 

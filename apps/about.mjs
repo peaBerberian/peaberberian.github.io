@@ -122,7 +122,7 @@ export function create(_args, env) {
       description: `<div>
 	<p>Hi, my name is Paul Berberian, I'm 34¹ I'm a software engineer and tech lead at Canal+ Group living in Montpellier, France. I lead several projects linked to media streaming, including the open-source <a href="https://github.com/canalplus/rx-player" target="_blank">RxPlayer</a> media player.</p>
 
-	<p>You're here in my personal website which emulates a classical desktop environment. Everything you see here has been done especially for this desktop without any external dependency.</p>
+	<p>You're here in my personal website which implements a (functional) desktop environment. Everything you see here has been done especially for this desktop without any external dependency.</p>
 
 	<p>To contact me, you can send an e-mail to: <a href="mailto:paul.berberian@proton.me">paul.berberian@proton.me</a>.</p>
 

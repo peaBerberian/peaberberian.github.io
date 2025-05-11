@@ -6,7 +6,7 @@
 // high priority:
 // - context menu in desktop, taskbar, start menu, and explorer at least?
 // - Storage settings
-// - notification system
+// - notes quick save could detect if file change since last save
 //
 // medium priority:
 // - confirmation alert when closing window with unsaved file.
@@ -16,6 +16,7 @@
 // - copy svg in passgen is broken on multiple devices
 //
 // low priority:
+// - filesystem: re-check that no error gives away the path
 // - explorer: when going to parent directory, focus the previous one by default?
 // - filesystem: Proxy local storage in `/system32/`?
 // - filesystem: When indexedDB is not available, fallback on in-memory

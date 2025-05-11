@@ -20,6 +20,7 @@ import {
   unblockElementsFromTakingPointerEvents,
 } from "../utils.mjs";
 import { SETTINGS } from "../settings.mjs";
+import notificationEmitter from "./notification_emitter.mjs";
 
 /**
  * Create Icon HMTLElement corresponding to the given apps and returns an
@@ -84,7 +85,16 @@ export default async function DesktopAppIcons(
         return [false, JSON.parse(userConfig).list];
       }
       lastAppListMemory = userConfig;
-      const tmpList = JSON.parse(userConfig).list;
+      let tmpList;
+      try {
+        tmpList = JSON.parse(userConfig).list;
+      } catch (err) {
+        notificationEmitter.warning(
+          "Invalid Desktop Config",
+          '"/userconfig/desktop.config.json" is not a valid JSON file.\nResetting it to its default value...',
+        );
+        throw new Error("Malformed config file");
+      }
       for (const app of tmpList) {
         if (
           typeof app.title !== "string" ||
@@ -92,6 +102,10 @@ export default async function DesktopAppIcons(
           typeof app.run !== "string" ||
           (app.args != null && !Array.isArray(app.args))
         ) {
+          notificationEmitter.warning(
+            "Invalid Desktop Config",
+            '"/userconfig/desktop.config.json" contains invalid data.\nResetting it to its default value...',
+          );
           throw new Error("Malformed config file");
         }
       }

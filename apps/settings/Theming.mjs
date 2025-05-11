@@ -7,62 +7,175 @@ const themes = {
     // button style,
     "Colorful",
     // taskbar-bg
+    // (Background color of the taskbar)
     "#1a2e4b",
     // taskbar-text
+    // (Text color for unselected tasks in the taskbar)
     "#ffffff",
     // taskbar-hover
+    // (Background color when a task is hovered in the taskbar)
     "#2196f3",
     // taskbar-active-bg
+    // (Background color for the opened task in the taskbar)
     "#3498db",
     // taskbar-inactive-bg
+    // (Background color a unselected tasks in the taskbar)
     "#263b59",
     // window-active-header
+    // (Background color for the header and borders of the active window)
     "#0f4774",
     // window-active-header-text
+    // (Text color for the header and borders of the active window)
     "#ffffff",
     // window-inactive-header
+    // (Background color for the header and borders of inactive windows)
     "#737373",
     // window-inactive-header-text
+    // (Text color for the header and borders of inactive windows)
     "#ffffff",
     // window-sidebar-bg
+    // (Background color for the optional sidebar of windows)
     "#e0e0e0",
     // window-text-color
+    // (Default text color inside windows)
     "#333333",
-    // window-content-bg (background color specific to windows)
+    // window-content-bg
+    // (Background color inside windows)
     "#ffffff",
-    // window-line-color (used for very thin lines inside windows)
+    // window-line-color
+    // (Thin lines inside windows like button borders, title underlines etc.)
     "#dddddd",
-    // app-primary-color (user by a windows UI elements)
+    // app-primary-color
+    // (Emphasis color used inside windows)
     "#3498db",
-    // app-primary-bg (when a UI element should be discrete, e.g. disabled
-    // input, button background and range input's line)
+    // (Background color used by some elements like buttons, disabled
+    // input and range input's line)
     "#efefef",
     // sidebar-hover-bg
+    // (Background color when hovering a sidebar item)
     "#c8c8c8",
     // sidebar-selected-bg-color
+    // (Background color for the selected sidebar item)
     "#3498db",
     // sidebar-selected-text-color
+    // (Text color for the selected sidebar item)
     "#ffffff",
     // start-menu-text
+    // (Text color for the start menu)
     "#000000",
     // start-menu-bg
+    // (Background color for the start menu)
     "#f5f5f5",
-    // start-menu-active-bg (background color for the active application in the taskbar)
+    // start-menu-active-bg
+    // (Background color for the hovered application in the start menu)
     "#e0e0e0",
     // start-icon-bg
+    // (Background color behind app icons in the start menu, should be discrete
+    // regarding `start-menu-bg`)
     "#dddddd",
     // icon-active-text
+    // (Text color for the selected item in the desktop)
     "#ffffff",
     // icon-inactive-text
+    // (Text color for not-selected item in the desktop)
     "#ffffff",
     // icon-active-bg
+    // (Background color for the selected item in the desktop)
     "#ffffff",
     // icon-image-bg
+    // (Background color specific to the icon of a desktop's item)
     "#ffffff",
     // icon-hover
+    // (Background color for the hovered item in the desktop)
     "#ffffff",
   ],
   dark: [
+    // button style,
+    "Colorful",
+    // taskbar-bg
+    // (Background color for the taskbar)
+    "#121212",
+    // taskbar-text
+    // (Text color for unselected tasks in the taskbar)
+    "#cccccc",
+    // taskbar-hover
+    // (Background color when a task is hovered in the taskbar)
+    "#2c2c2c",
+    // taskbar-active-bg
+    // (Background color for the opened task in the taskbar)
+    "#303030",
+    // taskbar-inactive-bg
+    // (Background color a unselected tasks in the taskbar)
+    "#1a1a1a",
+    // window-active-header
+    // (Background color for the header and borders of the active window)
+    "#202020",
+    // window-active-header-text
+    // (Text color for the header and borders of the active window)
+    "#ffffff",
+    // window-inactive-header
+    // (Background color for the header and borders of inactive windows)
+    "#2c2c2c",
+    // window-inactive-header-text
+    // (Text color for the header and borders of inactive windows)
+    "#aaaaaa",
+    // window-sidebar-bg
+    // (Background color for the optional sidebar of windows)
+    "#252525",
+    // window-text-color
+    // (Default text color inside windows)
+    "#dddddd",
+    // window-content-bg
+    // (Background color inside windows)
+    "#1e1e1e",
+    // window-line-color
+    // (Thin lines inside windows like button borders, title underlines etc.)
+    "#333333",
+    // app-primary-color
+    // (Emphasis color used inside windows)
+    "#e00000",
+    // (Background color used by some elements like buttons, disabled
+    // input and range input's line)
+    "#2a2a2a",
+    // sidebar-hover-bg
+    // (Background color when hovering a sidebar item)
+    "#363636",
+    // sidebar-selected-bg-color
+    // (Background color for the selected sidebar item)
+    "#4a4a4a",
+    // sidebar-selected-text-color
+    // (Text color for the selected sidebar item)
+    "#ffffff",
+    // start-menu-text
+    // (Text color for the start menu)
+    "#dddddd",
+    // start-menu-bg
+    // (Background color for the start menu)
+    "#1a1a1a",
+    // start-menu-active-bg
+    // (Background color for the hovered application in the start menu)
+    "#303030",
+    // start-icon-bg
+    // (Background color behind app icons in the start menu, should be discrete
+    // regarding `start-menu-bg`)
+    "#252525",
+    // icon-active-text
+    // (Text color for the selected item in the desktop)
+    "#ffffff",
+    // icon-inactive-text
+    // (Text color for not-selected item in the desktop)
+    "#cccccc",
+    // icon-active-bg
+    // (Background color for the selected item in the desktop)
+    "#383838",
+    // icon-image-bg
+    // (Background color specific to the icon of a desktop's item)
+    "#2c2c2c",
+    // icon-hover
+    // (Background color for the hovered item in the desktop)
+    "#333333",
+  ],
+  moon: [
     // button style,
     "Colorful",
     // taskbar-bg
@@ -90,7 +203,6 @@ const themes = {
     // window-content-bg
     "#2b3342",
     // window-line-color
-
     "#404755",
     // app-primary-color
     "#4a99d9",
@@ -120,6 +232,150 @@ const themes = {
     "#37415A",
     // icon-hover
     "#4B5F7D",
+  ],
+  robot: [
+    // button style,
+    "Sober",
+    // taskbar-bg
+    // (Background color for the taskbar)
+    "#1a1a1d",
+    // taskbar-text
+    // (Text color for unselected tasks in the taskbar)
+    "#8a8a8f",
+    // taskbar-hover
+    // (Background color when a task is hovered in the taskbar)
+    "#2e2e33",
+    // taskbar-active-bg
+    // (Background color for the opened task in the taskbar)
+    "#33333a",
+    // taskbar-inactive-bg
+    // (Background color a unselected tasks in the taskbar)
+    "#232329",
+    // window-active-header
+    // (Background color for the header and borders of the active window)
+    "#27272c",
+    // window-active-header-text
+    // (Text color for the header and borders of the active window)
+    "#ffffff",
+    // window-inactive-header
+    // (Background color for the header and borders of inactive windows)
+    "#35353c",
+    // window-inactive-header-text
+    // (Text color for the header and borders of inactive windows)
+    "#65656d",
+    // window-sidebar-bg
+    // (Background color for the optional sidebar of windows)
+    "#1f1f24",
+    // window-text-color
+    // (Default text color inside windows)
+    "#b3b3b8",
+    // window-content-bg
+    // (Background color inside windows)
+    "#19191d",
+    // window-line-color
+    // (Thin lines inside windows like button borders, title underlines etc.)
+    "#40404a",
+    // app-primary-color
+    // (Emphasis color used inside windows)
+    "#039b31",
+    // (Background color used by some elements like buttons, disabled
+    // input and range input's line)
+    "#2b2b33",
+    // sidebar-hover-bg
+    // (Background color when hovering a sidebar item)
+    "#2e2e36",
+    // sidebar-selected-bg-color
+    // (Background color for the selected sidebar item)
+    "#38383f",
+    // sidebar-selected-text-color
+    // (Text color for the selected sidebar item)
+    "#ffffff",
+    // start-menu-text
+    // (Text color for the start menu)
+    "#b8b8bf",
+    // start-menu-bg
+    // (Background color for the start menu)
+    "#222228",
+    // start-menu-active-bg
+    // (Background color for the hovered application in the start menu)
+    "#2d2d36",
+    // start-icon-bg
+    // (Background color behind app icons in the start menu, should be discrete
+    // regarding `start-menu-bg`)
+    "#2a2a33",
+    // icon-active-text
+    // (Text color for the selected item in the desktop)
+    "#ffffff",
+    // icon-inactive-text
+    // (Text color for not-selected item in the desktop)
+    "#9a9aa5",
+    // icon-active-bg
+    // (Background color for the selected item in the desktop)
+    "#323239",
+    // icon-image-bg
+    // (Background color specific to the icon of a desktop's item)
+    "#27272e",
+    // icon-hover
+    // (Background color for the hovered item in the desktop)
+    "#2c2c33",
+  ],
+  otter: [
+    // button style,
+    "Sober",
+    // taskbar-bg
+    "#0d3a40", // Deep teal (dark river water)
+    // taskbar-text
+    "#ffffff",
+    // taskbar-hover
+    "#3dd0d8", // Bright otter-play teal
+    // taskbar-active-bg
+    "#1a7a7f", // Mid-depth teal
+    // taskbar-inactive-bg
+    "#1a4a4f", // Slightly lighter than taskbar-bg
+    // window-active-header
+    "#0d5a62", // Richer teal for active window
+    // window-active-header-text
+    "#ffffff",
+    // window-inactive-header
+    "#5a7a7f", // Desaturated teal-gray
+    // window-inactive-header-text
+    "#ffffff",
+    // window-sidebar-bg
+    "#e0f5f5", // Very light teal (foam/bubbles)
+    // window-text-color
+    "#222222",
+    // window-content-bg
+    "#ffffff",
+    // window-line-color
+    "#cce5e5", // Subtle teal tint
+    // app-primary-color
+    "#2ab7c1", // Vibrant otter-pop teal
+    // element-bg
+    "#f0fafa", // Ice-teal (soft background)
+    // sidebar-hover-bg
+    "#b3e5e5", // Light teal hover
+    // sidebar-selected-bg-color
+    "#1a7a7f", // Matches taskbar-active-bg
+    // sidebar-selected-text-color
+    "#ffffff",
+    // start-menu-text
+    "#000000",
+    // start-menu-bg
+    "#f0fafa", // Matches element-bg
+    // start-menu-active-bg
+    "#cce5e5", // Slightly darker than sidebar-hover
+    // start-icon-bg
+    "#ddf0f0", // Very faint teal
+    // icon-active-text
+    "#ffffff",
+    // icon-inactive-text
+    "#ffffff",
+    // icon-active-bg
+    "#2ab7c1", // Primary teal
+    // icon-image-bg
+    "#ffffff",
+    // icon-hover
+    "#e0f5f5", // Light teal (matches sidebar)
   ],
   crystal: [
     // button style,
@@ -774,6 +1030,64 @@ const themes = {
     // icon-hover
     "#5d9e5d",
   ],
+  turtle: [
+    // button style,
+    "Sober",
+    // taskbar-bg
+    "#0d352a", // Dark turtle shell (forest green)
+    // taskbar-text
+    "#ffffff",
+    // taskbar-hover
+    "#2ac1a8", // Bright algae green
+    // taskbar-active-bg
+    "#1a6a5a", // Mid-tone shell green
+    // taskbar-inactive-bg
+    "#124a3a", // Darker green
+    // window-active-header
+    "#0a4a3a", // Rich pond green
+    // window-active-header-text
+    "#ffffff",
+    // window-inactive-header
+    "#4a6a5a", // Desaturated green-gray
+    // window-inactive-header-text
+    "#ffffff",
+    // window-sidebar-bg
+    "#e0f0ea", // Light water reflection (hint of blue)
+    // window-text-color
+    "#222222",
+    // window-content-bg
+    "#ffffff",
+    // window-line-color
+    "#b8d8d0", // Subtle aquatic tint
+    // app-primary-color
+    "#1a9a82", // Vibrant turtle green
+    // element-bg
+    "#e8f5f2", // Ice-blue/green (water surface)
+    // sidebar-hover-bg
+    "#a8e0d0", // Light aquatic hover
+    // sidebar-selected-bg-color
+    "#1a6a5a", // Matches taskbar-active-bg
+    // sidebar-selected-text-color
+    "#ffffff",
+    // start-menu-text
+    "#000000",
+    // start-menu-bg
+    "#e8f5f0", // Pale water (replaces sand)
+    // start-menu-active-bg
+    "#c8e8e0", // Rippled water effect
+    // start-icon-bg
+    "#d0f0e8", // Foam/light reflection
+    // icon-active-text
+    "#ffffff",
+    // icon-inactive-text
+    "#ffffff",
+    // icon-active-bg
+    "#1a9a82", // Primary turtle green
+    // icon-image-bg
+    "#ffffff",
+    // icon-hover
+    "#c8f0e0", // Shallow water highlight
+  ],
 };
 
 export default function createThemeSection(settings, abortSignal) {
@@ -882,7 +1196,9 @@ function constructThemePresetSelection(setTheme) {
 ${gridElt}
 </div>`;
   const emojis = [
-    ["🌚", "dark"],
+    ["🥷", "dark"],
+    ["🌚", "moon"],
+    ["🤖", "robot"],
     ["🌊", "light"],
     ["🥶", "cold"],
     ["🥵", "hot"],
@@ -893,7 +1209,9 @@ ${gridElt}
     ["🍵", "matcha"],
     ["🍯", "honey"],
     ["🐖", "pig"],
+    ["🦦", "otter"],
     ["🐋", "whale"],
+    ["🐢", "turtle"],
     ["🐼", "panda"],
   ];
   emojis.forEach(([emoji, val]) => {

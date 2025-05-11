@@ -1,11 +1,10 @@
 // TODO: Move to its own, "explorer", application
 //
-// TODO: MAJ+click
 // TODO: image thumbnails
 // TODO: Drag and drop in directory?
 // TODO: Cut (Move) button
 // TODO: Paste (Move) button
-// TODO: TOUCH
+// TODO: Better touch handling
 // TODO: check mv inside itself if it works
 // TODO: escape when there's a mask
 // TODO: Download multiple files as zip through Compress API?
@@ -37,12 +36,6 @@ export function createFileOpener(
    * @type {HTMLElement}
    */
   const explorerContainer = document.createElement("div");
-  explorerContainer.onkeydown = (e) => {
-    // TODO: We should have focus inside directly
-    if (e.key === "Escape") {
-      onFilesOpened([]);
-    }
-  };
 
   /** `AbortController` linked to the currently-displayed directory. */
   let currentDirectoryAbortController = new AbortController();

@@ -1374,6 +1374,10 @@ input[type="range"]::-moz-range-thumb {
   background-color: var(--app-primary-bg);
 }
 
+.dash-focus:focus {
+	outline: 1px dashed;
+}
+
 /* Animations */
 
 @keyframes spin {

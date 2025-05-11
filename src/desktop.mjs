@@ -15,11 +15,10 @@
 // high priority:
 //
 // medium priority:
-// - start menu should always do some kind of sublist when sublists are enabled
-// - copy svg in passgen is broken on multiple devices
-// - What do if App creation errors or rejects?
 // - image viewer touch controls
 // - Sometimes the focus in on a desktop icon, not on the app
+// - start menu should always do some kind of sublist when sublists are enabled
+// - copy svg in passgen is broken on multiple devices
 //
 // low priority:
 // - windows moving when moving taskbar to top/bottom. Could be cool to stay in
@@ -45,7 +44,6 @@
 // - when side-by-side window snapping we should be able to resize both at the same time
 // - z-index normalization could be less frequent, I don't know much if this has
 //   an impact
-// - icon lose focus onmousedown, not onclick
 // - Do "fake" app store to actually add external apps? (without it, though they
 //   do not really take space, it still could clutter if enough interesting
 //   i-frame-capable websites are found.)

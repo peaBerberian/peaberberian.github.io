@@ -105,7 +105,7 @@ The following properties can be set for each application:
 
 ## The `create` function
 
-Entry file of each application should export a `create` function in their main
+The entry file of each application should export a `create` function in their main
 file.
 
 ### Parameters
@@ -190,5 +190,9 @@ The `create` function should return either:
 
   This can also be used to decide what element will be focused when opening
   or switching to the application.
+
+Alternatively, it can also return a Promise which resolves with the same object.
+In cases where it returns a promise, a spinner will be shown while the promise
+is not yet resolved.
 
 Look at the apps already here for more information.

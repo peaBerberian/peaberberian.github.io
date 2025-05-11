@@ -203,6 +203,36 @@ export const SETTINGS = {
   /** If `true`, "snapping" a window to a side of the screen make if half-full-screen. */
   sideWindowSnapping: createRefForState("side-window-snapping", true),
 
+  /** How to display "tools" in concerned applications. */
+  toolbarFormat: createRefForState("toolbar-format", "both", (format) => {
+    if (format === "icon") {
+      document.body.classList.add("no-tool-title");
+    } else {
+      document.body.classList.remove("no-tool-title");
+    }
+  }),
+
+  /** How to display the "sidebar" in concerned applications. */
+  sidebarFormat: createRefForState("sidebar-format", "auto", (format) => {
+    if (format === "top") {
+      document.body.classList.add("w-sidebar-top");
+    } else {
+      document.body.classList.remove("w-sidebar-top");
+    }
+  }),
+
+  showIframeBlockerHelp: createRefForState(
+    "i-frame-blocker-msg",
+    true,
+    (displayHelp) => {
+      if (displayHelp) {
+        document.body.classList.remove("transparent-i-frame-top");
+      } else {
+        document.body.classList.add("transparent-i-frame-top");
+      }
+    },
+  ),
+
   dblClickHeaderFullScreen: createRefForState(
     "dbl-click-header-full-screen",
     true,

@@ -624,6 +624,23 @@ html {
   color: var(--sidebar-hover-bg);
 }
 
+.w-tool-title {
+  font-size: 0.9em;
+  padding: 0 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+  white-space: normal;
+  max-width: 6em;
+  width: min-content;
+  overflow: hidden;
+}
+
+.no-tool-title .w-tool-title {
+  display: none;
+}
+
 .w-button {
   width: var(--window-button-size);
   height: var(--window-button-size);
@@ -995,7 +1012,18 @@ ol {
 
 .iframe-top-layer {
   display: flex;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  background-color: #000000aa;
+  justify-content: center;
+  align-items: center;
 }
+
+.transparent-i-frame-top .iframe-top-layer {
+  opacity: 0;
+}
+
 .window.active .iframe-top-layer {
   display: none;
 }
@@ -1558,6 +1586,21 @@ input[type="range"]::-moz-range-thumb {
     word-break: normal;
     overflow: visible;
   }
+}
+
+.w-sidebar-top .w-container {
+  flex-direction: column;
+}
+.w-sidebar-top .w-sidebar {
+  display: flex;
+  max-width: 100%;
+}
+.w-sidebar-top .w-sidebar-item {
+  text-align: center;
+  text-overflow: clip;
+  overflow-wrap: normal;
+  word-break: normal;
+  overflow: visible;
 }
 
 @keyframes SPEEN {

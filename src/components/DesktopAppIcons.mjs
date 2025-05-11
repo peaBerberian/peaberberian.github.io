@@ -18,6 +18,7 @@ import {
   addAbortableEventListener,
   applyStyle,
   blockElementsFromTakingPointerEvents,
+  createLinkedAbortController,
   getMaxDesktopDimensions,
   unblockElementsFromTakingPointerEvents,
 } from "../utils.mjs";
@@ -34,6 +35,7 @@ import { SETTINGS } from "../settings.mjs";
  *   - `run` (`string`): The path to the application to run.
  *   - `icon` (`string`): The icon representing that application.
  *   - `title` (`string`): The title for that application.
+ *   - `args` (`Args`): The optional arguments for that application.
  * @param {Function} onOpen - Callback that will be called when/if an app is
  * launched through its icon, with the corresponding application path.
  * @param {AbortSignal} [parentAbortSignal] - AbortSignal allowing to free
@@ -47,67 +49,188 @@ export default async function DesktopAppIcons(
   onOpen,
   parentAbortSignal,
 ) {
-  let appList;
-  try {
-    const userConfig = await fs.readFile(
-      "/userconfig/desktop.config.json",
-      "object",
-    );
-    appList = userConfig.list;
-    for (const app of appList) {
-      if (
-        typeof app.title !== "string" ||
-        typeof app.icon !== "string" ||
-        typeof app.run !== "string" ||
-        (app.args != null && !Array.isArray(app.args))
-      ) {
-        throw new Error("Malformed config file");
-      }
-    }
-  } catch (err) {
-    if (err.code !== "NoEntryError") {
-      console.warn('Failure to read "/userconfig/desktop.config.json":', err);
-      console.warn(`"/userconfig/desktop.config.json" will be reset`);
-    } else {
-      console.info(
-        `No "/userconfig/desktop.config.json" yet. Initializing one...`,
-      );
-    }
-    const systemConfig = await fs.readFile(
-      "/system32/default-desktop.json",
-      "object",
-    );
-    fs.writeFile(
-      "/userconfig/desktop.config.json",
-      JSON.stringify(systemConfig, null, 2),
-    );
-    appList = systemConfig.list.slice();
-  }
-  let abortController;
   const iconWrapperElt = document.createElement("div");
+  let lastAppListMemory;
+  let currentAbortController = createLinkedAbortController(parentAbortSignal);
 
-  // initialize to no icon
-  let lastGrid = [0, 0];
-  SETTINGS.fontSize.onUpdate(recheckUpdate, {
-    clearSignal: parentAbortSignal,
-  });
-  window.addEventListener("resize", recheckUpdate);
-  SETTINGS.taskbarSize.onUpdate(recheckUpdate, {
-    clearSignal: parentAbortSignal,
-  });
-  SETTINGS.taskbarLocation.onUpdate(recheckUpdate, {
-    clearSignal: parentAbortSignal,
-  });
-  if (parentAbortSignal) {
-    parentAbortSignal.addEventListener("abort", () => {
-      window.removeEventListener("resize", recheckUpdate);
-    });
+  fs.watch(
+    "/userconfig/desktop.config.json",
+    async () => {
+      const abortSignal = currentAbortController.signal;
+      const [hasChanged, newAppList] = await getAppList();
+      if (abortSignal.aborted || !hasChanged) {
+        return;
+      }
+      iconWrapperElt.innerHTML = "";
+      currentAbortController.abort();
+      currentAbortController = createLinkedAbortController(parentAbortSignal);
+
+      await constructGrid(newAppList, currentAbortController.signal);
+      if (abortSignal.aborted) {
+        return;
+      }
+    },
+    parentAbortSignal,
+  );
+
+  const abortSignal = currentAbortController.signal;
+  const [_, appList] = await getAppList();
+  if (abortSignal.aborted) {
+    return;
   }
-  recheckUpdate();
-  containerElt.appendChild(iconWrapperElt);
-  return;
+  constructGrid(appList, abortSignal);
 
-  function refreshIcons(gridSize, iconHeight) {
+  async function getAppList() {
+    try {
+      const userConfig = await fs.readFile("/userconfig/desktop.config.json");
+      if (lastAppListMemory === userConfig) {
+        return [false, JSON.parse(userConfig).list];
+      }
+      lastAppListMemory = userConfig;
+      const tmpList = JSON.parse(userConfig).list;
+      for (const app of tmpList) {
+        if (
+          typeof app.title !== "string" ||
+          typeof app.icon !== "string" ||
+          typeof app.run !== "string" ||
+          (app.args != null && !Array.isArray(app.args))
+        ) {
+          throw new Error("Malformed config file");
+        }
+      }
+      return [true, tmpList];
+    } catch (err) {
+      if (err.code !== "NoEntryError") {
+        console.warn('Failure to read "/userconfig/desktop.config.json":', err);
+        console.warn(`"/userconfig/desktop.config.json" will be reset`);
+      } else {
+        console.info(
+          `No "/userconfig/desktop.config.json" yet. Initializing one...`,
+        );
+      }
+      const systemConfig = await fs.readFile(
+        "/system32/default-desktop.json",
+        "object",
+      );
+      lastAppListMemory = JSON.stringify(systemConfig, null, 2);
+      fs.writeFile("/userconfig/desktop.config.json", lastAppListMemory);
+      return [true, systemConfig.list.slice()];
+    }
+  }
+
+  function constructGrid(appList, abortSignal) {
+    if (abortSignal.aborted) {
+      return;
+    }
+    let currentGridAbortController = createLinkedAbortController(abortSignal);
+
+    // initialize to no icon
+    let lastGrid = [0, 0];
+    SETTINGS.fontSize.onUpdate(recheckUpdate, {
+      clearSignal: parentAbortSignal,
+    });
+    window.addEventListener("resize", recheckUpdate);
+    SETTINGS.taskbarSize.onUpdate(recheckUpdate, {
+      clearSignal: parentAbortSignal,
+    });
+    SETTINGS.taskbarLocation.onUpdate(recheckUpdate, {
+      clearSignal: parentAbortSignal,
+    });
+    if (parentAbortSignal) {
+      parentAbortSignal.addEventListener("abort", () => {
+        window.removeEventListener("resize", recheckUpdate);
+      });
+    }
+    containerElt.appendChild(iconWrapperElt);
+    return recheckUpdate();
+
+    function recheckUpdate() {
+      return new Promise((resolve, reject) => {
+        requestAnimationFrame(() => {
+          try {
+            // Do a complex check first to see if icons need to be re-rendered.
+            // There was a performance ""issue"" (not that much in thruth, but still
+            // surprising) repainting the icons on resize before.
+
+            const newDimensions = getMaxDesktopDimensions(
+              SETTINGS.taskbarLocation.getValue(),
+              SETTINGS.taskbarSize.getValue(),
+            );
+            const newMaxWidth = newDimensions.maxWidth;
+            const newMaxHeight = newDimensions.maxHeight;
+            const newIconHeight =
+              ICON_HEIGHT_BASE +
+              SETTINGS.fontSize.getValue() * 2 +
+              ICON_Y_OFFSET_FROM_HEIGHT;
+            const newGrid = [
+              // nb of icons on height / column
+              Math.floor(
+                (newMaxHeight - ICON_Y_BASE) / (newIconHeight + ICON_MARGIN),
+              ),
+              // nb of icons on width / row
+              Math.floor(
+                (newMaxWidth - ICON_X_BASE) /
+                  (ICON_WIDTH_BASE + ICON_X_OFFSET_FROM_WIDTH),
+              ),
+            ];
+
+            const doRefresh = () => {
+              currentGridAbortController?.abort();
+              currentGridAbortController =
+                createLinkedAbortController(abortSignal);
+              refreshIcons(
+                appList,
+                newGrid,
+                newIconHeight,
+                currentGridAbortController.signal,
+              );
+              lastGrid = newGrid;
+            };
+
+            if (newGrid[0] < lastGrid[0]) {
+              if (newGrid[0] >= appList.length) {
+                // There's less apps than the first column anyway
+                return;
+              } else {
+                doRefresh();
+              }
+            } else if (newGrid[0] === lastGrid[0]) {
+              // check columns
+              if (newGrid[1] < lastGrid[1]) {
+                // less columns check that the new still can contain all apps
+                if (newGrid[0] * newGrid[1] < appList.length) {
+                  doRefresh();
+                }
+              } else if (newGrid[1] > lastGrid[1]) {
+                // more columns, check that the previous could contain all apps
+                if (lastGrid[0] * lastGrid[1] < appList.length) {
+                  doRefresh();
+                }
+              }
+            } else {
+              // newGrid[0] > lastGrid[0]
+
+              if (lastGrid[0] >= appList.length) {
+                // There was apps than the first column anyway
+                return;
+              } else {
+                doRefresh();
+              }
+            }
+            resolve();
+          } catch (err) {
+            reject(err);
+          }
+        });
+      });
+    }
+  }
+
+  function refreshIcons(appList, gridSize, iconHeight, abortSignal) {
+    if (abortSignal.aborted) {
+      return;
+    }
+
     /**
      * The next x, y position at which a desktop icon will be added.
      */
@@ -118,23 +241,13 @@ export default async function DesktopAppIcons(
 
     iconWrapperElt.innerHTML = "";
 
-    abortController?.abort();
-    abortController = new AbortController();
-    if (parentAbortSignal) {
-      const onParentAbort = () => abortController.abort();
-      parentAbortSignal.addEventListener("abort", onParentAbort);
-      abortController.signal.addEventListener("abort", () => {
-        parentAbortSignal.removeEventListener("abort", onParentAbort);
-      });
-    }
-
     const iconEltAppTuple = [];
     let currentRow = 0;
     for (let i = 0; i < appList.length; i++) {
       const app = appList[i];
       const iconElt = document.createElement("div");
       iconElt.tabIndex = "0";
-      iconElt.className = "icon";
+      iconElt.className = `icon icon-app-${app.id}`;
 
       if (currentRow >= gridSize[0]) {
         currentRow = 0;
@@ -198,7 +311,7 @@ export default async function DesktopAppIcons(
         }
       };
       document.addEventListener("click", onDocumentClick);
-      abortController.signal.addEventListener("abort", () => {
+      abortSignal.addEventListener("abort", () => {
         document.removeEventListener("click", onDocumentClick);
       });
       iconEltAppTuple.push([iconElt, app]);
@@ -212,79 +325,14 @@ export default async function DesktopAppIcons(
         height: iconHeight,
         width: ICON_WIDTH_BASE,
       },
-      reorderApps,
-      abortController.signal,
+      (newTuple) => reorderApps(appList, newTuple),
+      abortSignal,
     );
   }
-  function reorderApps(newTuple) {
+  function reorderApps(appList, newTuple) {
     appList = newTuple.map(([_, app]) => app);
-    fs.writeFile(
-      "/userconfig/desktop.config.json",
-      JSON.stringify({ list: appList }, null, 2),
-    );
-  }
-  function recheckUpdate() {
-    requestAnimationFrame(() => {
-      // Do a complex check first to see if icons need to be re-rendered.
-      // There was a performance ""issue"" (not that much in thruth, but still
-      // surprising) repainting the icons on resize before.
-
-      const newDimensions = getMaxDesktopDimensions(
-        SETTINGS.taskbarLocation.getValue(),
-        SETTINGS.taskbarSize.getValue(),
-      );
-      const newMaxWidth = newDimensions.maxWidth;
-      const newMaxHeight = newDimensions.maxHeight;
-      const newIconHeight =
-        ICON_HEIGHT_BASE +
-        SETTINGS.fontSize.getValue() * 2 +
-        ICON_Y_OFFSET_FROM_HEIGHT;
-      const newGrid = [
-        // nb of icons on height / column
-        Math.floor(
-          (newMaxHeight - ICON_Y_BASE) / (newIconHeight + ICON_MARGIN),
-        ),
-        // nb of icons on width / row
-        Math.floor(
-          (newMaxWidth - ICON_X_BASE) /
-            (ICON_WIDTH_BASE + ICON_X_OFFSET_FROM_WIDTH),
-        ),
-      ];
-      if (newGrid[0] < lastGrid[0]) {
-        if (newGrid[0] >= appList.length) {
-          // There's less apps than the first column anyway
-          return;
-        } else {
-          refreshIcons(newGrid, newIconHeight);
-          lastGrid = newGrid;
-        }
-      } else if (newGrid[0] === lastGrid[0]) {
-        // check columns
-        if (newGrid[1] < lastGrid[1]) {
-          // less columns check that the new still can contain all apps
-          if (newGrid[0] * newGrid[1] < appList.length) {
-            refreshIcons(newGrid, newIconHeight);
-            lastGrid = newGrid;
-          }
-        } else if (newGrid[1] > lastGrid[1]) {
-          // more columns, check that the previous could contain all apps
-          if (lastGrid[0] * lastGrid[1] < appList.length) {
-            refreshIcons(newGrid, newIconHeight);
-            lastGrid = newGrid;
-          }
-        }
-      } else {
-        // newGrid[0] > lastGrid[0]
-
-        if (lastGrid[0] >= appList.length) {
-          // There was apps than the first column anyway
-          return;
-        } else {
-          refreshIcons(newGrid, newIconHeight);
-          lastGrid = newGrid;
-        }
-      }
-    });
+    lastAppListMemory = JSON.stringify({ list: appList }, null, 2);
+    fs.writeFile("/userconfig/desktop.config.json", lastAppListMemory);
   }
 }
 
@@ -532,3 +580,60 @@ function addMovingAroundListeners(
     dragBaseTop = updatedTop;
   }
 }
+
+// function areAppListsDifferent(appList1, appList2) {
+//   if (appList1.length !== appList2.length) {
+//     return false;
+//   }
+//
+//   for (let i = 0; i < appList1.length; i++) {
+//     if (!isEqual(appList1[i], appList2[i])) {
+//       return false;
+//     }
+//   }
+//
+//   return true;
+//
+//   // TODO: arraybuffer?
+//
+//   function isEqual(obj1, obj2) {
+//     if (obj1 === obj2) {
+//       return true;
+//     }
+//     if (obj1 == null || obj2 == null) {
+//       return false;
+//     }
+//
+//     if (typeof obj1 !== "object" || typeof obj2 !== "object") {
+//       return obj1 === obj2;
+//     }
+//
+//     if (Array.isArray(obj1) || Array.isArray(obj2)) {
+//       if (!Array.isArray(obj1) || !Array.isArray(obj2)) {
+//         return false;
+//       }
+//       if (obj1.length !== obj2.length) {
+//         return false;
+//       }
+//       for (let i = 0; i < obj1.length; i++) {
+//         if (!isEqual(obj1[i], obj2[i])) return false;
+//       }
+//       return true;
+//     }
+//
+//     const keys1 = Object.keys(obj1);
+//     const keys2 = Object.keys(obj2);
+//
+//     if (keys1.length !== keys2.length) {
+//       return false;
+//     }
+//
+//     for (let key of keys1) {
+//       if (!keys2.includes(key) || !isEqual(obj1[key], obj2[key])) {
+//         return false;
+//       }
+//     }
+//
+//     return true;
+//   }
+// }

@@ -12,6 +12,7 @@
 // - text-color quicklink svgs
 // - taskbar active task and hover opacity may be different than regular opacity
 // - taskbar after windows in settings?
+// - start menu always do some kind of sublist when sublists are enabled
 //
 // low priority:
 // - windows moving when moving taskbar to top/bottom. Could be cool to stay in

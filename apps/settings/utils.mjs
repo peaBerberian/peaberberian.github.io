@@ -1,6 +1,5 @@
-const { strHtml, applyStyle } = AppUtils;
-
-export function createColorPickerOnRef(ref, text, abortSignal) {
+export function createColorPickerOnRef(ref, text, appUtils, abortSignal) {
+  const { strHtml, applyStyle } = appUtils;
   const container = strHtml`<span />`;
   const textElt = text != null ? strHtml`<span>${text}</span>` : null;
   if (textElt) {
@@ -39,8 +38,10 @@ export function createColorPickerOnRef(ref, text, abortSignal) {
 
 export function createNumericSliderOnRef(
   { label, ref, min, max, valueToText },
+  appUtils,
   abortSignal,
 ) {
+  const { strHtml } = appUtils;
   const wrapper = strHtml`<div class="w-slider-container">`;
   const sliderLineElt = strHtml`<div class="w-slider-with-value" />`;
   const labelElt = strHtml`<label>${label}</label>`;
@@ -68,7 +69,8 @@ export function createNumericSliderOnRef(
   return wrapper;
 }
 
-export function createCheckboxOnRef({ ref, label }, abortSignal) {
+export function createCheckboxOnRef({ ref, label }, appUtils, abortSignal) {
+  const { strHtml } = appUtils;
   const inputEl = strHtml`<input type="checkbox" id="animations-toggle" checked="">`;
   inputEl.checked = ref.getValue();
   const checkboxElt = strHtml`<div class="w-small-opt">
@@ -90,7 +92,12 @@ export function createCheckboxOnRef({ ref, label }, abortSignal) {
   return checkboxElt;
 }
 
-export function createDropdownOnRef({ ref, options, label }, abortSignal) {
+export function createDropdownOnRef(
+  { ref, options, label },
+  appUtils,
+  abortSignal,
+) {
+  const { strHtml } = appUtils;
   const selectEl = strHtml`<select class="w-select">
 ${options.map((o) => strHtml`<option value="${o}">${o}</option>`)}
 </select>`;

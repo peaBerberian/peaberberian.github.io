@@ -1,17 +1,18 @@
-const { createAppIframe, strHtml, createAppTitle } = window.AppUtils;
-
 const DEMO_LINK = "https://peaberberian.github.io/wasp-hls/";
 const DOC_LINK =
   "https://peaberberian.github.io/wasp-hls/doc/Getting_Started/Welcome.html";
 const GITHUB_LINK = "https://github.com/peaBerberian/wasp-hls";
 
-const sidebar = [
-  {
-    text: "Overview",
-    icon: "🧑‍🏫",
-    centered: true,
-    render: () => {
-      return strHtml`<div>
+export function create(_args, env) {
+  const { strHtml, createAppTitle, createAppIframe } = env.appUtils;
+  return {
+    sidebar: [
+      {
+        text: "Overview",
+        icon: "🧑‍🏫",
+        centered: true,
+        render: () => {
+          return strHtml`<div>
 ${createAppTitle("WASP-HLS", { github: GITHUB_LINK, doc: DOC_LINK, demo: DEMO_LINK })}
 
 <p><a href="${GITHUB_LINK}" target="_blank">WASP-HLS</a> is a personal project where I did some R&D on the side to see how a very efficient web media player could look like:
@@ -28,17 +29,17 @@ ${createAppTitle("WASP-HLS", { github: GITHUB_LINK, doc: DOC_LINK, demo: DEMO_LI
 
 <p>I sometimes come back to it but not as much, yet it is still very functional. At some point, I wanted to also <a href="https://github.com/peaBerberian/wasp-hls/pull/5">port to Rust the optional transmuxing code</a> (converting some specific containers here to an mp4-like one to improve browser compatibility) - yet the task was enormous and I never really finished it, nor could see if the gain of porting that code would be sensible (I guessed it would, it's a relatively heavy operation).<br>Though transmuxing is less and less needed so I'm not too unhappy that it has not been done yet.</p>
 </div>`;
-    },
-  },
-  {
-    text: "Demo",
-    icon: "📺",
-    noPadding: true,
-    render: () => {
-      const appIframe = createAppIframe(DEMO_LINK);
-      return appIframe;
-    },
-  },
-];
-
-export { sidebar };
+        },
+      },
+      {
+        text: "Demo",
+        icon: "📺",
+        noPadding: true,
+        render: () => {
+          const appIframe = createAppIframe(DEMO_LINK);
+          return appIframe;
+        },
+      },
+    ],
+  };
+}

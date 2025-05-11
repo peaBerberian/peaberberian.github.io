@@ -5,33 +5,47 @@ import {
   createNumericSliderOnRef,
 } from "./utils.mjs";
 
-const { createAppTitle, strHtml } = AppUtils;
-
-export default function createWindowSection(settings, abortSignal) {
+export default function createWindowSection(
+  { appUtils, settings },
+  abortSignal,
+) {
+  const { createAppTitle, strHtml } = appUtils;
   const section = strHtml`<div>${createAppTitle("Window", {})}</div>`;
   section.dataset.section = "window";
 
   const headerStyleGroup = strHtml`<div class="w-group"><h3>Header style</h3></div>`;
   headerStyleGroup.appendChild(
-    createDropdownOnRef({
-      ref: settings.headerTitlePosition,
-      options: ["Left", "Right", "Center"],
-      label: "Title Position",
-    }),
+    createDropdownOnRef(
+      {
+        ref: settings.headerTitlePosition,
+        options: ["Left", "Right", "Center"],
+        label: "Title Position",
+      },
+      appUtils,
+      abortSignal,
+    ),
   );
   headerStyleGroup.appendChild(
-    createDropdownOnRef({
-      ref: settings.buttonPosition,
-      options: ["Left", "Right"],
-      label: "Button Position",
-    }),
+    createDropdownOnRef(
+      {
+        ref: settings.buttonPosition,
+        options: ["Left", "Right"],
+        label: "Button Position",
+      },
+      appUtils,
+      abortSignal,
+    ),
   );
   headerStyleGroup.appendChild(
-    createDropdownOnRef({
-      ref: settings.buttonStyle,
-      options: ["Colorful", "Sober"],
-      label: "Button Style",
-    }),
+    createDropdownOnRef(
+      {
+        ref: settings.buttonStyle,
+        options: ["Colorful", "Sober"],
+        label: "Button Style",
+      },
+      appUtils,
+      abortSignal,
+    ),
   );
   section.appendChild(headerStyleGroup);
 
@@ -45,6 +59,7 @@ export default function createWindowSection(settings, abortSignal) {
         max: 50,
         valueToText: (val) => String(val) + "px",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -57,6 +72,7 @@ export default function createWindowSection(settings, abortSignal) {
         max: 25,
         valueToText: (val) => String(val),
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -69,6 +85,7 @@ export default function createWindowSection(settings, abortSignal) {
         max: 15,
         valueToText: (val) => String(val),
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -81,6 +98,7 @@ export default function createWindowSection(settings, abortSignal) {
         ref: settings.oobWindows,
         label: "Windows can partially be moved out of the screen",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -90,6 +108,7 @@ export default function createWindowSection(settings, abortSignal) {
         ref: settings.absoluteWindowPositioning,
         label: "Absolute Positioning (don't move windows on page resize)",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -99,6 +118,7 @@ export default function createWindowSection(settings, abortSignal) {
         ref: settings.absoluteWindowSize,
         label: "Absolute size (don't update window size on page resize)",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -108,6 +128,7 @@ export default function createWindowSection(settings, abortSignal) {
         ref: settings.dblClickHeaderFullScreen,
         label: "Double clicking on header toggles full-screen mode",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -120,6 +141,7 @@ export default function createWindowSection(settings, abortSignal) {
         label:
           "When moving a window to the top of the screen, put it on fullscreen",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -130,6 +152,7 @@ export default function createWindowSection(settings, abortSignal) {
         label:
           "When moving a window to a side of the screen, put it on half-screen mode (if there's enough horizontal space)",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -152,7 +175,9 @@ export default function createWindowSection(settings, abortSignal) {
     ["Sidebar Selected Background", settings.windowSidebarSelectedBgColor],
     ["Sidebar Selected Text", settings.windowSidebarSelectedTextColor],
   ].forEach(([text, ref]) => {
-    colorGroupElt.appendChild(createColorPickerOnRef(ref, text, abortSignal));
+    colorGroupElt.appendChild(
+      createColorPickerOnRef(ref, text, appUtils, abortSignal),
+    );
   });
   section.appendChild(colorGroupElt);
   return section;

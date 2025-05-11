@@ -1,15 +1,16 @@
-const { strHtml, createAppTitle } = window.AppUtils;
-
 const DEMO_LINK = "https://peaberberian.github.io/AISOBMFFWVDFBUTFAII/";
 const GITHUB_LINK = "https://github.com/peaberberian/isobmff-inspector";
 
-const sidebar = [
-  {
-    text: "Overview",
-    icon: "🧑‍🏫",
-    centered: true,
-    render: () => {
-      return strHtml`<div>
+export function create(_args, env) {
+  const { strHtml, createAppTitle } = env.appUtils;
+  return {
+    sidebar: [
+      {
+        text: "Overview",
+        icon: "🧑‍🏫",
+        centered: true,
+        render: () => {
+          return strHtml`<div>
 	${createAppTitle("isobmff-inspector", { github: GITHUB_LINK, demo: DEMO_LINK })}
 
 	<p>ISOBMFF-inspector is an ISOBMFF-compatible (for example: "mp4" files) file parser written in JavaScript.</p>
@@ -20,8 +21,8 @@ const sidebar = [
 	<p>Isobmff-inspector is a simple parser for those files allowing to visualize the metadata contained in a mp4 file. I often use it in professional contexts when inspecting some playback-related issues.</p>
 
 </div>`;
-    },
-  },
-];
-
-export { sidebar };
+        },
+      },
+    ],
+  };
+}

@@ -5,15 +5,19 @@ import {
   createNumericSliderOnRef,
 } from "./utils.mjs";
 
-const { CONSTANTS, createAppTitle, strHtml } = AppUtils;
-const {
-  TASKBAR_MAX_HORIZONTAL_SIZE,
-  TASKBAR_MAX_VERTICAL_SIZE,
-  TASKBAR_MIN_HORIZONTAL_SIZE,
-  TASKBAR_MIN_VERTICAL_SIZE,
-} = CONSTANTS;
+// TODO: For now this is kept in sync with the constants in the main desktop.
+// A better solution should be found (through a virtual fs in
+// `/system/constants`?)
+const TASKBAR_MIN_HORIZONTAL_SIZE = 25;
+const TASKBAR_MAX_HORIZONTAL_SIZE = 70;
+const TASKBAR_MIN_VERTICAL_SIZE = 60;
+const TASKBAR_MAX_VERTICAL_SIZE = 150;
 
-export default function createTaskbarSection(settings, abortSignal) {
+export default function createTaskbarSection(
+  { settings, appUtils },
+  abortSignal,
+) {
+  const { createAppTitle, strHtml } = appUtils;
   const section = strHtml`<div>${createAppTitle("Taskbar", {})}</div>`;
   section.dataset.section = "taskbar";
 
@@ -26,6 +30,7 @@ export default function createTaskbarSection(settings, abortSignal) {
         options: ["bottom", "top", "left", "right"],
         label: "Location of the taskbar",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -35,6 +40,7 @@ export default function createTaskbarSection(settings, abortSignal) {
         ref: settings.taskbarDisplayTitle,
         label: "Show applications titles",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -49,6 +55,7 @@ export default function createTaskbarSection(settings, abortSignal) {
         max: 20,
         valueToText: (val) => String(val) + "px",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -63,6 +70,7 @@ export default function createTaskbarSection(settings, abortSignal) {
         ref: settings.enableStartMenuSublists,
         label: "Enable sub-categories in start menu",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -76,6 +84,7 @@ export default function createTaskbarSection(settings, abortSignal) {
         ref: settings.allowManualTaskbarResize,
         label: "Enable resizing the taskbar from its edge",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -85,6 +94,7 @@ export default function createTaskbarSection(settings, abortSignal) {
         ref: settings.allowManualTaskbarMove,
         label: "Enable moving the taskbar by selecting it",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -100,6 +110,7 @@ export default function createTaskbarSection(settings, abortSignal) {
         max: 100,
         valueToText: (val) => String(val) + "%",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -112,6 +123,7 @@ export default function createTaskbarSection(settings, abortSignal) {
         max: 100,
         valueToText: (val) => String(val) + "%",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -127,22 +139,72 @@ export default function createTaskbarSection(settings, abortSignal) {
     ["Start Menu Selected Item", settings.startMenuActiveBgColor],
     ["Start Menu Icon Background", settings.startMenuIconBgColor],
   ].forEach(([text, ref]) => {
-    colorGroupElt.appendChild(createColorPickerOnRef(ref, text, abortSignal));
+    colorGroupElt.appendChild(
+      createColorPickerOnRef(ref, text, appUtils, abortSignal),
+    );
   });
   section.appendChild(colorGroupElt);
   return section;
+
+  function createTaskbarSizeElt(settings, abortSignal) {
+    const taskbarSizeWrapperElt = document.createElement("span");
+    settings.taskbarLocation.onUpdate(
+      (newVal) => {
+        const isCurrentlyHorizontal = ["top", "bottom"].includes(newVal);
+        taskbarSizeWrapperElt.innerHTML = "";
+
+        taskbarSizeWrapperElt.appendChild(
+          createNumericSliderOnRef(
+            {
+              ref: settings.taskbarSize,
+              label: "Taskbar size",
+              min: isCurrentlyHorizontal
+                ? TASKBAR_MIN_HORIZONTAL_SIZE
+                : TASKBAR_MIN_VERTICAL_SIZE,
+              max: isCurrentlyHorizontal
+                ? TASKBAR_MAX_HORIZONTAL_SIZE
+                : TASKBAR_MAX_VERTICAL_SIZE,
+              valueToText: (val) => String(val),
+            },
+            appUtils,
+            abortSignal,
+          ),
+        );
+      },
+      { emitCurrentValue: true, clearSignal: abortSignal },
+    );
+    return taskbarSizeWrapperElt;
+  }
 }
 
 function constructStartMenuLogoSelection(settings) {
-  const startMenuLogo = strHtml`<input type="button" class="btn" value="${settings.startMenuPic.getValue()}">`;
+  const wrapperElt = document.createElement("div");
 
-  const startMenuLabel = strHtml`<label>${startMenuLogo}</label>`;
-  const startMenuOptElt = strHtml`<div><div class="w-small-opt"><span>Start Menu Logo</span>${startMenuLabel}</div></div>`;
-  const gridElt = strHtml`<div class="w-char-grid"></div>`;
-  const charPickerElt = strHtml`<div class="w-char-picker">
-${gridElt}
-</div>`;
-  startMenuLogo.onclick = () => {
+  // First the text description
+  const startMenuOptElt = document.createElement("div");
+  startMenuOptElt.className = "w-small-opt";
+  startMenuOptElt.innerHTML = "<span>Start Menu Logo</span>";
+
+  // Then the button:
+  // TODO: I don't even remember why I created an empty label here.
+  const startMenuLabelElt = document.createElement("label");
+  const startMenuLogoElt = document.createElement("input");
+  startMenuLogoElt.type = "button";
+  startMenuLogoElt.className = "btn";
+  startMenuLogoElt.value = settings.startMenuPic.getValue();
+  startMenuLabelElt.appendChild(startMenuLogoElt);
+
+  startMenuOptElt.appendChild(startMenuLabelElt);
+  wrapperElt.appendChild(startMenuOptElt);
+
+  // Now the char selection grid that is optionally shown
+  const charPickerElt = document.createElement("div");
+  charPickerElt.className = "w-char-picker";
+  const gridElt = document.createElement("div");
+  gridElt.className = "w-char-grid";
+  charPickerElt.appendChild(gridElt);
+
+  startMenuLogoElt.onclick = () => {
     if (charPickerElt.parentElement) {
       closePicker();
     } else {
@@ -180,7 +242,7 @@ ${gridElt}
     button.className = "w-char-picker-char";
     button.textContent = emoji;
     button.addEventListener("click", (evt) => {
-      startMenuLogo.value = emoji;
+      startMenuLogoElt.value = emoji;
       settings.startMenuPic.setValueIfChanged(emoji);
       closePicker();
       evt.stopPropagation();
@@ -188,43 +250,14 @@ ${gridElt}
     });
     gridElt.appendChild(button);
   });
-  return startMenuOptElt;
+  return wrapperElt;
 
   function addPicker() {
-    startMenuOptElt.appendChild(charPickerElt);
+    wrapperElt.appendChild(charPickerElt);
   }
   function closePicker() {
     try {
-      startMenuOptElt.removeChild(charPickerElt);
+      wrapperElt.removeChild(charPickerElt);
     } catch (_) {}
   }
-}
-
-function createTaskbarSizeElt(settings, abortSignal) {
-  const taskbarSizeWrapperElt = document.createElement("span");
-  settings.taskbarLocation.onUpdate(
-    (newVal) => {
-      const isCurrentlyHorizontal = ["top", "bottom"].includes(newVal);
-      taskbarSizeWrapperElt.innerHTML = "";
-
-      taskbarSizeWrapperElt.appendChild(
-        createNumericSliderOnRef(
-          {
-            ref: settings.taskbarSize,
-            label: "Taskbar size",
-            min: isCurrentlyHorizontal
-              ? TASKBAR_MIN_HORIZONTAL_SIZE
-              : TASKBAR_MIN_VERTICAL_SIZE,
-            max: isCurrentlyHorizontal
-              ? TASKBAR_MAX_HORIZONTAL_SIZE
-              : TASKBAR_MAX_VERTICAL_SIZE,
-            valueToText: (val) => String(val),
-          },
-          abortSignal,
-        ),
-      );
-    },
-    { emitCurrentValue: true, clearSignal: abortSignal },
-  );
-  return taskbarSizeWrapperElt;
 }

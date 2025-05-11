@@ -1,14 +1,15 @@
-const { strHtml, createAppTitle } = window.AppUtils;
-
 const GITHUB_LINK = "https://github.com/peaberberian/MSESpy.js";
 
-const sidebar = [
-  {
-    text: "Overview",
-    icon: "🧑‍🏫",
-    centered: true,
-    render: () => {
-      return strHtml`<div>
+export function create(_app, env) {
+  const { strHtml, createAppTitle } = env.appUtils;
+  return {
+    sidebar: [
+      {
+        text: "Overview",
+        icon: "🧑‍🏫",
+        centered: true,
+        render: () => {
+          return strHtml`<div>
 	${createAppTitle("MSESpy", { github: GITHUB_LINK })}
 <p><a href="${GITHUB_LINK}" target="_blank">MSESpy</a> is a reverse-engineering tool I developed to easily see when a webpage calls "MSE" web API</p>
 	<div class=\"separator\"></div>
@@ -18,8 +19,8 @@ It can be seen as a lower-level API than just setting a media file directly on a
 <p>This MSESpy tool works by identifying and <a href="https://en.wikipedia.org/wiki/Monkey_patch" target="_blank">monkey-patching</a> all API linked to MSE API and then filling an array with details about those calls. We then manually take a look at those results and draw conclusions on how the page interact with those API.</p>
 <p>Practical use of these API are not so frequent in the wild, so this tool allows to understand what user-agents and platforms support and how we're able to interact with it.</p>
 </div>`;
-    },
-  },
-];
-
-export { sidebar };
+        },
+      },
+    ],
+  };
+}

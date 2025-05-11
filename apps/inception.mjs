@@ -1,10 +1,9 @@
-const { createAppIframe } = window.AppUtils;
-
 /**
  * Generate content of the "Inception" application.
  * @returns {HTMLElement}
  */
-export function create() {
+export function create(_args, env) {
+  const { createAppIframe } = env.appUtils;
   const fragmentIdx = location.href.indexOf("#");
   const urlWithoutFragment =
     fragmentIdx > 0 ? location.href.substring(0, fragmentIdx) : location.href;

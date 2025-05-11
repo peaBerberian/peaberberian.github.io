@@ -1,3 +1,4 @@
+import appUtils from "../../app-utils.mjs";
 import EventEmitter from "../../event-emitter.mjs";
 import {
   addEventListener,
@@ -16,6 +17,8 @@ import {
   MINIMIZE_APP_ANIM_TIMER,
   DEMINIMIZE_APP_ANIM_TIMER,
   WINDOW_OOB_SECURITY_PIX,
+  IMAGE_ROOT_PATH,
+  __VERSION__,
 } from "../../constants.mjs";
 import { SETTINGS } from "../../settings.mjs";
 import strHtml from "../../str-html.mjs";
@@ -47,7 +50,7 @@ import {
 
 export default class AppWindow extends EventEmitter {
   /**
-   * @param {Object} app - Application object to display in the window.
+   * @param {Object} app - Object describing the application to run.
    * @param {Array} appArgs - The application's arguments.
    * @param {Object} options - Various options to configure how that new
    * application window will behave
@@ -316,32 +319,49 @@ export default class AppWindow extends EventEmitter {
   }
 
   _setUpAppContent(container, appData, appArgs, dependencies) {
+    if (
+      typeof appData.globalApp === "string" &&
+      window.globalApps?.[appData.globalApp]
+    ) {
+      return this._setUpAppContent(
+        container,
+        window.globalApps[appData.globalApp],
+        appArgs,
+        dependencies,
+      );
+    }
+
     if (appData.create) {
-      let app;
-      const env = {};
+      const env = {
+        appUtils,
+        getImageRootPath: () => IMAGE_ROOT_PATH,
+        getVersion: () => __VERSION__,
+      };
       if (Array.isArray(dependencies)) {
         if (dependencies.includes("settings")) {
           env.settings = SETTINGS;
         }
       }
-      app = appData.create(appArgs, env, this._abortController.signal);
-      container.appendChild(app.element);
-      if (app.focus) {
-        this.focus = app.focus.bind(app);
+      const ret = appData.create(appArgs, env, this._abortController.signal);
+      if (ret.element) {
+        container.appendChild(ret.element);
+      } else if (Array.isArray(ret.sidebar) && ret.sidebar.length > 0) {
+        const { element, focus } = constructAppWithSidebar(
+          ret.sidebar,
+          this._abortController.signal,
+        );
+        container.appendChild(element);
+        this.focus = focus;
+        return;
+      } else {
+        container.appendChild(document.createElement("div"));
+      }
+      if (ret.focus) {
+        this.focus = ret.focus.bind(ret);
         if (this.isActivated()) {
-          app.focus();
+          ret.focus();
         }
       }
-      return;
-    }
-
-    if (Array.isArray(appData.sidebar) && appData.sidebar.length > 0) {
-      const { element, focus } = constructAppWithSidebar(
-        appData.sidebar,
-        this._abortController.signal,
-      );
-      container.appendChild(element);
-      this.focus = focus;
       return;
     }
 

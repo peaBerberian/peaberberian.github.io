@@ -1,5 +1,3 @@
-const { applyStyle, constructAppHeaderLine } = AppUtils;
-
 const DEFAULT_CELL_HEIGHT = 30;
 const DEFAULT_CELL_WIDTH = 100;
 const MINIMUM_CELL_HEIGHT = 20;
@@ -106,7 +104,9 @@ style.textContent = `
 
 document.head.appendChild(style);
 
-export function create(_args, _env, abortSignal) {
+export function create(_args, env, abortSignal) {
+  const { applyStyle, constructAppHeaderLine } = env.appUtils;
+
   const spreadsheet = new Spreadsheet(49, 13);
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
@@ -157,8 +157,8 @@ export function create(_args, _env, abortSignal) {
         updateLineNumbers();
       },
     },
-    save: {
-      title: "Save as CSV (download)",
+    download: {
+      title: "Download as CSV",
       onClick: () => {
         const rows = spreadsheet.getData();
         const data = rows

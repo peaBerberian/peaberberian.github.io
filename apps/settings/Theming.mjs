@@ -1,7 +1,5 @@
 import { createColorPickerOnRef, createDropdownOnRef } from "./utils.mjs";
 
-const { createAppTitle, strHtml } = AppUtils;
-
 const themes = {
   light: [
     // button style,
@@ -1090,7 +1088,11 @@ const themes = {
   ],
 };
 
-export default function createThemeSection(settings, abortSignal) {
+export default function createThemeSection(
+  { settings, appUtils },
+  abortSignal,
+) {
+  const { createAppTitle, strHtml } = appUtils;
   const refs = [
     settings.buttonStyle,
     settings.taskbarBgColor,
@@ -1125,7 +1127,7 @@ export default function createThemeSection(settings, abortSignal) {
   section.dataset.section = "theme";
   const themeGroupElt = strHtml`<div class="w-group"><h3>Theme Presets</h3></div>`;
   section.appendChild(themeGroupElt);
-  section.appendChild(constructThemePresetSelection(setTheme));
+  section.appendChild(constructThemePresetSelection(setTheme, strHtml));
 
   const styleGroup = strHtml`<div class="w-group"><h3>Styling</h3></div>`;
   styleGroup.appendChild(
@@ -1135,6 +1137,7 @@ export default function createThemeSection(settings, abortSignal) {
         options: ["Colorful", "Sober"],
         label: "Windows button style",
       },
+      appUtils,
       abortSignal,
     ),
   );
@@ -1170,7 +1173,9 @@ export default function createThemeSection(settings, abortSignal) {
     ["Icon Image Background", settings.iconImageBgColor],
     ["Icon Hover Background", settings.iconHoverBgColor],
   ].forEach(([text, ref]) => {
-    colorGroupElt.appendChild(createColorPickerOnRef(ref, text, abortSignal));
+    colorGroupElt.appendChild(
+      createColorPickerOnRef(ref, text, appUtils, abortSignal),
+    );
   });
   section.appendChild(colorGroupElt);
   return section;
@@ -1189,7 +1194,7 @@ export default function createThemeSection(settings, abortSignal) {
   }
 }
 
-function constructThemePresetSelection(setTheme) {
+function constructThemePresetSelection(setTheme, strHtml) {
   const themeOptElt = strHtml`<div class="w-small-opt">Choose a theme preset</div>`;
   const gridElt = strHtml`<div class="w-char-grid"></div>`;
   const themePickerElt = strHtml`<div class="w-char-picker">

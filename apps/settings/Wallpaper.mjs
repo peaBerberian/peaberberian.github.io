@@ -1,5 +1,26 @@
-const { CONSTANTS, createAppTitle, strHtml, applyStyle } = AppUtils;
-const { WALLPAPERS } = CONSTANTS;
+/** Wallpapers provided by default in settings. */
+export const WALLPAPERS = [
+  // From Kalen Emsley (@kalenemsley from unsplash)
+  "photo-1464822759023-fed622ff2c3b.jpg",
+
+  // Jack B (@nervum on unsplash)
+  "beach1.avif",
+
+  // Irina Iriser (@iriser on unsplash)
+  "forest1.avif",
+
+  // Lucas Dalamarta (@lucasdalamartaphoto on unsplash)
+  "some_ducks.avif",
+
+  // Tim Schmidbauer (@timschmidbauer on unsplash)
+  "photo-1745761412274-5303bc3f2e45.jpg",
+
+  // Ashim D’Silva (@randomlies on unsplash)
+  "photo-1479030160180-b1860951d696.jpg",
+
+  // Benjamin Voros (@vorosbenisop on unsplash)
+  "dark_mountain.avif",
+];
 
 const DEFAULT_GRADIENTS = [
   "linear-gradient(45deg, #12c2e9, #c471ed, #f64f59)",
@@ -13,7 +34,9 @@ const DEFAULT_GRADIENTS = [
   "linear-gradient(135deg, #667eea, #764ba2)", // purple
 ];
 
-export default function createWallpaperSection(settings) {
+export default function createWallpaperSection(env) {
+  const { settings } = env;
+  const { createAppTitle, strHtml, applyStyle } = env.appUtils;
   const section = strHtml`<div>${createAppTitle("Wallpaper", {})}</div>`;
   section.dataset.section = "wallpaper";
 
@@ -24,8 +47,9 @@ export default function createWallpaperSection(settings) {
 
   const wpGroupElt = strHtml`<div class="w-group"><h3>Pre-selected Images</h3></div>`;
 
+  let foundInBaseWallpapers = false;
   for (let i = 0; i < WALLPAPERS.length; i++) {
-    const wp = WALLPAPERS[i];
+    const wp = env.getImageRootPath() + WALLPAPERS[i];
     const wpPreviewElt = strHtml`<img class="w-color-item selectable img-empty" src="${encodeURI(wp)}" />`;
     wpPreviewElt.onload = () => {
       window.requestAnimationFrame(() => {
@@ -33,6 +57,7 @@ export default function createWallpaperSection(settings) {
       });
     };
     if (currentBackground.type === "image" && currentBackground.value === wp) {
+      foundInBaseWallpapers = true;
       wpPreviewElt.classList.add("selected");
     }
     wpPreviewElt.onclick = () => {
@@ -50,8 +75,7 @@ export default function createWallpaperSection(settings) {
   // =================== CUSTOM IMAGE ====================
 
   const baseUrl =
-    currentBackground.type === "image" &&
-    !WALLPAPERS.includes(currentBackground.value)
+    currentBackground.type === "image" && !foundInBaseWallpapers
       ? currentBackground.value
       : "";
 

@@ -1,5 +1,3 @@
-const { applyStyle } = AppUtils;
-
 // NOTE: Adapted from my own project:
 // https://github.com/peaBerberian/passgen
 
@@ -26,7 +24,8 @@ const SYMBOLS_FACTOR = 1;
 /** All characters that may be added as "numbers". */
 const NUMBERS = "1234567890";
 
-export function create() {
+export function create(_args, env) {
+  const { applyStyle } = env.appUtils;
   const wrapperElt = document.createElement("div");
   applyStyle(wrapperElt, {
     backgroundColor: "var(--window-content-bg)",
@@ -319,10 +318,8 @@ function createInputButton(parentElt, text, inputType, onClick) {
     buttonElt.checked = true;
   }
   const lowerCaseLabelElt = document.createElement("label");
-  applyStyle(lowerCaseLabelElt, {
-    display: "flex",
-    alignItems: "center",
-  });
+  lowerCaseLabelElt.style.display = "flex";
+  lowerCaseLabelElt.style.alignItems = "center";
   const textNodeLabel = document.createTextNode(text);
   if (inputType === "checkbox") {
     lowerCaseLabelElt.appendChild(buttonElt);
@@ -335,7 +332,7 @@ function createInputButton(parentElt, text, inputType, onClick) {
   }
   containerElt.appendChild(lowerCaseLabelElt);
   buttonElt.onchange = onClick;
-  applyStyle(containerElt, { margin: "10px" });
+  containerElt.style.margin = "10px";
   parentElt.appendChild(containerElt);
   return buttonElt;
 }

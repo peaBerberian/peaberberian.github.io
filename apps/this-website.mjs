@@ -1,37 +1,45 @@
-const { createAppTitle, strHtml } = AppUtils;
-
 const GITHUB_LINK = "https://github.com/peaberberian/peaberberian.github.io";
 
-const sidebar = [
-  { text: "Overview", centered: true, icon: "🧑‍🏫", render: getOverview },
-  {
-    text: "Making it efficient",
-    centered: true,
-    icon: "🏎️",
-    render: getOptimal,
-  },
-  {
-    text: "Making it configurable",
-    centered: true,
-    icon: "🧰",
-    render: getConfigurable,
-  },
-  {
-    text: "Why so many emojis?",
-    centered: true,
-    icon: "😵‍💫",
-    render: getEmojis,
-  },
-  {
-    text: "Some Anecdotes",
-    centered: true,
-    icon: "🎈",
-    render: getAnecdotes,
-  },
-];
-export { sidebar };
-function getOverview() {
-  return strHtml`<div>
+export function create(_args, env) {
+  const { strHtml, createAppTitle } = env.appUtils;
+  return {
+    sidebar: [
+      { text: "Overview", centered: true, icon: "🧑‍🏫", render: getOverview },
+      {
+        text: "Making it efficient",
+        centered: true,
+        icon: "🏎️",
+        render: getOptimal,
+      },
+      {
+        text: "Making it configurable",
+        centered: true,
+        icon: "🧰",
+        render: getConfigurable,
+      },
+      {
+        text: "Why so many emojis?",
+        centered: true,
+        icon: "😵‍💫",
+        render: getEmojis,
+      },
+      {
+        text: "Some Anecdotes",
+        centered: true,
+        icon: "🎈",
+        render: getAnecdotes,
+      },
+      {
+        text: "External Resources",
+        centered: true,
+        icon: "🫶",
+        render: getResources,
+      },
+    ],
+  };
+
+  function getOverview() {
+    return strHtml`<div>
 ${createAppTitle("About This Website", { github: GITHUB_LINK })}
 
 <p>I initially envisionned a simple desktop environment where I could list my open-source projects to replace my previously minimal (some said bland) personal website.</p>
@@ -41,10 +49,10 @@ ${createAppTitle("About This Website", { github: GITHUB_LINK })}
 <p>So there has been a change of plan: it's not a listing of other projects anymore, now it's its own thing as a JS desktop environment!</p>
 
 </div>`;
-}
+  }
 
-function getOptimal() {
-  return strHtml`<div>
+  function getOptimal() {
+    return strHtml`<div>
 ${createAppTitle("Making it efficient", {})}
 <p>I tried to make that website as efficient as possible:</p>
 
@@ -57,10 +65,10 @@ ${createAppTitle("Making it efficient", {})}
 	<li>I've tried to also be frugal with memory usage, by only storing what's needed and being very careful with the potentiality of memory leaks (here the main culprits would be event listeners).</li>
 </ul>
 </p>`;
-}
+  }
 
-function getConfigurable() {
-  return strHtml`<div>
+  function getConfigurable() {
+    return strHtml`<div>
 ${createAppTitle("Making it configurable", {})}
 <p>I spent some efforts trying to make the behavior of this desktop configurable (through the settings app).</p>
 
@@ -89,10 +97,10 @@ I ended up on a simple rule in my logic reacting to page resizes: For windows en
 If a window is partially out of the screen, I consider that the area in which it can be repainted is the screen extended to the edge of that window (instead of just what's visible), I then added checks for security paddings ensuring that windows always stay reachable.</p>
 <p>This should lead to always predictable and useful behavior.</p>
 </div>`;
-}
+  }
 
-function getEmojis() {
-  return strHtml`<div>
+  function getEmojis() {
+    return strHtml`<div>
 ${createAppTitle("So many emojis 😵‍💫", {})}
 <p>As you can see, I rely heavily on emojis for many picture-like aspects of this website (icons, sidebar categories, start button, theming).</p>
 
@@ -100,27 +108,27 @@ ${createAppTitle("So many emojis 😵‍💫", {})}
 <ul>
 	<li>They are embedded in one of your system's font, so there's no external image to load from the network and they are memory-efficient.</li>
 	<li>Because they are linked to your system, they also provide a more "native" look in the platform you use to visit that website.</li>
-	<li>Those have already been vetted by experts to express moods and ideas, which is what I wanted to do to represent the idea behind each project.</li>
+	<li>I do not actually have to create or take images from somewhere, I'm just in effect outputing text, this frees me up from licensing issues!</li>
+	<li>Those have been designed and vetted by experts to express moods/ideas and to look good on the current device.</li>
 </ul>
 </p>
 <p>It could be argued that some devices don't have any font with emojis, though those should generally not be devices from the target audience of that website. Yet if it turns out that a visitor still don't have them, the fallback font or replacement characters will make it clear that the current device is missing them.</p>
 </div>`;
-}
+  }
 
-function getAnecdotes() {
-  return strHtml`<div>
+  function getAnecdotes() {
+    return strHtml`<div>
 ${createAppTitle("Some anecdotes", {})}
 <p>While writing this, I encountered several difficulties that I found interesting.</p>
 
-<div class="separator" />
+<h3>i-frame blocking</h3>
 
 <p>Some applications contain i-frame elements, which are HTML elements allowing to display a page in another page. This is the case for example with what I called "demos".</p>
 
-<p>For security reasons, web browsers implement many specific behaviors on i-frame elements.<br>The most annoying one for me has been related to pointer events: anytime you move your mouse/finger on most i-frames here, the website embedding that i-frame (so here, the one you are on right now) is unable to get the corresponding events. This could subtly break multiple behaviors, like resizing and moving. This is because depending on your celerity you could temporarily have your mouse on top of an i-frame while doing that (without even realizing, just you would see that your mouse stopped having an effect for some reason).<br>The fun, weird, yet completely-functional solution was to disable through a CSS rule all pointer events on all i-frames when window moving or resizing is going on. There's no reason why you would want to do both at the same time so it's fully transparent.</p>
+<p>For security reasons, web browsers implement many specific behaviors on i-frame elements.<br>The most annoying one for me has been related to pointer events: anytime you move your mouse/finger on most i-frames here, the website embedding that i-frame (so here, the one you are on right now) is unable to get the corresponding events. This can break many behaviors, like window activation, resizing and moving.<br>The fun, weird, yet completely-functional solution was to disable through a CSS rule all pointer events on all i-frames when window moving or resizing is going on.</p>
+<p>In most cases, this would have been transparent (when moving or resizing a window, you're probably not also interacting with the window's content), but in one case, an inactive window, it has the now weird side-effect of not registering events inside the window's content (you have to interact twice: one click to activate the window and thus removing the "i-frame blocker", the second click will actually interact with the i-frame's content).<br>So I decided for now to add a message on top of i-frames to indicate to a user when the i-frame is not interactive.</p>
 
-<p>It's still not perfect as for example, clicking inside an i-frame which itself is in a background window won't put that window forward (it doesn't know you clicked in its content). Yet as this only applies to very few applications, I found this behavior OK for now).</p>
-
-<div class="separator" />
+<h3>The "inception" app</h3>
 
 <p>Speaking of i-frames, a fun idea I wanted to implement is what I jokingly called the "inception" app, which is running the current app inside itself in an i-frame (what's called a mise en abyme in other media, here called "inception" with a brain emoji as a more-fun, less pretentious reference).</p>
 
@@ -128,9 +136,39 @@ ${createAppTitle("Some anecdotes", {})}
 
 <p>Yet luckily most web servers seem to do that.</p>
 
-<div class="separator" />
+<h3>Trying that LLM thing</h3>
 
-<p>The application giving me the most difficulties was weirdly-enough the clock.</p>
+<p>I've always been skeptical of LLM regarding development yet I don't want to miss out on ways in which it could help me improve, so it's the first project I've done where I tried iterating with it.</p>
+
+<p>In the few logic-related areas where I tested it, I didn't find it good enough: I spent a lof of time correcting issues and fixing an IMO non-maintable architecture, leading in the end to me rewriting 90% of it, with a lot of debugging time, leading me to believe that it would have been faster to write that from scratch.</p>
+
+<p>For prototyping drafts of what new apps could look like however, it saved me a lot of time in what is usually a timesink for me, so here it has been a net plus.</p>
+
+<p>But the main area where I relied on it is for theming.<br>I basically constructed an initial theme (the default one), that I reduced to a few 6 digits hex RGB codes, prefaced with a light description of what each are for. Then I gave it to Claude and/or Deepseek (sometimes the former, sometimes the latter) by giving a description of an alternate theme I wanted to create (e.g. a "dark theme", a "warm sunny theme" etc.).<br>It was here surprisingly good, with me only updating a few colors, usually for the same parts (the corresponding colors' description maybe weren't clear enough?). I even continued by asking some nonsensical themes like a "watermelon-based" theme just to check its limit... But the resulting watermelon theme it produced was in my opinion one of the best (though "panda" is still my personal favorite)!</p>
+
+<p>That was definitely a good surprise for that part, which I wouldn't have spent too much time on anyway if I had to do it all by myself.</p>
+
+<h3>Paint's bucket</h3>
+
+<p>The "paint" app has a "bucket" tool allowing to fill an area originally in one color in another color, similar to some other paint applications. I first thought that implementing it would be simple enough but I was completely wrong!</p>
+
+<p>My initial implementation just:
+	<ol>
+		<li>Checked the "color pixels" individually currently drawn (this is under the hood relying on a ${"<canvas>"} HTML element which has many JS api available to interact with it)</li>
+		<li>Identified the color under the cursor on click</li>
+		<li>Fill that pixel, and all neighbors with the same pixel color, of the target color</li>
+		<li>That's done!</li>
+	</ol>
+</p>
+<p>But doing that weirdly led to what appeared to be some remnants of the old color at the edges.<br>After thinking my code was wrong and trying to fix some stuff, I finally looked at what exact pixels where not filled: turned out that they had a weird "color pixel" that I had never drawn, WTF 😮...</p>
+
+<p>This is actually because in the paint app, we're very rarely "coloring" exact coordinates, like say: 15 pixels to the left and 50 to the bottom. To improve the rendering effect, I go beyond integer pixels (like: 1.42578 pixels to the left instead).<br>When doing that, most web browsers implementation actually perform sub-pixel tricks (like "inventing" some color) just so it can look better. Then asking for the corresponding pixel's color is going to return that new, not asked for, color.</p>
+
+<p>I like this browser trick, so didn't want to prevent it. Instead I tried to improve my bucket fill tool around this: I initially tried an advanced custom subpixel color detection but this was becoming way too complicated, for gains I'm not sure is worth it for a tool as rough and crude as a bucket fill.<br>So in the end I opted for a practical and relatively efficient solution: the bucket fill sometimes go a little beyond the actual "target" color, to reach those subpixels. I found that it seemed relatively invisible that this was going on, besides some aliasing.</p>
+
+<h3>The clock app</h3>
+
+<p>The simple clock app, weirdly enough, gave me a lot of difficulties to write.</p>
 
 <p>I absolutely wanted to have a clock as I wanted something to happen when someone click on the time inside the taskbar (doing nothing there would have been lame to me).<br>I originally had the simplest possible SVG of a white face with hours, minutes and seconds hands on top that I was periodically updating (scheduling through the requestAnimationFrame web API), but I always found that it was kind of ugly.</p>
 
@@ -147,17 +185,28 @@ ${createAppTitle("Some anecdotes", {})}
 </ol>
 </p>
 
-<div class="separator" />
+</div>`;
+  }
 
-<p>I've always been skeptical of LLM regarding development yet I don't want to miss out on ways in which it could help me improve, so it's the first project I've done where I tried iterating with it.</p>
+  function getResources() {
+    return strHtml`<div>
+${createAppTitle("External Resources", {})}
+<p>I had to find many images to write this project.<br>I chose to only include resources with a very permissive license, CC0 and public domain only.</p>
 
-<p>In the few logic-related areas where I tested it, I didn't find it good enough: I spent a lof of time correcting issues and fixing an IMO non-maintable architecture, leading in the end to me rewriting 90% of it, with a lot of debugging time, leading me to believe that it would have been faster to write that from scratch.</p>
+<p>Thus even if I'm not forced to, I want to thank <a href="https://unsplash.com" target="_blank">unsplash</a> for providing free-to-use pictures - that I used to get wallpapers, and especially thanks to the following unsplash contributors from which I sourced wallpaper images (because I liked those!):
+	<ul>
+		<li>Kalen Emsley (@kalenemsley on unsplash)</li>
+		<li>Jack B (@nervum on unsplash)</li>
+		<li>Irina Iriser (@iriser on unsplash)</li>
+		<li>Lucas Dalamarta (@lucasdalamartaphoto on unsplash)</li>
+		<li>Tim Schmidbauer (@timschmidbauer on unsplash)</li>
+		<li>Ashim D'Silva (@randomlies on unsplash)</li>
+		<li>Benjamin Voros (@vorosbenisop on unsplash)</li>
+	</ul>
+</p>
 
-<p>For prototyping HTML drafts of what future things could look like however, it saved me a lot of time in what is usually a timesink for me, so here it has been a net plus.</p>
-
-<p>But the main area where I used it and where it has been especially useful is for theming.<br>I basically constructed an initial theme (the default one), that I reduced to a few 6 digits hex RGB codes, prefaced with a light description of what each are for. Then I gave it to Claude and/or Deepseek (sometimes the former, sometimes the latter) by giving a description of an alternate theme I wanted to create (e.g. a "dark theme", a "warm sunny theme" etc.).<br>It was here surprisingly good, with me only updating a few colors, usually for the same parts (the corresponding colors' description maybe weren't clear enough?). I even continued by asking some nonsensical themes like a "watermelon-based" theme just to check its limit... But the resulting watermelon theme it produced was in my opinion one of the best (though "panda" is still my personal favorite)!</p>
-
-<p>That was definitely a good surprise for that part, which I wouldn't have spent too much time on anyway if I had to do it all by myself.</p>
+<p>For icons, I mainly sourced it from  <a href="https://www.svgrepo.com/" target="_blank">svgrepo</a>, in particular its  <a href="https://www.svgrepo.com/collection/minimal-ui-icons/" target="_blank">Minimal UI Icon</a> collection. Thanks to the people involved in that set!</p>
 
 </div>`;
+  }
 }

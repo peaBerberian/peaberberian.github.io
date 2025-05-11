@@ -1,20 +1,21 @@
-const { IMAGE_ROOT_PATH, strHtml, createAppTitle } = window.AppUtils;
-
 const DOC_LINK =
   "https://peaberberian.github.io/README/doc/Getting_Started/Home.html";
 const GITHUB_LINK = "https://github.com/canalplus/README";
 
-const sidebar = [
-  {
-    text: "Overview",
-    icon: "🧑‍🏫",
-    centered: true,
-    render: () => {
-      return strHtml`<div>
+export function create(_args, env) {
+  const { strHtml, createAppTitle } = env.appUtils;
+  return {
+    sidebar: [
+      {
+        text: "Overview",
+        icon: "🧑‍🏫",
+        centered: true,
+        render: () => {
+          return strHtml`<div>
 	${createAppTitle("README", { github: GITHUB_LINK, doc: DOC_LINK })}
 	<p>README is a simple (in a KISS way) documentation generator taking as input fully CommonMark-compatible Markdown files.</p>
 
-	<img style="width: 100%" src="${IMAGE_ROOT_PATH + "README-screenshot.png"}" alt="README's screenshot" />
+	<img style="width: 100%" src="${env.getImageRootPath() + "README-screenshot.png"}" alt="README's screenshot" />
 
   <p>Its goal is to keep the original documentation files readability in a text-editor (as intended by the Markdown format) as well as on other Markdown-capable UIs like Github's interface. This is done without doing any specific modification on them, just by adding minimal .docConfig.json JSON files alongside documentation files.</p>
 
@@ -26,8 +27,8 @@ const sidebar = [
   <p>It thus appeared that improving our own documentation generator by taking inspiration from many of docusaurus' great ideas (soft navigation, search, table of contents on the right, nice look and feel etc.) would lead to better maintainability than bringing docusaurus into our project (and with it its not-so-standard markdown files).<br>We profited from that improvement to completely spin-off this project in its own git repository. I'm now using that documentation generator for multiple projects.</p>
 
 </div>`;
-    },
-  },
-];
-
-export { sidebar };
+        },
+      },
+    ],
+  };
+}

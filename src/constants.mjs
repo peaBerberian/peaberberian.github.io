@@ -8,7 +8,7 @@ export const __VERSION__ = "0.1.0";
  * Minimum size in pixels that may be configured for the taskbar part of the
  * screen when it is on the top or bottom sides.
  */
-export const TASKBAR_MIN_HORIZONTAL_SIZE = 20;
+export const TASKBAR_MIN_HORIZONTAL_SIZE = 25;
 /**
  * Maximum size in pixels that may be configured for the taskbar part of the
  * screen when it is on the top or bottom sides.
@@ -19,7 +19,7 @@ export const TASKBAR_MAX_HORIZONTAL_SIZE = 70;
  * Minimum size in pixels that may be configured for the taskbar part of the
  * screen when it is on the top or bottom sides.
  */
-export const TASKBAR_MIN_VERTICAL_SIZE = 50;
+export const TASKBAR_MIN_VERTICAL_SIZE = 60;
 /**
  * Maximum size in pixels that may be configured for the taskbar part of the
  * screen when it is on the top or bottom sides.
@@ -86,34 +86,6 @@ export const WINDOW_OOB_SECURITY_PIX = 60;
 
 /** Path to reach the images stored locally, relative to the main HTML page. */
 export const IMAGE_ROOT_PATH = "./assets/img/";
-
-/**
- * Wallpapers provided by default in settings.
- *
- * The first value has the special status of being the default wallpaper.
- */
-export const WALLPAPERS = [
-  // From Kalen Emsley (@kalenemsley from unsplash)
-  IMAGE_ROOT_PATH + "photo-1464822759023-fed622ff2c3b.jpg",
-
-  // Jack B (@nervum on unsplash)
-  IMAGE_ROOT_PATH + "beach1.avif",
-
-  // Irina Iriser (@iriser on unsplash)
-  IMAGE_ROOT_PATH + "forest1.avif",
-
-  // Lucas Dalamarta (@lucasdalamartaphoto on unsplash)
-  IMAGE_ROOT_PATH + "some_ducks.avif",
-
-  // Tim Schmidbauer (@timschmidbauer on unsplash)
-  IMAGE_ROOT_PATH + "photo-1745761412274-5303bc3f2e45.jpg",
-
-  // Ashim D’Silva (@randomlies on unsplash)
-  IMAGE_ROOT_PATH + "photo-1479030160180-b1860951d696.jpg",
-
-  // Benjamin Voros (@vorosbenisop on unsplash)
-  IMAGE_ROOT_PATH + "dark_mountain.avif",
-];
 
 /** URL of the SVG for the "doc" link we set on some applications */
 export const docImgSvg = `<svg width="800px" height="800px" viewBox="0 0 16 16" fill="var(--window-text-color)" xmlns="http://www.w3.org/2000/svg"><path d="M5 0C3.34315 0 2 1.34315 2 3V13C2 14.6569 3.34315 16 5 16H14V14H4V12H14V0H5Z"/></svg>`;

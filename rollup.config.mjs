@@ -185,15 +185,16 @@ function writeGeneratedAppFile(baseDir) {
         "    dependencies: " + JSON.stringify(app.dependencies) + ",\n";
     }
 
-    if (!!app.autoload) {
-      uglyHandWrittenJsObject += "    autoload: true,\n";
-    }
-
     if (filePath) {
       if (app.preload === true) {
         // Here I will just write a regular static import statement on top of
         // the generated file toward this file.
-        uglyHandWrittenJsObject += "    data: __APP__" + String(i) + ",\n";
+        // As we want to keep the object serializable, we'll have to put it
+        // in `window` however.
+        uglyHandWrittenJsObject += `    data: {
+			globalApp: "__APP__${String(i)}",
+    },
+`;
         importsToWrite.push({
           name: "__APP__" + String(i),
           filePath: path.relative(DESKTOP_SRC_DIR, filePath),

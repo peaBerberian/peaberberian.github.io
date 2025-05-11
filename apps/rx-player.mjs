@@ -1,5 +1,3 @@
-const { strHtml, createAppTitle, createAppIframe } = AppUtils;
-
 const DEMO_LINK = "https://developers.canal-plus.com/rx-player/";
 const DOC_LINK =
   "https://developers.canal-plus.com/rx-player/doc/api/Overview.html";
@@ -9,13 +7,16 @@ const GITHUB_LINK = "https://github.com/canalplus/rx-player";
  * Generate content of the "RxPlayer" application.
  * @returns {Object}
  */
-const sidebar = [
-  {
-    text: "Overview",
-    icon: "🧑‍🏫",
-    centered: true,
-    render: () => {
-      return strHtml`<div>
+export function create(_args, env) {
+  const { strHtml, createAppTitle, createAppIframe } = env.appUtils;
+  return {
+    sidebar: [
+      {
+        text: "Overview",
+        icon: "🧑‍🏫",
+        centered: true,
+        render: () => {
+          return strHtml`<div>
 ${createAppTitle("RxPlayer", { github: GITHUB_LINK, doc: DOC_LINK, demo: DEMO_LINK })}
 
 <p>The <a href="${GITHUB_LINK}" target="_blank">RxPlayer</a> is an advanced media player adapted for large streaming companies: instead of just relying on a video element's \`src\` attribute and let the browser handle contents, the RxPlayer progressively loads chunks of audio and video data and then push them to lower-level buffers. It can also rely on other browser API to decrypt an encrypted content.</p>
@@ -44,19 +45,19 @@ ${createAppTitle("RxPlayer", { github: GITHUB_LINK, doc: DOC_LINK, demo: DEMO_LI
 <p>The RxPlayer thus fills the role of a library interacting with those standards to play a content efficiently in a web browser.</p>
 
 </div>`;
-    },
-  },
-  {
-    text: "Demo",
-    icon: "📺",
-    noPadding: true,
-    render: () => {
-      const appIframe = createAppIframe(
-        "https://developers.canal-plus.com/rx-player/",
-      );
-      return appIframe;
-    },
-  },
-];
-
-export { sidebar };
+        },
+      },
+      {
+        text: "Demo",
+        icon: "📺",
+        noPadding: true,
+        render: () => {
+          const appIframe = createAppIframe(
+            "https://developers.canal-plus.com/rx-player/",
+          );
+          return appIframe;
+        },
+      },
+    ],
+  };
+}

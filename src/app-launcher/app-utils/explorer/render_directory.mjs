@@ -279,6 +279,10 @@ export default function renderDirectory({
       }
 
       case "ArrowRight": {
+        e.preventDefault();
+
+        // TODO: When you go the other way, it should unselect
+
         if (selectedElts.items.length === 0) {
           const itemElt = itemsParentElt.children[0];
           if (itemElt) {

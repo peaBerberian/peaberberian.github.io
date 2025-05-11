@@ -8,6 +8,7 @@
 // TODO: TOUCH
 // TODO: check mv inside itself if it works
 // TODO: escape when there's a mask
+// TODO: Download multiple files as zip through Compress API?
 
 import { constructAppHeaderLine } from "../header-line.mjs";
 import renderDirectory from "./render_directory.mjs";
@@ -913,6 +914,7 @@ async function spawnConfirmDialog(containerElt, title, message) {
     yesButtonElt.addEventListener("click", onYes);
     noButtonElt.addEventListener("click", onNo);
     overlay.onclick = () => resolve(null);
+    yesButtonElt.focus();
 
     function onYes() {
       overlay.remove();

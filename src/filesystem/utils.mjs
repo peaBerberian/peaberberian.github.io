@@ -10,6 +10,7 @@ export const CONTENT_STORE = "files_content";
 export const APPS_DIR = "/apps/";
 export const SYSTEM_DIR = "/system/";
 export const USER_DATA_DIR = "/userdata/";
+export const USER_CONFIG_DIR = "/userconfig/";
 
 export const DESKTOP_CONFIG = "desktop.config.json";
 export const START_MENU_CONFIG = "start_menu.config.json";

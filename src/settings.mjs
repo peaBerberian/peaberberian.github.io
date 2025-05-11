@@ -170,6 +170,32 @@ export const SETTINGS = {
     }
   }),
 
+  /** Whether buttons are at the left or right of headers. */
+  buttonPosition: createRefForState("button-position", "Right", (pos) => {
+    for (const prevClass of document.body.classList) {
+      if (prevClass.startsWith("w-btn-pos-")) {
+        document.body.classList.remove(prevClass);
+      }
+    }
+    if (pos === "Left") {
+      document.body.classList.add("w-btn-pos-left");
+    }
+  }),
+
+  /** Whether app titles are at the left, center or right of headers. */
+  headerTitlePosition: createRefForState("title-position", "Left", (pos) => {
+    for (const prevClass of document.body.classList) {
+      if (prevClass.startsWith("w-title-pos-")) {
+        document.body.classList.remove(prevClass);
+      }
+    }
+    if (pos === "Center") {
+      document.body.classList.add("w-title-pos-center");
+    } else if (pos === "Right") {
+      document.body.classList.add("w-title-pos-right");
+    }
+  }),
+
   /** If `true`, "snapping" a window to the top of the screen make if full-screen. */
   topWindowSnapping: createRefForState("top-window-snapping", true),
 

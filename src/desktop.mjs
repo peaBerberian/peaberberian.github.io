@@ -7,8 +7,7 @@
 // - when side-by-side window snapping we should be able to resize both at the same time
 // - if click out of the screen / mouseleave do not deactivate window?
 // - sometimes app has focus (e.g. "notes" can be written on), but not the window
-// - text-color quicklink svgs
-// - start menu always do some kind of sublist when sublists are enabled
+// - start menu should always do some kind of sublist when sublists are enabled
 //
 // low priority:
 // - windows moving when moving taskbar to top/bottom. Could be cool to stay in

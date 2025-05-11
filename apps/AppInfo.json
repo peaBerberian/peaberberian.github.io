@@ -86,6 +86,8 @@
       "id": "image-viewer",
       "title": "Image Viewer",
       "icon": "🏞️",
+      "defaultHeight": 600,
+      "defaultWidth": 900,
       "startMenu": {
         "list": "Desktop Apps"
       },

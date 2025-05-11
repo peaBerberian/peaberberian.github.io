@@ -55,6 +55,7 @@ export function create(_args, env, parentAbortSignal) {
         });
       },
     },
+    { name: "separator" },
     {
       name: "previous",
       height: "1.4rem",
@@ -67,6 +68,7 @@ export function create(_args, env, parentAbortSignal) {
       title: "Next image",
       onClick: showNextImage,
     },
+    { name: "separator" },
     {
       name: "rotateLeft",
       svg: rotateLeftSvg,
@@ -81,6 +83,7 @@ export function create(_args, env, parentAbortSignal) {
       title: "Rotate right",
       onClick: rotateRight,
     },
+    { name: "separator" },
     {
       name: "zoomOut",
       svg: zoomOutSvg,

@@ -1,5 +1,7 @@
 import { applyStyle } from "../utils.mjs";
 
+const openSvg = `<svg width="800px" height="800px" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><g transform="translate(-60.000000, -1879.000000)" fill="currentColor"><g transform="translate(56.000000, 160.000000)"><path d="M13.978,1730.401 L12.596,1729.007 L6,1735.656 L6,1733 L4,1733 L4,1739 L10.071,1739 L10.101,1737 L7.344,1737 L13.978,1730.401 Z M24,1725.08 L24,1739 L12,1739 L12,1737 L22,1737 L22,1727 L16,1727 L16,1721 L6,1721 L6,1731 L4,1731 L4,1719 L18,1719 L24,1725.08 Z"></path></g></g></g></svg>`;
+
 const BUTTONS_LIST = [
   // All SVG are with a CC0 or PD license, most found on svgrepo
   {
@@ -44,6 +46,12 @@ const BUTTONS_LIST = [
     defaultTitle: "Upload",
     height: "1.4rem",
     svg: `<svg width="800px" height="800px" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><g transform="translate(-300.000000, -3479.000000)" fill="currentColor"><g transform="translate(56.000000, 160.000000)"><path d="M254.006515,3325.00497 L250.302249,3328.71065 L251.715206,3330.12415 L253.007252,3328.83161 L253.007252,3339 L255.005777,3339 L255.005777,3328.83161 L256.297824,3330.12415 L257.710781,3328.71065 L254.006515,3325.00497 Z M262.281407,3331.70459 C260.525703,3333.21505 258.787985,3333.00213 257.004302,3333.00213 L257.004302,3331.00284 C258.859932,3331.00284 259.724294,3331.13879 260.728553,3330.45203 C263.14477,3328.79962 261.8847,3324.908 258.902901,3325.01496 C257.570884,3318.41131 247.183551,3320.64551 249.247028,3327.4451 C246.618968,3325.35484 243.535244,3331.00284 249.116125,3331.00284 L251.008728,3331.00284 L251.008728,3333.00213 L248.211792,3333.00213 C244.878253,3333.00213 242.823769,3329.44339 244.73236,3326.72236 C245.644687,3325.42282 247.075631,3325.10193 247.075631,3325.10193 C247.735144,3319.99075 253.568838,3317.29171 257.889649,3320.18468 C259.74428,3321.42724 260.44776,3323.24259 260.44776,3323.24259 C264.159021,3324.37019 265.278195,3329.1265 262.281407,3331.70459 L262.281407,3331.70459 Z"></path></g></g></g></svg>`,
+  },
+  {
+    name: "open",
+    defaultTitle: "Open",
+    height: "1.2rem",
+    svg: openSvg,
   },
   {
     name: "download",
@@ -116,7 +124,16 @@ export function constructAppHeaderLine(buttonConfigs) {
 
   if (Array.isArray(buttonConfigs)) {
     for (const config of buttonConfigs) {
-      addButton(config, config.name);
+      if (config.name === "separator") {
+        const separatorElt = document.createElement("span");
+        applyStyle(separatorElt, {
+          width: "1px",
+          borderRight: "1px solid var(--sidebar-hover-bg)",
+        });
+        headerElt.appendChild(separatorElt);
+      } else {
+        addButton(config, config.name);
+      }
     }
   } else {
     BUTTONS_LIST.forEach(({ name }) => {
@@ -157,13 +174,18 @@ function disableButton(buttonElt) {
 
 function createButtonElt(svg, title, height = "1.7rem", onClick) {
   const buttonWrapperElt = document.createElement("span");
-  buttonWrapperElt.setAttribute("tabindex", "0");
   applyStyle(buttonWrapperElt, {
     display: "flex",
+    height: "100%",
+    alignItems: "center",
+    alignItems: "center",
+  });
+  const svgWrapperElt = document.createElement("span");
+  svgWrapperElt.setAttribute("tabindex", "0");
+  applyStyle(svgWrapperElt, {
     // flex: "1 0 0",
     height: height,
-    margin: "auto 0",
-    alignItems: "center",
+    // margin: "auto 0",
   });
   const buttonSvgElt = getSvg(svg);
   if (buttonSvgElt) {
@@ -172,8 +194,9 @@ function createButtonElt(svg, title, height = "1.7rem", onClick) {
       height: "100%",
       // flex: "0 0 auto",
     });
-    buttonWrapperElt.appendChild(buttonSvgElt);
+    svgWrapperElt.appendChild(buttonSvgElt);
   }
+  buttonWrapperElt.appendChild(svgWrapperElt);
   buttonWrapperElt.onclick = onClick;
   buttonWrapperElt.onkeydown = (e) => {
     if (e.key === " " || e.key === "Enter") {
@@ -192,6 +215,7 @@ function createButtonElt(svg, title, height = "1.7rem", onClick) {
     textOverflow: "ellipsis",
     whiteSpace: "normal",
     maxWidth: "6em",
+    width: "min-content",
     overflow: "hidden",
   });
   titleElt.textContent = title;

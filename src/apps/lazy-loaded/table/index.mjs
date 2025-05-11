@@ -105,7 +105,7 @@ style.textContent = `
 document.head.appendChild(style);
 
 export function create(abortSignal) {
-  const spreadsheet = new Spreadsheet(99, 26);
+  const spreadsheet = new Spreadsheet(49, 13);
   const containerElt = document.createElement("div");
   containerElt.className = "__table_app_spreadsheet";
 

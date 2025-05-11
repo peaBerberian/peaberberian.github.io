@@ -868,7 +868,14 @@ async function performItemsDeletion(fs, items, containerElt) {
 
     for (const item of items) {
       if (item.isDirectory) {
-        await fs.rmDir(item.path);
+        if (item.path === "/system32/" || item.path === "/system32") {
+          showError(
+            containerElt,
+            "I'm sorry, Dave. I'm afraid I can't do that 🦾",
+          );
+        } else {
+          await fs.rmDir(item.path);
+        }
       } else {
         await fs.rmFile(item.path);
       }

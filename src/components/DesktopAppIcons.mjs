@@ -2,6 +2,7 @@
 // TODO: What to do if dragging and there's a window on top?
 // TODO: Delete key
 // TODO: Rename icon?
+// TODO: watch desktop.config.json?
 
 import fs from "../filesystem/filesystem.mjs";
 import {
@@ -46,12 +47,43 @@ export default async function DesktopAppIcons(
   onOpen,
   parentAbortSignal,
 ) {
-  const { list: apps } = await fs.readFile(
-    "/system32/desktop.config.json",
-    "object",
-  );
+  let appList;
+  try {
+    const userConfig = await fs.readFile(
+      "/userconfig/desktop.config.json",
+      "object",
+    );
+    appList = userConfig.list;
+    for (const app of appList) {
+      if (
+        typeof app.title !== "string" ||
+        typeof app.icon !== "string" ||
+        typeof app.run !== "string" ||
+        (app.args != null && !Array.isArray(app.args))
+      ) {
+        throw new Error("Malformed config file");
+      }
+    }
+  } catch (err) {
+    if (err.code !== "NoEntryError") {
+      console.warn('Failure to read "/userconfig/desktop.config.json":', err);
+      console.warn(`"/userconfig/desktop.config.json" will be reset`);
+    } else {
+      console.info(
+        `No "/userconfig/desktop.config.json" yet. Initializing one...`,
+      );
+    }
+    const systemConfig = await fs.readFile(
+      "/system32/default-desktop.json",
+      "object",
+    );
+    fs.writeFile(
+      "/userconfig/desktop.config.json",
+      JSON.stringify(systemConfig, null, 2),
+    );
+    appList = systemConfig.list.slice();
+  }
   let abortController;
-  let appList = apps.slice();
   const iconWrapperElt = document.createElement("div");
 
   // initialize to no icon
@@ -133,7 +165,7 @@ export default async function DesktopAppIcons(
       let lastClickTs = -Infinity;
       iconElt.addEventListener("keydown", (evt) => {
         if (evt.key === "Enter") {
-          onOpen(app.run, app.args);
+          onOpen(app.run, app.args ?? []);
           iconElt.blur();
         }
       });
@@ -147,7 +179,7 @@ export default async function DesktopAppIcons(
           // Double click to open app
           if (clickCount && performance.now() - lastClickTs < 300) {
             clickCount = 0;
-            onOpen(app.run, app.args);
+            onOpen(app.run, app.args ?? []);
             iconElt.blur();
           } else {
             clickCount = 1;
@@ -155,7 +187,7 @@ export default async function DesktopAppIcons(
           }
         } else {
           clickCount = 0;
-          onOpen(app.run, app.args);
+          onOpen(app.run, app.args ?? []);
           iconElt.blur();
         }
       });
@@ -186,6 +218,10 @@ export default async function DesktopAppIcons(
   }
   function reorderApps(newTuple) {
     appList = newTuple.map(([_, app]) => app);
+    fs.writeFile(
+      "/userconfig/desktop.config.json",
+      JSON.stringify({ list: appList }, null, 2),
+    );
   }
   function recheckUpdate() {
     requestAnimationFrame(() => {

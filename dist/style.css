@@ -781,9 +781,10 @@ ol {
 .quicklink-link {
   margin: 7px;
 }
-.quicklink-img {
-  width: 22px;
-  margin-bottom: -2px;
+.quicklink-img,
+.quicklink-img svg {
+  height: 22px;
+  width: auto;
 }
 .about-name {
   font-size: 2.5em;

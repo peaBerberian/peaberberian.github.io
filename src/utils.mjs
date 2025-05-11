@@ -81,6 +81,31 @@ export function createAppIframe(url) {
     position: "relative",
     backgroundColor: "var(--window-content-bg)",
   });
+
+  // Blocker DIV to work-around pointer-event-blocking that makes the behavior
+  // of the desktop OS weird if nothing is done about it.
+  const blockerDiv = document.createElement("div");
+  blockerDiv.className = "iframe-top-layer";
+  applyStyle(blockerDiv, {
+    height: "100%",
+    width: "100%",
+    position: "absolute",
+    backgroundColor: "#000000AA",
+    justifyContent: "center",
+    alignItems: "center",
+  });
+  const blockerText = document.createElement("div");
+  applyStyle(blockerText, {
+    color: "white",
+    fontStyle: "italic",
+    padding: "10px",
+    backgroundColor: "#0000004d",
+    borderRadius: "10px",
+  });
+  blockerText.textContent =
+    "External i-frame blocked until the window's content is focused.";
+  blockerDiv.appendChild(blockerText);
+
   const spinner = document.createElement("div");
   spinner.className = "spinner spinner-iframe";
   const iframe = document.createElement("iframe");
@@ -106,6 +131,7 @@ export function createAppIframe(url) {
   iframe.onerror = function () {
     container.removeChild(spinner);
   };
+  container.appendChild(blockerDiv);
   container.appendChild(iframe);
   container.appendChild(spinner);
   return container;

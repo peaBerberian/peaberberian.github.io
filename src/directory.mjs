@@ -49,6 +49,7 @@ function createApp(apps, onOpen) {
       borderRadius: "5px",
       padding: "5px",
       width: "80px",
+      height: "100px",
       overflow: "hidden",
     });
     const iconImgElt = document.createElement("span");

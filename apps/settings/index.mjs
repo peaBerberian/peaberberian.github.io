@@ -130,7 +130,7 @@ export function create(_args, env, abortSignal) {
         break;
     }
     contentElt.scrollTo(0, 0);
-    contentElt.focus();
+    contentElt.focus({ preventScroll: true });
   }
   function updateSectionsIcons() {
     for (const item of sidebarItems) {

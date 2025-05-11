@@ -57,7 +57,9 @@ import { keepWindowActiveInCurrentEventLoopIteration } from "./utils.mjs";
  * one or multiple properties from the object returned by
  * `callbacks.getOobDistances`.
  * @param {Function} callbacks.exitFullScreen - Callback to exit the current
- * full screen mode.
+ * full screen mode. Takes optionally a boolean which indicates if this is a
+ * "soft" exit: if `true` we will keep the current dimensions, if false or not
+ * set, we'll reset to the last saved dimensions.
  * @param {Function} callbacks.saveCurrentCoordinates - Callback to save the
  * current window coordinates as the last one wanted (e.g. as a target whne
  * exiting fullscreen mode).
@@ -558,7 +560,7 @@ function handleResizeOnWindow(
           getWindowHeight(windowElt) < containerHeight ||
           getLeftPositioning(windowElt) > 0
         ) {
-          exitFullScreen();
+          exitFullScreen(true);
         }
         // Maybe when left side snapping we should check that top == 0 + height == 100%?
       } else if (isFullscreenRight(windowElt)) {
@@ -567,7 +569,7 @@ function handleResizeOnWindow(
           getWindowHeight(windowElt) < containerHeight ||
           getLeftPositioning(windowElt) + windowWidth < containerWidth
         ) {
-          exitFullScreen();
+          exitFullScreen(true);
         }
       }
       unblockElementsFromTakingPointerEvents();

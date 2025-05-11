@@ -87,20 +87,14 @@ export function enterRightFullScreen(windowElt) {
  * @param {HTMLElement} windowElt
  */
 export function exitAllFullScreens(windowElt, originalDimensions) {
-  if (!originalDimensions) {
-    originalDimensions = {
-      left: 200,
-      top: 100,
-      width: DEFAULT_WINDOW_WIDTH,
-      height: DEFAULT_WINDOW_HEIGHT,
-    };
-  }
   windowElt.classList.remove("fullscreen");
   windowElt.classList.remove("fs-full");
   windowElt.classList.remove("fs-left");
   windowElt.classList.remove("fs-right");
-  setLeftPositioning(windowElt, originalDimensions.left);
-  setTopPositioning(windowElt, originalDimensions.top);
-  setWindowWidth(windowElt, originalDimensions.width);
-  setWindowHeight(windowElt, originalDimensions.height);
+  if (originalDimensions) {
+    setLeftPositioning(windowElt, originalDimensions.left);
+    setTopPositioning(windowElt, originalDimensions.top);
+    setWindowWidth(windowElt, originalDimensions.width);
+    setWindowHeight(windowElt, originalDimensions.height);
+  }
 }

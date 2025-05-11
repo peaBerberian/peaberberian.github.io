@@ -147,8 +147,13 @@ export default class AppWindow extends EventEmitter {
     });
 
     this.element.className = "window";
-    this.focus = () => {
-      /* noop */
+    this._appCallbacks = {
+      onActivate: () => {
+        /* noop */
+      },
+      onDeactivate: () => {
+        /* noop */
+      },
     };
 
     this._setUpAppContent(appContainer, app.data, appArgs, app.dependencies);
@@ -156,6 +161,7 @@ export default class AppWindow extends EventEmitter {
     if (!skipAnim) {
       this._performWindowTransition("open");
     }
+    this._saveCurrentCoordinates();
   }
 
   setFullscreen() {
@@ -171,6 +177,7 @@ export default class AppWindow extends EventEmitter {
     this._abortController.abort();
     this.trigger("closing");
     this.removeEventListener();
+    this._appCallbacks.onDeactivate();
   }
 
   isClosed() {
@@ -231,7 +238,7 @@ export default class AppWindow extends EventEmitter {
     keepWindowActiveInCurrentEventLoopIteration(this.element);
     this.element.classList.add("active");
     this.trigger("activated");
-    this.focus();
+    this._appCallbacks.onActivate();
   }
 
   /**
@@ -240,6 +247,7 @@ export default class AppWindow extends EventEmitter {
   deActivate() {
     this.element.classList.remove("active");
     this.trigger("deactivated");
+    this._appCallbacks.onDeactivate();
     if (this.element.contains(document.activeElement)) {
       document.activeElement.blur();
     }
@@ -339,15 +347,21 @@ export default class AppWindow extends EventEmitter {
           this._abortController.signal,
         );
         container.appendChild(element);
-        this.focus = focus;
+        this._appCallbacks.onActivate = focus;
         return;
       } else {
         container.appendChild(document.createElement("div"));
       }
-      if (ret.focus) {
-        this.focus = ret.focus.bind(ret);
+      if (ret.onActivate) {
+        this._appCallbacks.onActivate = ret.onActivate.bind(ret);
         if (this.isActivated()) {
-          ret.focus();
+          ret.onActivate();
+        }
+      }
+      if (ret.onDeactivate) {
+        this._appCallbacks.onDeactivate = ret.onDeactivate.bind(ret);
+        if (!this.isActivated()) {
+          ret.onDeactivate();
         }
       }
       return;
@@ -733,9 +747,9 @@ export default class AppWindow extends EventEmitter {
         getOobDistances: () => this._oobDistances,
         updateOobDistances: (update) =>
           (this._oobDistances = { ...this._oobDistances, ...update }),
-        exitFullScreen: () => {
+        exitFullScreen: (soft) => {
           this._performWindowTransition(""); // Remove previous transition if one
-          exitAllFullScreens(windowElt, this._savedCoordinates);
+          exitAllFullScreens(windowElt, soft ? null : this._savedCoordinates);
           this._setPositionAndSize({
             isInitialization: false,
             centerOnDesktop: false,

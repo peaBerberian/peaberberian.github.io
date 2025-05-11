@@ -11,7 +11,7 @@ export function create(_args, env) {
   containerElt.appendChild(element);
   return {
     element: containerElt,
-    focus,
+    onActivate: focus,
   };
 
   function createEditor() {

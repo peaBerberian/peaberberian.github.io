@@ -191,7 +191,7 @@ ${createAppTitle("Some anecdotes", {})}
   function getResources() {
     return strHtml`<div>
 ${createAppTitle("External Resources", {})}
-<p>I had to find many images to write this project.<br>I chose to only include resources with a very permissive license, CC0 and public domain only.</p>
+<p>I had to find many images to write this project.<br>I chose to only include resources with a very permissive license: CC0 and public domain only.</p>
 
 <p>Thus even if I'm not forced to, I want to thank <a href="https://unsplash.com" target="_blank">unsplash</a> for providing free-to-use pictures - that I used to get wallpapers, and especially thanks to the following unsplash contributors from which I sourced wallpaper images (because I liked those!):
 	<ul>

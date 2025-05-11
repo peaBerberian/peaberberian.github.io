@@ -46,6 +46,20 @@
       }
     },
     {
+      "id": "explorer",
+      "title": "File Explorer",
+      "icon": "🚢",
+      "dependencies": ["filesystem"],
+      "defaultHeight": 600,
+      "defaultWidth": 855,
+      "startMenu": {
+        "list": "Desktop Apps"
+      },
+      "desktop": {
+        "display": true
+      }
+    },
+    {
       "id": "paint",
       "title": "Paint",
       "icon": "🖌️",
@@ -86,6 +100,7 @@
       "id": "image-viewer",
       "title": "Image Viewer",
       "icon": "🏞️",
+      "dependencies": ["filePickerOpen"],
       "defaultHeight": 600,
       "defaultWidth": 900,
       "startMenu": {

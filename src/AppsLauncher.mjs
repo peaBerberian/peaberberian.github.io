@@ -1,4 +1,5 @@
 import appUtils from "./app-utils/index.mjs";
+import { createFileOpener } from "./app-utils/file-picker.mjs";
 import {
   applyStyle,
   constructSidebarElt,
@@ -230,6 +231,30 @@ export default class AppsLauncher {
       }
       if (app.dependencies.includes("filesystem")) {
         env.filesystem = filesystem;
+      }
+      if (app.dependencies.includes("filePickerOpen")) {
+        env.filePickerOpen = (title, config) => {
+          const containerElt = createContainerElement();
+          appElement.replaceWith(containerElt);
+          const prevElement = appElement;
+          appElement = containerElt;
+          return createFileOpener(containerElt, title, config).then(
+            (files) => {
+              if (appElement === containerElt) {
+                appElement.replaceWith(prevElement);
+                appElement = prevElement;
+              }
+              return files;
+            },
+            (err) => {
+              if (appElement === containerElt) {
+                appElement.replaceWith(prevElement);
+                appElement = prevElement;
+              }
+              throw err;
+            },
+          );
+        };
       }
     }
 
@@ -534,4 +559,18 @@ export function constructAppWithSidebar(sections, abortSignal) {
     element: container,
     focus: () => content.focus({ preventScroll: true }),
   };
+}
+
+function createContainerElement() {
+  const containerElt = document.createElement("div");
+  applyStyle(containerElt, {
+    display: "flex",
+    flexDirection: "column",
+    position: "relative",
+    width: "100%",
+    height: "100%",
+    overflow: "hidden",
+    backgroundColor: "var(--window-content-bg)",
+  });
+  return containerElt;
 }

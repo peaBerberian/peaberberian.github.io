@@ -43,16 +43,26 @@ export function create(_args, env, parentAbortSignal) {
     {
       name: "upload",
       onClick: () => {
-        // Trick to open the file picker
-        const fileInputElt = document.createElement("input");
-        fileInputElt.type = "file";
-        fileInputElt.accept = "image/*";
-        fileInputElt.multiple = true;
-        fileInputElt.click();
-        fileInputElt.addEventListener("change", (e) => {
-          const files = e.target.files;
-          handleInputedFiles(files);
-        });
+        env
+          .filePickerOpen(
+            "Choose an image to open from your files stored on this Web Desktop",
+            {
+              multiple: true,
+            },
+          )
+          .then((files) => {
+            console.warn("!!!!", files);
+          });
+        // // Trick to open the file picker
+        // const fileInputElt = document.createElement("input");
+        // fileInputElt.type = "file";
+        // fileInputElt.accept = "image/*";
+        // fileInputElt.multiple = true;
+        // fileInputElt.click();
+        // fileInputElt.addEventListener("change", (e) => {
+        //   const files = e.target.files;
+        //   handleInputedFiles(files);
+        // });
       },
     },
     { name: "separator" },

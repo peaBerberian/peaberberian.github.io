@@ -11,7 +11,8 @@
       "onlyOne": false,
       "needsSettingsObject": false,
       "inStartList": null,
-      "desktopDir": null
+      "desktopDir": null,
+      "website": null
     },
     {
       "id": "settings",

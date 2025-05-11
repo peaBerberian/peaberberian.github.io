@@ -11,9 +11,6 @@
 // - if click out of the screen / mouseleave do not deactivate window?
 //
 // low priority:
-// - When mimizing a window over another one, the other one get a higher z-index directly.
-//   That's good technically but weird visually as the minimization animation is not
-//   finished. Find a solution.
 // - all images are their height and width defined to avoid repaint effects
 // - windows moving when moving taskbar to top/bottom. Could be cool to stay in
 //   place if possible
@@ -51,9 +48,10 @@ import ThisWebsite from "./apps/ThisWebsite.mjs";
 import WaspHls from "./apps/WaspHls.mjs";
 
 import AppIcons from "./components/AppIcons.mjs";
-import AppWindow from "./components/window/AppWindow.mjs";
 import StartMenu from "./components/StartMenu.mjs";
 import Taskbar from "./components/Taskbar.mjs";
+import WindowsManager from "./components/window/WindowsManager.mjs";
+
 import { is12HourClockFormat } from "./utils.mjs";
 
 /**
@@ -171,7 +169,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   };
 
-  const taskbar = new Taskbar({ applets: [clockElt] });
+  const taskbarManager = new Taskbar({ applets: [clockElt] });
+  const windowsManager = new WindowsManager(taskbarManager);
 
   const openAppFromIconOrStartMenu = (app) => {
     createApp(app, {
@@ -212,44 +211,9 @@ document.addEventListener("DOMContentLoaded", function () {
    * `null` if no window has been created.
    */
   function createApp(app, options) {
-    const appWindow = AppWindow(app, options);
-    if (!appWindow) {
-      return; // No window has been created
-    }
-    taskbar.addWindow(appWindow.windowId, app.value, {
-      toggleAppActivation: () => appWindow.toggleActivation(),
-      closeApp: () => appWindow.close(),
-    });
-    appWindow.addEventListener("closing", () => {
-      taskbar.remove(appWindow.windowId);
-    });
-    appWindow.addEventListener("activated", () => {
-      taskbar.setActiveWindow(appWindow.windowId);
-    });
-    appWindow.addEventListener("deactivated", () => {
-      taskbar.deActiveWindow(appWindow.windowId);
-    });
-    appWindow.addEventListener("minimizing", () => {
-      taskbar.deActiveWindow(appWindow.windowId);
-
-      // Translation of the minimized window toward the taskbar
-      const taskRect = taskbar.getTaskBoundingClientRect(appWindow.windowId);
-      if (taskRect) {
-        // Calculate transform origin based on taskbar item position
-        const windowRect = appWindow.element.getBoundingClientRect();
-        const taskbarCenterX = taskRect.left + taskRect.width / 2;
-        const taskbarCenterY = taskRect.top - taskRect.height / 2;
-        appWindow.element.style.transformOrigin = `${taskbarCenterX - windowRect.left}px ${taskbarCenterY - windowRect.top}px`;
-      }
-    });
-    appWindow.addEventListener("deminimized", () => {
-      // Reset attribute
-      appWindow.element.style.transformOrigin = "";
-    });
-    desktopElt.appendChild(appWindow.element);
-    if (options.activate) {
-      taskbar.setActiveWindow(appWindow.windowId);
-      appWindow.focus();
+    const windowElt = windowsManager.openApp(app, options);
+    if (windowElt !== null) {
+      desktopElt.appendChild(windowElt);
     }
   }
 });

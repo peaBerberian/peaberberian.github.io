@@ -14,7 +14,6 @@ import {
   CLOSE_APP_ANIM_TIMER,
   MINIMIZE_APP_ANIM_TIMER,
   DEMINIMIZE_APP_ANIM_TIMER,
-  BASE_WINDOW_Z_INDEX,
   WINDOW_OOB_SECURITY_PIX,
 } from "../../constants.mjs";
 import { SETTINGS } from "../../settings.mjs";
@@ -38,84 +37,25 @@ import {
   setWindowWidth,
 } from "./position_utils.mjs";
 import { handleResizeAndMove } from "./resize_and_move.mjs";
-import { keepWindowActiveInCurrentEventLoopIteration } from "./utils.mjs";
+import {
+  keepWindowActiveInCurrentEventLoopIteration,
+  isMinimizedOrMinimizing,
+} from "./utils.mjs";
 import strHtml from "../../str-html.mjs";
 
-/**
- * Metadata on all currently created windows.
- * @type {Array.<AppWindow>}
- */
-const windows = [];
-
-/**
- * Allows to quickly generate an identifier by just incrementing a number.
- * /!\ Careful of not overflowing `Number.MAX_SAFE_INTEGER`.
- * @type {number}
- */
-let nextId = 0;
-
-/**
- * Create a "window" for the given "app" object.
- * TODO: move to desktop?
- *
- * @param {Object} app
- * @param {Object} options - Various options to configure how that new
- * application window will behave
- * @param {boolean} [options.fullscreen] - If set to `true`, the application
- * will be started full screen.
- * @param {boolean} [options.skipAnim] - If set to `true`, we will not show the
- * open animation for this new window.
- * @param {boolean} [options.centered] - If set to `true`, the application
- * window will be centered relative to the desktop in which it can be moved.
- * @param {boolean} [options.activate] - If set to `true`, the application
- * window will be directly activated.
- * @returns {Object|null} - Object representing the newly created window.
- * `null` if no window has been created.
- */
-export default function createAppWindow(app, options = {}) {
-  if (app.value.onlyOne) {
-    // If only instance of the app can be created, check if this window already
-    // exists. If so, activate it.
-    const createdWindowForApp = AppWindow.hasWindowForApp(app.id);
-    if (createdWindowForApp !== null) {
-      if (options.activate) {
-        createdWindowForApp.deminimizeAndActivate();
-      }
-      return null;
-    }
-  }
-  return new AppWindow(app, options);
-}
-
-class AppWindow extends EventEmitter {
-  /**
-   * @returns {AppWindow|null}
-   */
-  static hasWindowForApp(appId) {
-    for (const w of windows) {
-      if (w.appId === appId) {
-        return w;
-      }
-    }
-    return null;
-  }
-
+export default class AppWindow extends EventEmitter {
   /**
    * @param {Object} app
    * @param {Object} options - Various options to configure how that new
    * application window will behave
-   * @param {boolean} [options.fullscreen] - If set to `true`, the application
-   * will be started full screen.
    * @param {boolean} [options.skipAnim] - If set to `true`, we will not show the
    * open animation for this new window.
    * @param {boolean} [options.centered] - If set to `true`, the application
    * window will be centered relative to the desktop in which it can be moved.
-   * @param {boolean} [options.activate] - If set to `true`, the application
-   * window will be directly activated.
    * @returns {Object|null} - Object representing the newly created window.
    * `null` if no window has been created.
    */
-  constructor(app, { fullscreen, skipAnim, centered, activate } = {}) {
+  constructor(app, { skipAnim, centered } = {}) {
     super();
 
     /**
@@ -139,12 +79,6 @@ class AppWindow extends EventEmitter {
      * @type {number|Function}
      */
     this.defaultWidth = app.value.defaultWidth ?? DEFAULT_WINDOW_WIDTH;
-    /**
-     * Identifier identifying this particular window.
-     * Might be communicated around to refer to that window.
-     * @type {string}
-     */
-    this.windowId = "w-" + nextId++;
     /**
      * Will allow to free resources linked to that window.
      * @private
@@ -199,18 +133,12 @@ class AppWindow extends EventEmitter {
       y: 0,
     };
 
-    windows.push(this);
-
     this._setPositionAndSize({
       isInitialization: true,
       centerOnDesktop: centered,
     });
 
-    if (fullscreen) {
-      this.element.className = "window fullscreen";
-    } else {
-      this.element.className = "window";
-    }
+    this.element.className = "window";
 
     let appElt;
     if (app.value.create) {
@@ -229,17 +157,14 @@ class AppWindow extends EventEmitter {
     }
 
     this.element.appendChild(appElt);
-
-    if (activate) {
-      this.activate();
-    } else {
-      this.deActivate();
-    }
-
+    this._setupWindowEvents();
     if (!skipAnim) {
       this._performWindowTransition("open");
     }
-    this._setupWindowEvents();
+  }
+
+  setFullscreen() {
+    enterFullFullScreen(this.element);
   }
 
   focus() {
@@ -251,16 +176,9 @@ class AppWindow extends EventEmitter {
    * Might activate the next visible window as a side-effect.
    */
   close() {
-    const windowIndex = windows.indexOf(this);
-    if (windowIndex !== -1) {
-      // Remove from array
-      windows.splice(windowIndex, 1);
-
-      this._performWindowTransition("close");
-      activateNextWindow();
-    }
-    this.trigger("closing");
+    this._performWindowTransition("close");
     this._abortController.abort();
+    this.trigger("closing");
     this.removeEventListener();
   }
 
@@ -283,7 +201,7 @@ class AppWindow extends EventEmitter {
         return;
       }
       this.activate();
-    } else if (this.element.classList.contains("active")) {
+    } else if (this.isActivated()) {
       // If active, minimize it
       this.minimize();
     } else {
@@ -298,8 +216,7 @@ class AppWindow extends EventEmitter {
       return;
     }
 
-    // Activate another window if available
-    activateNextWindow();
+    this.trigger("minimizing");
   }
 
   deminimizeAndActivate() {
@@ -317,37 +234,11 @@ class AppWindow extends EventEmitter {
    * Bring this window to the front.
    */
   activate() {
-    if (this.element.classList.contains("active")) {
+    if (this.isActivated()) {
       return;
     }
-
-    const windowEltsWithZIndex = [];
-
-    // Deactivate all other windows
-    for (const w of windows) {
-      if (w.windowId !== this.windowId) {
-        w.element.classList.remove("active");
-      } else {
-        w.element.classList.add("active");
-      }
-      windowEltsWithZIndex.push({
-        element: w.element,
-        zIndex: parseInt(w.element.style.zIndex, 10) || BASE_WINDOW_Z_INDEX,
-      });
-    }
-
-    // Normalize all windows so it starts at `BASE_WINDOW_Z_INDEX`
-    // as a low value
-    windowEltsWithZIndex.sort((a, b) => a.zIndex - b.zIndex);
-    windowEltsWithZIndex.forEach((item, index) => {
-      const newZIndex = String(BASE_WINDOW_Z_INDEX + index);
-      if (newZIndex !== item.element.style.zIndex) {
-        item.element.style.zIndex = newZIndex;
-      }
-    });
-    this.element.style.zIndex =
-      BASE_WINDOW_Z_INDEX + windowEltsWithZIndex.length + 1;
     keepWindowActiveInCurrentEventLoopIteration(this.element);
+    this.element.classList.add("active");
     this.trigger("activated");
   }
 
@@ -357,6 +248,79 @@ class AppWindow extends EventEmitter {
   deActivate() {
     this.element.classList.remove("active");
     this.trigger("deactivated");
+  }
+
+  /**
+   * Move/resize current window `HTMLElement`.
+   * @param {Object} position
+   * @param {number|undefined} [position.left] - The absolute position from the
+   * left of its container, in pixels.
+   * Wont' change it this parameter is omitted.
+   * @param {number|undefined} [position.top] - The absolution position from the
+   * top of its container, in pixels.
+   * Wont' change it this parameter is omitted.
+   * @param {number|undefined} [position.height] - The new window height, in
+   * pixels.
+   * Wont' change it this parameter is omitted.
+   * @param {number|undefined} [position.width] - The new window width, in
+   * pixels.
+   * Wont' change it this parameter is omitted.
+   * @param {Object|undefined} [position.desktopDimensions] - Communicate the
+   * maximum width and height of the parent container in pixels as two number
+   * properties called `maxWidth` and `maxHeight` respectively.
+   * Will be re-computed if this parameter is omitted.
+   */
+  move({ left, top, height, width, desktopDimensions }) {
+    let newHeight;
+    let newWidth;
+
+    const maxDesktopDimensions =
+      desktopDimensions ??
+      getMaxDesktopDimensions(
+        SETTINGS.taskbarLocation.getValue(),
+        SETTINGS.taskbarSize.getValue(),
+      );
+
+    if (height !== undefined) {
+      setWindowHeight(this.element, height);
+      newHeight = height;
+    } else {
+      newHeight = getWindowHeight(this.element);
+    }
+
+    if (width !== undefined) {
+      setWindowWidth(this.element, width);
+      newWidth = width;
+    } else {
+      newWidth = getWindowWidth(this.element);
+    }
+
+    if (left !== undefined) {
+      setLeftPositioning(this.element, left);
+    } else {
+      left = getLeftPositioning(this.element);
+    }
+    if (top !== undefined) {
+      setTopPositioning(this.element, top);
+    } else {
+      top = getTopPositioning(this.element);
+    }
+
+    const minBounds = { minXBound: 0, minYBound: 0 };
+    const maxBounds = {
+      maxXBound: maxDesktopDimensions.maxWidth - newWidth,
+      maxYBound: maxDesktopDimensions.maxHeight - newHeight,
+    };
+    this._oobDistances = calculateOutOfBounds(minBounds, maxBounds, left, top);
+  }
+
+  getPlacement() {
+    return {
+      top: getTopPositioning(this.element),
+      left: getLeftPositioning(this.element),
+      height: getWindowHeight(this.element),
+      width: getWindowWidth(this.element),
+    };
   }
 
   _onMaximizeButton() {
@@ -440,7 +404,6 @@ class AppWindow extends EventEmitter {
             this.trigger("minimized");
           }
         };
-        this.trigger("minimizing");
         return true;
 
       case "deminimize":
@@ -604,6 +567,7 @@ class AppWindow extends EventEmitter {
         // relative positioning
 
         if (!isPercentLeftPositioned(this.element)) {
+          // Ensure we set the right unit of positioning
           setLeftPositioning(this.element, currLeft);
         }
         const rightSidePx = currLeft + wantedWWidth;
@@ -655,6 +619,7 @@ class AppWindow extends EventEmitter {
       } else {
         // relative positioning
         if (!isPercentTopPositioned(this.element)) {
+          // Ensure we set the right unit of positioning
           setTopPositioning(this.element, currTop);
         }
         const bottomSidePx = currTop + wantedWHeight;
@@ -686,87 +651,13 @@ class AppWindow extends EventEmitter {
         left = maxAbsoluteHeight - WINDOW_OOB_SECURITY_PIX;
       }
     }
-
-    setWindowHeight(this.element, wantedWHeight);
-    setWindowWidth(this.element, wantedWWidth);
-
-    if (isInitialization) {
-      // Do not overlap previously-create window on the top left position
-      for (let windowIdx = 0; windowIdx < windows.length; windowIdx++) {
-        const appWindow = windows[windowIdx];
-        if (appWindow === this) {
-          continue;
-        }
-        const windowRect = windows[windowIdx].element.getBoundingClientRect();
-        const leftOffset =
-          SETTINGS.taskbarLocation.getValue() === "left"
-            ? SETTINGS.taskbarSize.getValue()
-            : 0;
-
-        const topOffset =
-          SETTINGS.taskbarLocation.getValue() === "top"
-            ? SETTINGS.taskbarSize.getValue()
-            : 0;
-
-        let needRecheck = false;
-        if (
-          windowRect &&
-          top !== undefined &&
-          wantedWHeight &&
-          windowRect.top - topOffset === top
-        ) {
-          if (top + wantedWHeight + 25 <= maxWindowHeight) {
-            top += 25;
-            needRecheck = true;
-          } else {
-            top = maxWindowHeight - wantedWHeight;
-          }
-        }
-        if (
-          windowRect &&
-          left !== undefined &&
-          wantedWWidth &&
-          windowRect.left - leftOffset === left
-        ) {
-          if (left + wantedWWidth + 25 <= maxWindowWidth) {
-            left += 25;
-            needRecheck = true;
-          } else {
-            left = maxWindowWidth - wantedWWidth;
-          }
-        }
-        if (needRecheck) {
-          windowIdx = -1;
-        }
-      }
-    }
-
-    if (left !== undefined) {
-      setLeftPositioning(this.element, left);
-    }
-    if (top !== undefined) {
-      setTopPositioning(this.element, top);
-    }
-
-    if (left === undefined) {
-      // TODO: avoid re-doing this
-      left = getLeftPositioning(this.element);
-    }
-    if (top === undefined) {
-      top = getTopPositioning(this.element);
-    }
-    const minBounds = { minXBound: 0, minYBound: 0 };
-    const maxBounds = {
-      maxXBound: maxDesktopDimensions.maxWidth - wantedWWidth,
-      maxYBound: maxDesktopDimensions.maxHeight - wantedWHeight,
-    };
-    this._oobDistances = calculateOutOfBounds(
-      minBounds,
-      maxBounds,
-      // TODO: better logic
-      left ?? getLeftPositioning(this.element),
-      top ?? getTopPositioning(this.element),
-    );
+    this.move({
+      left,
+      top,
+      height: wantedWHeight,
+      width: wantedWWidth,
+      desktopDimensions: maxDesktopDimensions,
+    });
   }
 
   /**
@@ -843,7 +734,7 @@ class AppWindow extends EventEmitter {
         evt.target !== windowElt &&
         !windowElt.contains(evt.target)
       ) {
-        this.deActivate(windowElt, this.windowId);
+        this.deActivate(windowElt);
       }
     });
 
@@ -885,38 +776,6 @@ class AppWindow extends EventEmitter {
       top: getTopPositioning(this.element),
     };
   }
-}
-
-function activateNextWindow() {
-  if (windows.length === 0) {
-    return;
-  }
-
-  let currentWindowWithMaxZIndex;
-  let maxZindex = -Infinity;
-  for (const w of windows) {
-    if (!isMinimizedOrMinimizing(w.element)) {
-      const wZindex = parseInt(w.element.style.zIndex, 10);
-      if (!isNaN(wZindex) && wZindex >= maxZindex) {
-        currentWindowWithMaxZIndex = w;
-        maxZindex = wZindex;
-      }
-    }
-  }
-
-  if (currentWindowWithMaxZIndex) {
-    currentWindowWithMaxZIndex.activate();
-  }
-}
-
-/**
- * @param {HTMLElement} windowElt
- */
-function isMinimizedOrMinimizing(windowElt) {
-  return (
-    windowElt.classList.contains("minimized") ||
-    windowElt.dataset.state === "minimize"
-  );
 }
 
 function constructInitialWindowElement(title) {

@@ -95,6 +95,7 @@ export function create(args, env) {
           }
           spinnerContainerElt.style.display = "none";
           statusBar.textContent = "Ready";
+          saveState(false);
         });
       },
     },
@@ -131,6 +132,7 @@ export function create(args, env) {
               }
               spinnerContainerElt.style.display = "none";
               statusBar.textContent = "Ready";
+              saveState(false);
             },
             (err) => {
               clearAndRestart();
@@ -316,6 +318,7 @@ export function create(args, env) {
     disableButton("quick-save");
     textArea.scrollTo(0, 0);
     updateLineNumbers();
+    saveState(false);
   }
 
   function updateLineNumbers() {

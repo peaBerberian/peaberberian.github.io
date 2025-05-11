@@ -22,7 +22,7 @@ export default function createWindowSection(settings, abortSignal) {
   headerStyleGroup.appendChild(
     createDropdownOnRef({
       ref: settings.buttonPosition,
-      options: ["Right", "Left"],
+      options: ["Left", "Right"],
       label: "Button Position",
     }),
   );

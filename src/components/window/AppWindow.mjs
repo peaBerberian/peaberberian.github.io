@@ -6,20 +6,7 @@ import {
   createAppIframe,
   getMaxDesktopDimensions,
 } from "../../utils.mjs";
-import {
-  WINDOW_MIN_WIDTH,
-  WINDOW_MIN_HEIGHT,
-  DEFAULT_WINDOW_HEIGHT,
-  DEFAULT_WINDOW_WIDTH,
-  EXIT_FULLSCREEN_ANIM_TIMER,
-  OPEN_APP_ANIM_TIMER,
-  CLOSE_APP_ANIM_TIMER,
-  MINIMIZE_APP_ANIM_TIMER,
-  DEMINIMIZE_APP_ANIM_TIMER,
-  WINDOW_OOB_SECURITY_PIX,
-  IMAGE_ROOT_PATH,
-  __VERSION__,
-} from "../../constants.mjs";
+import * as CONSTANTS from "../../constants.mjs";
 import { SETTINGS } from "../../settings.mjs";
 import strHtml from "../../str-html.mjs";
 import filesystem from "../../filesystem.mjs";
@@ -48,6 +35,21 @@ import {
   isMinimizedOrMinimizing,
   constructAppWithSidebar,
 } from "./utils.mjs";
+
+const {
+  WINDOW_MIN_WIDTH,
+  WINDOW_MIN_HEIGHT,
+  DEFAULT_WINDOW_HEIGHT,
+  DEFAULT_WINDOW_WIDTH,
+  EXIT_FULLSCREEN_ANIM_TIMER,
+  OPEN_APP_ANIM_TIMER,
+  CLOSE_APP_ANIM_TIMER,
+  MINIMIZE_APP_ANIM_TIMER,
+  DEMINIMIZE_APP_ANIM_TIMER,
+  WINDOW_OOB_SECURITY_PIX,
+  IMAGE_ROOT_PATH,
+  __VERSION__,
+} = CONSTANTS;
 
 export default class AppWindow extends EventEmitter {
   /**
@@ -345,6 +347,7 @@ export default class AppWindow extends EventEmitter {
         appUtils,
         getImageRootPath: () => IMAGE_ROOT_PATH,
         getVersion: () => __VERSION__,
+        CONSTANTS,
       };
       if (Array.isArray(dependencies)) {
         if (dependencies.includes("settings")) {

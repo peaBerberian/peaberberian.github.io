@@ -22,7 +22,7 @@
         "after": 100
       },
       "onlyOne": true,
-      "dependencies": ["settings", "filesystem"],
+      "dependencies": ["settings"],
       "inStartList": null,
       "desktopDir": null
     },

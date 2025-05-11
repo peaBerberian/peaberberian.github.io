@@ -8,7 +8,7 @@ import {
   ICON_MARGIN,
 } from "../constants.mjs";
 import {
-  addEventListener,
+  addAbortableEventListener,
   applyStyle,
   blockElementsFromTakingPointerEvents,
   getMaxDesktopDimensions,
@@ -315,27 +315,47 @@ function addMovingAroundListeners(icon, { baseLeft, baseTop }, abortSignal) {
     icon.style.left = `${baseLeft}px`;
     icon.style.top = `${baseTop}px`;
   };
-  addEventListener(icon, "touchstart", abortSignal, onTouchStart);
-  addEventListener(icon, "touchend", abortSignal, onMouseUp);
-  addEventListener(icon, "touchmove", abortSignal, onTouchMove);
+  addAbortableEventListener(icon, "touchstart", abortSignal, onTouchStart);
+  addAbortableEventListener(icon, "touchend", abortSignal, onMouseUp);
+  addAbortableEventListener(icon, "touchmove", abortSignal, onTouchMove);
 
   // Safari just selects all over the place like some maniac without this
-  addEventListener(icon, "selectstart", abortSignal, (e) => {
+  addAbortableEventListener(icon, "selectstart", abortSignal, (e) => {
     e.preventDefault();
   });
-  addEventListener(icon, "mousedown", abortSignal, onMouseDown);
-  addEventListener(document.documentElement, "mouseleave", abortSignal, () => {
-    isDragging = false;
-    resetIconPosition();
-  });
-  addEventListener(document.documentElement, "mouseenter", abortSignal, () => {
-    isDragging = false;
-    resetIconPosition();
-  });
-  addEventListener(document.documentElement, "click", abortSignal, () => {
-    isDragging = false;
-    resetIconPosition();
-  });
-  addEventListener(document, "mousemove", abortSignal, onDocumentMouseMove);
-  addEventListener(document, "mouseup", abortSignal, onMouseUp);
+  addAbortableEventListener(icon, "mousedown", abortSignal, onMouseDown);
+  addAbortableEventListener(
+    document.documentElement,
+    "mouseleave",
+    abortSignal,
+    () => {
+      isDragging = false;
+      resetIconPosition();
+    },
+  );
+  addAbortableEventListener(
+    document.documentElement,
+    "mouseenter",
+    abortSignal,
+    () => {
+      isDragging = false;
+      resetIconPosition();
+    },
+  );
+  addAbortableEventListener(
+    document.documentElement,
+    "click",
+    abortSignal,
+    () => {
+      isDragging = false;
+      resetIconPosition();
+    },
+  );
+  addAbortableEventListener(
+    document,
+    "mousemove",
+    abortSignal,
+    onDocumentMouseMove,
+  );
+  addAbortableEventListener(document, "mouseup", abortSignal, onMouseUp);
 }

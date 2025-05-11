@@ -5,7 +5,7 @@ import {
   TASKBAR_MAX_VERTICAL_SIZE,
 } from "../constants.mjs";
 import { SETTINGS } from "../settings.mjs";
-import { addEventListener } from "../utils.mjs";
+import { addAbortableEventListener } from "../utils.mjs";
 
 /**
  * Class simplifying the handling of the "Taskbar", which is the bar containing
@@ -150,7 +150,7 @@ function addResizeHandle(elt, abortSignal) {
   let startWidth;
 
   abortSignal.addEventListener("abort", stopResize);
-  addEventListener(window, "resize", abortSignal, stopResize);
+  addAbortableEventListener(window, "resize", abortSignal, stopResize);
   SETTINGS.taskbarLocation.onUpdate(
     () => {
       taskbarLocation = SETTINGS.taskbarLocation.getValue();
@@ -264,12 +264,17 @@ function handleTaskbarMove(taskbarElt, abortSignal) {
   // Reset some state on abort, just to be sure we're not left in an unwanted state
   abortSignal.addEventListener("abort", stopDragging);
 
-  addEventListener(taskbarElt, "touchstart", abortSignal, () => {
+  addAbortableEventListener(taskbarElt, "touchstart", abortSignal, () => {
     startDraggingTaskbar();
   });
-  addEventListener(taskbarElt, "touchend", abortSignal, stopDragging);
-  addEventListener(taskbarElt, "touchcancel", abortSignal, stopDragging);
-  addEventListener(taskbarElt, "touchmove", abortSignal, (e) => {
+  addAbortableEventListener(taskbarElt, "touchend", abortSignal, stopDragging);
+  addAbortableEventListener(
+    taskbarElt,
+    "touchcancel",
+    abortSignal,
+    stopDragging,
+  );
+  addAbortableEventListener(taskbarElt, "touchmove", abortSignal, (e) => {
     if (e.touches.length === 1) {
       const touch = e.touches[0];
       e.preventDefault();
@@ -278,10 +283,10 @@ function handleTaskbarMove(taskbarElt, abortSignal) {
   });
 
   // Safari just selects all over the place like some maniac without this
-  addEventListener(taskbarElt, "selectstart", abortSignal, (e) => {
+  addAbortableEventListener(taskbarElt, "selectstart", abortSignal, (e) => {
     e.preventDefault();
   });
-  addEventListener(taskbarElt, "mousedown", abortSignal, (e) => {
+  addAbortableEventListener(taskbarElt, "mousedown", abortSignal, (e) => {
     if (e.button !== 0) {
       // not left click
       return;
@@ -289,33 +294,33 @@ function handleTaskbarMove(taskbarElt, abortSignal) {
     e.preventDefault();
     startDraggingTaskbar();
   });
-  addEventListener(
+  addAbortableEventListener(
     document.documentElement,
     "mouseleave",
     abortSignal,
     stopDragging,
   );
-  addEventListener(
+  addAbortableEventListener(
     document.documentElement,
     "mouseenter",
     abortSignal,
     stopDragging,
   );
-  addEventListener(
+  addAbortableEventListener(
     document.documentElement,
     "click",
     abortSignal,
     stopDragging,
   );
-  addEventListener(document, "mousemove", abortSignal, (e) => {
+  addAbortableEventListener(document, "mousemove", abortSignal, (e) => {
     if (!isDragging) {
       return;
     }
     e.preventDefault();
     moveDraggedTaskbar(e.clientX, e.clientY);
   });
-  addEventListener(taskbarElt, "mouseup", abortSignal, stopDragging);
-  addEventListener(window, "resize", abortSignal, stopDragging);
+  addAbortableEventListener(taskbarElt, "mouseup", abortSignal, stopDragging);
+  addAbortableEventListener(window, "resize", abortSignal, stopDragging);
 
   function startDraggingTaskbar() {
     if (!SETTINGS.allowManualTaskbarMove.getValue()) {

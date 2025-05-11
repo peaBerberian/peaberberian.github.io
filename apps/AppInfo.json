@@ -7,9 +7,9 @@
       "defaultHeight": 600,
       "defaultWidth": 855,
       "preload": true,
-			"autoload": true,
+      "autoload": true,
       "onlyOne": false,
-			"needsSettingsObject": false,
+      "needsSettingsObject": false,
       "inStartList": null,
       "startMenuDir": null
     },
@@ -21,7 +21,7 @@
       "defaultWidth": 1000,
       "preload": true,
       "onlyOne": true,
-			"needsSettingsObject": true,
+      "needsSettingsObject": true,
       "inStartList": null,
       "startMenuDir": null
     },

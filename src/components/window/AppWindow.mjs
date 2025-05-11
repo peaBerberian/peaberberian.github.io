@@ -1,7 +1,7 @@
 import appUtils from "../../app-utils.mjs";
 import EventEmitter from "../../event-emitter.mjs";
 import {
-  addEventListener,
+  addAbortableEventListener,
   applyStyle,
   createAppIframe,
   getMaxDesktopDimensions,
@@ -721,7 +721,7 @@ export default class AppWindow extends EventEmitter {
     const minimizeBtn = header.getElementsByClassName("w-minimize")[0];
     const maximizeBtn = header.getElementsByClassName("w-maximize")[0];
 
-    addEventListener(windowElt, "mousedown", abortSignal, () => {
+    addAbortableEventListener(windowElt, "mousedown", abortSignal, () => {
       this.activate();
     });
 
@@ -746,7 +746,7 @@ export default class AppWindow extends EventEmitter {
       abortSignal,
     );
 
-    addEventListener(header, "dblclick", abortSignal, () => {
+    addAbortableEventListener(header, "dblclick", abortSignal, () => {
       if (!SETTINGS.dblClickHeaderFullScreen.getValue()) {
         return;
       }
@@ -756,21 +756,21 @@ export default class AppWindow extends EventEmitter {
         enterFullFullScreen(windowElt);
       }
     });
-    addEventListener(windowElt, "mousedown", abortSignal, () => {
+    addAbortableEventListener(windowElt, "mousedown", abortSignal, () => {
       this.activate();
     });
     if (minimizeBtn) {
-      addEventListener(minimizeBtn, "click", abortSignal, () => {
+      addAbortableEventListener(minimizeBtn, "click", abortSignal, () => {
         this.minimize();
       });
     }
     if (maximizeBtn) {
-      addEventListener(maximizeBtn, "click", abortSignal, () => {
+      addAbortableEventListener(maximizeBtn, "click", abortSignal, () => {
         this._onMaximizeButton(windowElt);
       });
     }
     if (closeBtn) {
-      addEventListener(closeBtn, "click", abortSignal, () => {
+      addAbortableEventListener(closeBtn, "click", abortSignal, () => {
         this.close();
       });
     }
@@ -778,10 +778,10 @@ export default class AppWindow extends EventEmitter {
     // Block clicks clearly on buttons from allowing to move or resize windows.
     [minimizeBtn, maximizeBtn, closeBtn].forEach((btn) => {
       if (btn) {
-        addEventListener(btn, "touchstart", abortSignal, (e) => {
+        addAbortableEventListener(btn, "touchstart", abortSignal, (e) => {
           e.stopPropagation();
         });
-        addEventListener(btn, "mousedown", abortSignal, (e) => {
+        addAbortableEventListener(btn, "mousedown", abortSignal, (e) => {
           if (e.button !== 0) {
             // not left click
             return;
@@ -790,7 +790,7 @@ export default class AppWindow extends EventEmitter {
         });
       }
     });
-    addEventListener(document, "click", abortSignal, (evt) => {
+    addAbortableEventListener(document, "click", abortSignal, (evt) => {
       if (
         windowElt.classList.contains("active") &&
         // The setup of events may be following a click, just don't deactivate on an
@@ -813,7 +813,7 @@ export default class AppWindow extends EventEmitter {
     };
 
     // Re-draw window placement if the window is resized
-    addEventListener(
+    addAbortableEventListener(
       window,
       "resize",
       this._abortController.signal,

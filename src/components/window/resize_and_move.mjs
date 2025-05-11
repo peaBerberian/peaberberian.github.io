@@ -1,5 +1,5 @@
 import {
-  addEventListener,
+  addAbortableEventListener,
   blockElementsFromTakingPointerEvents,
   getMaxDesktopDimensions,
   unblockElementsFromTakingPointerEvents,
@@ -193,13 +193,18 @@ function handleMoveOnWindow(
       }
       stopDragging();
     };
-    addEventListener(header, "touchstart", abortSignal, (e) => {
+    addAbortableEventListener(header, "touchstart", abortSignal, (e) => {
       const touch = e.touches[0];
       startDraggingWindow(touch.clientX, touch.clientY);
     });
-    addEventListener(header, "touchend", abortSignal, validateWindowMovement);
-    addEventListener(header, "touchcancel", abortSignal, stopDragging);
-    addEventListener(header, "touchmove", abortSignal, (e) => {
+    addAbortableEventListener(
+      header,
+      "touchend",
+      abortSignal,
+      validateWindowMovement,
+    );
+    addAbortableEventListener(header, "touchcancel", abortSignal, stopDragging);
+    addAbortableEventListener(header, "touchmove", abortSignal, (e) => {
       if (e.touches.length === 1) {
         const touch = e.touches[0];
         moveDraggedWindow(touch.clientX, touch.clientY);
@@ -207,43 +212,48 @@ function handleMoveOnWindow(
     });
 
     // Safari just selects all over the place like some maniac without this
-    addEventListener(header, "selectstart", abortSignal, (e) => {
+    addAbortableEventListener(header, "selectstart", abortSignal, (e) => {
       e.preventDefault();
     });
 
-    addEventListener(header, "mousedown", abortSignal, (e) => {
+    addAbortableEventListener(header, "mousedown", abortSignal, (e) => {
       if (e.button !== 0) {
         // not left click
         return;
       }
       startDraggingWindow(e.clientX, e.clientY);
     });
-    addEventListener(
+    addAbortableEventListener(
       document.documentElement,
       "mouseleave",
       abortSignal,
       stopDragging,
     );
-    addEventListener(
+    addAbortableEventListener(
       document.documentElement,
       "mouseenter",
       abortSignal,
       validateWindowMovement,
     );
-    addEventListener(
+    addAbortableEventListener(
       document.documentElement,
       "click",
       abortSignal,
       validateWindowMovement,
     );
-    addEventListener(document, "mousemove", abortSignal, (e) => {
+    addAbortableEventListener(document, "mousemove", abortSignal, (e) => {
       if (!isDragging) {
         return;
       }
       moveDraggedWindow(e.clientX, e.clientY);
     });
-    addEventListener(windowElt, "mouseup", abortSignal, validateWindowMovement);
-    addEventListener(window, "resize", abortSignal, stopDragging);
+    addAbortableEventListener(
+      windowElt,
+      "mouseup",
+      abortSignal,
+      validateWindowMovement,
+    );
+    addAbortableEventListener(window, "resize", abortSignal, stopDragging);
   }
 
   function startDraggingWindow(clientX, clientY) {
@@ -501,7 +511,7 @@ function handleResizeOnWindow(
     abortSignal.addEventListener("abort", () => {
       unblockElementsFromTakingPointerEvents();
     });
-    addEventListener(handle, "mousedown", abortSignal, (e) => {
+    addAbortableEventListener(handle, "mousedown", abortSignal, (e) => {
       if (e.button) {
         // not left click
         return;

@@ -8,7 +8,12 @@ import strHtml from "./str-html.mjs";
  * @param {AbortSignal} abortSignal
  * @param {Function} callback
  */
-export function addEventListener(target, event, abortSignal, callback) {
+export function addAbortableEventListener(
+  target,
+  event,
+  abortSignal,
+  callback,
+) {
   target.addEventListener(event, callback);
   abortSignal.addEventListener("abort", () => {
     target.removeEventListener(event, callback);

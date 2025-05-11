@@ -112,6 +112,27 @@ class DesktopFileSystem {
       );
     }
 
+    const segmentedSrcPath = srcPath.split("/");
+    for (const segment of segmentedSrcPath) {
+      if (RESERVED_NAMES.includes(segment)) {
+        throw new Error("Permission denied: Tried to move a system file");
+      }
+    }
+
+    const segmentedDestPath = baseDestPath.split("/");
+    for (const segment of segmentedDestPath) {
+      if (RESERVED_NAMES.includes(segment)) {
+        throw new Error(
+          "Permission denied: Destination path contains a reserved name",
+        );
+      }
+      if (/[\x00-\x1F\x7F/\\]/.test(segment)) {
+        throw new Error(
+          "Unauthorized file name: Please do not use control characters, slash or anti-slash characters.",
+        );
+      }
+    }
+
     return this._scheduleLockingOperation(async () => {
       let allEntries;
 

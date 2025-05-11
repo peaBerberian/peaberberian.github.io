@@ -8,6 +8,8 @@
 // - if click out of the screen / mouseleave do not deactivate window?
 // - sometimes app has focus (e.g. "notes" can be written on), but not the window
 // - start menu should always do some kind of sublist when sublists are enabled
+// - copy svg in passgen is broken on multiple devices
+// - Allow to disable the i-frame warning in settings?
 //
 // low priority:
 // - windows moving when moving taskbar to top/bottom. Could be cool to stay in

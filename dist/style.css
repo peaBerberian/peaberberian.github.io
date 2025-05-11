@@ -339,6 +339,11 @@ html {
   height: 100%;
   width: 100%;
   border: var(--window-border-size) solid var(--window-inactive-header);
+  /*
+* This one is needed for subpixel perfection between the border and the header
+* for some reason.
+*/
+  background-color: var(--window-inactive-header);
   border-top: 0px;
   box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -497,6 +502,11 @@ html {
 
 .window.active .w-visible {
   scrollbar-color: var(--window-active-header) var(--window-content-bg);
+  /*
+* This one is needed for subpixel perfection between the border and the header
+* for some reason.
+*/
+  background-color: var(--window-active-header);
   border: var(--window-border-size) solid var(--window-active-header);
   border-top: 0px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);

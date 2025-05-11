@@ -407,6 +407,21 @@ export const SETTINGS = {
     },
   ),
 
+  allowManualTaskbarResize: createRefForState(
+    "manual-taskbar-resize",
+    true,
+    (isEnabled) => {
+      const taskbarElt = document.getElementById("taskbar");
+      if (isEnabled) {
+        taskbarElt.classList.add("resizable");
+      } else {
+        taskbarElt.classList.remove("resizable");
+      }
+    },
+  ),
+
+  allowManualTaskbarMove: createRefForState("manual-taskbar-move", true),
+
   /** Space in-between tasks of the taskbar, in px. */
   taskbarTaskMargin: createRefForState(
     "taskbar-task-margin",

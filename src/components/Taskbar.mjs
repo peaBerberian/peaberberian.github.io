@@ -5,6 +5,7 @@ import {
   TASKBAR_MAX_VERTICAL_SIZE,
 } from "../constants.mjs";
 import { SETTINGS } from "../settings.mjs";
+import { addEventListener } from "../utils.mjs";
 
 /**
  * Class simplifying the handling of the "Taskbar", which is the bar containing
@@ -17,6 +18,7 @@ export default class Taskbar {
    * inserted to the right of the taskbar
    */
   constructor(opts = {}) {
+    this._abortController = new AbortController();
     const taskbarElt = document.getElementById("taskbar");
     if (opts.applets) {
       const taskbarLastElt = document.getElementById("taskbar-last");
@@ -26,7 +28,8 @@ export default class Taskbar {
     }
     this._taskbarItemsElt =
       taskbarElt.getElementsByClassName("taskbar-items")[0];
-    addResizeHandle(taskbarElt);
+    addResizeHandle(taskbarElt, this._abortController.signal);
+    handleTaskbarMove(taskbarElt, this._abortController.signal);
   }
 
   /**
@@ -126,13 +129,14 @@ export default class Taskbar {
    * Free resources maintained by this Taskbar.
    */
   dispose() {
+    this._abortController.abort();
     this._taskbarItemsElt.innerHTML = "";
     const taskbarLastElt = document.getElementById("taskbar-last");
     taskbarLastElt.innerHTML = "";
   }
 }
 
-function addResizeHandle(elt) {
+function addResizeHandle(elt, abortSignal) {
   const handle = document.createElement("div");
   handle.className = "taskbar-resize-handle";
   elt.appendChild(handle);
@@ -145,6 +149,8 @@ function addResizeHandle(elt) {
   let startHeight;
   let startWidth;
 
+  abortSignal.addEventListener("abort", stopResize);
+  addEventListener(window, "resize", abortSignal, stopResize);
   SETTINGS.taskbarLocation.onUpdate(
     () => {
       taskbarLocation = SETTINGS.taskbarLocation.getValue();
@@ -225,5 +231,106 @@ function addResizeHandle(elt) {
     document.body.classList.remove("block-iframe");
     document.removeEventListener("mousemove", resize);
     document.removeEventListener("mouseup", stopResize);
+  }
+}
+
+/**
+ * Setup the right events to ensure this taskbar can be moved.
+ * @param {HTMLElement} taskbarElt - The whole taskbar element that can be
+ * moved.
+ * @param {AbortSignal} abortSignal - `AbortSignal` allowing to free all
+ * resources and event listeners registered here when it emits.
+ */
+function handleTaskbarMove(taskbarElt, abortSignal) {
+  /**
+   * If `true`, we're currently in the process of dragging the taskbar around.
+   */
+  let isDragging = false;
+  /**
+   * Height of the container element. We assume that it cannot change while a
+   * taskbar move is happening.
+   */
+  let containerWidth;
+  /**
+   * Height of the container element. We assume that it cannot change while a
+   * taskbar move is happening.
+   */
+  let containerHeight;
+
+  const stopDragging = () => {
+    isDragging = false;
+  };
+
+  // Reset some state on abort, just to be sure we're not left in an unwanted state
+  abortSignal.addEventListener("abort", stopDragging);
+
+  addEventListener(taskbarElt, "touchstart", abortSignal, () => {
+    startDraggingTaskbar();
+  });
+  addEventListener(taskbarElt, "touchend", abortSignal, stopDragging);
+  addEventListener(taskbarElt, "touchcancel", abortSignal, stopDragging);
+  addEventListener(taskbarElt, "touchmove", abortSignal, (e) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      e.preventDefault();
+      moveDraggedTaskbar(touch.clientX, touch.clientY);
+    }
+  });
+  addEventListener(taskbarElt, "mousedown", abortSignal, (e) => {
+    if (e.button !== 0) {
+      // not left click
+      return;
+    }
+    e.preventDefault();
+    startDraggingTaskbar();
+  });
+  addEventListener(
+    document.documentElement,
+    "mouseleave",
+    abortSignal,
+    stopDragging,
+  );
+  addEventListener(
+    document.documentElement,
+    "mouseenter",
+    abortSignal,
+    stopDragging,
+  );
+  addEventListener(
+    document.documentElement,
+    "click",
+    abortSignal,
+    stopDragging,
+  );
+  addEventListener(document, "mousemove", abortSignal, (e) => {
+    if (!isDragging) {
+      return;
+    }
+    e.preventDefault();
+    moveDraggedTaskbar(e.clientX, e.clientY);
+  });
+  addEventListener(taskbarElt, "mouseup", abortSignal, stopDragging);
+  addEventListener(window, "resize", abortSignal, stopDragging);
+
+  function startDraggingTaskbar() {
+    if (!SETTINGS.allowManualTaskbarMove.getValue()) {
+      return;
+    }
+    isDragging = true;
+    containerWidth = document.documentElement.clientWidth;
+    containerHeight = document.documentElement.clientHeight;
+  }
+
+  function moveDraggedTaskbar(clientX, clientY) {
+    const taskbarSize = SETTINGS.taskbarSize.getValue();
+    if (containerHeight - clientY <= taskbarSize) {
+      SETTINGS.taskbarLocation.setValueIfChanged("bottom");
+    } else if (clientY <= taskbarSize) {
+      SETTINGS.taskbarLocation.setValueIfChanged("top");
+    } else if (clientX <= taskbarSize) {
+      SETTINGS.taskbarLocation.setValueIfChanged("left");
+    } else if (containerWidth - clientX <= taskbarSize) {
+      SETTINGS.taskbarLocation.setValueIfChanged("right");
+    }
   }
 }

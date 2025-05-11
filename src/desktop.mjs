@@ -12,8 +12,6 @@
 // - filesystem: watch API?
 // - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices
-// - click on explorer should unselect
-// - no more window focused in taskbar
 //
 // low priority:
 // - filesystem: Proxy local storage in `/system/`?

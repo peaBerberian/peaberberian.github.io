@@ -632,12 +632,48 @@ function addMouseSelectInteractivity(
   itemsMap,
   { getSelectedItems, selectItemElts, clearItemElts, isItemEltSelected },
 ) {
-  let isSelecting = false;
+  /** If `true`, the pointer was pressed on the container element, else, `false`. */
+  let isPressing = false;
+
+  /**
+   * If `true`, we're currently in the process of having a "selection zone"
+   * which actually selects all items it moves over.
+   * If `false`, we're not selecting yet, probably because the pointer did
+   * not move enough.
+   */
   let hasSelectionStarted = false;
+  /**
+   * The starting `x` coordinate at the time of press of the pointer on the
+   * page.
+   */
   let startX = 0;
+  /**
+   * The starting `y` coordinate at the time of press of the pointer on the
+   * page.
+   */
   let startY = 0;
-  let selectionBox;
-  let baseSelected;
+
+  /** The list of selected items at the time of press (as an Array). */
+  let baseSelected = [];
+
+  /**
+   * The selection zone element.that will visually indicate what is currently
+   * the zone of selection.
+   */
+  const selectionBox = document.createElement("div");
+  selectionBox.className = "selection-box";
+  Object.assign(selectionBox.style, {
+    position: "absolute",
+    left: `${startX}px`,
+    top: `${startY}px`,
+    width: "0",
+    height: "0",
+    opacity: 0.5,
+    backgroundColor: "var(--app-primary-color)",
+    border: "",
+    pointerEvents: "none",
+    zIndex: "1000",
+  });
 
   containerElt.addEventListener("mousedown", (e) => {
     if (e.button !== 0) {
@@ -646,34 +682,27 @@ function addMouseSelectInteractivity(
     }
     e.preventDefault();
 
-    isSelecting = true;
+    isPressing = true;
+    hasSelectionStarted = false;
     startX = e.clientX;
     startY = e.clientY;
-
-    // Create selection box
-    selectionBox = document.createElement("div");
-    selectionBox.className = "selection-box";
-    Object.assign(selectionBox.style, {
-      position: "absolute",
-      left: `${startX}px`,
-      top: `${startY}px`,
-      width: "0",
-      height: "0",
-      opacity: 0.5,
-      backgroundColor: "var(--app-primary-color)",
-      border: "",
-      pointerEvents: "none",
-      zIndex: "1000",
-    });
+    baseSelected = getSelectedItems();
+    if (
+      !e.shiftKey &&
+      !e.ctrlKey &&
+      !baseSelected.some((s) => s.contains(e.target))
+    ) {
+      clearItemElts(baseSelected);
+    }
     document.body.appendChild(selectionBox);
   });
 
-  containerElt.onselectstart = (e) => {
+  containerElt.addEventListener("selectstart", (e) => {
     e.preventDefault();
-  };
+  });
 
   function onMouseMove(e) {
-    if (!isSelecting) {
+    if (!isPressing) {
       return;
     }
 
@@ -711,16 +740,16 @@ function addMouseSelectInteractivity(
 
     if (!hasSelectionStarted) {
       if (
-        Math.abs(startX - currentX) < 15 &&
+        Math.abs(startX - currentX) < 15 ||
         Math.abs(startY - currentY) < 15
       ) {
         return;
       }
       hasSelectionStarted = true;
-      if (e.ctrlKey) {
-        baseSelected = getSelectedItems();
-      } else {
-        baseSelected = [];
+      if (!e.ctrlKey && !e.shiftKey) {
+        //IWe postpone clearing until the intent of selection is well communicated
+        // to not surprise people which just try to drag and drop things (before
+        // realizing it has no effect)
         clearItemElts(getSelectedItems());
       }
     }
@@ -743,7 +772,7 @@ function addMouseSelectInteractivity(
         selectionRect.top > itemRect.bottom
       );
 
-      if (baseSelected.includes(itemElt)) {
+      if (e.ctrlKey && baseSelected.includes(itemElt)) {
         if (isOverlapping) {
           toClear.push(itemElt);
         } else {
@@ -758,6 +787,7 @@ function addMouseSelectInteractivity(
         toClear.push(itemElt);
       }
     });
+
     selectItemElts(toSelect, {
       clearPrevious: false,
       preventScroll: true,
@@ -765,16 +795,19 @@ function addMouseSelectInteractivity(
     clearItemElts(toClear);
   }
   function onMouseUp() {
-    hasSelectionStarted = false;
-    if (!isSelecting) {
+    if (!isPressing) {
       return;
     }
-
-    isSelecting = false;
-    if (selectionBox) {
-      selectionBox.remove();
-      selectionBox = null;
-    }
+    hasSelectionStarted = false;
+    baseSelected = [];
+    isPressing = false;
+    selectionBox.style.left = "0";
+    selectionBox.style.top = "0";
+    selectionBox.style.width = "0";
+    selectionBox.style.height = "0";
+    try {
+      document.body.removeChild(selectionBox);
+    } catch (_) {}
   }
 
   return { onActivate, onDeactivate };

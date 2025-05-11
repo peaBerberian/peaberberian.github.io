@@ -730,21 +730,6 @@ export default class AppWindow extends EventEmitter {
       }
     });
 
-    // This had too much false positives (e.g. when a click unmounted the
-    // corresponding HTMLElement).
-    // Removing it is also nice :p
-    // addAbortableEventListener(document, "click", abortSignal, (evt) => {
-    //   if (
-    //     windowElt.classList.contains("active") &&
-    //     // The setup of events may be following a click, just don't deactivate on an
-    //     // ouside click if the window just had been activated
-    //     !windowElt.dataset.dontDisableOnLoop &&
-    //     evt.target !== windowElt &&
-    //     !windowElt.contains(evt.target)
-    //   ) {
-    //     this.deActivate(windowElt);
-    //   }
-    // });
     addAbortableEventListener(document, "focusin", abortSignal, (evt) => {
       if (windowElt.contains(evt.target)) {
         this.activate(windowElt);

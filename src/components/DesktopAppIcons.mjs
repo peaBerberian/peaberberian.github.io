@@ -118,6 +118,7 @@ export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
       icon.addEventListener("keydown", (evt) => {
         if (evt.key === "Enter") {
           onOpen(app.run, app.args);
+          icon.blur();
         }
       });
       icon.addEventListener("blur", () => {
@@ -131,6 +132,7 @@ export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
           if (clickCount && performance.now() - lastClickTs < 300) {
             clickCount = 0;
             onOpen(app.run, app.args);
+            icon.blur();
           } else {
             clickCount = 1;
             lastClickTs = performance.now();
@@ -138,6 +140,7 @@ export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
         } else {
           clickCount = 0;
           onOpen(app.run, app.args);
+          icon.blur();
         }
       });
 

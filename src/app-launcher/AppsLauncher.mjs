@@ -59,6 +59,15 @@ export default class AppsLauncher {
      * @private
      */
     this._taskbarManager = taskbarManager;
+
+    this._desktopElt.addEventListener("click", (e) => {
+      if (e.target === this._desktopElt) {
+        // deactivate all windows
+        this._windows.forEach((wdow) => {
+          wdow.deActivate();
+        });
+      }
+    });
   }
 
   /**
@@ -803,6 +812,8 @@ export function constructAppWithSidebar(sections, abortSignal) {
   displaySection(0);
   return {
     element: container,
-    focus: () => content.focus({ preventScroll: true }),
+    focus: () => {
+      content.focus({ preventScroll: true });
+    },
   };
 }

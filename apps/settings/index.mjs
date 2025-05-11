@@ -84,7 +84,12 @@ export function create(_args, env, abortSignal) {
       clearSignal: abortSignal,
     },
   );
-  return { element: containerElt };
+  return {
+    element: containerElt,
+    onActivate() {
+      contentElt.focus({ preventScroll: true });
+    },
+  };
 
   function onSidebarSelectionChange(sectionName) {
     childAbortController.abort();

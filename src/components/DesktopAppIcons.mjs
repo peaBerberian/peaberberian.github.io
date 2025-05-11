@@ -1,3 +1,6 @@
+// TODO: Actually persist new icon grid
+// TODO: What to do if dragging and there's a window on top?
+
 import {
   ICON_WIDTH_BASE,
   ICON_HEIGHT_BASE,
@@ -37,6 +40,7 @@ import { SETTINGS } from "../settings.mjs";
  */
 export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
   let abortController;
+  let appList = apps.slice();
   const iconWrapperElt = document.createElement("div");
 
   // initialize to no icon
@@ -80,13 +84,13 @@ export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
       });
     }
 
-    const iconElts = [];
+    const iconEltAppTuple = [];
     let currentRow = 0;
-    for (let i = 0; i < apps.length; i++) {
-      const app = apps[i];
-      const icon = document.createElement("div");
-      icon.tabIndex = "0";
-      icon.className = "icon";
+    for (let i = 0; i < appList.length; i++) {
+      const app = appList[i];
+      const iconElt = document.createElement("div");
+      iconElt.tabIndex = "0";
+      iconElt.className = "icon";
 
       if (currentRow >= gridSize[0]) {
         currentRow = 0;
@@ -100,7 +104,7 @@ export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
 
       const basePositionTop = nextIconPosition.y;
       const basePositionLeft = nextIconPosition.x;
-      applyStyle(icon, {
+      applyStyle(iconElt, {
         height: String(iconHeight) + "px",
         width: String(ICON_WIDTH_BASE) + "px",
         left: `${basePositionLeft}px`,
@@ -108,31 +112,31 @@ export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
       });
       nextIconPosition.y += iconHeight + ICON_MARGIN;
 
-      icon.innerHTML = `
+      iconElt.innerHTML = `
 <div class="icon-img">${app.icon}</div>
 <div class="icon-text">${app.title}</div>
 `;
 
       let clickCount = 0;
       let lastClickTs = -Infinity;
-      icon.addEventListener("keydown", (evt) => {
+      iconElt.addEventListener("keydown", (evt) => {
         if (evt.key === "Enter") {
           onOpen(app.run, app.args);
-          icon.blur();
+          iconElt.blur();
         }
       });
-      icon.addEventListener("blur", () => {
-        icon.classList.remove("selected");
+      iconElt.addEventListener("blur", () => {
+        iconElt.classList.remove("selected");
       });
-      icon.addEventListener("click", (evt) => {
+      iconElt.addEventListener("click", (evt) => {
         if (evt.pointerType === "mouse") {
-          selectIcon(icon);
+          selectIcon(iconElt);
 
           // Double click to open app
           if (clickCount && performance.now() - lastClickTs < 300) {
             clickCount = 0;
             onOpen(app.run, app.args);
-            icon.blur();
+            iconElt.blur();
           } else {
             clickCount = 1;
             lastClickTs = performance.now();
@@ -140,33 +144,36 @@ export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
         } else {
           clickCount = 0;
           onOpen(app.run, app.args);
-          icon.blur();
+          iconElt.blur();
         }
       });
 
       const onDocumentClick = (evt) => {
-        if (evt.target !== icon && !icon.contains(evt.target)) {
-          icon.classList.remove("selected");
+        if (evt.target !== iconElt && !iconElt.contains(evt.target)) {
+          iconElt.classList.remove("selected");
         }
       };
       document.addEventListener("click", onDocumentClick);
       abortController.signal.addEventListener("abort", () => {
         document.removeEventListener("click", onDocumentClick);
       });
-
-      addMovingAroundListeners(
-        icon,
-        { baseLeft: basePositionLeft, baseTop: basePositionTop },
-        abortController.signal,
-      );
-      iconElts.push(icon);
+      iconEltAppTuple.push([iconElt, app]);
+      iconWrapperElt.appendChild(iconElt);
       currentRow++;
     }
-    for (const iconElt of iconElts) {
-      if (iconElt) {
-        iconWrapperElt.appendChild(iconElt);
-      }
-    }
+
+    addMovingAroundListeners(
+      iconEltAppTuple,
+      {
+        height: iconHeight,
+        width: ICON_WIDTH_BASE,
+      },
+      reorderApps,
+      abortController.signal,
+    );
+  }
+  function reorderApps(newTuple) {
+    appList = newTuple.map(([_, app]) => app);
   }
   function recheckUpdate() {
     requestAnimationFrame(() => {
@@ -196,7 +203,7 @@ export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
         ),
       ];
       if (newGrid[0] < lastGrid[0]) {
-        if (newGrid[0] >= apps.length) {
+        if (newGrid[0] >= appList.length) {
           // There's less apps than the first column anyway
           return;
         } else {
@@ -207,13 +214,13 @@ export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
         // check columns
         if (newGrid[1] < lastGrid[1]) {
           // less columns check that the new still can contain all apps
-          if (newGrid[0] * newGrid[1] < apps.length) {
+          if (newGrid[0] * newGrid[1] < appList.length) {
             refreshIcons(newGrid, newIconHeight);
             lastGrid = newGrid;
           }
         } else if (newGrid[1] > lastGrid[1]) {
           // more columns, check that the previous could contain all apps
-          if (lastGrid[0] * lastGrid[1] < apps.length) {
+          if (lastGrid[0] * lastGrid[1] < appList.length) {
             refreshIcons(newGrid, newIconHeight);
             lastGrid = newGrid;
           }
@@ -221,7 +228,7 @@ export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
       } else {
         // newGrid[0] > lastGrid[0]
 
-        if (lastGrid[0] >= apps.length) {
+        if (lastGrid[0] >= appList.length) {
           // There was apps than the first column anyway
           return;
         } else {
@@ -234,13 +241,13 @@ export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
 }
 
 /**
- * @param {HTMLElement} icon
+ * @param {HTMLElement} iconElt
  */
-function selectIcon(icon) {
+function selectIcon(iconElt) {
   for (const i of document.getElementsByClassName("icon")) {
     i.classList.remove("selected");
   }
-  icon.classList.add("selected");
+  iconElt.classList.add("selected");
 }
 
 function getMaxIconPosition(iconElt) {
@@ -253,15 +260,140 @@ function getMaxIconPosition(iconElt) {
   return { maxX, maxY };
 }
 
-function addMovingAroundListeners(icon, { baseLeft, baseTop }, abortSignal) {
-  let isDragging = false;
+function addMovingAroundListeners(
+  iconEltAppTuple,
+  { height, width },
+  reOrderApps,
+  abortSignal,
+) {
+  let isDragging = null;
   let offsetX, offsetY;
+  let dragBaseLeft;
+  let dragBaseTop;
+  let updatedLeft;
+  let updatedTop;
+  let tempMovedElt = null;
   abortSignal.addEventListener("abort", () => {
     unblockElementsFromTakingPointerEvents();
   });
+  function exchangeAppPlacesInTuple(iconElt1, iconElt2) {
+    for (let i = 0; i < iconEltAppTuple.length; i++) {
+      if (iconEltAppTuple[i][0] === iconElt1.element) {
+        for (let j = 0; j < iconEltAppTuple.length; j++) {
+          if (iconEltAppTuple[j][0] === iconElt2) {
+            const tempI = iconEltAppTuple[i];
+            iconEltAppTuple[i] = iconEltAppTuple[j];
+            iconEltAppTuple[j] = tempI;
+            reOrderApps(iconEltAppTuple);
+            return;
+          }
+        }
+        return;
+      }
+    }
+  }
 
-  const onTouchStart = (e) => {
-    const touch = e.touches[0];
+  for (const [iconElt] of iconEltAppTuple) {
+    const onMouseUp = () => {
+      if (isDragging !== iconElt) {
+        return;
+      }
+      if (tempMovedElt) {
+        exchangeAppPlacesInTuple(tempMovedElt, iconElt);
+      }
+      tempMovedElt = null;
+      isDragging = null;
+      resetIconPosition(iconElt);
+      unblockElementsFromTakingPointerEvents();
+    };
+
+    addAbortableEventListener(
+      iconElt,
+      "touchstart",
+      abortSignal,
+      (e) => {
+        const touch = e.touches[0];
+        onStart(iconElt, touch);
+      },
+      {
+        passive: true,
+      },
+    );
+    addAbortableEventListener(iconElt, "touchend", abortSignal, onMouseUp);
+    addAbortableEventListener(
+      iconElt,
+      "touchmove",
+      abortSignal,
+      (e) => {
+        if (e.touches.length !== 1) {
+          return;
+        }
+        const touch = e.touches[0];
+        onMove(iconElt, touch);
+      },
+      {
+        passive: true,
+      },
+    );
+
+    // Safari just selects all over the place like some maniac without this
+    addAbortableEventListener(iconElt, "selectstart", abortSignal, (e) => {
+      e.preventDefault();
+    });
+    addAbortableEventListener(iconElt, "mousedown", abortSignal, (e) => {
+      if (e.button !== 0) {
+        // not left click
+        return;
+      }
+      onStart(iconElt, e);
+    });
+    addAbortableEventListener(document, "mousemove", abortSignal, (e) => {
+      if (isDragging !== iconElt) {
+        return;
+      }
+      onMove(iconElt, e);
+    });
+    addAbortableEventListener(document, "mouseup", abortSignal, onMouseUp);
+    addAbortableEventListener(
+      document.documentElement,
+      "mouseleave",
+      abortSignal,
+      () => {
+        if (isDragging !== iconElt) {
+          return;
+        }
+        isDragging = null;
+        resetIconPosition();
+      },
+    );
+    addAbortableEventListener(
+      document.documentElement,
+      "mouseenter",
+      abortSignal,
+      () => {
+        if (isDragging !== iconElt) {
+          return;
+        }
+        isDragging = null;
+        resetIconPosition();
+      },
+    );
+    addAbortableEventListener(
+      document.documentElement,
+      "click",
+      abortSignal,
+      () => {
+        if (isDragging !== iconElt) {
+          return;
+        }
+        isDragging = null;
+        resetIconPosition();
+      },
+    );
+  }
+
+  function onStart(iconElt, { clientX, clientY }) {
+    isDragging = iconElt;
     blockElementsFromTakingPointerEvents();
     const topOffset =
       SETTINGS.taskbarLocation.getValue() === "top"
@@ -271,108 +403,81 @@ function addMovingAroundListeners(icon, { baseLeft, baseTop }, abortSignal) {
       SETTINGS.taskbarLocation.getValue() === "left"
         ? SETTINGS.taskbarSize.getValue()
         : 0;
-    const rect = icon.getBoundingClientRect();
-    icon.style.transition = "";
-    offsetX = touch.clientX - rect.left + leftOffset;
-    offsetY = touch.clientY - rect.top + topOffset;
-  };
-  const onTouchMove = (e) => {
-    if (e.touches.length === 1) {
-      const touch = e.touches[0];
-      const newX = touch.clientX - offsetX;
-      const newY = touch.clientY - offsetY;
-      const { maxX, maxY } = getMaxIconPosition(icon);
-      icon.style.left = `${Math.max(0, Math.min(newX, maxX))}px`;
-      icon.style.top = `${Math.max(0, Math.min(newY, maxY))}px`;
-    }
-  };
-  const onMouseDown = (e) => {
-    if (e.button !== 0) {
-      // not left click
-      return;
-    }
-    isDragging = true;
-    blockElementsFromTakingPointerEvents();
-    const topOffset =
-      SETTINGS.taskbarLocation.getValue() === "top"
-        ? SETTINGS.taskbarSize.getValue()
-        : 0;
-    const leftOffset =
-      SETTINGS.taskbarLocation.getValue() === "left"
-        ? SETTINGS.taskbarSize.getValue()
-        : 0;
-    icon.style.zIndex = "9999999";
-    icon.style.transition = "";
-    const rect = icon.getBoundingClientRect();
-    offsetX = e.clientX - rect.left + leftOffset;
-    offsetY = e.clientY - rect.top + topOffset;
-  };
-  const onDocumentMouseMove = (e) => {
-    if (!isDragging) {
-      return;
-    }
-    const newX = e.clientX - offsetX;
-    const newY = e.clientY - offsetY;
-    const { maxX, maxY } = getMaxIconPosition(icon);
-    icon.style.left = `${Math.max(0, Math.min(newX, maxX))}px`;
-    icon.style.top = `${Math.max(0, Math.min(newY, maxY))}px`;
-  };
-  const onMouseUp = () => {
-    isDragging = false;
-    resetIconPosition();
-    unblockElementsFromTakingPointerEvents();
-  };
-  const resetIconPosition = () => {
-    icon.style.transition = "background-color 0.2s, top 0.2s, left 0.2s";
-    icon.style.zIndex = "";
-    icon.style.left = `${baseLeft}px`;
-    icon.style.top = `${baseTop}px`;
-  };
-  addAbortableEventListener(icon, "touchstart", abortSignal, onTouchStart, {
-    passive: true,
-  });
-  addAbortableEventListener(icon, "touchend", abortSignal, onMouseUp);
-  addAbortableEventListener(icon, "touchmove", abortSignal, onTouchMove, {
-    passive: true,
-  });
+    // iconElt.style.zIndex = "9999999";
+    iconElt.style.transition = "";
+    dragBaseLeft = parseInt(iconElt.style.left);
+    dragBaseTop = parseInt(iconElt.style.top);
+    updatedLeft = dragBaseLeft;
+    updatedTop = dragBaseTop;
+    offsetX = clientX - dragBaseLeft + leftOffset;
+    offsetY = clientY - dragBaseTop + topOffset;
+  }
 
-  // Safari just selects all over the place like some maniac without this
-  addAbortableEventListener(icon, "selectstart", abortSignal, (e) => {
-    e.preventDefault();
-  });
-  addAbortableEventListener(icon, "mousedown", abortSignal, onMouseDown);
-  addAbortableEventListener(
-    document.documentElement,
-    "mouseleave",
-    abortSignal,
-    () => {
-      isDragging = false;
-      resetIconPosition();
-    },
-  );
-  addAbortableEventListener(
-    document.documentElement,
-    "mouseenter",
-    abortSignal,
-    () => {
-      isDragging = false;
-      resetIconPosition();
-    },
-  );
-  addAbortableEventListener(
-    document.documentElement,
-    "click",
-    abortSignal,
-    () => {
-      isDragging = false;
-      resetIconPosition();
-    },
-  );
-  addAbortableEventListener(
-    document,
-    "mousemove",
-    abortSignal,
-    onDocumentMouseMove,
-  );
-  addAbortableEventListener(document, "mouseup", abortSignal, onMouseUp);
+  function onMove(iconElt, { clientX, clientY }) {
+    const newX = clientX - offsetX;
+    const newY = clientY - offsetY;
+    const { maxX, maxY } = getMaxIconPosition(iconElt);
+    const newLeft = Math.max(0, Math.min(newX, maxX));
+    const newTop = Math.max(0, Math.min(newY, maxY));
+    iconElt.style.left = `${newLeft}px`;
+    iconElt.style.top = `${newTop}px`;
+
+    const newRight = newLeft + width;
+    const newBottom = newTop + height;
+    for (const [child] of iconEltAppTuple) {
+      if (child === iconElt) {
+        continue;
+      }
+      const childLeft = parseInt(child.style.left);
+      const childTop = parseInt(child.style.top);
+      const isOverlapping = !(
+        newRight < childLeft ||
+        newLeft > childLeft + width ||
+        newBottom < childTop ||
+        newTop > childTop + height
+      );
+      if (isOverlapping) {
+        if (
+          Math.abs(childLeft - newLeft) < width / 2 &&
+          Math.abs(childTop - newTop) < height / 2
+        ) {
+          let resettedChild;
+          if (tempMovedElt) {
+            tempMovedElt.element.style.left = tempMovedElt.from.left;
+            tempMovedElt.element.style.top = tempMovedElt.from.top;
+            if (tempMovedElt.element === child) {
+              resettedChild = true;
+            }
+          }
+          if (!resettedChild) {
+            tempMovedElt = {
+              element: child,
+              from: {
+                left: child.style.left,
+                top: child.style.top,
+              },
+            };
+            child.style.transition =
+              "background-color 0.2s, top 0.2s, left 0.2s";
+            child.style.left = `${dragBaseLeft}px`;
+            child.style.top = `${dragBaseTop}px`;
+          } else {
+            tempMovedElt = null;
+          }
+          updatedLeft = childLeft;
+          updatedTop = childTop;
+        }
+        break;
+      }
+    }
+  }
+
+  function resetIconPosition(iconElt) {
+    iconElt.style.transition = "background-color 0.2s, top 0.2s, left 0.2s";
+    iconElt.style.zIndex = "";
+    iconElt.style.left = `${updatedLeft}px`;
+    iconElt.style.top = `${updatedTop}px`;
+    dragBaseLeft = updatedLeft;
+    dragBaseTop = updatedTop;
+  }
 }

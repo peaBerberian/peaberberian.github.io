@@ -743,27 +743,29 @@ function addMouseSelectInteractivity(
     const currentY = e.clientY;
 
     // TODO: I guess we could make it more efficient here
-    const selectionZoneLimits = containerElt.getBoundingClientRect();
+    // FIXME: The container element is the one with the scroll, we should
+    // bring that element under our responsability here.
+    const containerRect = containerElt.parentElement.getBoundingClientRect();
     let offsetWidth = 0;
     let left = Math.min(startX, currentX);
-    if (left < selectionZoneLimits.left) {
-      offsetWidth = left - selectionZoneLimits.left;
-      left = selectionZoneLimits.left;
+    if (left < containerRect.left) {
+      offsetWidth = left - containerRect.left;
+      left = containerRect.left;
     }
     let offsetHeight = 0;
     let top = Math.min(startY, currentY);
-    if (top < selectionZoneLimits.top) {
-      offsetHeight = top - selectionZoneLimits.top;
-      top = selectionZoneLimits.top;
+    if (top < containerRect.top) {
+      offsetHeight = top - containerRect.top;
+      top = containerRect.top;
     }
 
     let width = Math.abs(currentX - startX) + offsetWidth;
-    if (left + width > selectionZoneLimits.right) {
-      width = selectionZoneLimits.right - left;
+    if (left + width > containerRect.right) {
+      width = containerRect.right - left;
     }
     let height = Math.abs(currentY - startY) + offsetHeight;
-    if (top + height > selectionZoneLimits.bottom) {
-      height = selectionZoneLimits.bottom - top;
+    if (top + height > containerRect.bottom) {
+      height = containerRect.bottom - top;
     }
 
     selectionBox.style.left = `${left}px`;

@@ -45,11 +45,13 @@ export default function RxPaired() {
 
 function getOverview() {
   return strHtml`<div>
-${createAppTitle("This Website", { github: GITHUB_LINK })}
+${createAppTitle("About This Website", { github: GITHUB_LINK })}
 
-<p>I initially envisionned a simple desktop environment where I could list my open-source projects to replace my previously minimal (some said bland) personal website.<br>
-Yet, I so loved writing the fake OS parts that I ended up implementing many nice features (moving / resizing the taskbar, theming, window customization, window snapping) seen in window managers, only this time inside a browser, in "vanilla" JavaScript/HTML/CSS.</p>
-<p>Admittedly now, its current goal is stuck between showcasing a JS desktop and just listing and talking about niche personal projects (as most are related to media streaming), but I also like the idea of having this weird hybrid.</p>
+<p>I initially envisionned a simple desktop environment where I could list my open-source projects to replace my previously minimal (some said bland) personal website.</p>
+
+<p>However, I so loved writing the fake OS parts that I ended up implementing many nice features (moving / resizing the taskbar, theming, window customization, window snapping) and multiple applications (though all fairly minimal, I will admit!), in "vanilla" (meaning: depending on no framework/library) JavaScript/HTML/CSS.</p>
+
+<p>So there has been a change of plan: it's not a listing of other projects anymore, now it's its own thing as a JS desktop environment!</p>
 
 </div>`;
 }

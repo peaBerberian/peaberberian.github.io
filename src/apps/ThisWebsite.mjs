@@ -9,7 +9,7 @@ const GITHUB_LINK = "https://github.com/peaberberian/peaberberian.github.io";
  */
 export default function RxPaired() {
   return {
-    title: "This Website",
+    title: "About This Website",
     icon: "🌐",
     defaultHeight: 600,
     defaultWidth: 855,

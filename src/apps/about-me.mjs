@@ -191,11 +191,9 @@ const wording = {
     description: `<div>
 	<p>Hi, my name is Paul Berberian, I'm 34¹ I'm a software engineer and tech lead at Canal+ Group living in Montpellier, France. I lead several projects linked to media streaming, including the open-source <a href="https://github.com/canalplus/rx-player" target="_blank">RxPlayer</a> media player.</p>
 
-	<p>You\'re here in my personal website which emulates a classical desktop environment without any external dependency.<br>Each "application" represents an open-source project I lead (well, most of them are just small personal projects!), you can obtain more information about what they're about by clicking on them ... or alternatively just have fun with the "fake OS" parts of this website.<br>There's not everything yet as I'm still working on making some of them cooler to check in this type of environment!</p>
+	<p>You\'re here in my personal website which emulates a classical desktop environment. Everything you see here has been done especially for this desktop without any external dependency / library.</p>
 
 	<p>To contact me, you can send an e-mail to: <a href="mailto:paul.berberian@proton.me">paul.berberian@proton.me</a>.</p>
-
-  <p>PS: If you're just here for the fake OS, there's "fun" to have tweaking its behavior through the settings app!</p>
 
 	<p class="asterisk"><span class="note">1</a>. As long as we\'re still in 2025, that is.</span></p>
 

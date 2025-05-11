@@ -3,10 +3,10 @@ import {
   TASKBAR_MAX_VERTICAL_SIZE,
   TASKBAR_MIN_HORIZONTAL_SIZE,
   TASKBAR_MIN_VERTICAL_SIZE,
-} from "../../constants.mjs";
-import { SETTINGS } from "../../settings.mjs";
-import strHtml from "../../str-html.mjs";
-import { createAppTitle } from "../app-utils.mjs";
+} from "../../../constants.mjs";
+import { SETTINGS } from "../../../settings.mjs";
+import strHtml from "../../../str-html.mjs";
+import { createAppTitle } from "../../app-utils.mjs";
 import {
   createCheckboxOnRef,
   createColorPickerOnRef,

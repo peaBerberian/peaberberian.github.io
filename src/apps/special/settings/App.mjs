@@ -1,6 +1,6 @@
-import { SETTINGS } from "../../settings.mjs";
-import { constructSidebarElt } from "../../utils.mjs";
-import strHtml from "../../str-html.mjs";
+import { SETTINGS } from "../../../settings.mjs";
+import { constructSidebarElt } from "../../../utils.mjs";
+import strHtml from "../../../str-html.mjs";
 
 import createTaskbarSection from "./Taskbar.mjs";
 import createWallpaperSection from "./Wallpaper.mjs";

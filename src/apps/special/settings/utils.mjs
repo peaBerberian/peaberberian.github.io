@@ -1,5 +1,5 @@
-import strHtml from "../../str-html.mjs";
-import { applyStyle } from "../../utils.mjs";
+import strHtml from "../../../str-html.mjs";
+import { applyStyle } from "../../../utils.mjs";
 
 export function createColorPickerOnRef(ref, text, abortSignal) {
   const container = strHtml`<span />`;

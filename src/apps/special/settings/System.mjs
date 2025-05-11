@@ -1,8 +1,8 @@
-import { __VERSION__ } from "../../constants.mjs";
-import { SETTINGS, resetStateToDefault } from "../../settings.mjs";
-import strHtml from "../../str-html.mjs";
-import { applyStyle } from "../../utils.mjs";
-import { createAppTitle, createFullscreenButton } from "../app-utils.mjs";
+import { __VERSION__ } from "../../../constants.mjs";
+import { SETTINGS, resetStateToDefault } from "../../../settings.mjs";
+import strHtml from "../../../str-html.mjs";
+import { applyStyle } from "../../../utils.mjs";
+import { createAppTitle, createFullscreenButton } from "../../app-utils.mjs";
 import { createNumericSliderOnRef } from "./utils.mjs";
 
 export default function createSystemSection(abortSignal) {

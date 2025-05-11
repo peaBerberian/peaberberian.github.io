@@ -1,8 +1,8 @@
-import { WALLPAPERS } from "../../constants.mjs";
-import { SETTINGS } from "../../settings.mjs";
-import strHtml from "../../str-html.mjs";
-import { applyStyle } from "../../utils.mjs";
-import { createAppTitle } from "../app-utils.mjs";
+import { WALLPAPERS } from "../../../constants.mjs";
+import { SETTINGS } from "../../../settings.mjs";
+import strHtml from "../../../str-html.mjs";
+import { applyStyle } from "../../../utils.mjs";
+import { createAppTitle } from "../../app-utils.mjs";
 
 // TODO: We could be reactive (reacting to a background change not linked to it)
 // relatively easily here

@@ -2,7 +2,9 @@ import apps from "./__generated_apps.mjs";
 
 const DB_NAME = "fake_filesystem";
 const DB_VERSION = 1;
-const STORE_NAME = "files";
+
+const METADATA_STORE = "files";
+const CONTENT_STORE = "files_content";
 
 class DesktopFileSystem {
   constructor() {
@@ -13,9 +15,14 @@ class DesktopFileSystem {
     };
   }
 
-  async _getStore(mode = "readonly") {
+  async _getMetadataStore(mode = "readonly") {
     const db = await this._dbProm;
-    return db.transaction(STORE_NAME, mode).objectStore(STORE_NAME);
+    return db.transaction(METADATA_STORE, mode).objectStore(METADATA_STORE);
+  }
+
+  async _getContentStore(mode = "readonly") {
+    const db = await this._dbProm;
+    return db.transaction(CONTENT_STORE, mode).objectStore(CONTENT_STORE);
   }
 
   async writeFile(path, content, mimeType) {
@@ -26,28 +33,83 @@ class DesktopFileSystem {
       throw new Error("Writing a directory instead of a file");
     }
 
-    const db = await this._dbProm;
-    const tx = db.transaction([STORE_NAME], "readwrite");
-    const store = tx.objectStore(STORE_NAME);
+    const [metadataStore, contentStore] = await Promise.all([
+      this._getMetadataStore("readwrite"),
+      this._getContentStore("readwrite"),
+    ]);
+
     const now = Date.now();
+    const name = path.split("/").filter(Boolean).pop();
+    const entry = {
+      id: pathToId(path),
+      fullPath: path,
+      directory: getParentDirectory(path),
+      name,
+      type: "file",
+      modified: now,
+      mimeType,
+      content,
+    };
+
+    // XXX TODO: If one operation fails remove the other
+    // TODO: check rejection syntax
+    await Promise.all([
+      new Promise((resolve) => (metadataStore.put(entry).onsuccess = resolve)),
+      new Promise(
+        (resolve) =>
+          (contentStore.put({ id: entry.id, content }).onsuccess = resolve),
+      ),
+    ]);
+  }
+
+  async readDir(directoryPath) {
+    if (directoryPath in this._virtualRootDir) {
+      if (directoryPath === "/apps/") {
+        return apps.map((a) => {
+          return {
+            name: a.title,
+            icon: a.icon,
+            type: "file",
+            mimeType: "exec",
+          };
+        });
+      }
+      return [];
+    }
+
+    if (directoryPath === "/") {
+      return [
+        {
+          name: "apps",
+          type: "directory",
+        },
+        {
+          name: "user",
+          type: "directory",
+        },
+      ];
+    }
+
+    if (!directoryPath.startsWith("/user/")) {
+      return Promise.reject(new Error("Invalid directory"));
+    }
+
+    const store = await this._getMetadataStore();
+    const range = IDBKeyRange.only(directoryPath);
 
     return new Promise((resolve, reject) => {
-      const name = path.split("/").filter(Boolean).pop();
-      const request = store.put({
-        id: pathToId(path),
-        fullPath: path,
-        directory: getParentDirectory(path),
-        name,
-        mimeType,
-        content,
-        type: "file",
-        modified: now,
-      });
-      request.onsuccess = resolve;
-      request.onerror = reject;
-    }).catch((err) => {
-      tx.abort();
-      throw err;
+      const request = store.index("directory").getAll(range, 100);
+      request.onsuccess = () =>
+        resolve(
+          request.result.map(({ name, type, size, modified, mimeType }) => ({
+            name,
+            type,
+            size,
+            modified,
+            mimeType,
+          })),
+        );
+      request.onerror = () => reject(request.error);
     });
   }
 
@@ -59,7 +121,7 @@ class DesktopFileSystem {
       throw new Error("Cannot delete the user directory itself.");
     }
 
-    const store = await this._getStore("readwrite");
+    const store = await this._getMetadataStore("readwrite");
     const getRequest = store.index("fullPath").get(path);
 
     const entry = await new Promise((resolve) => {
@@ -79,28 +141,40 @@ class DesktopFileSystem {
   }
 
   async _deleteFile(filePath) {
-    const store = await this._getStore("readwrite");
-    return new Promise((resolve, reject) => {
-      const request = store.delete(pathToId(filePath));
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
+    // TODO: we could reuse the store already requested
+    const [metadataStore, contentStore] = await Promise.all([
+      this._getMetadataStore("readwrite"),
+      this._getContentStore("readwrite"),
+    ]);
+    const id = pathToId(filePath);
+
+    // TODO: check rejection syntax
+    await Promise.all([
+      new Promise((resolve) => {
+        metadataStore.delete(id).onsuccess = resolve;
+      }),
+      new Promise((resolve) => {
+        contentStore.delete({ id: entry.id, content }).onsuccess = resolve;
+      }),
+    ]);
   }
 
   async _deleteDirectory(dirPath, recursive = false) {
-    if (!dirPath.endsWith("/")) dirPath += "/";
+    if (!dirPath.endsWith("/")) {
+      throw new Error("Deleting a file instead of a directory");
+    }
 
-    const store = await this._getStore("readwrite");
+    // XXX TODO: check with file content and whatnot
+    const metadataStore = await this._getMetadataStore("readwrite");
     const range = IDBKeyRange.lowerBound(dirPath);
 
     return new Promise((resolve, reject) => {
       const itemsToDelete = [];
-      const cursorRequest = store.index("fullPath").openCursor(range);
+      const cursorRequest = metadataStore.index("fullPath").openCursor(range);
 
       cursorRequest.onsuccess = (event) => {
         const cursor = event.target.result;
         if (cursor) {
-          // Check if path is within our target directory
           if (cursor.value.fullPath.startsWith(dirPath)) {
             if (
               !recursive &&
@@ -131,66 +205,12 @@ class DesktopFileSystem {
           const deleteRequest = store.delete(id);
           deleteRequest.onerror = () => reject(deleteRequest.error);
           deleteRequest.onsuccess = () => {
-            if (++processed === itemsToDelete.length) resolve();
+            if (++processed === itemsToDelete.length) {
+              resolve();
+            }
           };
         });
       }
-    });
-  }
-
-  async readDir(directoryPath) {
-    if (directoryPath in this._virtualRootDir) {
-      if (directoryPath === "/apps/") {
-        return apps.map((a) => {
-          return {
-            name: a.title,
-            icon: a.icon,
-            type: "file",
-            mimeType: "exec",
-            data: a.id,
-          };
-        });
-      }
-      return [];
-    }
-
-    if (directoryPath === "/") {
-      return [
-        {
-          name: "apps",
-          type: "directory",
-        },
-        {
-          name: "user",
-          type: "directory",
-        },
-      ];
-    }
-
-    if (!directoryPath.startsWith("/user/")) {
-      return Promise.reject(new Error("Invalid directory"));
-    }
-
-    const store = await this._getStore();
-    const range = IDBKeyRange.only(directoryPath);
-
-    return new Promise((resolve, reject) => {
-      const items = [];
-      const request = store.index("directory").openCursor(range);
-
-      request.onsuccess = (event) => {
-        const cursor = event.target.result;
-        if (cursor) {
-          items.push(cursor.value);
-          cursor.continue();
-        } else {
-          resolve(items);
-        }
-      };
-
-      request.onerror = () => {
-        reject(request.error);
-      };
     });
   }
 
@@ -204,9 +224,10 @@ class DesktopFileSystem {
       throw new Error("File not found.");
     }
 
-    const store = await this._getStore();
+    const contentStore = await this._getContentStore("readwrite");
+
     return new Promise((resolve, reject) => {
-      const request = store.index("fullPath").get(path);
+      const request = contentStore.get(pathToId(path));
       request.onsuccess = () => {
         if (!request.result) {
           reject(new Error("File not found."));
@@ -222,7 +243,7 @@ class DesktopFileSystem {
       throw new Error("No permission to write in the given path: " + path);
     }
 
-    const store = await this._getStore("readwrite");
+    const store = await this._getMetadataStore("readwrite");
     return new Promise((resolve, reject) => {
       const request = store.put({
         path: path.endsWith("/") ? path : `${path}/`,
@@ -245,11 +266,13 @@ function openDB() {
 
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: "id" });
-        store.createIndex("directory", "directory");
-        store.createIndex("fullPath", "fullPath", { unique: true });
-      }
+
+      const store = db.createObjectStore(METADATA_STORE, { keyPath: "id" });
+      store.createIndex("directory", "directory");
+      store.createIndex("fullPath", "fullPath", { unique: true });
+
+      // Store content separately for efficiency
+      db.createObjectStore(CONTENT_STORE, { keyPath: "id" });
     };
 
     request.onsuccess = () => resolve(request.result);

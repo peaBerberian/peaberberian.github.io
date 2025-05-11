@@ -616,26 +616,26 @@ function handleImageDragging(
 }
 
 function showAppMessage(containerElt, message, duration = 5000) {
-  const messageEl = document.createElement("div");
-  messageEl.textContent = message;
-  messageEl.style.position = "absolute";
-  messageEl.style.top = "10px";
-  messageEl.style.left = "50%";
-  messageEl.style.transform = "translateX(-50%)";
-  messageEl.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
-  messageEl.style.color = "white";
-  messageEl.style.padding = "10px 20px";
-  messageEl.style.borderRadius = "4px";
-  messageEl.style.zIndex = "1000";
-  messageEl.style.transition = "opacity 0.3s";
+  const messageElt = document.createElement("div");
+  messageElt.textContent = message;
+  messageElt.style.position = "absolute";
+  messageElt.style.top = "10px";
+  messageElt.style.left = "50%";
+  messageElt.style.transform = "translateX(-50%)";
+  messageElt.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+  messageElt.style.color = "white";
+  messageElt.style.padding = "10px 20px";
+  messageElt.style.borderRadius = "4px";
+  messageElt.style.zIndex = "1000";
+  messageElt.style.transition = "opacity 0.3s";
 
-  containerElt.appendChild(messageEl);
+  containerElt.appendChild(messageElt);
 
   setTimeout(() => {
-    messageEl.style.opacity = "0";
+    messageElt.style.opacity = "0";
     // After animation, remove
     setTimeout(() => {
-      messageEl.remove();
+      messageElt.remove();
     }, 350);
   }, duration);
 }

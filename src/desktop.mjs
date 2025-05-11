@@ -40,6 +40,7 @@
 // - Allow to disable the i-frame warning in settings?
 // - z-index normalization could be less frequent, I don't know much if this has
 //   an impact
+// - icon lose focus onmousedown, not onclick
 
 import fs from "./filesystem.mjs";
 import generateAppGroupApp from "./app_group.mjs";

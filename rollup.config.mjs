@@ -186,43 +186,28 @@ function writeGeneratedAppFile(baseDir) {
     }
 
     if (filePath) {
-      if (app.preload === true) {
-        // Here I will just write a regular static import statement on top of
-        // the generated file toward this file.
-        // As we want to keep the object serializable, we'll have to put it
-        // in `window` however.
-        uglyHandWrittenJsObject += `    data: {
-			globalApp: "__APP__${String(i)}",
-    },
-`;
-        importsToWrite.push({
-          name: "__APP__" + String(i),
-          filePath: path.relative(DESKTOP_SRC_DIR, filePath),
-        });
-      } else {
-        // Here I will put the import path as a `lazyLoad` property.
-        const importPath = `./lazy/${app.id}.js`;
-        uglyHandWrittenJsObject += `    data: {
+      // Here I will put the import path as a `lazyLoad` property.
+      const importPath = `./lazy/${app.id}.js`;
+      uglyHandWrittenJsObject += `    data: {
 			lazyLoad: ${JSON.stringify(importPath)},
 		},
 `;
-        const outputFile = path.join(OUTPUT_LAZY_LOADED_APPS, `${app.id}.js`);
-        bundlesToMake.push({
-          outputFile,
-          input: filePath,
-          intoEsm: true,
-        });
+      const outputFile = path.join(OUTPUT_LAZY_LOADED_APPS, `${app.id}.js`);
+      bundlesToMake.push({
+        outputFile,
+        input: filePath,
+        intoEsm: true,
+      });
 
-        // The preload.after idea is to preload the app only after a low
-        // timeout.
-        // Browsers are smart enough to not load a given import multiple times (I
-        // would even guess this is ECMAScript-defined).
-        if (typeof app.preload?.after === "number") {
-          automaticDynImportsAfterTimer.push({
-            importPath,
-            timer: app.preload.after,
-          });
-        }
+      // The preload.after idea is to preload the app only after a low
+      // timeout.
+      // Browsers are smart enough to not load a given import multiple times (I
+      // would even guess this is ECMAScript-defined).
+      if (typeof app.preload?.after === "number") {
+        automaticDynImportsAfterTimer.push({
+          importPath,
+          timer: app.preload.after,
+        });
       }
     } else if (typeof app.website === "string" && app.website !== "") {
       uglyHandWrittenJsObject += `    data: {

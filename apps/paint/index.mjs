@@ -220,7 +220,7 @@ export function create(_args, env, abortSignal) {
   }
   activateTool(toolElements[0], "Brush");
 
-  const colorInputElt = strHtml`<input type="color" id="color-input" value="#000000">`;
+  const colorInputElt = strHtml`<input type="color" value="#000000">`;
   applyStyle(colorInputElt, {
     width: "40px",
     height: "30px",

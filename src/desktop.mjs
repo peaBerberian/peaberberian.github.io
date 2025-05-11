@@ -57,14 +57,7 @@ import Taskbar from "./components/Taskbar.mjs";
 import AppsLauncher from "./app-launcher/AppsLauncher.mjs";
 import initializeClockApplet from "./clock_applet.mjs";
 
-// Fragment is only used for in-app anchors for now.
-// We can remove it when the desktop is restared to prevent weird behaviors
-if (window.location.href.includes("#")) {
-  window.location.replace("#");
-}
-
 async function start() {
-  console.time("START");
   const desktopElt = document.getElementById("desktop");
 
   // Get list of apps from "filesystem" (they're actually all virtual paths for
@@ -95,12 +88,25 @@ async function start() {
   desktopElt.appendChild(DesktopAppIcons(desktopApps.list, openAppFromPath));
   StartMenu(startMenuApps.list, openAppFromPath);
 
-  // Open about me default app
-  appsLauncher.openApp("/apps/about.run", [], {
-    skipAnim: true,
-    centered: true,
-  });
-  console.timeEnd("START");
+  // Open default app or asked one
+  let wantedApp;
+  {
+    const fragmentIndex = window.location.href.indexOf("#");
+    if (fragmentIndex > 0) {
+      wantedApp = window.location.href.substring(fragmentIndex + 1);
+    }
+  }
+  if (!wantedApp) {
+    appsLauncher.openApp("/apps/about.run", [], {
+      skipAnim: true,
+      centered: true,
+    });
+  } else {
+    appsLauncher.openApp(`/apps/${wantedApp}.run`, [], {
+      skipAnim: true,
+      centered: true,
+    });
+  }
 
   function openAppFromPath(appPath, appArgs) {
     appsLauncher.openApp(appPath, appArgs ?? []);

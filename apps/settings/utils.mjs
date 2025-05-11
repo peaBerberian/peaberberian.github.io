@@ -77,7 +77,7 @@ export function createNumericSliderOnRef(
 
 export function createCheckboxOnRef({ ref, label }, appUtils, abortSignal) {
   const { strHtml } = appUtils;
-  const inputEl = strHtml`<input type="checkbox" id="animations-toggle" checked="">`;
+  const inputEl = strHtml`<input type="checkbox" checked="">`;
   inputEl.checked = ref.getValue();
   const checkboxElt = strHtml`<div class="w-small-opt">
 <span class="w-small-opt-desc">${label}</span>

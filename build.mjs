@@ -27,15 +27,13 @@ const OUTPUT_DIR = path.join(PROJECT_ROOT_DIRECTORY, "dist");
 const OUTPUT_LAZY_LOADED_APPS = path.join(OUTPUT_DIR, "lazy");
 
 /**
- * Run bundler on a single file with the given options.
- * @param {string} inputFile - The entry file for the bundle
+ * Produce the bundles for all application defined in `./apps/AppInfo.json` and
+ * for the desktop itself (`./src`) and output them in `./dist`.
  * @param {Object} options
  * @param {boolean} [options.minify] - If `true`, the output will be minified.
  * @param {boolean} [options.watch] - If `true`, the RxPlayer's files involve
  * will be watched and the code re-built each time one of them changes.
  * @param {boolean} [options.silent] - If `true`, we won't output logs.
- * @param {string} [options.outfile] - Destination of the produced es2017
- * bundle. To ignore to skip ES2017 bundle generation.
  * @param {Object} [options.globals] - Optional globally-defined identifiers, as
  * a key-value objects, where the object is a string (trick: if you want to
  * replace an identifier with a string, call `JSON.stringify` on it).
@@ -385,7 +383,6 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
   let shouldWatch = false;
   let shouldMinify = false;
-  let outputFile = "";
   let silent = false;
 
   for (let argOffset = 0; argOffset < args.length; argOffset++) {
@@ -411,20 +408,6 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
         silent = true;
         break;
 
-      case "-o":
-      case "--output":
-        {
-          argOffset++;
-          const wantedOutput = args[argOffset];
-          if (wantedOutput === undefined) {
-            console.error("ERROR: no output file provided\n");
-            displayHelp();
-            process.exit(1);
-          }
-          outputFile = path.normalize(wantedOutput);
-        }
-        break;
-
       case "--":
         argOffset = args.length;
         break;
@@ -442,7 +425,6 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
       watch: shouldWatch,
       minify: shouldMinify,
       silent,
-      outfile: outputFile,
     }).catch((err) => {
       console.error(`ERROR: ${err}\n`);
       process.exit(1);

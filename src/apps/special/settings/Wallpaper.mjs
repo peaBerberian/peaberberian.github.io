@@ -30,8 +30,14 @@ export default function createWallpaperSection() {
 
   const wpGroupElt = strHtml`<div class="w-group"><h3>Pre-selected Images</h3></div>`;
 
-  for (const wp of WALLPAPERS) {
-    const wpPreviewElt = strHtml`<img class="w-color-item selectable" src="${encodeURI(wp)}" />`;
+  for (let i = 0; i < WALLPAPERS.length; i++) {
+    const wp = WALLPAPERS[i];
+    const wpPreviewElt = strHtml`<img class="w-color-item selectable img-empty" src="${encodeURI(wp)}" />`;
+    wpPreviewElt.onload = () => {
+      window.requestAnimationFrame(() => {
+        wpPreviewElt.classList.remove("img-empty");
+      });
+    };
     if (currentBackground.type === "image" && currentBackground.value === wp) {
       wpPreviewElt.classList.add("selected");
     }

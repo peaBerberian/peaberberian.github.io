@@ -17,7 +17,6 @@ import {
 const DEFAULT_CANVAS_HEIGHT = 800;
 const DEFAULT_CANVAS_WIDTH = 800;
 
-// TODO: post-resize polish
 // TODO: disable clear button when there's nothing to clear?
 // TODO: clean-up code!
 

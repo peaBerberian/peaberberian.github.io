@@ -1,0 +1,484 @@
+#!/usr/bin/env node
+/**
+ * # bundle.mjs
+ *
+ * This file allows to create JavaScript bundles for the fake desktop through
+ * esbuild with the right configuration.
+ *
+ * You can either run it directly as a script (run `node bundle.mjs -h`
+ * to see the different options) or by requiring it as a node module.
+ * If doing the latter you will obtain a function you will have to run with the
+ * right options.
+ */
+
+import * as fs from "fs";
+import * as path from "path";
+import { pathToFileURL, fileURLToPath } from "url";
+import esbuild from "esbuild";
+
+const PROJECT_ROOT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
+
+const DESKTOP_SRC_DIR = path.join(PROJECT_ROOT_DIRECTORY, "src");
+const APPS_SRC_DIR = path.join(PROJECT_ROOT_DIRECTORY, "apps");
+
+const GENERATED_APP_PATH = path.join(DESKTOP_SRC_DIR, "__generated_apps.mjs");
+
+const OUTPUT_DIR = path.join(PROJECT_ROOT_DIRECTORY, "dist");
+const OUTPUT_LAZY_LOADED_APPS = path.join(OUTPUT_DIR, "lazy");
+
+/**
+ * Run bundler on a single file with the given options.
+ * @param {string} inputFile - The entry file for the bundle
+ * @param {string} outfile - Destination of the produced bundle.
+ * @param {Object} options
+ * @param {boolean} [options.minify] - If `true`, the output will be minified.
+ * @param {boolean} [options.watch] - If `true`, the RxPlayer's files involve
+ * will be watched and the code re-built each time one of them changes.
+ * @param {boolean} [options.silent] - If `true`, we won't output logs.
+ * @param {Object} [options.globals] - Optional globally-defined identifiers, as
+ * a key-value objects, where the object is a string (trick: if you want to
+ * replace an identifier with a string, call `JSON.stringify` on it).
+ * @returns {Promise}
+ */
+async function produceBundle(inputFile, outfile, options) {
+  const minify = !!options.minify;
+  const watch = !!options.watch;
+  const isSilent = options.silent;
+  const globals = options.globals;
+  const relativeInFile = path.relative(PROJECT_ROOT_DIRECTORY, inputFile);
+  const relativeOutfile = path.relative(PROJECT_ROOT_DIRECTORY, outfile);
+
+  const esbuildStepsPlugin = {
+    name: "bundler-steps",
+    setup(build) {
+      build.onStart(() => {
+        logWarning(`Bundling of "${relativeInFile}" started.`);
+      });
+      build.onEnd((result) => {
+        if (result.errors.length > 0 || result.warnings.length > 0) {
+          const { errors, warnings } = result;
+          logWarning(
+            `Re-bundling for "${inputFile}" failed with ${errors.length} error(s) and ` +
+              ` ${warnings.length} warning(s) `,
+          );
+          return;
+        }
+        if (relativeOutfile !== undefined) {
+          logSuccess(`Bundling of "${relativeOutfile}" succeeded.`);
+        }
+      });
+    },
+  };
+
+  const meth = watch ? "context" : "build";
+
+  // Create a context for incremental builds
+  try {
+    const context = await esbuild[meth]({
+      entryPoints: [inputFile],
+      bundle: true,
+      target: "es2017",
+      minify,
+      write: true,
+      format: "esm",
+      outfile,
+      plugins: [esbuildStepsPlugin],
+      define: {
+        ...globals,
+      },
+    });
+    if (watch) {
+      return context.watch();
+    }
+  } catch (err) {
+    logError(`Bundling failed for "${inputFile}":`, err);
+    throw err;
+  }
+
+  function logSuccess(msg) {
+    if (!isSilent) {
+      console.log(`\x1b[32m[${getHumanReadableHours()}]\x1b[0m`, msg);
+    }
+  }
+
+  function logWarning(msg) {
+    if (!isSilent) {
+      console.log(`\x1b[33m[${getHumanReadableHours()}]\x1b[0m`, msg);
+    }
+  }
+
+  function logError(msg) {
+    if (!isSilent) {
+      console.log(`\x1b[31m[${getHumanReadableHours()}]\x1b[0m`, msg);
+    }
+  }
+}
+
+// If true, this script is called directly
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const args = process.argv.slice(2);
+  let shouldWatch = false;
+  let shouldMinify = false;
+  let outputFile = "";
+  let silent = false;
+
+  for (let argOffset = 0; argOffset < args.length; argOffset++) {
+    const currentArg = args[argOffset];
+    switch (currentArg) {
+      case "-h":
+      case "--help":
+        displayHelp();
+        process.exit(0);
+
+      case "-w":
+      case "--watch":
+        shouldWatch = true;
+        break;
+
+      case "-m":
+      case "--minify":
+        shouldMinify = true;
+        break;
+
+      case "-s":
+      case "--silent":
+        silent = true;
+        break;
+
+      case "-o":
+      case "--output":
+        {
+          argOffset++;
+          const wantedOutput = args[argOffset];
+          if (wantedOutput === undefined) {
+            console.error("ERROR: no output file provided\n");
+            displayHelp();
+            process.exit(1);
+          }
+          outputFile = path.normalize(wantedOutput);
+        }
+        break;
+
+      case "--":
+        argOffset = args.length;
+        break;
+
+      default: {
+        console.error('ERROR: unknown option: "' + currentArg + '"\n');
+        displayHelp();
+        process.exit(1);
+      }
+    }
+  }
+
+  try {
+    run({
+      watch: shouldWatch,
+      minify: shouldMinify,
+      silent,
+      outfile: outputFile,
+    }).catch((err) => {
+      console.error(`ERROR: ${err}\n`);
+      process.exit(1);
+    });
+  } catch (err) {
+    console.error(`ERROR: ${err}\n`);
+    process.exit(1);
+  }
+}
+
+/**
+ * Return the current date into a more readable `HH:mm:ss.fff`
+ * (hours:minutes:seconds.milliseconds) format.
+ * @returns {string}
+ */
+function getHumanReadableHours() {
+  const date = new Date();
+  return (
+    String(date.getHours()).padStart(2, "0") +
+    ":" +
+    String(date.getMinutes()).padStart(2, "0") +
+    ":" +
+    String(date.getSeconds()).padStart(2, "0") +
+    "." +
+    String(date.getMilliseconds()).padStart(4, "0")
+  );
+}
+
+/**
+ * Display through `console.log` an helping message relative to how to run this
+ * script.
+ */
+function displayHelp() {
+  console.log(
+    `bundle.mjs: Produce a RxPlayer bundle (a single JS file containing the RxPlayer).
+
+Usage: node bundle.mjs <INPUT FILE> [OPTIONS]
+
+Available options:
+  -h, --help                  Display this help message.
+  -o <PATH>, --output <PATH>  Mandatory: Specify the output file.
+  -m, --minify                Minify the built bundle.
+  -s, --silent                Don't log to stdout/stderr when bundling.
+  -w, --watch                 Re-build each time any of the files depended on changed.`,
+  );
+}
+
+/**
+ * Run bundler on a single file with the given options.
+ * @param {string} inputFile - The entry file for the bundle
+ * @param {Object} options
+ * @param {boolean} [options.minify] - If `true`, the output will be minified.
+ * @param {boolean} [options.watch] - If `true`, the RxPlayer's files involve
+ * will be watched and the code re-built each time one of them changes.
+ * @param {boolean} [options.silent] - If `true`, we won't output logs.
+ * @param {string} [options.outfile] - Destination of the produced es2017
+ * bundle. To ignore to skip ES2017 bundle generation.
+ * @param {Object} [options.globals] - Optional globally-defined identifiers, as
+ * a key-value objects, where the object is a string (trick: if you want to
+ * replace an identifier with a string, call `JSON.stringify` on it).
+ * @returns {Promise}
+ */
+export default function run(options) {
+  // We'll create `GENERATED_APP_PATH` here:
+  const lazyLoadedApps = writeGeneratedAppFile(APPS_SRC_DIR);
+
+  // Re-create the lazy-loaded destination folder, just to clean-up.
+  try {
+    fs.rmSync(OUTPUT_LAZY_LOADED_APPS, { recursive: true, force: true });
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      throw err;
+    }
+  }
+  fs.mkdirSync(OUTPUT_LAZY_LOADED_APPS, { recursive: true });
+
+  // Produce all bundles. First the apps (the desktop might depend statically on
+  // some), then the desktop
+  return Promise.all(
+    [
+      ...lazyLoadedApps,
+      {
+        outputFile: path.join(OUTPUT_DIR, "desktop.js"),
+        input: path.join(DESKTOP_SRC_DIR, "desktop.mjs"),
+        intoEsm: false,
+      },
+    ].map(
+      (bundle) => produceBundle(bundle.input, bundle.outputFile, options),
+      // input: bundle.input,
+      // output: {
+      //   file: bundle.outputFile,
+      //   format: bundle.intoEsm ? "es" : "iife",
+      // },
+      // plugins: [process.env.MINIFY && terser()].filter(Boolean),
+    ),
+  );
+}
+
+/**
+ * Write the app file inside the desktop's code, based on the apps defined in
+ * `baseDir`.
+ * @param {string} baseDir
+ * @returns {Array.<Object>} - Defines the bundles to produce all apps, and
+ * where to put them.
+ */
+function writeGeneratedAppFile(baseDir) {
+  let fileContent;
+  try {
+    fileContent = fs.readFileSync(path.join(baseDir, "AppInfo.json"), {
+      encoding: "utf8",
+    });
+  } catch (err) {
+    throw new Error(`Failed to read "AppInfo.json": ${e}`);
+  }
+
+  let json;
+  try {
+    json = JSON.parse(fileContent);
+  } catch (err) {
+    throw new Error(`Failed to parse "AppInfo.json": ${err}`);
+  }
+
+  if (!Array.isArray(json?.apps)) {
+    throw new Error("Invalid AppInfo.json: no apps Array");
+  }
+
+  /** Information on the bundles to create for apps. */
+  const bundlesToMake = [];
+  /** Static imports to write in the generated file. */
+  const importsToWrite = [];
+  /** Dynamic imports to write in the generated file to be imported after a timer. */
+  const automaticDynImportsAfterTimer = [];
+
+  /** I'll uglily write manually the JS code, being careful with it. */
+  let uglyHandWrittenJsObject = "export default [";
+
+  for (let i = 0; i < json.apps.length; i++) {
+    const app = json.apps[i];
+
+    let hasRemoteUrl = !!app.website;
+    let filePath;
+
+    // dumb rule so it's simpler to write the following code
+    if (!/^[A-Za-z0-9-_]+$/.test(app.id)) {
+      throw new Error(
+        `Invalid app id: "${app.id}". Should only contain alphanumeric, dash or lowescore characters`,
+      );
+    }
+
+    if (typeof app.title !== "string" || app.title === "") {
+      throw new Error(
+        `Invalid title for app id: "${app.id}". Title should be non-empty strings`,
+      );
+    }
+
+    // Find the corresponding app. Either:
+    // 1. <APPID>.mjs
+    // 2. <APPID>/index.mjs
+    // 3. <APPID>.js
+    // 4. <APPID>/index.js
+    //
+    // In that order
+    for (const ext of [".mjs", ".js"]) {
+      const fileName = path.join(baseDir, app.id + ext);
+      if (fs.existsSync(fileName)) {
+        filePath = fileName;
+        break;
+      }
+      const inSubdir = path.join(baseDir, app.id, "index" + ext);
+      if (fs.existsSync(inSubdir)) {
+        filePath = inSubdir;
+        break;
+      }
+    }
+
+    if (!filePath && !hasRemoteUrl) {
+      throw new Error(`Failed to find app ${app.id}`);
+    }
+
+    // TODO: I don't even know if `JSON.stringify` is sufficient here for all
+    // chars, or if I could find some case where the inner string outputed by
+    // `JSON.stringify` could contain a special char that doesn't work as a JS
+    // string. This should however not happen for now unless I'm trying to hack
+    // myself.
+    uglyHandWrittenJsObject += `
+  {
+    id: ${JSON.stringify(app.id)},
+		title: ${JSON.stringify(app.title ?? "Unnamed Application")},
+`;
+
+    if (typeof app.icon === "string") {
+      uglyHandWrittenJsObject +=
+        "    icon: " + JSON.stringify(app.icon) + ",\n";
+    }
+
+    if (typeof app.inStartList === "string") {
+      uglyHandWrittenJsObject +=
+        "    inStartList: " + JSON.stringify(app.inStartList) + ",\n";
+    }
+
+    if (typeof app.desktopDir === "string") {
+      uglyHandWrittenJsObject +=
+        "    desktopDir: " + JSON.stringify(app.desktopDir) + ",\n";
+    }
+
+    if (typeof app.defaultHeight === "number") {
+      uglyHandWrittenJsObject +=
+        "    defaultHeight: " + app.defaultHeight + ",\n";
+    }
+
+    if (typeof app.defaultWidth === "number") {
+      uglyHandWrittenJsObject +=
+        "    defaultWidth: " + app.defaultWidth + ",\n";
+    }
+
+    if (!!app.onlyOne) {
+      uglyHandWrittenJsObject += "    onlyOne: true,\n";
+    }
+
+    if (Array.isArray(app.dependencies)) {
+      for (const dep of app.dependencies) {
+        if (dep !== "settings") {
+          throw new Error(
+            `Error in app "${app.id}". One of the asked dependency does not exist: ${dep}`,
+          );
+        }
+      }
+      uglyHandWrittenJsObject +=
+        "    dependencies: " + JSON.stringify(app.dependencies) + ",\n";
+    }
+
+    if (filePath) {
+      // Here I will put the import path as a `lazyLoad` property.
+      const importPath = `./lazy/${app.id}.js`;
+      uglyHandWrittenJsObject += `    data: {
+			lazyLoad: ${JSON.stringify(importPath)},
+		},
+`;
+      const outputFile = path.join(OUTPUT_LAZY_LOADED_APPS, `${app.id}.js`);
+      bundlesToMake.push({
+        outputFile,
+        input: filePath,
+        intoEsm: true,
+      });
+
+      // The preload.after idea is to preload the app only after a low
+      // timeout.
+      // Browsers are smart enough to not load a given import multiple times (I
+      // would even guess this is ECMAScript-defined).
+      if (typeof app.preload?.after === "number") {
+        automaticDynImportsAfterTimer.push({
+          importPath,
+          timer: app.preload.after,
+        });
+      }
+    } else if (typeof app.website === "string" && app.website !== "") {
+      uglyHandWrittenJsObject += `    data: {
+			website: ${JSON.stringify(app.website)}
+		},
+`;
+    }
+    uglyHandWrittenJsObject += `  },
+`;
+  }
+  uglyHandWrittenJsObject += "];";
+
+  let jsFile = `// NOTE: This is a generated file by this project's build script.
+// Manually updating it is futile!
+
+`;
+
+  if (importsToWrite.length) {
+    for (const importStmt of importsToWrite) {
+      jsFile += `import * as ${importStmt.name} from ${JSON.stringify(importStmt.filePath)};\n`;
+    }
+
+    jsFile += `
+// Making the imports available in global scope just so the app object stay
+// serializable **AND** complete.
+window.globalApps = {};
+`;
+    for (const importStmt of importsToWrite) {
+      jsFile += `window.globalApps.${importStmt.name} = ${importStmt.name};
+`;
+    }
+  }
+  jsFile += "\n" + uglyHandWrittenJsObject;
+
+  for (const timerImports of automaticDynImportsAfterTimer) {
+    jsFile += `
+
+setTimeout(
+	() => {
+    // trick so our bundler doesn't try funky things like rewriting paths
+    const importPath = ${JSON.stringify(timerImports.importPath)};
+    import(importPath);
+  },
+  ${timerImports.timer}
+);
+`;
+  }
+
+  fs.writeFileSync(GENERATED_APP_PATH, jsFile);
+  return bundlesToMake;
+}

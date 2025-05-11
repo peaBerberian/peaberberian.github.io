@@ -48,23 +48,23 @@ export default class Taskbar {
    * @param {Function} callbacks.closeApp - Close the corresponding window.
    */
   addWindow(windowHandle, { icon, title }, { toggleAppActivation, closeApp }) {
-    const item = document.createElement("div");
-    item.className = "taskbar-item";
-    item.tabIndex = "0";
-    item.addEventListener("mousedown", (evt) => {
+    const itemElt = document.createElement("div");
+    itemElt.className = "taskbar-item";
+    itemElt.tabIndex = "0";
+    itemElt.addEventListener("mousedown", (evt) => {
       if (evt && evt.button == 1) {
         // middle click
         closeApp();
       }
     });
-    item.addEventListener("click", (evt) => {
+    itemElt.addEventListener("click", (evt) => {
       if (evt && evt.button == 1) {
         // middle click
         return;
       }
       toggleAppActivation();
     });
-    item.addEventListener("keydown", (evt) => {
+    itemElt.addEventListener("keydown", (evt) => {
       if (evt.key === " " || evt.key === "Enter") {
         toggleAppActivation();
       }
@@ -75,10 +75,10 @@ export default class Taskbar {
     const titleElt = document.createElement("span");
     titleElt.className = "taskbar-item-text taskbar-item-title";
     titleElt.textContent = title;
-    item.appendChild(iconElt);
-    item.appendChild(titleElt);
-    this._taskbarItemMap.set(windowHandle, item);
-    this._taskbarItemsElt.appendChild(item);
+    itemElt.appendChild(iconElt);
+    itemElt.appendChild(titleElt);
+    this._taskbarItemMap.set(windowHandle, itemElt);
+    this._taskbarItemsElt.appendChild(itemElt);
   }
 
   /**
@@ -112,13 +112,13 @@ export default class Taskbar {
    */
   setActiveWindow(windowHandle) {
     const itemElt = this._taskbarItemMap.get(windowHandle);
-    for (const item of this._taskbarItemsElt.getElementsByClassName(
+    for (const currItemElt of this._taskbarItemsElt.getElementsByClassName(
       "taskbar-item",
     )) {
-      if (item === itemElt) {
-        item.classList.add("active");
+      if (currItemElt === itemElt) {
+        currItemElt.classList.add("active");
       } else {
-        item.classList.remove("active");
+        currItemElt.classList.remove("active");
       }
     }
   }
@@ -142,7 +142,7 @@ export default class Taskbar {
   getTaskBoundingClientRect(windowHandle) {
     const itemElt = this._taskbarItemMap.get(windowHandle);
     if (itemElt) {
-      return item.getBoundingClientRect();
+      return itemElt.getBoundingClientRect();
     }
     return null;
   }

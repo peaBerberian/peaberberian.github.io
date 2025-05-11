@@ -12,6 +12,8 @@
 // - filesystem: watch API?
 // - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices
+// - click on explorer should unselect
+// - no more window focused in taskbar
 //
 // low priority:
 // - filesystem: Proxy local storage in `/system/`?
@@ -56,6 +58,12 @@
 //   info on what has been dropped
 // - apps can have an `env.drag` method (`"drag"` dependency?) to start drag
 //   and dropping
+//
+// Application settings:
+// sidebar position: Always on top / auto
+// Toolbar: Both title and icons, Icons only, text only
+// iframe blocker
+// colors
 
 import fs from "./filesystem/filesystem.mjs";
 import DesktopAppIcons from "./components/DesktopAppIcons.mjs";
@@ -72,6 +80,11 @@ import initializeClockApplet from "./clock_applet.mjs";
  * that it won't be loaded at start-up through that same fragment trick).
  */
 const SPECIAL_NO_APP_STRING = "#";
+
+console.log(
+  "Welcome to my Web Desktop! This is an open-source project whose code can be found here:",
+  "https://github.com/peaBerberian/peaberberian.github.io",
+);
 
 async function start() {
   const desktopElt = document.getElementById("desktop");

@@ -696,6 +696,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
             currentDirectoryComponent.onActivate();
             return;
           }
+          await filesystem.writeFile(items[0].path, savedFileData);
           currentDirectoryComponent?.onActivate();
           removeBlockingMask(maskContainer, explorerElt);
           env.onSaved({ path: items[0].path });

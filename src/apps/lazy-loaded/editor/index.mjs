@@ -36,7 +36,7 @@ function createEditor() {
     width: "100%",
     overflow: "auto",
     display: "flex",
-    padding: "5px",
+    padding: "3px",
     gap: "5px",
     flexShrink: "0",
   });
@@ -45,19 +45,19 @@ function createEditor() {
   let historyIndex = -1;
   let lastSavedContent = null;
 
-  const undoButton = createButtonElt(undoSvg, 35, (e) => {
+  const undoButton = createButtonElt(undoSvg, 1, (e) => {
     e.preventDefault();
     undo();
   });
   disableButton(undoButton);
 
-  const redoButton = createButtonElt(redoSvg, 35, (e) => {
+  const redoButton = createButtonElt(redoSvg, 1, (e) => {
     e.preventDefault();
     redo();
   });
   disableButton(redoButton);
 
-  const clearButton = createButtonElt(clearSvg, 35, () => {
+  const clearButton = createButtonElt(clearSvg, 1, () => {
     const hadSomethingWritten = textArea.value;
     statusBar.textContent = "Cleared";
     textArea.value = "";
@@ -69,7 +69,7 @@ function createEditor() {
   });
   disableButton(clearButton);
 
-  const saveButton = createButtonElt(saveSvg, 28, () => {
+  const saveButton = createButtonElt(saveSvg, 0.75, () => {
     if (typeof window.showSaveFilePicker === "function") {
       saveFile(textArea.value);
     } else {
@@ -262,11 +262,11 @@ function createEditor() {
   }
 }
 
-function createButtonElt(svg, height, onClick) {
+function createButtonElt(svg, heightScale, onClick) {
   const buttonElt = getSvg(svg);
   applyStyle(buttonElt, {
-    width: "35px",
-    height: `${height}px`,
+    width: "2rem",
+    height: `${heightScale * 2}rem`,
     cursor: "pointer",
     margin: "auto 0px",
   });

@@ -279,9 +279,20 @@ function refreshStartMenu(
 
         const list = document.createElement("div");
         list.className = "s-list";
-        list.style.bottom =
-          String((apps.length - 1 - currentIdx) * START_ITEM_HEIGHT) + "px";
-        // String(START_ITEM_HEIGHT + currentIdx * START_ITEM_HEIGHT) + "px";
+        if (SETTINGS.taskbarLocation.getValue() === "bottom") {
+          list.style.bottom =
+            String((apps.length - 1 - currentIdx) * START_ITEM_HEIGHT) + "px";
+          // String(START_ITEM_HEIGHT + currentIdx * START_ITEM_HEIGHT) + "px";
+        } else {
+          // There might be the start menu header first
+          const offset =
+            SETTINGS.taskbarLocation.getValue() === "top"
+              ? 0
+              : START_ITEM_HEIGHT;
+          list.style.top =
+            String(offset + currentIdx * START_ITEM_HEIGHT) + "px";
+          // String(START_ITEM_HEIGHT + currentIdx * START_ITEM_HEIGHT) + "px";
+        }
 
         startItemListElt.onmouseenter = () => {
           list.classList.add("active");

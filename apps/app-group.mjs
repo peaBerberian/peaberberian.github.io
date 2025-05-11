@@ -4,17 +4,25 @@
  *
  * To run it, provide to it as arguments:
  *
- *   1. The title wanted for that application, including the icon as a first
- *      character
+ *   1. The icon wanted for this app group.
  *
- *   2. Then a variable numbers of paths to the applications or files that
- *      should be listed in this application group.
+ *   2. The title wanted for this app group.
+ *
+ *   3-. Then a variable numbers of paths to the applications or files that
+ *       should be listed in this application group.
  * @param {Array.<string>} args - The application arguments, as documented
  * above.
  * @param {Object} env - Util functions coming from the environment
- * @param {Object} env.filesystem
- * @param {Object} env.appUtils
- * @param {function(string, Array.<string>):undefined} env.open
+ * @param {Object} env.appUtils - Util libraries, not actual desktop API.
+ * @param {Object} env.filesystem - Interface to interact with the desktop's
+ * filesystem.
+ * @param {function(string, string):undefined} env.updateTitle - Update the
+ * title of the current application. First argument is the icon, second is the
+ * title.
+ * @param {function(string, Array.<string>):undefined} env.open - API allowing
+ * to open new files and applications. The first argument is the path to the
+ * application to run, the second are the arguments with which it should be
+ * launched.
  * @param {function(HTMLElement, Object):undefined} env.appUtils.applyStyle -
  * Util function allowing to apply multiple CSS rules at once on an
  * `HTMLElement`.
@@ -22,8 +30,8 @@
  */
 export async function create(args, env) {
   const applyStyle = env.appUtils.applyStyle;
-  if (args.length > 0) {
-    env.updateTitle(args[0]);
+  if (args.length > 1) {
+    env.updateTitle(args[0], args[1]);
   }
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
@@ -44,7 +52,15 @@ export async function create(args, env) {
   });
   containerElt.appendChild(iconsContainerElt);
 
-  const appPaths = args.slice(1);
+  // Prevent annoying random selection when clicking fast.
+  containerElt.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+  });
+  containerElt.addEventListener("selectstart", (e) => {
+    e.preventDefault();
+  });
+
+  const appPaths = args.slice(2);
   const appProms = appPaths.map((a) => env.filesystem.readFile(a, "object"));
   const apps = await Promise.all(appProms);
   const icons = [];

@@ -41,6 +41,11 @@
   box-sizing: border-box;
 }
 
+/* Bad I know. I should do accessiblity. */
+*:focus {
+  outline: none;
+}
+
 a {
   color: var(--window-text-color);
 }

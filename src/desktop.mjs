@@ -1,6 +1,8 @@
 // ROADMAP
 // =======
 //
+// This is not really a roadmap, just writing stuff I see to not forget them.
+//
 // filesystem:
 // - Finish file explorer
 // - Open in text editor, image viewer, and sheets at least
@@ -13,11 +15,16 @@
 // high priority:
 //
 // medium priority:
+// - Exception for app group where the icon / title is pre-filled?
 // - when side-by-side window snapping we should be able to resize both at the same time
 // - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices
 // - Sidebar should be able to break a word in worst cases I think.
 // - What do if App creation errors or rejects?
+// - PONG not focused move or not?
+// - clock not centered on taskbar?
+// - applications defaultHeight and defaultWidth exclude window decorations
+// - some accessibility I guess
 //
 // low priority:
 // - windows moving when moving taskbar to top/bottom. Could be cool to stay in
@@ -43,11 +50,11 @@
 // - icon lose focus onmousedown, not onclick
 
 import fs from "./filesystem.mjs";
-import { is12HourClockFormat } from "./utils.mjs";
-import AppIcons from "./components/AppIcons.mjs";
+import DesktopAppIcons from "./components/DesktopAppIcons.mjs";
 import StartMenu from "./components/StartMenu.mjs";
 import Taskbar from "./components/Taskbar.mjs";
-import AppsManager from "./components/window/AppsManager.mjs";
+import AppsLauncher from "./AppsLauncher.mjs";
+import initializeClockApplet from "./clock_applet.mjs";
 
 // Fragment is only used for in-app anchors for now.
 // We can remove it when the desktop is restared to prevent weird behaviors
@@ -67,39 +74,30 @@ async function start() {
   ]);
 
   /** Clock shown as a taskbar "applet". */
-  const clockElt = initializeClockElement();
+  const clockElt = initializeClockApplet();
   clockElt.onclick = function () {
-    appsManager.openApp("/apps/clock.run", [], {
-      activate: true,
-      fullscreen: false,
-      skipAnim: false,
+    appsLauncher.openApp("/apps/clock.run", [], {
       centered: true,
     });
     return;
   };
 
   const taskbarManager = new Taskbar({ applets: [clockElt] });
-  const appsManager = new AppsManager(desktopElt, taskbarManager);
+  const appsLauncher = new AppsLauncher(desktopElt, taskbarManager);
 
-  const openAppFromPath = (appPath, appArgs) => {
-    appsManager.openApp(appPath, appArgs ?? [], {
-      activate: true,
-      fullscreen: false,
-      skipAnim: false,
-      centered: false,
-    });
-  };
-  desktopElt.appendChild(AppIcons(desktopApps.list, openAppFromPath));
+  desktopElt.appendChild(DesktopAppIcons(desktopApps.list, openAppFromPath));
   StartMenu(startMenuApps.list, openAppFromPath);
 
   // Open about me default app
-  appsManager.openApp("/apps/about.run", [], {
-    activate: true,
-    fullscreen: false,
+  appsLauncher.openApp("/apps/about.run", [], {
     skipAnim: true,
     centered: true,
   });
   console.timeEnd("START");
+
+  function openAppFromPath(appPath, appArgs) {
+    appsLauncher.openApp(appPath, appArgs ?? []);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -107,36 +105,3 @@ document.addEventListener("DOMContentLoaded", function () {
     /* noop for now */
   });
 });
-
-/**
- * Create a simple infinitely self-updating clock whose goal is to be shown
- * inside the taskbar.
- * NOTE: The interval started for this clock is never stopped. Call this
- * function only one time.
- *
- * @returns {HTMLElement} - The clock element itself, showing the digital
- * local hour.
- */
-function initializeClockElement() {
-  const clockElt = document.createElement("div");
-  clockElt.className = "clock";
-  const use12HourClockFormat = is12HourClockFormat();
-  updateClock(use12HourClockFormat, clockElt);
-  setInterval(() => updateClock(use12HourClockFormat, clockElt), 2000);
-  return clockElt;
-  function updateClock(use12HourClock, clockElt) {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    let ampm;
-    if (use12HourClock) {
-      ampm = hours >= 12 ? " PM" : " AM";
-    } else {
-      ampm = "";
-    }
-    const formattedHours = use12HourClock ? hours % 12 || 12 : hours;
-    const formattedMinutes = minutes < 10 ? "0" + minutes : minutes;
-    // NOTE: \u200B == Zero-width space. Allows line breaks if needed.
-    clockElt.textContent = `${formattedHours}\u200B:\u200B${formattedMinutes}${ampm}`;
-  }
-}

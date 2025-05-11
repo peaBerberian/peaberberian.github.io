@@ -696,7 +696,9 @@ function generateDesktopConfig() {
         } else {
           const title = app.desktop.group;
           const icon = app.desktop.group === "External Apps" ? "📡" : "💽";
-          const newList = [`${icon} ${title}`, path];
+
+          // app-group args are [icon, title, ...apps]
+          const newList = [icon, title, path];
           groups.set(app.desktop.group, newList);
           acc.push({
             run: "/apps/app-group.run",

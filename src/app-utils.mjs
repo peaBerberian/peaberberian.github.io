@@ -1,10 +1,10 @@
 import { applyStyle, constructSidebarElt, createAppIframe } from "./utils.mjs";
 import strHtml from "./str-html.mjs";
 
-// ==== Globally export utils for lazy-loaded applications ====
+// ==== Utils for lazy-loaded applications ====
 
 export default {
-  // Often needed:
+  // Often needed utils:
   applyStyle: applyStyle,
   strHtml: strHtml,
   constructAppHeaderLine: constructAppHeaderLine,

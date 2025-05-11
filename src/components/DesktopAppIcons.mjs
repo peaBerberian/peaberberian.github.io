@@ -35,7 +35,7 @@ import { SETTINGS } from "../settings.mjs";
  * the whole screen beside the taskbar element (and is automatically updated
  * on page resize).
  */
-export default function AppIcons(apps, onOpen, parentAbortSignal) {
+export default function DesktopAppIcons(apps, onOpen, parentAbortSignal) {
   let abortController;
   const iconWrapperElt = document.createElement("div");
 

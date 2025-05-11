@@ -74,6 +74,31 @@ export default class Taskbar {
   }
 
   /**
+   * Update the title and icon of a specific window in the taskbar.
+   * @param {string} windowId - The `windowId` (@see `addWindow`) of the window
+   * whose title should be updated.
+   * @param {string} icon - The icon, as a single character (generally an
+   * emoji).
+   * @param {string} title - The title of the application.
+   */
+  updateTitle(windowId, icon, title) {
+    for (const item of this._taskbarItemsElt.getElementsByClassName(
+      "taskbar-item",
+    )) {
+      if (item.dataset.window === windowId) {
+        const iconElt = item.getElementsByClassName("taskbar-item-icon");
+        if (iconElt.length) {
+          iconElt[0].textContent = icon;
+        }
+        const titleElt = item.getElementsByClassName("taskbar-item-title");
+        if (titleElt.length) {
+          titleElt[0].textContent = title;
+        }
+      }
+    }
+  }
+
+  /**
    * Change the active window or deactivate all windows.
    * @param {string|null} windowId - The `windowId` for the window you wish to
    * activate, or `null` if no window should be activated.
@@ -90,6 +115,11 @@ export default class Taskbar {
     }
   }
 
+  /**
+   * "Deactivate" visually a specific window in the taskbar.
+   * @param {string} windowId - The `windowId` (@see `addWindow`) of the window
+   * which should be deactivated.
+   */
   deActiveWindow(windowId) {
     for (const item of this._taskbarItemsElt.getElementsByClassName(
       "taskbar-item",
@@ -115,6 +145,11 @@ export default class Taskbar {
     return null;
   }
 
+  /**
+   * Remove a window from the taskbar.
+   * @param {string} windowId - The `windowId` (@see `addWindow`) of the window
+   * that should be removed.
+   */
   remove(windowId) {
     for (const item of this._taskbarItemsElt.getElementsByClassName(
       "taskbar-item",

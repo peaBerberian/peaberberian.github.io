@@ -1,6 +1,7 @@
 # Apps
 
 _LAST UPDATE: 2025-05-13_
+
 _APPS API VERSION: 0.1.0_
 
 This directory regroups "apps" that can be loaded by this desktop.
@@ -73,8 +74,7 @@ depending on the application's needs:
 
 ### Return value
 
-Apps have to follow a particular syntax where they have to export a `create`
-function returning at least either:
+The `create` function should return either:
 
 - An `element` `HTMLElement` property corresponding to the app's content.
   Most applications should probably define an `element` property.

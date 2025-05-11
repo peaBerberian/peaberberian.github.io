@@ -159,6 +159,53 @@
       "desktopDir": "Other Projects"
     },
     {
+      "id": "bif-inspector",
+      "title": "bif-inspector",
+      "icon": "🖼️",
+      "inStartList": "Other Projects",
+      "desktopDir": "Other Projects"
+    },
+    {
+      "id": "godbolt",
+      "title": "Compiler explorer",
+      "icon": "🤖",
+      "defaultHeight": 720,
+      "defaultWidth": 1000,
+      "inStartList": "External Apps",
+      "website": "https://godbolt.org/",
+      "desktopDir": "External Apps"
+    },
+    {
+      "id": "wikipedia",
+      "title": "Wikipedia",
+      "icon": "📖",
+      "defaultHeight": 720,
+      "defaultWidth": 1000,
+      "inStartList": "External Apps",
+      "website": "https://www.wikipedia.org/",
+      "desktopDir": "External Apps"
+    },
+    {
+      "id": "osm",
+      "title": "OS Maps",
+      "icon": "🗺️",
+      "defaultHeight": 720,
+      "defaultWidth": 1000,
+      "inStartList": "External Apps",
+      "website": "https://www.openstreetmap.org/export/embed.html",
+      "desktopDir": "External Apps"
+    },
+    {
+      "id": "bbb",
+      "title": "That one testing video",
+      "icon": "🐇",
+      "defaultHeight": 720,
+      "defaultWidth": 900,
+      "inStartList": "External Apps",
+      "website": "https://www.youtube.com/embed/aqz-KE-bpKQ",
+      "desktopDir": "External Apps"
+    },
+    {
       "id": "passgen",
       "title": "passgen",
       "icon": "🔑",
@@ -166,13 +213,6 @@
       "defaultWidth": 450,
       "inStartList": "Misc",
       "desktopDir": null
-    },
-    {
-      "id": "bif-inspector",
-      "title": "bif-inspector",
-      "icon": "🖼️",
-      "inStartList": "Other Projects",
-      "desktopDir": "Other Projects"
     },
     {
       "id": "clock",

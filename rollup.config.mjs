@@ -71,6 +71,7 @@ function createAppImports(baseDir) {
   let uglyHandWrittenJsObject = "export default [";
   for (let i = 0; i < json.apps.length; i++) {
     const app = json.apps[i];
+    let hasRemoteUrl = !!app.website;
     let filePath;
     for (const ext of [".mjs", ".js"]) {
       const fileName = path.join(baseDir, app.id + ext);
@@ -84,7 +85,7 @@ function createAppImports(baseDir) {
         break;
       }
     }
-    if (!filePath) {
+    if (!filePath && !hasRemoteUrl) {
       throw new Error(`Failed to find app ${app.id}`);
     }
     uglyHandWrittenJsObject += `
@@ -121,14 +122,15 @@ function createAppImports(baseDir) {
     if (!!app.autoload) {
       uglyHandWrittenJsObject += "    autoload: true,\n";
     }
-    if (app.preload) {
-      uglyHandWrittenJsObject += "    data: __APP__" + String(i) + ",\n";
-      imports.push({
-        name: "__APP__" + String(i),
-        filePath: path.relative(SRC_DIR, filePath),
-      });
-    } else {
-      uglyHandWrittenJsObject += `    data: {
+    if (filePath) {
+      if (app.preload) {
+        uglyHandWrittenJsObject += "    data: __APP__" + String(i) + ",\n";
+        imports.push({
+          name: "__APP__" + String(i),
+          filePath: path.relative(SRC_DIR, filePath),
+        });
+      } else {
+        uglyHandWrittenJsObject += `    data: {
 			lazyLoad: () => import(${JSON.stringify(
         "/lazy/" +
           // TODO: I'm sure I missed some unauthorized char in a JS string
@@ -137,11 +139,17 @@ function createAppImports(baseDir) {
       )}),
 		},
 `;
-      bundlesToMake.push({
-        bundlePath: path.join(OUTPUT_DIR, "lazy", `${app.id}.js`),
-        input: filePath,
-        keepEsm: true,
-      });
+        bundlesToMake.push({
+          bundlePath: path.join(OUTPUT_DIR, "lazy", `${app.id}.js`),
+          input: filePath,
+          keepEsm: true,
+        });
+      }
+    } else if (typeof app.website === "string" && app.website !== "") {
+      uglyHandWrittenJsObject += `    data: {
+			website: ${JSON.stringify(app.website)}
+		},
+`;
     }
     uglyHandWrittenJsObject += `  },
 `;

@@ -166,12 +166,12 @@ function getDesktopIconsList(onOpen) {
   const appIcons = [];
   const appIconDirMap = new Map();
   for (const app of apps) {
-    if (app.startMenuDir !== undefined) {
-      let list = appIconDirMap.get(app.startMenuDir);
+    if (app.desktopDir !== undefined) {
+      let list = appIconDirMap.get(app.desktopDir);
       if (list === undefined) {
         list = [];
-        appIconDirMap.set(app.startMenuDir, list);
-        appIcons.push(generateDirectoryApp(app.startMenuDir, list, onOpen));
+        appIconDirMap.set(app.desktopDir, list);
+        appIcons.push(generateDirectoryApp(app.desktopDir, list, onOpen));
       }
       list.push(app);
     } else {

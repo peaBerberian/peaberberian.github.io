@@ -11,7 +11,7 @@
       "onlyOne": false,
       "needsSettingsObject": false,
       "inStartList": null,
-      "startMenuDir": null
+      "desktopDir": null
     },
     {
       "id": "settings",
@@ -23,7 +23,7 @@
       "onlyOne": true,
       "needsSettingsObject": true,
       "inStartList": null,
-      "startMenuDir": null
+      "desktopDir": null
     },
     {
       "id": "this-website",
@@ -33,7 +33,7 @@
       "defaultWidth": 855,
       "preload": false,
       "inStartList": null,
-      "startMenuDir": null
+      "desktopDir": null
     },
     {
       "id": "paint",
@@ -42,7 +42,7 @@
       "defaultHeight": 950,
       "defaultWidth": 1000,
       "inStartList": "Desktop Apps",
-      "startMenuDir": null
+      "desktopDir": null
     },
     {
       "id": "editor",
@@ -51,14 +51,14 @@
       "defaultHeight": 500,
       "defaultWidth": 500,
       "inStartList": "Desktop Apps",
-      "startMenuDir": null
+      "desktopDir": null
     },
     {
       "id": "table",
       "title": "Sheets",
       "icon": "📏",
       "inStartList": "Desktop Apps",
-      "startMenuDir": null
+      "desktopDir": null
     },
     {
       "id": "bombsweeper",
@@ -67,7 +67,7 @@
       "defaultHeight": 700,
       "defaultWidth": 600,
       "inStartList": "Desktop Apps",
-      "startMenuDir": null
+      "desktopDir": null
     },
     {
       "id": "pong",
@@ -76,7 +76,7 @@
       "defaultHeight": 400,
       "defaultWidth": 600,
       "inStartList": "Desktop Apps",
-      "startMenuDir": null
+      "desktopDir": null
     },
     {
       "id": "rx-player",
@@ -85,7 +85,7 @@
       "defaultHeight": 720,
       "defaultWidth": 950,
       "inStartList": "Other Projects",
-      "startMenuDir": "Other Projects"
+      "desktopDir": "Other Projects"
     },
     {
       "id": "wasp-hls",
@@ -94,7 +94,7 @@
       "defaultHeight": 720,
       "defaultWidth": 950,
       "inStartList": "Other Projects",
-      "startMenuDir": "Other Projects"
+      "desktopDir": "Other Projects"
     },
     {
       "id": "rx-paired",
@@ -103,7 +103,7 @@
       "defaultHeight": 700,
       "defaultWidth": 1000,
       "inStartList": "Other Projects",
-      "startMenuDir": "Other Projects"
+      "desktopDir": "Other Projects"
     },
     {
       "id": "eme-spy",
@@ -112,7 +112,7 @@
       "defaultHeight": 500,
       "defaultWidth": 800,
       "inStartList": "Other Projects",
-      "startMenuDir": "Other Projects"
+      "desktopDir": "Other Projects"
     },
     {
       "id": "mse-spy",
@@ -121,42 +121,42 @@
       "defaultHeight": 500,
       "defaultWidth": 800,
       "inStartList": "Other Projects",
-      "startMenuDir": "Other Projects"
+      "desktopDir": "Other Projects"
     },
     {
       "id": "isobmff-inspector",
       "title": "isobmff-inspector",
       "icon": "📹",
       "inStartList": "Other Projects",
-      "startMenuDir": "Other Projects"
+      "desktopDir": "Other Projects"
     },
     {
       "id": "gif-renderer",
       "title": "gif-renderer.rs",
       "icon": "🏇",
       "inStartList": "Other Projects",
-      "startMenuDir": "Other Projects"
+      "desktopDir": "Other Projects"
     },
     {
       "id": "str-html",
       "title": "str-html",
       "icon": "📄",
       "inStartList": "Other Projects",
-      "startMenuDir": "Other Projects"
+      "desktopDir": "Other Projects"
     },
     {
       "id": "readme",
       "title": "README",
       "icon": "📖",
       "inStartList": "Other Projects",
-      "startMenuDir": "Other Projects"
+      "desktopDir": "Other Projects"
     },
     {
       "id": "keyboard9",
       "title": "keyboard9",
       "icon": "⌨️",
       "inStartList": "Other Projects",
-      "startMenuDir": "Other Projects"
+      "desktopDir": "Other Projects"
     },
     {
       "id": "passgen",
@@ -165,14 +165,14 @@
       "defaultHeight": 300,
       "defaultWidth": 450,
       "inStartList": "Misc",
-      "startMenuDir": null
+      "desktopDir": null
     },
     {
       "id": "bif-inspector",
       "title": "bif-inspector",
       "icon": "🖼️",
       "inStartList": "Other Projects",
-      "startMenuDir": "Other Projects"
+      "desktopDir": "Other Projects"
     },
     {
       "id": "clock",
@@ -181,7 +181,7 @@
       "defaultHeight": 250,
       "defaultWidth": 250,
       "inStartList": "Misc",
-      "startMenuDir": null
+      "desktopDir": null
     },
     {
       "id": "inception",
@@ -190,7 +190,7 @@
       "defaultHeight": 720,
       "defaultWidth": 1280,
       "inStartList": "Misc",
-      "startMenuDir": null
+      "desktopDir": null
     }
   ]
 }

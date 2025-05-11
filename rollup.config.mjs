@@ -100,9 +100,9 @@ function createAppImports(baseDir) {
       uglyHandWrittenJsObject +=
         "    inStartList: " + JSON.stringify(app.inStartList) + ",\n";
     }
-    if (app.startMenuDir) {
+    if (app.desktopDir) {
       uglyHandWrittenJsObject +=
-        "    startMenuDir: " + JSON.stringify(app.startMenuDir) + ",\n";
+        "    desktopDir: " + JSON.stringify(app.desktopDir) + ",\n";
     }
     if (app.defaultHeight && typeof app.defaultHeight === "number") {
       uglyHandWrittenJsObject +=

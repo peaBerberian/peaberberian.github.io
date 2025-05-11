@@ -143,6 +143,20 @@
       ]
     },
     {
+      "id": "calculator",
+      "title": "Calculator",
+      "icon": "🧮",
+      "defaultHeight": 400,
+      "defaultWidth": 300,
+      "dependencies": [],
+      "startMenu": {
+        "list": "Desktop Apps"
+      },
+      "desktop": {
+        "display": true
+      }
+    },
+    {
       "id": "bombsweeper",
       "title": "BombSweeper!",
       "icon": "💣",

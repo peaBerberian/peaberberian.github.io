@@ -116,7 +116,7 @@ async function produceBundle(inputFile, outfile, options) {
     const context = await esbuild[meth]({
       entryPoints: [inputFile],
       bundle: true,
-      target: "es2017",
+      target: "es2020",
       minify,
       write: true,
       format: "esm",

@@ -1,7 +1,7 @@
+// TODO: Watch local image file and reload it automagically? Will need to add
+// watch mechanism to args+filePickerOpen objects
 // TODO: experience is shit on tactile devices: implement swipe+zoom with gestures?
 // TODO: Zoom reset also centers (just renamed reset?)
-// TODO: update title with image name
-// TODO: Better error is this an image
 
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 10;

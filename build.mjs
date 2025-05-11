@@ -29,6 +29,47 @@ const OUTPUT_LAZY_LOADED_APPS = path.join(OUTPUT_DIR, "lazy");
 /**
  * Run bundler on a single file with the given options.
  * @param {string} inputFile - The entry file for the bundle
+ * @param {Object} options
+ * @param {boolean} [options.minify] - If `true`, the output will be minified.
+ * @param {boolean} [options.watch] - If `true`, the RxPlayer's files involve
+ * will be watched and the code re-built each time one of them changes.
+ * @param {boolean} [options.silent] - If `true`, we won't output logs.
+ * @param {string} [options.outfile] - Destination of the produced es2017
+ * bundle. To ignore to skip ES2017 bundle generation.
+ * @param {Object} [options.globals] - Optional globally-defined identifiers, as
+ * a key-value objects, where the object is a string (trick: if you want to
+ * replace an identifier with a string, call `JSON.stringify` on it).
+ * @returns {Promise}
+ */
+export default function run(options) {
+  // We'll create `GENERATED_APP_PATH` here:
+  const lazyLoadedApps = writeGeneratedAppFile(APPS_SRC_DIR);
+
+  // Re-create the lazy-loaded destination folder, just to clean-up.
+  try {
+    fs.rmSync(OUTPUT_LAZY_LOADED_APPS, { recursive: true, force: true });
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      throw err;
+    }
+  }
+  fs.mkdirSync(OUTPUT_LAZY_LOADED_APPS, { recursive: true });
+
+  // Produce all bundles
+  return Promise.all(
+    [
+      ...lazyLoadedApps,
+      {
+        outputFile: path.join(OUTPUT_DIR, "desktop.js"),
+        input: path.join(DESKTOP_SRC_DIR, "desktop.mjs"),
+      },
+    ].map((bundle) => produceBundle(bundle.input, bundle.outputFile, options)),
+  );
+}
+
+/**
+ * Run bundler on a single file with the given options.
+ * @param {string} inputFile - The entry file for the bundle
  * @param {string} outfile - Destination of the produced bundle.
  * @param {Object} options
  * @param {boolean} [options.minify] - If `true`, the output will be minified.
@@ -114,79 +155,6 @@ async function produceBundle(inputFile, outfile, options) {
   }
 }
 
-// If true, this script is called directly
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const args = process.argv.slice(2);
-  let shouldWatch = false;
-  let shouldMinify = false;
-  let outputFile = "";
-  let silent = false;
-
-  for (let argOffset = 0; argOffset < args.length; argOffset++) {
-    const currentArg = args[argOffset];
-    switch (currentArg) {
-      case "-h":
-      case "--help":
-        displayHelp();
-        process.exit(0);
-
-      case "-w":
-      case "--watch":
-        shouldWatch = true;
-        break;
-
-      case "-m":
-      case "--minify":
-        shouldMinify = true;
-        break;
-
-      case "-s":
-      case "--silent":
-        silent = true;
-        break;
-
-      case "-o":
-      case "--output":
-        {
-          argOffset++;
-          const wantedOutput = args[argOffset];
-          if (wantedOutput === undefined) {
-            console.error("ERROR: no output file provided\n");
-            displayHelp();
-            process.exit(1);
-          }
-          outputFile = path.normalize(wantedOutput);
-        }
-        break;
-
-      case "--":
-        argOffset = args.length;
-        break;
-
-      default: {
-        console.error('ERROR: unknown option: "' + currentArg + '"\n');
-        displayHelp();
-        process.exit(1);
-      }
-    }
-  }
-
-  try {
-    run({
-      watch: shouldWatch,
-      minify: shouldMinify,
-      silent,
-      outfile: outputFile,
-    }).catch((err) => {
-      console.error(`ERROR: ${err}\n`);
-      process.exit(1);
-    });
-  } catch (err) {
-    console.error(`ERROR: ${err}\n`);
-    process.exit(1);
-  }
-}
-
 /**
  * Return the current date into a more readable `HH:mm:ss.fff`
  * (hours:minutes:seconds.milliseconds) format.
@@ -202,85 +170,6 @@ function getHumanReadableHours() {
     String(date.getSeconds()).padStart(2, "0") +
     "." +
     String(date.getMilliseconds()).padStart(4, "0")
-  );
-}
-
-/**
- * Display through `console.log` an helping message relative to how to run this
- * script.
- */
-function displayHelp() {
-  console.log(
-    `build.mjs: Produce the desktop bundles (of both the core desktop itself and
-of all the declared apps).
-
-Will interpret the \`/apps/AppInfo.json\` first to find out all the apps it needs to
-bundle, and will advertise them to the desktop through a generated JS file.
-The bundled desktop will then be able to list those applications and load their app
-bundle when needed.
-
-For now, this script doesn't react to modifications of the \`/apps/AppInfo.json\` file,
-even in "watch" mode, meaning that this script should be relaunched anytime that json
-file is modified (which should mostly happen when adding new applications).
-
-Usage: node build.mjs [OPTIONS]
-
-Available options:
-  -h, --help                  Display this help message.
-  -m, --minify                Minify the built bundle.
-  -s, --silent                Don't log to stdout/stderr when bundling.
-  -w, --watch                 Re-build each time any of the files depended on changed.`,
-  );
-}
-
-/**
- * Run bundler on a single file with the given options.
- * @param {string} inputFile - The entry file for the bundle
- * @param {Object} options
- * @param {boolean} [options.minify] - If `true`, the output will be minified.
- * @param {boolean} [options.watch] - If `true`, the RxPlayer's files involve
- * will be watched and the code re-built each time one of them changes.
- * @param {boolean} [options.silent] - If `true`, we won't output logs.
- * @param {string} [options.outfile] - Destination of the produced es2017
- * bundle. To ignore to skip ES2017 bundle generation.
- * @param {Object} [options.globals] - Optional globally-defined identifiers, as
- * a key-value objects, where the object is a string (trick: if you want to
- * replace an identifier with a string, call `JSON.stringify` on it).
- * @returns {Promise}
- */
-export default function run(options) {
-  // We'll create `GENERATED_APP_PATH` here:
-  const lazyLoadedApps = writeGeneratedAppFile(APPS_SRC_DIR);
-
-  // Re-create the lazy-loaded destination folder, just to clean-up.
-  try {
-    fs.rmSync(OUTPUT_LAZY_LOADED_APPS, { recursive: true, force: true });
-  } catch (err) {
-    if (err.code !== "ENOENT") {
-      throw err;
-    }
-  }
-  fs.mkdirSync(OUTPUT_LAZY_LOADED_APPS, { recursive: true });
-
-  // Produce all bundles. First the apps (the desktop might depend statically on
-  // some), then the desktop
-  return Promise.all(
-    [
-      ...lazyLoadedApps,
-      {
-        outputFile: path.join(OUTPUT_DIR, "desktop.js"),
-        input: path.join(DESKTOP_SRC_DIR, "desktop.mjs"),
-        intoEsm: false,
-      },
-    ].map(
-      (bundle) => produceBundle(bundle.input, bundle.outputFile, options),
-      // input: bundle.input,
-      // output: {
-      //   file: bundle.outputFile,
-      //   format: bundle.intoEsm ? "es" : "iife",
-      // },
-      // plugins: [process.env.MINIFY && terser()].filter(Boolean),
-    ),
   );
 }
 
@@ -314,8 +203,6 @@ function writeGeneratedAppFile(baseDir) {
 
   /** Information on the bundles to create for apps. */
   const bundlesToMake = [];
-  /** Static imports to write in the generated file. */
-  const importsToWrite = [];
   /** Dynamic imports to write in the generated file to be imported after a timer. */
   const automaticDynImportsAfterTimer = [];
 
@@ -331,7 +218,7 @@ function writeGeneratedAppFile(baseDir) {
     // dumb rule so it's simpler to write the following code
     if (!/^[A-Za-z0-9-_]+$/.test(app.id)) {
       throw new Error(
-        `Invalid app id: "${app.id}". Should only contain alphanumeric, dash or lowescore characters`,
+        `Invalid app id: "${app.id}". Should only contain alphanumeric, dash or lowerscore characters`,
       );
     }
 
@@ -428,7 +315,6 @@ function writeGeneratedAppFile(baseDir) {
       bundlesToMake.push({
         outputFile,
         input: filePath,
-        intoEsm: true,
       });
 
       // The preload.after idea is to preload the app only after a low
@@ -454,24 +340,8 @@ function writeGeneratedAppFile(baseDir) {
 
   let jsFile = `// NOTE: This is a generated file by this project's build script.
 // Manually updating it is futile!
-
 `;
 
-  if (importsToWrite.length) {
-    for (const importStmt of importsToWrite) {
-      jsFile += `import * as ${importStmt.name} from ${JSON.stringify(importStmt.filePath)};\n`;
-    }
-
-    jsFile += `
-// Making the imports available in global scope just so the app object stay
-// serializable **AND** complete.
-window.globalApps = {};
-`;
-    for (const importStmt of importsToWrite) {
-      jsFile += `window.globalApps.${importStmt.name} = ${importStmt.name};
-`;
-    }
-  }
   jsFile += "\n" + uglyHandWrittenJsObject;
 
   for (const timerImports of automaticDynImportsAfterTimer) {
@@ -490,4 +360,105 @@ setTimeout(
 
   fs.writeFileSync(GENERATED_APP_PATH, jsFile);
   return bundlesToMake;
+}
+
+// If true, this script is called directly
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const args = process.argv.slice(2);
+  let shouldWatch = false;
+  let shouldMinify = false;
+  let outputFile = "";
+  let silent = false;
+
+  for (let argOffset = 0; argOffset < args.length; argOffset++) {
+    const currentArg = args[argOffset];
+    switch (currentArg) {
+      case "-h":
+      case "--help":
+        displayHelp();
+        process.exit(0);
+
+      case "-w":
+      case "--watch":
+        shouldWatch = true;
+        break;
+
+      case "-m":
+      case "--minify":
+        shouldMinify = true;
+        break;
+
+      case "-s":
+      case "--silent":
+        silent = true;
+        break;
+
+      case "-o":
+      case "--output":
+        {
+          argOffset++;
+          const wantedOutput = args[argOffset];
+          if (wantedOutput === undefined) {
+            console.error("ERROR: no output file provided\n");
+            displayHelp();
+            process.exit(1);
+          }
+          outputFile = path.normalize(wantedOutput);
+        }
+        break;
+
+      case "--":
+        argOffset = args.length;
+        break;
+
+      default: {
+        console.error('ERROR: unknown option: "' + currentArg + '"\n');
+        displayHelp();
+        process.exit(1);
+      }
+    }
+  }
+
+  try {
+    run({
+      watch: shouldWatch,
+      minify: shouldMinify,
+      silent,
+      outfile: outputFile,
+    }).catch((err) => {
+      console.error(`ERROR: ${err}\n`);
+      process.exit(1);
+    });
+  } catch (err) {
+    console.error(`ERROR: ${err}\n`);
+    process.exit(1);
+  }
+}
+
+/**
+ * Display through `console.log` an helping message relative to how to run this
+ * script.
+ */
+function displayHelp() {
+  console.log(
+    `build.mjs: Produce the desktop bundles (of both the core desktop itself and
+of all the declared apps).
+
+Will interpret the \`/apps/AppInfo.json\` first to find out all the apps it needs to
+bundle, and will advertise them to the desktop through a generated JS file.
+The bundled desktop will then be able to list those applications and load their app
+bundle when needed.
+
+For now, this script doesn't react to modifications of the \`/apps/AppInfo.json\` file,
+even in "watch" mode, meaning that this script should be relaunched anytime that json
+file is modified (which should mostly happen when adding new applications).
+
+Usage: node build.mjs [OPTIONS]
+
+Available options:
+  -h, --help                  Display this help message.
+  -m, --minify                Minify the built bundle.
+  -s, --silent                Don't log to stdout/stderr when bundling.
+  -w, --watch                 Re-build each time any of the files depended on changed.`,
+  );
 }

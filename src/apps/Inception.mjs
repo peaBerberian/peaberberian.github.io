@@ -8,7 +8,7 @@ export default function RxPlayerDemo() {
   return {
     title: "Inception",
     icon: "🧠",
-    create: () => createElement(),
+    create: () => createApp(),
     defaultHeight: ({ maxHeight }) => {
       if (maxHeight * 0.85 > 200) {
         return maxHeight * 0.85;
@@ -24,12 +24,14 @@ export default function RxPlayerDemo() {
   };
 }
 
-function createElement() {
+function createApp() {
   const fragmentIdx = location.href.indexOf("#");
   const urlWithoutFragment =
     fragmentIdx > 0 ? location.href.substring(0, fragmentIdx) : location.href;
   // Ugly trick to authorize iframe-in-iframe usage
   // If the URL is reachable or not depends on the server.
   // On Github-pages, it works!
-  return createAppIframe(urlWithoutFragment + "?" + String(Date.now()));
+  return {
+    element: createAppIframe(urlWithoutFragment + "?" + String(Date.now())),
+  };
 }

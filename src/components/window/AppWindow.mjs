@@ -2,7 +2,6 @@ import EventEmitter from "../../event-emitter.mjs";
 import {
   addEventListener,
   applyStyle,
-  constructAppWithSidebar,
   getMaxDesktopDimensions,
 } from "../../utils.mjs";
 import {
@@ -41,6 +40,7 @@ import { handleResizeAndMove } from "./resize_and_move.mjs";
 import {
   keepWindowActiveInCurrentEventLoopIteration,
   isMinimizedOrMinimizing,
+  constructAppWithSidebar,
 } from "./utils.mjs";
 import strHtml from "../../str-html.mjs";
 
@@ -144,48 +144,7 @@ export default class AppWindow extends EventEmitter {
       /* noop */
     };
 
-    let appElt;
-    if (app.value.create) {
-      const created = app.value.create(this._abortController.signal);
-      if (created !== null) {
-        appElt = created;
-      }
-    } else if (
-      Array.isArray(app.value.sidebar) &&
-      app.value.sidebar.length > 0
-    ) {
-      appElt = constructAppWithSidebar(
-        app.value.sidebar,
-        this._abortController.signal,
-      );
-    } else if (app.value.lazyLoad) {
-      const spinnerPlaceholder = getSpinnerPlaceholder();
-      appElt = spinnerPlaceholder.element;
-      app.value.lazyLoad().then((module) => {
-        clearTimeout(spinnerPlaceholder.timeout);
-        appElt.remove();
-        if (module && typeof module.create === "function") {
-          const app = module.create(this._abortController.signal);
-          this.element.appendChild(app.element);
-          if (app.focus) {
-            this.focus = app.focus.bind(app);
-            if (this.isActivated()) {
-              app.focus();
-            }
-          } else {
-            this.focus = () => {
-              /* noop */
-            };
-          }
-        }
-      });
-    } else {
-      appElt = document.createElement("div");
-    }
-
-    if (appElt) {
-      this.element.appendChild(appElt);
-    }
+    this._setUpAppContent(app.value);
     this._setupWindowEvents();
     if (!skipAnim) {
       this._performWindowTransition("open");
@@ -351,6 +310,42 @@ export default class AppWindow extends EventEmitter {
       height: getWindowHeight(this.element),
       width: getWindowWidth(this.element),
     };
+  }
+
+  _setUpAppContent(appVal) {
+    if (appVal.create) {
+      const app = appVal.create(this._abortController.signal);
+      this.element.appendChild(app.element);
+      if (app.focus) {
+        this.focus = app.focus.bind(app);
+        if (this.isActivated()) {
+          app.focus();
+        }
+      }
+      return;
+    }
+
+    if (Array.isArray(appVal.sidebar) && appVal.sidebar.length > 0) {
+      const { element, focus } = constructAppWithSidebar(
+        appVal.sidebar,
+        this._abortController.signal,
+      );
+      this.element.appendChild(element);
+      this.focus = focus;
+      return;
+    }
+
+    if (appVal.lazyLoad) {
+      const spinnerPlaceholder = getSpinnerPlaceholder();
+      const initialElement = spinnerPlaceholder.element;
+      appVal.lazyLoad().then((module) => {
+        clearTimeout(spinnerPlaceholder.timeout);
+        initialElement.remove();
+        this._setUpAppContent(module);
+      });
+      return;
+    }
+    this.element.appendChild(document.createElement("div"));
   }
 
   _onMaximizeButton() {

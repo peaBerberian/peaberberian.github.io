@@ -50,7 +50,8 @@ function createClockApp(abortSignal) {
     isStopped = true;
   });
   requestAnimationFrame(startUpdatingClockHands);
-  return wrapper;
+  return { element: wrapper };
+
   function updateClockText() {
     const now = new Date();
     const hours = now.getHours();

@@ -7,10 +7,12 @@ export default function PassGenDemoApp() {
   return {
     title: "passgen",
     icon: "🔑",
-    create: () => createElement(),
+    create: () => createApp(),
   };
 }
 
-function createElement() {
-  return createAppIframe("https://peaberberian.github.io/passgen/");
+function createApp() {
+  return {
+    element: createAppIframe("https://peaberberian.github.io/passgen/"),
+  };
 }

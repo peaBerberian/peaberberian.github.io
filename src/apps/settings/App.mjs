@@ -71,7 +71,7 @@ function createSystemSettingsApp(abortSignal) {
       clearSignal: abortSignal,
     },
   );
-  return containerElt;
+  return { element: containerElt };
 
   function onSidebarSelectionChange(sectionName) {
     childAbortController.abort();

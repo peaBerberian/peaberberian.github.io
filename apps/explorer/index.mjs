@@ -154,9 +154,9 @@ function createExplorer(explorerType, args, env, abortSignal) {
               }
             },
           },
+          { name: "separator" },
         ]
       : []),
-    { name: "separator" },
     {
       name: "previous",
       height: "1em",

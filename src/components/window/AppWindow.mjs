@@ -22,6 +22,7 @@ import {
 } from "../../constants.mjs";
 import { SETTINGS } from "../../settings.mjs";
 import strHtml from "../../str-html.mjs";
+import filesystem from "../../filesystem.mjs";
 import {
   enterFullFullScreen,
   exitAllFullScreens,
@@ -50,7 +51,8 @@ import {
 
 export default class AppWindow extends EventEmitter {
   /**
-   * @param {Object} app - Object describing the application to run.
+   * @param {Object} app - Object describing the application to run (result of
+   * reading the corresponding app as an object in the filesystem).
    * @param {Array} appArgs - The application's arguments.
    * @param {Object} options - Various options to configure how that new
    * application window will behave
@@ -336,6 +338,9 @@ export default class AppWindow extends EventEmitter {
       if (Array.isArray(dependencies)) {
         if (dependencies.includes("settings")) {
           env.settings = SETTINGS;
+        }
+        if (dependencies.includes("filesystem")) {
+          env.filesystem = filesystem;
         }
       }
       const ret = appData.create(appArgs, env, this._abortController.signal);

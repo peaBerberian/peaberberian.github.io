@@ -308,7 +308,7 @@ function refreshStartMenu(
 
     startItemElt.addEventListener("click", () => {
       closeStartMenu(startMenuElt);
-      openApp(appObj);
+      openApp(appObj.run);
     });
   }
 

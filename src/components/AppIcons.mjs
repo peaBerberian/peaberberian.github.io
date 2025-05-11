@@ -23,13 +23,12 @@ import { SETTINGS } from "../settings.mjs";
  * generate an icon, in order from the first displayed to the last displayed.
  * If the current icon area does not allow for all applications to be shown.
  * only the first objects of that array will be displayed.
- * Each of those objects correspond to what will be given to the `onOpen`
- * callback when clicked. They should have at least two properties:
- *   - `icon` (`string`): The icon representing that application
- *   - `title` (`string`): The title for that application
+ * Each of those objects should have at least three properties:
+ *   - `run` (`string`): The path to the application to run.
+ *   - `icon` (`string`): The icon representing that application.
+ *   - `title` (`string`): The title for that application.
  * @param {Function} onOpen - Callback that will be called when/if an app is
- * launched through its icon, with the corresponding element of the `apps`
- * object.
+ * launched through its icon, with the corresponding application path.
  * @param {AbortSignal} [parentAbortSignal] - AbortSignal allowing to free
  * all resources taken by this component.
  * @returns {HTMLElement} - The list of icons displayed. It is assumed to fill
@@ -122,14 +121,14 @@ export default function AppIcons(apps, onOpen, parentAbortSignal) {
           // Double click to open app
           if (clickCount && performance.now() - lastClickTs < 300) {
             clickCount = 0;
-            onOpen(app);
+            onOpen(app.run);
           } else {
             clickCount = 1;
             lastClickTs = performance.now();
           }
         } else {
           clickCount = 0;
-          onOpen(app);
+          onOpen(app.run);
         }
       });
 

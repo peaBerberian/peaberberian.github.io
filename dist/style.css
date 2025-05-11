@@ -1203,11 +1203,6 @@ ol {
   padding-right: 10px;
 }
 
-.w-small-opt .btn {
-  width: 48px;
-  padding: 5px;
-}
-
 .w-small-opt.disabled {
   color: var(--app-primary-bg);
 }
@@ -1234,7 +1229,6 @@ ol {
   border: 1px solid var(--window-line-color);
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  margin-top: -10px;
   margin-bottom: 15px;
 }
 .w-char-picker-char {

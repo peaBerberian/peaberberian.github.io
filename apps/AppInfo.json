@@ -25,7 +25,7 @@
         "after": 100
       },
       "onlyOne": true,
-      "dependencies": ["settings"],
+      "dependencies": ["settings", "filesystem"],
       "startMenu": {
         "display": true
       },

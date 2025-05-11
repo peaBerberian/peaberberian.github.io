@@ -57,15 +57,15 @@ export function create(abortSignal) {
   });
   wrapperElt.appendChild(headerElt);
 
-  const undoButton = createButtonElt(undoSvg, undo);
+  const undoButton = createButtonElt(undoSvg, 35, undo);
   headerElt.appendChild(undoButton);
   disableUndoButton();
 
-  const redoButton = createButtonElt(redoSvg, redo);
+  const redoButton = createButtonElt(redoSvg, 35, redo);
   headerElt.appendChild(redoButton);
   disableRedoButton();
 
-  const clearButton = createButtonElt(clearSvg, () => {
+  const clearButton = createButtonElt(clearSvg, 35, () => {
     const hadSomethingDrawn = hasSomethingDrawnOnCanvas;
     clearCanvas();
     if (hadSomethingDrawn) {
@@ -74,7 +74,7 @@ export function create(abortSignal) {
     }
   });
   headerElt.appendChild(clearButton);
-  const saveButton = createButtonElt(saveSvg, saveImage);
+  const saveButton = createButtonElt(saveSvg, 28, saveImage);
   headerElt.appendChild(saveButton);
 
   const contentElt = document.createElement("div");
@@ -520,7 +520,7 @@ export function create(abortSignal) {
   function enableUndoButton() {
     if (undoButton.style.cursor !== "pointer") {
       undoButton.style.cursor = "pointer";
-      undoButton.setAttribute("fill", "var(--window-active-header)");
+      undoButton.setAttribute("fill", "var(--window-text-color)");
     }
   }
 
@@ -534,7 +534,7 @@ export function create(abortSignal) {
   function enableRedoButton() {
     if (redoButton.style.cursor !== "pointer") {
       redoButton.style.cursor = "pointer";
-      redoButton.setAttribute("fill", "var(--window-active-header)");
+      redoButton.setAttribute("fill", "var(--window-text-color)");
     }
   }
 
@@ -611,12 +611,13 @@ function createToolElt(toolSvg, height, onClick) {
   toolElt.onclick = onClick;
   return toolElt;
 }
-function createButtonElt(svg, onClick) {
+function createButtonElt(svg, height, onClick) {
   const buttonElt = getSvg(svg);
   applyStyle(buttonElt, {
     width: "35px",
-    height: "35px",
+    height: `${height}px`,
     cursor: "pointer",
+    margin: "auto 0px",
   });
   buttonElt.onclick = onClick;
   return buttonElt;

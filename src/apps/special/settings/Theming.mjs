@@ -698,7 +698,7 @@ const themes = {
     // window-active-header-text
     "#ffffff",
     // window-inactive-header
-    "#404040",
+    "#7D7D7D",
     // window-inactive-header-text
     "#ffffff",
     // window-sidebar-bg

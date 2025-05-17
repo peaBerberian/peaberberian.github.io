@@ -244,7 +244,15 @@ export default class AppsLauncher {
                 appElement.replaceWith(prevElement);
                 appElement = prevElement;
               }
-              return files;
+              const proms = files.map((filePath) => {
+                return filesystem
+                  .readFile(filePath, "arraybuffer")
+                  .then((data) => ({
+                    filePath,
+                    data,
+                  }));
+              });
+              return Promise.all(proms);
             },
             (err) => {
               if (appElement === containerElt) {

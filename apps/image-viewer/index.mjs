@@ -43,26 +43,58 @@ export function create(_args, env, parentAbortSignal) {
     {
       name: "upload",
       onClick: () => {
+        // Trick to open the file picker
+        const fileInputElt = document.createElement("input");
+        fileInputElt.type = "file";
+        fileInputElt.accept = "image/*";
+        fileInputElt.multiple = true;
+        fileInputElt.click();
+        fileInputElt.addEventListener("change", (e) => {
+          const files = e.target.files;
+          handleInputedFiles(files);
+        });
+      },
+    },
+    {
+      name: "open",
+      onClick: () => {
         env
           .filePickerOpen(
-            "Choose an image to open from your files stored on this Web Desktop",
+            "Open an image from files stored on this Web Desktop",
             {
               multiple: true,
             },
           )
-          .then((files) => {
-            console.warn("!!!!", files);
-          });
-        // // Trick to open the file picker
-        // const fileInputElt = document.createElement("input");
-        // fileInputElt.type = "file";
-        // fileInputElt.accept = "image/*";
-        // fileInputElt.multiple = true;
-        // fileInputElt.click();
-        // fileInputElt.addEventListener("change", (e) => {
-        //   const files = e.target.files;
-        //   handleInputedFiles(files);
-        // });
+          .then(
+            (files) => {
+              console.warn("!!!!", files);
+              // XXX TODO:
+              if (files.length === 0) {
+                return;
+              }
+              if (files.length === 1) {
+                showAppMessage(
+                  appContentAreaElt,
+                  "❌ Error: Failed to load this file: Are you sure this is an image?",
+                  10000,
+                );
+              } else {
+                // TODO:
+                showAppMessage(
+                  appContentAreaElt,
+                  "❌ Error: Failed to load those files: Are you sure they are all images?",
+                  10000,
+                );
+              }
+            },
+            (_err) => {
+              showAppMessage(
+                appContentAreaElt,
+                "❌ Error: Failed to read those files from the file system :(",
+                10000,
+              );
+            },
+          );
       },
     },
     { name: "separator" },

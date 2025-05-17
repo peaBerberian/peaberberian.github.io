@@ -95,7 +95,7 @@ async function start() {
   StartMenu(startMenuApps.list, openAppFromPath);
 
   // Open about me default app
-  appsLauncher.openApp("/apps/about.run", [], {
+  appsLauncher.openApp("/apps/image-viewer.run", [], {
     skipAnim: true,
     centered: true,
   });

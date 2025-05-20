@@ -491,11 +491,12 @@ class DesktopFileSystem {
           try {
             resolve(parseToWantedFormat(content, format));
           } catch (err) {
-            throw new FileSystemError(
+            const formattedErr = new FileSystemError(
               "ParsingError",
               "Impossible to read corrupted file: " +
                 (err?.toString?.() ?? "Unknown Error"),
             );
+            reject(formattedErr);
           }
         };
       });

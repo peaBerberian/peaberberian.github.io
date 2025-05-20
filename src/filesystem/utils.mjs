@@ -12,7 +12,7 @@ export const SYSTEM_DIR = "/system32/";
 export const USER_DATA_DIR = "/userdata/";
 export const USER_CONFIG_DIR = "/userconfig/";
 
-export const DESKTOP_CONFIG = "desktop.config.json";
+export const DESKTOP_CONFIG = "default-desktop.json";
 export const START_MENU_CONFIG = "start_menu.config.json";
 export const PROVIDERS_CONFIG = "providers.config.json";
 export const DEFAULT_APPS_CONFIG = "default_apps.config.json";
@@ -93,11 +93,13 @@ export function pathToId(path) {
 export function parseToWantedFormat(data, format) {
   if (format === "arraybuffer") {
     if (typeof data === "string") {
-      return textEncoder.encode(data);
+      return textEncoder.encode(data).buffer;
     } else if (data instanceof ArrayBuffer) {
       return data;
+    } else if (data instanceof Uint8Array) {
+      return data.buffer;
     } else if (typeof data === "object") {
-      return textEncoder.encode(JSON.stringify(data, null, 2));
+      return textEncoder.encode(JSON.stringify(data, null, 2)).buffer;
     } else {
       throw new Error("Impossible to parse to ArrayBuffer the wanted file");
     }
@@ -106,7 +108,7 @@ export function parseToWantedFormat(data, format) {
   if (format === "object") {
     if (typeof data === "string") {
       return JSON.parse(data);
-    } else if (data instanceof ArrayBuffer) {
+    } else if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
       const decoded = textDecoder.decode(data);
       return JSON.parse(decoded);
     } else if (typeof data === "object") {
@@ -120,7 +122,7 @@ export function parseToWantedFormat(data, format) {
   if (typeof data === "string") {
     return data;
   }
-  if (data instanceof ArrayBuffer) {
+  if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
     return textDecoder.decode(data);
   }
   return JSON.stringify(data, null, 2);
@@ -251,7 +253,7 @@ export function generateDefaultAppsConfig() {
 }
 
 export function checkWrittenFilePath(path) {
-  if (!path.startsWith(USER_DATA_DIR)) {
+  if (![USER_DATA_DIR, USER_CONFIG_DIR].some((dir) => path.startsWith(dir))) {
     throw new Error("Permission denied: This directory is read-only.");
   }
 
@@ -273,9 +275,11 @@ export function checkWrittenFilePath(path) {
 
 export function formatWrittenFileContent(content) {
   if (typeof content === "string") {
-    return textEncoder.encode(content);
+    return textEncoder.encode(content).buffer;
   } else if (content instanceof ArrayBuffer) {
     return content;
+  } else if (content instanceof Uint8Array) {
+    return content.buffer;
   } else {
     throw new Error(
       "Invalid format: A file should be a string or an ArrayBuffer",

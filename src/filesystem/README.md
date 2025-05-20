@@ -54,15 +54,14 @@ width/height, where to find its code etc.).
 `/system32/` (the name itself being a nonsensical joke) is also a read-only
 root directory. It contains basically virtual "config files" for the desktop.
 
-It is for now read-only, as well as all its content. However the whole point
-is here to make it configurable in the future, I just didn't take the time
-yet.
+It is read-only, as well as all its content.
 
 For now it contains the following files (with the `type` set to `file`), they
 can be discovered through `readDir`, but they should be always there:
 
-- `/system32/desktop.config.json`: Contains metadata on the wanted arrangement
-  for the desktop icons.
+- `/system32/default-desktop.json`: Contains metadata on the default
+  wanted arrangement for the desktop icons, which can be updated at any time
+  by the user through its `/userconfig/` directory.
 
   Reading that file will return you a JSON object.
   That object will contain a `list` key containing an Array of JSON objects,
@@ -135,4 +134,15 @@ can be discovered through `readDir`, but they should be always there:
 ### `/userdata/`
 
 The root directory where the user can do whatever it wants: read/write.
-Not decided yet on its content.
+
+### `/userconfig/`
+
+A directory that can be used by the desktop (probably not app, even if rights
+are permissive in it) to configure some things.
+
+For example the desktop app icons may be updated at any time, and a
+`/userconfig/desktop.config.json` file will reflect what the user last
+configured.
+
+Those files can also be manually updated through an editor if the user wants to
+discover how much they can hack things around, which is also the point!

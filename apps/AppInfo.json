@@ -48,8 +48,8 @@
       "id": "explorer",
       "title": "File Explorer",
       "icon": "🐋",
-      "defaultHeight": 400,
-      "defaultWidth": 600,
+      "defaultHeight": 500,
+      "defaultWidth": 700,
       "startMenu": {
         "display": true
       },

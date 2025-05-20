@@ -51,7 +51,6 @@ export default function setUpContextMenu({
         return onClick(e);
       }
     };
-    buttonWrapperElt.title = title;
     const titleElt = document.createElement("span");
     titleElt.textContent = title;
     buttonWrapperElt.appendChild(titleElt);
@@ -78,6 +77,7 @@ export default function setUpContextMenu({
         (e) => {
           e.preventDefault();
           actionData.onClick();
+          closeContextMenu();
         },
       );
       contextMenuItemElt.tabIndex = "0";

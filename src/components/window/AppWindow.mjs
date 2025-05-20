@@ -27,6 +27,7 @@ import {
 } from "./position_utils.mjs";
 import { handleResizeAndMove } from "./resize_and_move.mjs";
 import { keepWindowActiveInCurrentEventLoopIteration } from "./utils.mjs";
+import setUpContextMenu from "../context-menu.mjs";
 
 const {
   WINDOW_MIN_WIDTH,
@@ -639,6 +640,42 @@ export default class AppWindow extends EventEmitter {
     const minimizeBtn = header.getElementsByClassName("w-minimize")[0];
     const maximizeBtn = header.getElementsByClassName("w-maximize")[0];
 
+    setUpContextMenu({
+      element: header,
+      filter: (e) => header.contains(e.target),
+      abortSignal,
+      actions: [
+        {
+          name: "minimize",
+          title: "Minimize window",
+          onClick: () => this.minimize(),
+        },
+        {
+          name: "fullscreen",
+          title: "Toggle window maximization",
+          onClick: () => {
+            if (isFullscreen(windowElt)) {
+              this._performWindowTransition("exit-fullscreen");
+              this.activate();
+            } else {
+              enterFullFullScreen(windowElt);
+              this.activate();
+            }
+          },
+        },
+        {
+          name: "close",
+          title: "Close window",
+          onClick: () => this.close(),
+        },
+        {
+          name: "deactivate",
+          title: "Make window inactive",
+          onClick: () => this.deActivate(),
+        },
+      ],
+    });
+
     addAbortableEventListener(windowElt, "mousedown", abortSignal, () => {
       this.activate();
     });
@@ -781,9 +818,9 @@ function constructVisibleWindowScaffolding(title) {
 		<div class="w-header">
 			<div class="w-title">${title}</div>
 			<div class="w-controls">
-				<div class="w-button w-minimize" title="Minimize" tabindex="0"><span class="w-button-icon"></span></div>
-				<div class="w-button w-maximize" title="Maximize" tabindex="0"><span class="w-button-icon"></span></div>
-				<div class="w-button w-close" title="Close" tabindex="0"><span class="w-button-icon"></span></div>
+				<div class="w-button w-minimize" aria-label="Minimize window" title="Minimize" tabindex="0"><span class="w-button-icon"></span></div>
+				<div class="w-button w-maximize" aria-label="Maximize window" title="Maximize" tabindex="0"><span class="w-button-icon"></span></div>
+				<div class="w-button w-close" aria-label="close window" title="Close" tabindex="0"><span class="w-button-icon"></span></div>
 			</div>
 		</div>
   </div>`;

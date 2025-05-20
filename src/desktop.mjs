@@ -8,6 +8,7 @@
 //   explorer at least?
 // - Storage settings
 // - notes quick save could detect if file change since last save
+// - quicklinks hover
 //
 // medium priority:
 // - confirmation alert when closing window with unsaved file.

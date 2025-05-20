@@ -809,6 +809,7 @@ export function create(_args, env) {
   function onClick() {
     if (gameState.gameOver) {
       restartGame();
+      gameState.started = true;
     } else if (!gameState.started) {
       gameState.started = true;
     }

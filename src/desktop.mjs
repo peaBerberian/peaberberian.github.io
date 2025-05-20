@@ -4,10 +4,10 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
+// - disable quickSave when crypto.subtle is not available (HTTP-only?)
 //
 // medium priority:
 // - image viewer touch controls
-// - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices, very mysterious that one
 // - drag and drop in explorer
 // - confirmation alert when closing window with unsaved file.

@@ -329,8 +329,8 @@ function processEventsFromIframe(iframe, cbs, resolve, reject, abortSignal) {
         break;
 
       case "__pwd__update-title":
-        checkUpdateTitleMessageData(e.data);
-        cbs.updateTitle(e.data.icon, e.data.title);
+        checkUpdateTitleMessageData(e.data.data);
+        cbs.updateTitle(e.data.data.icon ?? null, e.data.data.title);
         break;
 
       case "__pwd__close-app":

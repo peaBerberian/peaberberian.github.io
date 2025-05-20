@@ -47,6 +47,8 @@ p {
 
 .sandbox {
   scrollbar-color: var(--window-inactive-header) var(--window-content-bg);
+  container-type: size;
+  container-name: window;
 }
 
 .sandbox.active {

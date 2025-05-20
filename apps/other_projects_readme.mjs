@@ -4,6 +4,9 @@ const GITHUB_LINK = "https://github.com/canalplus/README";
 
 export function create(_args, env) {
   const { createAppTitle } = env.appUtils;
+
+  // Indicate more clearly that this app only talks about another project
+  env.updateTitle(null /* keep same icon */, "Other Projects: README");
   return {
     sidebar: [
       {

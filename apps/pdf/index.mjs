@@ -68,7 +68,10 @@ export function create(args, env) {
 
           const reader = new FileReader();
           const file = files[0];
-          env.updateTitle("📑", file.name + " - Docx Reader (docx.js)");
+          env.updateTitle(
+            null /* keep same icon */,
+            file.name + " - PDF Reader (pdf.js) 🚧 In construction",
+          );
           reader.onload = (event) => {
             openFile(file.name, event.target.result);
             containerElt.removeAttribute("inert");
@@ -262,7 +265,10 @@ function forwardEvent(eventType, originalEvent) {
   return { element: containerElt };
 
   function openFile(name, data) {
-    env.updateTitle("📑", name + " - PDF Reader (pdf.js) 🚧 In construction");
+    env.updateTitle(
+      null /* keep same icon */,
+      name + " - PDF Reader (pdf.js) 🚧 In construction",
+    );
     iframeInfo.pendingFile = data;
     if (iframeInfo.isLoaded) {
       iframeInfo.pendingFile = null;

@@ -94,7 +94,8 @@ export default class AppWindow extends EventEmitter {
      * @type {HTMLElement}
      */
     const appContainer = constructVisibleWindowScaffolding(
-      (appObj.icon ?? "") + " " + (appObj.title ?? ""),
+      appObj.icon,
+      appObj.title,
     );
     appContainer.appendChild(initialContent);
     this.element = document.createElement("div");
@@ -158,9 +159,15 @@ export default class AppWindow extends EventEmitter {
   }
 
   updateTitle(newIcon, newTitle) {
-    const titleElt = this.element.getElementsByClassName("w-title")[0];
+    if (newIcon !== null) {
+      const iconElt = this.element.getElementsByClassName("w-title-icon")[0];
+      if (iconElt) {
+        iconElt.textContent = newIcon;
+      }
+    }
+    const titleElt = this.element.getElementsByClassName("w-title-title")[0];
     if (titleElt) {
-      titleElt.textContent = (newIcon ?? "") + " " + (newTitle ?? "");
+      titleElt.textContent = newTitle;
     }
   }
 
@@ -818,11 +825,14 @@ export default class AppWindow extends EventEmitter {
   }
 }
 
-function constructVisibleWindowScaffolding(title) {
+function constructVisibleWindowScaffolding(icon, title) {
   const visibleElt = document.createElement("div");
   visibleElt.className = "w-visible";
   visibleElt.innerHTML = `<div class="w-header">
-  <div class="w-title">${title}</div>
+  <div class="w-title">
+    <span class="w-title-icon">${icon ?? ""}</span>
+    <span class="w-title-title">${title ?? ""}</span>
+  </div>
   <div class="w-controls">
     <div class="w-button w-minimize" aria-label="Minimize window" title="Minimize" tabindex="0"><span class="w-button-icon"></span></div>
     <div class="w-button w-maximize" aria-label="Maximize window" title="Maximize" tabindex="0"><span class="w-button-icon"></span></div>

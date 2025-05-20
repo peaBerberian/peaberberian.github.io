@@ -9,6 +9,9 @@ const GITHUB_LINK = "https://github.com/canalplus/rx-player";
  */
 export function create(_args, env) {
   const { createAppTitle, createExternalIframe } = env.appUtils;
+
+  // Indicate more clearly that this app only talks about another project
+  env.updateTitle(null /* keep same icon */, "Other Projects: RxPlayer");
   return {
     sidebar: [
       {

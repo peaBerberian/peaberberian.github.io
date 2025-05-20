@@ -2,6 +2,9 @@ const GITHUB_LINK = "https://github.com/peaberberian/MSESpy.js";
 
 export function create(_app, env) {
   const { createAppTitle } = env.appUtils;
+
+  // Indicate more clearly that this app only talks about another project
+  env.updateTitle(null /* keep same icon */, "Other Projects: MSESpy");
   return {
     sidebar: [
       {

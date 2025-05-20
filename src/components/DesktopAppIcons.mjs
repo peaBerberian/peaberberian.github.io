@@ -298,6 +298,7 @@ function addMovingAroundListeners(icon, { baseLeft, baseTop }, abortSignal) {
       SETTINGS.taskbarLocation.getValue() === "left"
         ? SETTINGS.taskbarSize.getValue()
         : 0;
+    icon.style.zIndex = "9999999";
     icon.style.transition = "";
     const rect = icon.getBoundingClientRect();
     offsetX = e.clientX - rect.left + leftOffset;
@@ -320,6 +321,7 @@ function addMovingAroundListeners(icon, { baseLeft, baseTop }, abortSignal) {
   };
   const resetIconPosition = () => {
     icon.style.transition = "background-color 0.2s, top 0.2s, left 0.2s";
+    icon.style.zIndex = "";
     icon.style.left = `${baseLeft}px`;
     icon.style.top = `${baseTop}px`;
   };

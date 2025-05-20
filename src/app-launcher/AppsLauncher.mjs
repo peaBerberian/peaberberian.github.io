@@ -2,6 +2,7 @@ import * as CONSTANTS from "../constants.mjs";
 import { SETTINGS } from "../settings.mjs";
 import filesystem, { getName } from "../filesystem/filesystem.mjs";
 import AppWindow from "../components/window/AppWindow.mjs";
+import notificationEmitter from "../components/notification_emitter.mjs";
 import {
   applyStyle,
   constructSidebarElt,
@@ -91,10 +92,29 @@ export default class AppsLauncher {
   async openApp(appPath, appArgs, options = {}) {
     // we're given a path, from which we can get the app's executable format:
     // an object with all its metadata, including the script to import to run it.
-    const app =
-      typeof appPath === "string"
-        ? await filesystem.readFile(appPath, "object")
-        : appPath;
+    let app;
+    try {
+      app =
+        typeof appPath === "string"
+          ? await filesystem.readFile(appPath, "object")
+          : appPath;
+    } catch (err) {
+      if (err.code === "NoEntryError") {
+        notificationEmitter.error(
+          "Invalid app",
+          `"${appPath}" is not a valid app path`,
+        );
+      }
+      throw err;
+    }
+
+    if (!app) {
+      notificationEmitter.error(
+        "Invalid app",
+        `Cannot run wanted application: the app is not valid.`,
+      );
+      throw new Error("Invalid app");
+    }
 
     if (app.onlyOne) {
       // If only instance of the app can be created, check if this window already
@@ -265,14 +285,25 @@ export default class AppsLauncher {
 
       const lastIdxOfDot = data.lastIndexOf(".");
       if (lastIdxOfDot < 0) {
-        // No extension found
-        // TODO: notification? Try executing it?
+        notificationEmitter.error(
+          "Unable to open file",
+          `Cannot open file "${data}".\n\nUnknown extension`,
+        );
         return;
       }
       const extension = data.substring(lastIdxOfDot + 1);
-      if (!extension || extension.includes("/")) {
-        // Empty extension or not a path
-        // TODO: notification?
+      if (!extension) {
+        notificationEmitter.error(
+          "Unable to open file",
+          `Cannot open file "${data}".\n\nEmpty extension`,
+        );
+        return;
+      }
+      if (extension.includes("/")) {
+        notificationEmitter.error(
+          "Unable to open file",
+          `Cannot open file "${data}".\n\nUnknown file extension`,
+        );
         return;
       }
       const defaultApps = await filesystem.readFile(
@@ -281,23 +312,33 @@ export default class AppsLauncher {
       );
       if (!defaultApps[extension]) {
         // No default app for this extension
-        // TODO: notification?
+        notificationEmitter.error(
+          "Unable to open file",
+          `Cannot open file "${data}".\n\nFound no default app for extension "${extension}".`,
+        );
         return;
       }
 
-      // TODO: what if fails? Also should we stat for max size before?
-      const openedFile = await filesystem.readFile(data, "arraybuffer");
+      try {
+        const openedFile = await filesystem.readFile(data, "arraybuffer");
 
-      const handle = {};
-      this._fileHandles.set(handle, data);
-      return this.openApp(defaultApps[extension], [
-        {
-          type: "file",
-          filename: getName(data),
-          data: openedFile,
-          handle,
-        },
-      ]);
+        const handle = {};
+        this._fileHandles.set(handle, data);
+        return this.openApp(defaultApps[extension], [
+          {
+            type: "file",
+            filename: getName(data),
+            data: openedFile,
+            handle,
+          },
+        ]);
+      } catch (err) {
+        notificationEmitter.error(
+          "Failed to run file",
+          `Failed to run "${data}": ${err}`,
+        );
+        return;
+      }
     }
 
     // If not a string but an object, some duck-typing time.

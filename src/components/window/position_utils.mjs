@@ -86,12 +86,10 @@ export function getWindowHeight(windowElt) {
  * relative to its parent container's width.
  */
 export function setLeftPositioning(windowElt, leftPx) {
-  // We'll assume that the width of the container is the total width for now.
-  const maxWidth = document.documentElement.clientWidth;
   if (SETTINGS.absoluteWindowPositioning.getValue()) {
     windowElt.style.left = String(leftPx) + "px";
   } else {
-    windowElt.style.left = String((leftPx / maxWidth) * 100) + "%";
+    windowElt.style.left = String((leftPx / getMaxDesktopWidth()) * 100) + "%";
   }
 }
 

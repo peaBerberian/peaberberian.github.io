@@ -40,29 +40,65 @@ const OUTPUT_LAZY_LOADED_APPS = path.join(OUTPUT_DIR, "lazy");
  * @returns {Promise}
  */
 export default function run(options) {
-  // We'll create `GENERATED_APP_PATH` here:
-  const lazyLoadedApps = writeGeneratedAppFile(APPS_SRC_DIR);
+  return new Promise((_resolve, reject) => {
+    let lastBuildContexts = reBuild().catch(reject);
 
-  // Re-create the lazy-loaded destination folder, just to clean-up.
-  try {
-    fs.rmSync(OUTPUT_LAZY_LOADED_APPS, { recursive: true, force: true });
-  } catch (err) {
-    if (err.code !== "ENOENT") {
-      throw err;
+    const appInfoFile = path.join(APPS_SRC_DIR, "AppInfo.json");
+
+    // NOTE: fs.watch seems to not work as expected on some platforms (cygwin
+    // seems to be one ""popular"" example). This is sad but I'm too lazy
+    // to do a robust logic, so there's also that.
+    let theWatcher = fs.watch(appInfoFile, onFileChange); // Things just ain't the same for gangstas
+
+    async function onFileChange(eventName) {
+      if (eventName !== "change") {
+        // There's seem to be filesystem stuff happening which just perform
+        // renames before actually updating the file.
+        // Reacting to those risk to lead to an ENOENT, it's just simpler to
+        // watch for change.
+        return;
+      }
+      console.info(`"${appInfoFile}" updated. Restarting all builds...`);
+      const contexts = await lastBuildContexts;
+      contexts.forEach((context) => {
+        context.cancel();
+        context.dispose();
+      });
+      lastBuildContexts = reBuild().catch(reject);
+
+      // Because of those same weird filesystem stuff, it's just safer to
+      // re-watch the file here.
+      theWatcher.close();
+      theWatcher = fs.watch(appInfoFile, onFileChange);
     }
-  }
-  fs.mkdirSync(OUTPUT_LAZY_LOADED_APPS, { recursive: true });
+  });
+  async function reBuild() {
+    // We'll create `GENERATED_APP_PATH` here:
+    const lazyLoadedApps = writeGeneratedAppFile(APPS_SRC_DIR);
 
-  // Produce all bundles
-  return Promise.all(
-    [
-      ...lazyLoadedApps,
-      {
-        outputFile: path.join(OUTPUT_DIR, "desktop.js"),
-        input: path.join(DESKTOP_SRC_DIR, "desktop.mjs"),
-      },
-    ].map((bundle) => produceBundle(bundle.input, bundle.outputFile, options)),
-  );
+    // Re-create the lazy-loaded destination folder, just to clean-up.
+    try {
+      fs.rmSync(OUTPUT_LAZY_LOADED_APPS, { recursive: true, force: true });
+    } catch (err) {
+      if (err.code !== "ENOENT") {
+        throw err;
+      }
+    }
+    fs.mkdirSync(OUTPUT_LAZY_LOADED_APPS, { recursive: true });
+
+    // Produce all bundles
+    return await Promise.all(
+      [
+        ...lazyLoadedApps,
+        {
+          outputFile: path.join(OUTPUT_DIR, "desktop.js"),
+          input: path.join(DESKTOP_SRC_DIR, "desktop.mjs"),
+        },
+      ].map((bundle) =>
+        produceBundle(bundle.input, bundle.outputFile, options),
+      ),
+    );
+  }
 }
 
 /**
@@ -127,7 +163,8 @@ async function produceBundle(inputFile, outfile, options) {
       },
     });
     if (watch) {
-      return context.watch();
+      context.watch();
+      return context;
     }
   } catch (err) {
     logError(`Bundling failed for "${inputFile}":`, err);
@@ -185,7 +222,7 @@ function writeGeneratedAppFile(baseDir) {
       encoding: "utf8",
     });
   } catch (err) {
-    throw new Error(`Failed to read "AppInfo.json": ${e}`);
+    throw new Error(`Failed to read "AppInfo.json": ${err}`);
   }
 
   let json;
@@ -564,19 +601,14 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     }
   }
 
-  try {
-    run({
-      watch: shouldWatch,
-      minify: shouldMinify,
-      silent,
-    }).catch((err) => {
-      console.error(`ERROR: ${err}\n`);
-      process.exit(1);
-    });
-  } catch (err) {
+  run({
+    watch: shouldWatch,
+    minify: shouldMinify,
+    silent,
+  }).catch((err) => {
     console.error(`ERROR: ${err}\n`);
     process.exit(1);
-  }
+  });
 }
 
 /**

@@ -7,7 +7,7 @@
     "build": "node build.mjs",
     "build:min": "node build.mjs --minify",
     "build:watch": "node build.mjs --watch",
-    "serve": "node ./launch_static_server.mjs --directory dist"
+    "start": "node ./start_local_server.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.25.4"

@@ -43,7 +43,6 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
       case "--help":
         displayHelp();
         process.exit(0);
-        break;
 
       case "-d":
       case "--directory":
@@ -277,10 +276,7 @@ export default function launchStaticServer(path, config) {
       .catch((err) => {
         httpsServerStatus = "error";
         if (err.code === "ENOENT") {
-          const err = new Error(
-            "Certificate not generated.\n" +
-              "(You can run `npm run certificate` to generate a certificate.)",
-          );
+          const err = new Error("Certificate not generated.");
           onHttpsConnection(err);
         } else {
           const err = new Error("Could not read key and certificate file.");

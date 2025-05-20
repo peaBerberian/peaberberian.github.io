@@ -705,8 +705,16 @@ export default class AppsLauncher {
         appWindow.updateTitle(newIcon, newTitle);
         this._taskbarManager.updateTitle(appWindow, newIcon, newTitle);
       },
-      CONSTANTS,
       closeApp: () => appWindow.close(),
+      activate: () => {
+        if (appWindow.isMinimizedOrMinimizing()) {
+          appWindow.deminimize();
+        }
+        appWindow.activate();
+      },
+
+      // TODO: remove need for that one
+      CONSTANTS,
     };
 
     if (Array.isArray(dependencies)) {

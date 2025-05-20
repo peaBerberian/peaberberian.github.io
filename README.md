@@ -1,8 +1,9 @@
 # Paul's Web Desktop
 
-This is my personal website, which takes the form of a desktop environment,
-done with no external library nor dependency (besides a JS bundler to produce
-efficient bundles).
+This is a desktop environment written in (Vanilla) JS, which also acts as my
+personal page.
+It is done with no external library nor dependency (besides a JS bundler to
+produce efficient bundles).
 
 ![screenshot of this desktop](./screenshot.png)
 _showing off my pong skills_

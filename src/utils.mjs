@@ -588,7 +588,9 @@ export class EventEmitter {
 
 export function createLinkedAbortController(parentAbortSignal) {
   const abortController = new AbortController();
-  linkAbortControllerToSignal(abortController, parentAbortSignal);
+  if (parentAbortSignal) {
+    linkAbortControllerToSignal(abortController, parentAbortSignal);
+  }
   return abortController;
 }
 

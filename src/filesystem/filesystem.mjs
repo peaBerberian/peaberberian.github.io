@@ -74,7 +74,7 @@ class DesktopFileSystem {
    * @param {AbortSignal} abortSignal
    */
   watch(path, cb, abortSignal) {
-    if (abortSignal.aborted) {
+    if (abortSignal?.aborted) {
       return;
     }
     const cbList = this._watchedPaths.get(path);
@@ -85,7 +85,7 @@ class DesktopFileSystem {
       cbList.push(cb);
       this._watchedPaths.set(path, cbList);
     }
-    abortSignal.addEventListener("abort", () => {
+    abortSignal?.addEventListener("abort", () => {
       const cbList = this._watchedPaths.get(path);
       for (let i = cbList.length - 1; i >= 0; i--) {
         if (cbList[i] === cb) {
@@ -486,6 +486,7 @@ class DesktopFileSystem {
         request.onsuccess = () => {
           if (!request.result) {
             reject(new FileSystemError("NoEntryError", "File not found."));
+            return;
           }
           const content = request.result.content;
           try {

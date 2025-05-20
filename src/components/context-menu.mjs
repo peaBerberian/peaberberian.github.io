@@ -11,7 +11,6 @@ export default function setUpContextMenu({
   const containerElt = document.body;
   const contextMenuElt = document.createElement("div");
   contextMenuElt.className = "context-menu";
-  containerElt.appendChild(contextMenuElt);
 
   function createButtonElt(svg, title, height = "1.7rem", onClick) {
     const buttonWrapperElt = document.createElement("span");
@@ -92,6 +91,7 @@ export default function setUpContextMenu({
     }
     e.preventDefault();
 
+    containerElt.appendChild(contextMenuElt);
     contextMenuElt.style.display = "flex";
 
     if (
@@ -134,8 +134,8 @@ export default function setUpContextMenu({
   addAbortableEventListener(document, "click", abortSignal, closeContextMenu);
   addAbortableEventListener(window, "resize", abortSignal, closeContextMenu);
   function closeContextMenu() {
-    contextMenuElt.style.display = "none";
     contextMenuElt.classList.remove("show");
+    contextMenuElt.remove();
     contextMenuElt.style.left = "";
     contextMenuElt.style.top = "";
   }

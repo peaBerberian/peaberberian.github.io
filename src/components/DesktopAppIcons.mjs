@@ -276,12 +276,7 @@ export default async function DesktopAppIcons(
 
       let clickCount = 0;
       let lastClickTs = -Infinity;
-      iconElt.addEventListener("keydown", (evt) => {
-        if (evt.key === "Enter") {
-          onOpen(app.run, app.args ?? []);
-          iconElt.blur();
-        }
-      });
+      iconElt.onkeydown = (e) => onKeyDown(appList, iconElt, app, e);
       iconElt.addEventListener("blur", () => {
         iconElt.classList.remove("selected");
       });
@@ -328,6 +323,134 @@ export default async function DesktopAppIcons(
       (newTuple) => reorderApps(appList, newTuple),
       abortSignal,
     );
+  }
+
+  /**
+   * @param {Array.<Object>} appList
+   * @param {HTMLElement} iconElt
+   * @param {Object} app
+   * @param {KeyboardEvent} e
+   */
+  function onKeyDown(appList, iconElt, app, e) {
+    switch (e.key) {
+      case "Escape": {
+        e.preventDefault();
+        iconElt.blur();
+        iconElt.classList.remove("selected");
+        break;
+      }
+      case "Delete": {
+        e.preventDefault();
+        const index = appList.indexOf(app);
+        if (index >= 0) {
+          appList.splice(index, 1);
+          const newAppList = JSON.stringify({ list: appList }, null, 2);
+          // NOTE: We do not update `lastAppListMemory` because we DO want to
+          // refresh here
+          fs.writeFile("/userconfig/desktop.config.json", newAppList);
+        }
+        break;
+      }
+      case "Backspace": {
+        e.preventDefault();
+        navigateToParent();
+        break;
+      }
+      case "ArrowLeft": {
+        e.preventDefault();
+
+        const allElements = iconWrapperElt.getElementsByClassName("icon");
+        if (allElements.length === 0) {
+          return;
+        }
+
+        // NOTE: we could rely on the grid here and be much much more efficient.
+        // But this would be at the cost of maintainability, for something
+        // nobody will ever do.
+        const currentClientRect = iconElt.getBoundingClientRect();
+
+        let prevSibling = iconElt.previousElementSibling;
+        while (prevSibling) {
+          const clientRect = prevSibling.getBoundingClientRect();
+          if (clientRect.top === currentClientRect.top) {
+            prevSibling.focus();
+            break;
+          }
+          prevSibling = prevSibling.previousElementSibling;
+        }
+        break;
+      }
+
+      case "ArrowRight": {
+        e.preventDefault();
+
+        const allElements = iconWrapperElt.getElementsByClassName("icon");
+        if (allElements.length === 0) {
+          return;
+        }
+
+        // NOTE: we could rely on the grid here and be much much more efficient.
+        // But this would be at the cost of maintainability, for something
+        // nobody will ever do.
+        const currentClientRect = iconElt.getBoundingClientRect();
+
+        let nextSibling = iconElt.nextElementSibling;
+        while (nextSibling) {
+          const clientRect = nextSibling.getBoundingClientRect();
+          if (clientRect.top === currentClientRect.top) {
+            nextSibling.focus();
+            break;
+          }
+          nextSibling = nextSibling.nextElementSibling;
+        }
+        break;
+      }
+
+      case "ArrowDown": {
+        e.preventDefault();
+
+        const allElements = iconWrapperElt.getElementsByClassName("icon");
+        if (allElements.length === 0) {
+          return;
+        }
+
+        const currentClientRect = iconElt.getBoundingClientRect();
+        const nextSibling = iconElt.nextElementSibling;
+        if (nextSibling) {
+          const clientRect = nextSibling.getBoundingClientRect();
+          if (clientRect.left === currentClientRect.left) {
+            nextSibling.focus();
+          }
+        }
+        break;
+      }
+
+      case "ArrowUp": {
+        e.preventDefault();
+
+        const allElements = iconWrapperElt.getElementsByClassName("icon");
+        if (allElements.length === 0) {
+          return;
+        }
+
+        const currentClientRect = iconElt.getBoundingClientRect();
+        const previousSibling = iconElt.previousElementSibling;
+        if (previousSibling) {
+          const clientRect = previousSibling.getBoundingClientRect();
+          if (clientRect.left === currentClientRect.left) {
+            previousSibling.focus();
+          }
+        }
+        break;
+      }
+
+      case "Enter": {
+        e.preventDefault();
+        onOpen(app.run, app.args ?? []);
+        iconElt.blur();
+        break;
+      }
+    }
   }
   function reorderApps(appList, newTuple) {
     appList = newTuple.map(([_, app]) => app);

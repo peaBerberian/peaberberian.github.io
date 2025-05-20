@@ -3,12 +3,13 @@ import {
   createColorPickerOnRef,
   createDropdownOnRef,
 } from "./utils.mjs";
+import strHtml from "./str-html.mjs";
 
 export default function createApplicationsSection(
   { settings, appUtils },
   abortSignal,
 ) {
-  const { createAppTitle, strHtml } = appUtils;
+  const { createAppTitle } = appUtils;
   const section = strHtml`<div>${createAppTitle("Applications", {})}</div>`;
   section.dataset.section = "applications";
 
@@ -20,7 +21,6 @@ export default function createApplicationsSection(
         ref: settings.aboutMeStart,
         label: `Launch the "About Me" app on start-up by default`,
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -37,7 +37,6 @@ export default function createApplicationsSection(
           return value === "Always on top" ? "top" : "auto";
         },
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -54,7 +53,6 @@ export default function createApplicationsSection(
           return value === "Just icons" ? "icon" : "both";
         },
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -65,7 +63,6 @@ export default function createApplicationsSection(
         ref: settings.showIframeBlockerHelp,
         label: "Display i-frame help message when they are not interactive",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -83,9 +80,7 @@ export default function createApplicationsSection(
     ["Sidebar Selected Background", settings.windowSidebarSelectedBgColor],
     ["Sidebar Selected Text", settings.windowSidebarSelectedTextColor],
   ].forEach(([text, ref]) => {
-    colorGroupElt.appendChild(
-      createColorPickerOnRef(ref, text, appUtils, abortSignal),
-    );
+    colorGroupElt.appendChild(createColorPickerOnRef(ref, text, abortSignal));
   });
   section.appendChild(colorGroupElt);
   return section;

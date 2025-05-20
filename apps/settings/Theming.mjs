@@ -1,4 +1,5 @@
 import { createColorPickerOnRef, createDropdownOnRef } from "./utils.mjs";
+import strHtml from "./str-html.mjs";
 
 const themes = {
   light: [
@@ -1089,7 +1090,7 @@ export default function createThemeSection(
   { settings, appUtils },
   abortSignal,
 ) {
-  const { createAppTitle, strHtml } = appUtils;
+  const { createAppTitle } = appUtils;
   const refs = [
     settings.buttonStyle,
     settings.taskbarBgColor,
@@ -1134,7 +1135,6 @@ export default function createThemeSection(
         options: ["Colorful", "Sober"],
         label: "Windows button style",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -1170,9 +1170,7 @@ export default function createThemeSection(
     ["Icon Image Background", settings.iconImageBgColor],
     ["Icon Hover Background", settings.iconHoverBgColor],
   ].forEach(([text, ref]) => {
-    colorGroupElt.appendChild(
-      createColorPickerOnRef(ref, text, appUtils, abortSignal),
-    );
+    colorGroupElt.appendChild(createColorPickerOnRef(ref, text, abortSignal));
   });
   section.appendChild(colorGroupElt);
   return section;

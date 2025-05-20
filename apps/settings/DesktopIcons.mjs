@@ -3,12 +3,13 @@ import {
   createColorPickerOnRef,
   createNumericSliderOnRef,
 } from "./utils.mjs";
+import strHtml from "./str-html.mjs";
 
 export default function createDesktopIconsSection(
   { filesystem, settings, appUtils },
   abortSignal,
 ) {
-  const { createAppTitle, strHtml } = appUtils;
+  const { createAppTitle } = appUtils;
   const section = strHtml`<div>${createAppTitle("Desktop Icons", {})}</div>`;
   section.dataset.section = "icons";
   const generalGroupElt = strHtml`<div class="w-group"><h3>General Settings</h3></div>`;
@@ -18,7 +19,6 @@ export default function createDesktopIconsSection(
         ref: settings.moveAroundIcons,
         label: "Desktop icons can be moved around from the desktop",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -42,7 +42,6 @@ export default function createDesktopIconsSection(
       max: 100,
       valueToText: (val) => String(val) + "%",
     },
-    appUtils,
     abortSignal,
   );
   colorGroupElt.appendChild(imgBgIconOpacitySlider);
@@ -54,7 +53,6 @@ export default function createDesktopIconsSection(
       max: 100,
       valueToText: (val) => String(val) + "%",
     },
-    appUtils,
     abortSignal,
   );
   colorGroupElt.appendChild(hoverOpacitySlider);
@@ -66,7 +64,6 @@ export default function createDesktopIconsSection(
       max: 100,
       valueToText: (val) => String(val) + "%",
     },
-    appUtils,
     abortSignal,
   );
   colorGroupElt.appendChild(activeIconOpacitySlider);
@@ -78,9 +75,7 @@ export default function createDesktopIconsSection(
     ["Active Icon Background", settings.iconActiveBgColor],
     ["Active Icon Text", settings.iconActiveTextColor],
   ].forEach(([text, ref]) => {
-    colorGroupElt.appendChild(
-      createColorPickerOnRef(ref, text, appUtils, abortSignal),
-    );
+    colorGroupElt.appendChild(createColorPickerOnRef(ref, text, abortSignal));
   });
   section.appendChild(colorGroupElt);
   return section;

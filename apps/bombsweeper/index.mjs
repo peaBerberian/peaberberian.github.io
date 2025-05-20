@@ -10,7 +10,6 @@ const NUMBER_OF_COLS = 10;
 const NUMBER_OF_BOMBS = 15;
 
 export function create(_args, env) {
-  const { applyStyle } = env.appUtils;
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
     backgroundColor: env.STYLE.barBg,
@@ -240,7 +239,7 @@ export function create(_args, env) {
           justifyContent: "center",
           fontSize: "24px",
           cursor: "pointer",
-          border: "6px solid " + env.STYLE.lineColor,
+          border: "6px solid var(--window-line-color)",
         });
         cell.textContent = HIDDEN_CELL_VALUE;
 
@@ -301,5 +300,19 @@ export function create(_args, env) {
         }
       }
     }
+  }
+}
+
+/**
+ * Apply multiple style attributes on a given element.
+ * @param {HTMLElement} element - The `HTMLElement` on which the style should be
+ * aplied.
+ * @param {Object} style - The dictionnary where keys are style names (JSified,
+ * e.g. `backgroundColor` not `background-color`) and values are the
+ * corresponding syle values.
+ */
+function applyStyle(element, style) {
+  for (const key of Object.keys(style)) {
+    element.style[key] = style[key];
   }
 }

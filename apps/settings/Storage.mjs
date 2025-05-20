@@ -1,10 +1,11 @@
 import { createCheckboxOnRef } from "./utils.mjs";
+import strHtml from "./str-html.mjs";
 
 export default function createStorageSection(
   { filesystem, settings, appUtils, notificationEmitter },
   abortSignal,
 ) {
-  const { createAppTitle, strHtml } = appUtils;
+  const { createAppTitle } = appUtils;
   const section = strHtml`<div>${createAppTitle("Storage", {})}</div>`;
   section.dataset.section = "storage";
 
@@ -38,7 +39,6 @@ ${localStorageSpaceUsgElt}
         ref: settings.persistSettings,
         label: "Persist user settings (in localStorage)",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -85,7 +85,6 @@ ${localStorageSpaceUsgElt}
         ref: settings.performFileSystemCheckAtStartup,
         label: "Do filesystem integrity check at startup",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -97,7 +96,6 @@ ${localStorageSpaceUsgElt}
         label:
           "Authorize creation of new files (⚠️ Many features are lost when disabling this)",
       },
-      appUtils,
       abortSignal,
     ),
   );

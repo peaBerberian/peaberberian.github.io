@@ -343,7 +343,7 @@ function handleForwardedEvent(iframe, eventData) {
  * e.g. `backgroundColor` not `background-color`) and values are the
  * corresponding syle values.
  */
-export function applyStyle(element, style) {
+function applyStyle(element, style) {
   for (const key of Object.keys(style)) {
     element.style[key] = style[key];
   }

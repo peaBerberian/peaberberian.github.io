@@ -1,22 +1,20 @@
 import setUpContextMenu from "../components/context-menu.mjs";
 import { codeImgSvg, demoImgSvg, docImgSvg } from "../constants.mjs";
 import strHtml from "../str-html.mjs";
-import { applyStyle, constructSidebarElt, createAppIframe } from "../utils.mjs";
+import { constructSidebarElt, createExternalIframe } from "../utils.mjs";
 import { constructAppHeaderLine } from "./header-line.mjs";
 
 export function getAppUtils() {
   return {
     // Often needed utils:
-    applyStyle: applyStyle,
-    strHtml: strHtml,
-    constructAppHeaderLine: constructAppHeaderLine,
+    constructAppHeaderLine,
     setUpContextMenu,
 
     // In rare situations:
-    constructSidebarElt: constructSidebarElt,
-    createAppIframe: createAppIframe,
-    createAppTitle: createAppTitle,
-    createFullscreenButton: createFullscreenButton,
+    constructSidebarElt,
+    createExternalIframe,
+    createAppTitle,
+    createFullscreenButton,
   };
 }
 

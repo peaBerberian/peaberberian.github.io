@@ -24,6 +24,11 @@ if (typeof __APP_BASE_URL__ === "string") {
   // desktop.
   //
   // Yes that's why I set up two hosts. Yes that's very hacky.
+  // Even limiting ourselves to two origins is still not perfect.
+  //
+  // I guess in a perfect world, the best thing would be to have uuid-based
+  // first level domain e.g. `https://3dbc07c7.desktop.com`.
+  // But the free solutions don't do that for now.
   if (location.href.startsWith("https://peaberberian.github.io")) {
     appBaseUrl = "https://paulswebdesktop.netlify.app";
   } else if (location.href.startsWith("https://paulswebdesktop.netlify.app")) {

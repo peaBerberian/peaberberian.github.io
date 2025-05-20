@@ -20,7 +20,7 @@ const DEFAULT_CANVAS_WIDTH = 800;
 // TODO: bucket (or all operations really) in a Worker with a canvas delocalized to it?
 
 export function create(_args, env, abortSignal) {
-  const { strHtml, constructAppHeaderLine } = env.appUtils;
+  const { constructAppHeaderLine } = env.appUtils;
 
   // TODO:  factorize all this. As this was one of the first app, I just wrote
   // it too fast without thinking about organization yet.
@@ -298,7 +298,9 @@ export function create(_args, env, abortSignal) {
   }
   activateTool(toolElements[0], "Brush");
 
-  const colorInputElt = strHtml`<input type="color" value="#000000">`;
+  const colorInputElt = document.createElement("input");
+  colorInputElt.type = "color";
+  colorInputElt.value = "#000000";
   applyStyle(colorInputElt, {
     width: "40px",
     height: "30px",
@@ -974,13 +976,15 @@ export function create(_args, env, abortSignal) {
   }
 
   function createSizeSelector(sizes, defaultSize, onChange) {
-    const sizeSelectorElt = strHtml`<div class="size-selector" />`;
+    const sizeSelectorElt = document.createElement("div");
+    sizeSelectorElt.className = "size-selector";
     applyStyle(sizeSelectorElt, {
       padding: "12px 5px",
       background: env.STYLE.bgColor,
       border: "5px solid " + env.STYLE.lineColor,
     });
-    const sizeOptionsElt = strHtml`<div class="size-options" />`;
+    const sizeOptionsElt = document.createElement("div");
+    sizeOptionsElt.className = "size-options";
     applyStyle(sizeOptionsElt, {
       display: "flex",
       flexDirection: "column",
@@ -990,7 +994,9 @@ export function create(_args, env, abortSignal) {
     sizeSelectorElt.appendChild(sizeOptionsElt);
     const sizeOptions = [];
     for (const size of sizes) {
-      const sizeOptionElt = strHtml`<button class="size-option" data-size="${size}" title="${size}px"></button>`;
+      const sizeOptionElt = document.createElement("button");
+      sizeOptionElt.className = "size-option";
+      sizeOptionElt.title = `${size}px`;
       sizeOptionsElt.appendChild(sizeOptionElt);
       applyStyle(sizeOptionElt, {
         width: size + "px",

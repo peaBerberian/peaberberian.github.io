@@ -79,7 +79,7 @@ export function getMaxDesktopDimensions(taskbarLocation, taskbarSize) {
  * @param {string} url - URL to set this i-frame to.
  * @returns {HTMLElement} - A "div" containing the i-frame asked.
  */
-export function createAppIframe(url) {
+export function createExternalIframe(url) {
   const container = document.createElement("div");
   applyStyle(container, {
     height: "100%",

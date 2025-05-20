@@ -942,6 +942,69 @@ export const SETTINGS = {
   ),
 };
 
+/**
+ * Object regrouping information about specifically style settings that will be
+ * communicated to apps so they can style themselves.
+ */
+export const APP_STYLE = {
+  fontSize: {
+    ref: SETTINGS.fontSize,
+    cssVar: "--font-size",
+  },
+  windowActiveHeader: {
+    ref: SETTINGS.windowActiveHeaderBgColor,
+    cssVar: "--window-active-header",
+  },
+  windowActiveHeaderText: {
+    ref: SETTINGS.windowActiveHeaderTextColor,
+    cssVar: "--window-active-header-text",
+  },
+  windowInactiveHeader: {
+    ref: SETTINGS.windowInactiveHeaderBgColor,
+    cssVar: "--window-inactive-header",
+  },
+  windowInactiveHeaderText: {
+    ref: SETTINGS.windowIninactiveHeaderTextColor,
+    cssVar: "--window-inactive-header-text",
+  },
+  textColor: {
+    ref: SETTINGS.windowTextColor,
+    cssVar: "--window-text-color",
+  },
+  bgColor: {
+    ref: SETTINGS.windowContentBgColor,
+    cssVar: "--window-content-bg",
+  },
+  lineColor: {
+    ref: SETTINGS.windowLineColor,
+    cssVar: "--window-line-color",
+  },
+  primaryColor: {
+    ref: SETTINGS.appPrimaryColorBg,
+    cssVar: "--app-primary-color",
+  },
+  disabledColor: {
+    ref: SETTINGS.appPrimaryBgColor,
+    cssVar: "--app-primary-bg",
+  },
+  barBg: {
+    ref: SETTINGS.windowSidebarBgColor,
+    cssVar: "--window-sidebar-bg-color",
+  },
+  barHoverBg: {
+    ref: SETTINGS.windowSidebarHoverBgColor,
+    cssVar: "--window-sidebar-hover-bg",
+  },
+  barSelectedBg: {
+    ref: SETTINGS.windowSidebarSelectedBgColor,
+    cssVar: "--window-sidebar-selected-bg-color",
+  },
+  barSelectedText: {
+    ref: SETTINGS.windowSidebarSelectedTextColor,
+    cssVar: "--window-sidebar-selected-text-color",
+  },
+};
+
 // function hexToPercentage(hex) {
 //   const decimalValue = parseInt(hex, 16);
 //   return Math.min(Math.round((decimalValue / 255) * 100), 100);

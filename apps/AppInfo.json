@@ -190,9 +190,6 @@
       "defaultWidth": 950,
       "startMenu": {
         "list": "My Other Projects"
-      },
-      "desktop": {
-        "group": "My Other Projects"
       }
     },
     {
@@ -203,9 +200,6 @@
       "defaultWidth": 950,
       "startMenu": {
         "list": "My Other Projects"
-      },
-      "desktop": {
-        "group": "My Other Projects"
       }
     },
     {
@@ -216,9 +210,6 @@
       "defaultWidth": 1000,
       "startMenu": {
         "list": "My Other Projects"
-      },
-      "desktop": {
-        "group": "My Other Projects"
       }
     },
     {
@@ -229,9 +220,6 @@
       "defaultWidth": 800,
       "startMenu": {
         "list": "My Other Projects"
-      },
-      "desktop": {
-        "group": "My Other Projects"
       }
     },
     {
@@ -242,9 +230,6 @@
       "defaultWidth": 800,
       "startMenu": {
         "list": "My Other Projects"
-      },
-      "desktop": {
-        "group": "My Other Projects"
       }
     },
     {
@@ -253,9 +238,6 @@
       "icon": "📹",
       "startMenu": {
         "list": "My Other Projects"
-      },
-      "desktop": {
-        "group": "My Other Projects"
       }
     },
     {
@@ -264,9 +246,6 @@
       "icon": "🏇",
       "startMenu": {
         "list": "My Other Projects"
-      },
-      "desktop": {
-        "group": "My Other Projects"
       }
     },
     {
@@ -275,9 +254,6 @@
       "icon": "📄",
       "startMenu": {
         "list": "My Other Projects"
-      },
-      "desktop": {
-        "group": "My Other Projects"
       }
     },
     {
@@ -286,9 +262,6 @@
       "icon": "📖",
       "startMenu": {
         "list": "My Other Projects"
-      },
-      "desktop": {
-        "group": "My Other Projects"
       }
     },
     {
@@ -297,9 +270,6 @@
       "icon": "⌨️",
       "startMenu": {
         "list": "My Other Projects"
-      },
-      "desktop": {
-        "group": "My Other Projects"
       }
     },
     {
@@ -308,9 +278,6 @@
       "icon": "🖼️",
       "startMenu": {
         "list": "My Other Projects"
-      },
-      "desktop": {
-        "group": "My Other Projects"
       }
     },
     {
@@ -322,9 +289,6 @@
       "website": "https://godbolt.org/",
       "startMenu": {
         "list": "External Apps"
-      },
-      "desktop": {
-        "group": "External Apps"
       }
     },
     {
@@ -336,9 +300,6 @@
       "website": "https://www.wikipedia.org/",
       "startMenu": {
         "list": "External Apps"
-      },
-      "desktop": {
-        "group": "External Apps"
       }
     },
     {
@@ -350,9 +311,6 @@
       "website": "https://www.openstreetmap.org/export/embed.html",
       "startMenu": {
         "list": "External Apps"
-      },
-      "desktop": {
-        "group": "External Apps"
       }
     },
     {
@@ -364,9 +322,6 @@
       "website": "https://noclip.website/",
       "startMenu": {
         "list": "External Apps"
-      },
-      "desktop": {
-        "group": "External Apps"
       }
     },
     {
@@ -378,9 +333,6 @@
       "website": "https://www.youtube.com/embed/aqz-KE-bpKQ",
       "startMenu": {
         "list": "External Apps"
-      },
-      "desktop": {
-        "group": "External Apps"
       }
     },
     {
@@ -391,9 +343,6 @@
       "defaultWidth": 450,
       "startMenu": {
         "list": "Misc"
-      },
-      "desktop": {
-        "display": true
       }
     },
     {
@@ -414,9 +363,6 @@
       "defaultWidth": 1280,
       "startMenu": {
         "list": "Misc"
-      },
-      "desktop": {
-        "display": true
       }
     },
     {
@@ -427,9 +373,6 @@
       "defaultWidth": 855,
       "startMenu": {
         "list": "Misc"
-      },
-      "desktop": {
-        "display": true
       }
     },
     {

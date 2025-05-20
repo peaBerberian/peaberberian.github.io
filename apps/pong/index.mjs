@@ -48,8 +48,8 @@ export function create(_args, env, abortSignal) {
   containerElt.appendChild(
     contructCanvas(containerElt.getBoundingClientRect()),
   );
-  containerElt.addEventListener("mousemove", onMouseMove);
-  containerElt.addEventListener("touchmove", onTouchMove);
+  containerElt.addEventListener("mousemove", onMouseMove, { passive: false });
+  containerElt.addEventListener("touchmove", onTouchMove, { passive: false });
 
   // Safari just selects all over the place like some maniac without this
   containerElt.onselectstart = (e) => e.preventDefault();

@@ -4,6 +4,7 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
+// - app.html contains everything directly
 //
 // medium priority:
 // - confirmation alert when closing window with unsaved file.

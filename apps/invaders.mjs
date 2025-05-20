@@ -693,8 +693,8 @@ export function create(_args, env) {
   function onActivate() {
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("keyup", onKeyUp);
-    gameWrapper.addEventListener("mousemove", onMouseMove, { passive: true });
-    gameWrapper.addEventListener("touchmove", onMouseMove, { passive: true });
+    gameWrapper.addEventListener("mousemove", onMouseMove, { passive: false });
+    gameWrapper.addEventListener("touchmove", onMouseMove, { passive: false });
     gameWrapper.addEventListener("mousedown", onMouseDown);
     gameWrapper.addEventListener("mouseup", onMouseUp);
     gameWrapper.addEventListener("click", onClick);

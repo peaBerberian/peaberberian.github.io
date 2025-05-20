@@ -1,5 +1,7 @@
 // TODO: Actually persist new icon grid
 // TODO: What to do if dragging and there's a window on top?
+// TODO: Delete key
+// TODO: Rename icon?
 
 import fs from "../filesystem/filesystem.mjs";
 import {
@@ -403,6 +405,9 @@ function addMovingAroundListeners(
   }
 
   function onStart(iconElt, { clientX, clientY }) {
+    if (!SETTINGS.moveAroundIcons.getValue()) {
+      return;
+    }
     isDragging = iconElt;
     blockElementsFromTakingPointerEvents();
     const topOffset =

@@ -233,6 +233,8 @@ export const SETTINGS = {
     },
   ),
 
+  moveAroundIcons: createRefForState("move-icons", true),
+
   dblClickHeaderFullScreen: createRefForState(
     "dbl-click-header-full-screen",
     true,

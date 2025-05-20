@@ -302,7 +302,6 @@ function sendSettingsToIframe(iframe, abortSignal) {
   );
   SETTINGS.showIframeBlockerHelp.onUpdate(
     (shouldShow) => {
-      iframe.src = appBaseUrl + "/sandbox.html";
       iframe.contentWindow.postMessage(
         {
           type: "__pwd__show-iframe-blocker",

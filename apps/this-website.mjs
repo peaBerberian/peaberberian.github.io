@@ -72,6 +72,7 @@ export function create(_args, env) {
   <li>To avoid too many heavy repaints, I added specific checks ensuring that the content stood the same in some particular situations.<br>For example, on page resize I pre-check the dimensions of the new grid of desktop icons and check if their organization would change horizontally or vertically entirely with JS computations, before deciding to interact with the DOM.</li>
   <li>I've been also very careful with the browser API with which I interacted again to avoid repaints: I rarely rely on web API which would need the browser to internally re-check element positions for example, preferring to ensure that the browser can optimize its rendering the best it can. I also grouped most DOM mutations together, generally inside <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame" target="_blank">requestAnimationFrame</a> callbacks.</li>
   <li>When windows are moved or resized, I tried to make it apparent through CSS to the browser that it should have no impact on other elements beside z-positioning.</li>
+  <li>Most applications are isolated in a way that allows parralelism, meaning that some application doing heavy processing (like let's say you're handling a huge file in "notes") won't stall the whole desktop with it.</li>
   <li>I've tried to also be frugal with memory usage, by only storing what's needed and being very careful with the potentiality of memory leaks (here the main culprits would be event listeners).</li>
 </ul>`;
     return optimContainer;
@@ -124,7 +125,7 @@ If a window is partially out of the screen, I consider that the area in which it
 <h3>filesystem access from apps</h3>
 <p>The main constraint I imposed is that "apps" are less trusted than the desktop itself regarding user data: most apps should not have access to the filesystem directly for example, and when they do (e.g. to edit and save a file) they should just obtain the strict minimum: the file's data, and maybe the file's name.<br><br>
 Specifically in the case of a file, this was done by not giving direct filesystem access to most applications, but instead to allow them to spawn a more-trusted "file-picker" application, which takes the relay when opening or saving a file.</p>
-<p>To take as an example, let's say you want to edit a locally-stored image with the "Paint" application. What actually happens is:</p>
+<p>To take an example, let's say you want to edit a locally-stored image with the "Paint" application. What actually happens is:</p>
 <ol>
   <li>You click on the "open" button</li>
   <li>Paint ask the desktop to open a file-picker so the user may choose a file to open</li>
@@ -144,7 +145,7 @@ Specifically in the case of a file, this was done by not giving direct filesyste
 <p>Yet all those tricks may not be enough if the application can just access the actual storage source.</p>
 <p>At a lower-level, user storage is implemented by relying on several browser API, mainly <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage" target="_blank">the localStorage API</a> and more importantly <a href="https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API" target="_blank">the IndexedDB API</a>.<br>
 An app could there theoretically call those browser API directly to read stored data without notifying the desktop.</p>
-<p>To prevent this purely theoretical case, this desktop exploits for some apps a browser security feature called <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy" target="_blank">the "Same-origin" policy</a>.</p>
+<p>To prevent this purely theoretical case, this desktop exploits for most apps a browser security feature called <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy" target="_blank">the "Same-origin" policy</a>.</p>
 <p>It gets technical, but the simple idea is to run applications as <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/iframe" target="_blank">iframe elements</a> which are associated to another "origin" than the desktop.<br>Doing that prevent the application from being able to access many resources that the desktop can access, including the aforementioned storage API.</p>
 <p>As a very nice side-effect, running the application in an isolated iframe like this will also allow it to run in parallel with the desktop.<br>The main advantage of this in our case is that an application doing some heavy processing will not hang the whole desktop. With this, I could even implement an "app responsiveness check" in the desktop code, to e.g. allow to kill unresponsive app.<br>I did not take the time to do this yet.</p>
 </div>`;

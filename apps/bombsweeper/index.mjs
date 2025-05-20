@@ -239,7 +239,7 @@ export function create(_args, env) {
           justifyContent: "center",
           fontSize: "24px",
           cursor: "pointer",
-          border: "6px solid var(--window-line-color)",
+          border: "6px solid " + env.STYLE.lineColor,
         });
         cell.textContent = HIDDEN_CELL_VALUE;
 

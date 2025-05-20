@@ -7,7 +7,6 @@
 // - context menu in desktop, taskbar, start menu, and explorer at least?
 // - Storage settings
 // - notification system
-// - ctrl+s in paint and note
 //
 // medium priority:
 // - image viewer touch controls
@@ -17,6 +16,7 @@
 // - paint can open images
 //
 // low priority:
+// - explorer: when going to parent directory, focus the previous one by default?
 // - filesystem: Proxy local storage in `/system32/`?
 // - filesystem: When indexedDB is not available, fallback on in-memory
 // - double clicking while moving on the second click probably shouldn't put in

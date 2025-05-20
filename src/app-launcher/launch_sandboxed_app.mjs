@@ -1,11 +1,32 @@
 import { APP_STYLE, SETTINGS } from "../settings.mjs";
 import { addAbortableEventListener } from "../utils.mjs";
 
-/**
- * Some hack to check if a global is defined.
- */
-const appBaseUrl =
-  typeof __APP_BASE_URL__ === "string" ? __APP_BASE_URL__ : ".";
+let appBaseUrl;
+// Some hack to check if a potentially-undefined global is defined.
+if (typeof __APP_BASE_URL__ === "string") {
+  appBaseUrl = __APP_BASE_URL__l;
+} else {
+  // Fun hacky part. My desktop is best when there's actual site isolation
+  // between the desktop and apps. Due to how the web world works. The most
+  // sure way to do that without losing some key other features is just to
+  // have apps and desktops on different domains!!
+  //
+  // So when it's github pages, I use netlify and vice-versa. Yes that's dumb!
+  //
+  // Doing that cross-domain thing then unlocks parallelization between apps
+  // and desktop, ensure apps cannot access what the desktop is doing (which
+  // is a feature in my case), and ensure that an app won't hang the whole
+  // desktop.
+  //
+  // Yes that's why I set up two hosts. Yes that's very hacky.
+  if (location.href.startsWith("https://peaberberian.github.io")) {
+    appBaseUrl = "https://paulswebdesktop.netlify.app";
+  } else if (location.href.startsWith("https://paulswebdesktop.netlify.app")) {
+    appBaseUrl = "https://peaberberian.github.io";
+  } else {
+    appBaseUrl = ".";
+  }
+}
 
 export function launchSandboxedApp(scriptUrl, appArgs, env, abortSignal) {
   let isInitiallyActivated = true;

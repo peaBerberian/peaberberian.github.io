@@ -16,8 +16,6 @@ import * as path from "path";
 import { pathToFileURL, fileURLToPath } from "url";
 import esbuild from "esbuild";
 
-const DEFAULT_BASE_PATH = ".";
-
 const PROJECT_ROOT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 
 const DESKTOP_SRC_DIR = path.join(PROJECT_ROOT_DIRECTORY, "src");
@@ -32,7 +30,7 @@ const OUTPUT_APP_LIB_SCRIPT = path.join(OUTPUT_DIR, "app-sandbox.js");
 /**
  * Produce the bundles for all application defined in `./apps/AppInfo.json` and
  * for the desktop itself (`./src`) and output them in `./dist`.
- * @param {Object} optionappBaseUrl]
+ * @param {Object} [options.appBaseUrl]
  * @param {boolean} [options.minify] - If `true`, the output will be minified.
  * @param {boolean} [options.watch] - If `true`, the RxPlayer's files involve
  * will be watched and the code re-built each time one of them changes.
@@ -43,11 +41,12 @@ const OUTPUT_APP_LIB_SCRIPT = path.join(OUTPUT_DIR, "app-sandbox.js");
  * @returns {Promise}
  */
 export default async function run(options) {
-  const baseUrl = options.appBaseUrl ?? DEFAULT_BASE_PATH;
-  options.globals = {
-    __APP_BASE_URL__: JSON.stringify(baseUrl),
-    ...(options.globals ?? {}),
-  };
+  if (options.appBaseUrl) {
+    options.globals = {
+      __APP_BASE_URL__: JSON.stringify(options.appBaseUrl),
+      ...(options.globals ?? {}),
+    };
+  }
   if (!options.watch) {
     await reBuild();
     return;
@@ -91,7 +90,7 @@ export default async function run(options) {
   });
   async function reBuild() {
     // We'll create `GENERATED_APP_PATH` here:
-    const lazyLoadedApps = writeGeneratedAppFile(APPS_SRC_DIR, baseUrl);
+    const lazyLoadedApps = writeGeneratedAppFile(APPS_SRC_DIR);
 
     // Re-create the lazy-loaded destination folder, just to clean-up.
     try {
@@ -236,7 +235,7 @@ function getHumanReadableHours() {
  * @returns {Array.<Object>} - Defines the bundles to produce all apps, and
  * where to put them.
  */
-function writeGeneratedAppFile(baseDir, appBaseUrl) {
+function writeGeneratedAppFile(baseDir) {
   let fileContent;
   try {
     fileContent = fs.readFileSync(path.join(baseDir, "AppInfo.json"), {
@@ -539,7 +538,7 @@ export default [`;
 
     if (filePath) {
       // Here I will put the import path as a `lazyLoad` property.
-      const importPath = appBaseUrl + `/lazy/${app.id}.js`;
+      const importPath = `./lazy/${app.id}.js`;
       uglyHandWrittenJsObject += `    data: {
       lazyLoad: ${JSON.stringify(importPath)},
 `;

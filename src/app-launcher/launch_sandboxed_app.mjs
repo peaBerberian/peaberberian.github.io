@@ -7,11 +7,11 @@ import {
 } from "../utils.mjs";
 
 let appBaseUrl;
-let domain;
+let appDomain;
 // Some hack to check if a potentially-undefined global is defined.
 if (typeof __APP_BASE_URL__ === "string") {
   appBaseUrl = __APP_BASE_URL__;
-  domain = new URL(appBaseUrl).origin;
+  appDomain = new URL(appBaseUrl).origin;
 } else {
   // Fun hacky part. My desktop is best when there's actual site isolation
   // between the desktop and apps. Due to how the web world works. The most
@@ -33,13 +33,13 @@ if (typeof __APP_BASE_URL__ === "string") {
   // But the free solutions don't do that for now.
   if (location.href.startsWith("https://peaberberian.github.io")) {
     appBaseUrl = "https://paulswebdesktop.netlify.app";
-    domain = appBaseUrl;
+    appDomain = appBaseUrl;
   } else if (location.href.startsWith("https://paulswebdesktop.netlify.app")) {
     appBaseUrl = "https://peaberberian.github.io";
-    domain = appBaseUrl;
+    appDomain = appBaseUrl;
   } else {
     appBaseUrl = ".";
-    domain = window.location.origin;
+    appDomain = window.location.origin;
   }
 }
 
@@ -62,6 +62,7 @@ if (typeof __APP_BASE_URL__ === "string") {
  * @returns {Object} - Application object.
  */
 export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
+  let isIframeLoaded = false;
   let isActivated = true;
   const backgroundColor = appData.defaultBackground
     ? (APP_STYLE[appData.defaultBackground]?.cssProp ??
@@ -108,7 +109,7 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
               type: "__pwd__activate",
               data: null,
             },
-            domain,
+            appDomain,
           );
         }
       },
@@ -129,8 +130,9 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
           desktopOrigin: window.location.origin,
         },
       },
-      domain,
+      appDomain,
     );
+    isIframeLoaded = true;
   });
   redirectKeyDownEvents();
 
@@ -145,7 +147,7 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
     element: wrapperElt,
     onActivate: () => {
       isActivated = true;
-      if (!iframe.contentWindow) {
+      if (!isIframeLoaded) {
         return;
       }
       if (!iframe.contains(document.activeElement)) {
@@ -156,13 +158,13 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
           type: "__pwd__activate",
           data: null,
         },
-        domain,
+        appDomain,
       );
     },
 
     onDeactivate: () => {
       isActivated = false;
-      if (!iframe.contentWindow) {
+      if (!isIframeLoaded) {
         return;
       }
       if (iframe.contains(document.activeElement)) {
@@ -173,11 +175,14 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
           type: "__pwd__deactivate",
           data: null,
         },
-        domain,
+        appDomain,
       );
     },
 
     onClose: () => {
+      if (!isIframeLoaded) {
+        return;
+      }
       if (iframe.contains(document.activeElement)) {
         document.activeElement.blur();
       }
@@ -186,7 +191,7 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
           type: "__pwd__close",
           data: null,
         },
-        domain,
+        appDomain,
       );
     },
   };
@@ -212,7 +217,7 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
               altKey: event.altKey,
               metaKey: event.metaKey,
             },
-            domain,
+            appDomain,
           );
         },
       );
@@ -273,7 +278,7 @@ function sendSettingsToIframe(iframe, abortSignal) {
               ],
             },
           },
-          domain,
+          appDomain,
         );
       },
       { clearSignal: abortSignal, emitCurrentValue: true },
@@ -286,7 +291,7 @@ function sendSettingsToIframe(iframe, abortSignal) {
           type: "__pwd__sidebar-format-update",
           data: format,
         },
-        domain,
+        appDomain,
       );
     },
     { clearSignal: abortSignal, emitCurrentValue: true },
@@ -298,7 +303,7 @@ function sendSettingsToIframe(iframe, abortSignal) {
           type: "__pwd__show-iframe-blocker",
           data: shouldShow,
         },
-        domain,
+        appDomain,
       );
     },
     { clearSignal: abortSignal, emitCurrentValue: true },

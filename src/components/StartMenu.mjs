@@ -271,7 +271,25 @@ function refreshStartMenu(
       } else {
         const listIconElt = document.createElement("div");
         listIconElt.className = "start-icon";
-        listIconElt.textContent = "📂";
+
+        // TODO: Find some way to centrally configure?
+        switch (appObj.name) {
+          case "Games":
+            listIconElt.textContent = "🎮";
+            break;
+          case "My Other Projects":
+            listIconElt.textContent = "👨‍💻";
+            break;
+          case "External Apps":
+            listIconElt.textContent = "📡";
+            break;
+          case "Misc":
+            listIconElt.textContent = "⏰";
+            break;
+          default:
+            listIconElt.textContent = "🗃️";
+            break;
+        }
 
         const listTitleElt = document.createElement("div");
         listTitleElt.style.display = "flex";

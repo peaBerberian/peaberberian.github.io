@@ -42,6 +42,10 @@ application. The order of that array is important, as it may be re-used for
 application listings in the desktops (e.g. earlier apps might be put before
 as desktop icons or in the start menu).
 
+The build script will check that file for most mistakes and abort the build
+operation if it detects unknown options or options in the wrong format, to
+make sure the file is well-formed.
+
 The following properties can be set for each application:
 
 - `"id"` (`string`, mandatory): unique identifier for the application, which
@@ -77,31 +81,115 @@ The following properties can be set for each application:
   application will be opened at most in the desktop. New opening attempts will
   re-activate the window and not open a new one.
 
-- `"inStartList"` (`string`, optional): If set, the application will not be
-  directly visible in the start menu but ender a subcategory of that name.
+- `"startMenu"` (`Object`, optional): This application's configuration regarding
+  its display (or not) in the start menu.
 
-  If multiple applications shares the same `"inStartList"` property, they will
-  be together in that same subcategory.
+  Can contain the following properties, all optional:
 
-- `"desktopDir"` (`string`, optional): If set, the application will not be
-  directly visible as a desktop icon but will be added to an "app group" of that
-  name.
+  - `"list"` (`string`, optional): If set, the application may be added to
+    a "sub-list" in the start menu of that name, instead of displaying directly
+    in it.
 
-  If multiple applications shares the same `"desktopDir"` property, they will
-  be together in that same "app group".
+    Most applications should have a `"list"`, preferably shared between
+    multiple applications as to be more useful.
+
+    The presence of a `"list"` property makes the value of the `"display"`
+    property ignored.
+
+  - `"display"` (`boolean`, optional): Ignored if `"list"` is set.
+    Else, if set to `true`, the application will be displayed directly inside
+    the start menu and not inside a sub-list.
+
+- `"desktop"` (`Object`, optional): This application's configuration regarding
+  its display (or not) as a desktop icon.
+
+  Can contain the following properties, all optional:
+
+  - `"group"` (`string`, optional): If set, the application will not be added
+    direcly as a desktop icon but part of an "app-group" with that name instead.
+
+    Multiple apps should preferably be in the same app group, which should be
+    aptly named with the same string.
+
+    The presence of a `"group"` property makes the value of the `"display"`
+    property ignored.
+
+  - `"display"` (`boolean`, optional): Ignored if `"group"` is set.
+    Else, if set to `true`, the application will be displayed directly as a
+    desktop icon.
+
+- `"preload"` (`Object`, optional): Set trigger conditions for "application
+  preloading", that is, for loading it before it is actually opened - to speed
+  up the time to interactive when it is indeed opened.
+
+  For only the `after` key (a `number`) is implemented, which if set will run a
+  timer when the desktop is first loaded of the corresponding amounts of
+  milliseconds before preloading that application.
+
+- `"defaultForExtensions"` (`Array.<string>`, optional): The "extensions" for
+  which this application should be chosen by default when opening it without
+  specifying an application.
+
+  E.g. adding `"png"` will make this application open PNG images by default if
+  opened in some applications such as a file explorer.
+
+  If more than one application declares the same extension. Only the first
+  application that declare it in the `apps` array will be considered.
 
 - `"dependencies"` (`Array.<string>`, optional): Supplementary API that will be
-  provided to the application when it is run. This is kind of a permission
-  system, kind of its own thing, I'm still iterating on this.
+  provided to the application when it is run.
 
-- `"preload"` (`Object`, optional): I'm also iterating on this one, but the idea
-  here is to set trigger conditions for "application preloading", that is, for
-  loading it before it is actually opened - to speed up the time to interactive
-  when it is indeed opened.
+  This is close to a permission system.
 
-  For now I already implemented the `after` key (a `number`), which if set will
-  run a timer when the desktop is first loaded of the corresponding amounts of
-  milliseconds before preloading that application.
+  For now the following dependencies are handled:
+
+  - `"settings"`: Read and write access to the Desktop's core settings.
+    Very few applications will need that.
+
+  - `"open"`: Allows to open any path or file object from the file system
+    (executable, applications etc.).
+
+  - `"filesystem"`: Complete read and write access to the Desktop's
+    "filesystem".
+
+    This is a very broad permission, the `"filePickerOpen"` and
+    `"filePickerSave"` permissions should be prefered in almost all cases.
+
+  - `"filePickerOpen"`: Allows to spawn a "file-picker" to open a file.
+
+    The file-picker is an application that will be placed "on top" of the
+    application asking for it. It has `"filesystem"` access and as such can
+    navigate freely all files in the user's desktop. When the user made its
+    choise the file-picker will communicate back to the application the
+    filename and file's data - but not its full path.
+
+    This allows most application to open any file choosen explicitly by the
+    user.
+
+  - `"filePickerSave"`: Equivalent of `"filePickerOpen"` but this time to choose
+    a save location (and save) for a file.
+
+- `"provider"` (`Array.<string>`, optional): The supplementary features the
+  application can provide.
+
+  If more than one application declares the same features. Only the first
+  application that declare it in the `apps` array will be considered.
+
+  For now only the following values are supported:
+
+  - `"filePickerOpen"`: The application alternatively allows to spawn a
+    file-picker application to provide file opening capabilities to other
+    applications (those with the `"filePickerOpen"` dependency).
+
+    Applications with that feature should export a `createFileOpener` function
+    (additionally to their `create` function).
+
+  - `"filePickerSave"`: The application alternatively allows to spawn a
+    file-picker application to provide file saving capabilities to other
+    applications (those with the `"filePickerSave"` dependency).
+
+    Applications with that feature should export a `createFileSaver` function
+    (additionally to their `create` function).
 
 ## The `create` function
 
@@ -133,7 +221,7 @@ depending on the application's needs:
 
     - Optionally, there may be the `dependencies` asked for the App in the
       `AppInfo.json` file (e.g. asking for the `settings` dependency will provide
-      a `settings` object).
+      a `settings` object etc.).
 
 3.  AbortSignal (`AbortSignal`): An `AbortSignal` that will be triggered when
     the application is closed. This should be used to clean-up all
@@ -146,7 +234,11 @@ depending on the application's needs:
 
 ### Return value
 
-The `create` function should return either:
+The `create` function should return either and object or a a Promise which
+resolves with that same object. In cases where it returns a promise, a spinner
+will be shown while the promise is not yet resolved.
+
+The object may have the following properties:
 
 - An `element` `HTMLElement` property corresponding to the app's content.
   Most applications should probably define an `element` property.
@@ -182,18 +274,22 @@ The `create` function should return either:
     be listened to to free resources, not the one from `create` which would
     have more nich usages.
 
-- Optionally, the `create` function can also return a `onActivate` property
-  which will be called when the corresponding window is focused and an
-  `onDeactivate` function for when it is deactivated.
+- Optionally, the `create` function can also return a `onActivate` function
+  which will be called when the corresponding window is focused, an
+  `onDeactivate` function for when it is un-focused, and an `onClose` function
+  which will be called just before the application is closed.
 
   This can be used to for example register keyboard event listener when it's
-  the application which has the focus, and removing them when it's another.
+  the application which has the focus, and removing them when it's another
+  (on `onActivate` and `onDeactivate` respectively).
 
   This can also be used to decide what element will be focused when opening
   or switching to the application.
 
-Alternatively, it can also return a Promise which resolves with the same object.
-In cases where it returns a promise, a spinner will be shown while the promise
-is not yet resolved.
+  However note that the desktop may choose to kill the application at any time
+  without calling either `onDeactivate` or `onClose`, even if it will try to
+  refrain to do so. It will only do so when the application does not risk to
+  leak memory, such as when it is part of an i-frame, or when the page is being
+  closed anyway.
 
 Look at the apps already here for more information.

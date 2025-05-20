@@ -147,7 +147,7 @@ export function create() {
   const displayElt = document.createElement("div");
   applyStyle(displayElt, {
     backgroundColor: "var(--window-content-bg)",
-    border: "2px inset var(--window-line-color)",
+    border: "2px solid var(--window-line-color)",
     padding: "10px",
     textAlign: "right",
     fontSize: "1.5em",

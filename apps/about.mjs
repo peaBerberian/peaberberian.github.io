@@ -120,30 +120,30 @@ export function create(_args, env) {
     general: {
       title: "Welcome 👋🏻",
       description: `<div>
-	<p>Hi, my name is Paul Berberian, I'm 34¹ I'm a software engineer and tech lead at Canal+ Group living in Montpellier, France. I lead several projects linked to media streaming, including the open-source <a href="https://github.com/canalplus/rx-player" target="_blank">RxPlayer</a> media player.</p>
+  <p>Hi, my name is Paul Berberian, I'm 34¹ I'm a software engineer and tech lead at Canal+ Group living in Montpellier, France. I lead several projects linked to media streaming, including the open-source <a href="https://github.com/canalplus/rx-player" target="_blank">RxPlayer</a> media player.</p>
 
-	<p>You're here in my personal website which implements a (functional) desktop environment. Everything you see here has been done especially for this desktop without any external dependency.</p>
+  <p>You're here in my personal website which implements a (functional) desktop environment. Everything you see here has been done especially for this desktop without any external dependency.</p>
 
-	<p><b>Also note that everything you do here, even files you save or load on this site, never leaves your computer. This website does not track nor collect your data.</b> The only contacts with a server are to download the resources allowing to render the various applications (code, images...).</p>
+  <p><b>Also note that everything you do here, even files you save or load on this site, never leaves your computer. This website does not track nor collect your data.</b> The only contacts with a server are to download the resources allowing to render the various applications (code, images...).</p>
 
-	<p>To contact me, you can send an e-mail to: <a href="mailto:paul.berberian@proton.me">paul.berberian@proton.me</a>.</p>
+  <p>To contact me, you can send an e-mail to: <a href="mailto:paul.berberian@proton.me">paul.berberian@proton.me</a>.</p>
 
-	<p class="asterisk"><span class="note">1</a>. As long as we\'re still in 2025, that is.</span></p>
+  <p class="asterisk"><span class="note">1</a>. As long as we\'re still in 2025, that is.</span></p>
 
 <div class="quickLinks"><b>External links: </b>${formatQuickLinks(quickLinks, env)}</div></div>`,
     },
     current: {
       title: "What I work on",
       description: `<span>
-	<p>I'm mostly working on media web-applications using TypeScript, JavaScript, Zig and Rust (thanks to WebAssembly).<br>Right now the main project I lead is the RxPlayer, at Canal+ Group.<\p><p>The RxPlayer is a library allowing various front-end applications - among which Canal+' flagship products - to play live and VoD contents with adaptive streaming, multiple tracks and DRMs. It targets both the web and embedded platforms (set-top boxes, SmartTVs, ChromeCast, game consoles etc.).</p>
+  <p>I'm mostly working on media web-applications using TypeScript, JavaScript, Zig and Rust (thanks to WebAssembly).<br>Right now the main project I lead is the RxPlayer, at Canal+ Group.<\p><p>The RxPlayer is a library allowing various front-end applications - among which Canal+' flagship products - to play live and VoD contents with adaptive streaming, multiple tracks and DRMs. It targets both the web and embedded platforms (set-top boxes, SmartTVs, ChromeCast, game consoles etc.).</p>
 
-	<p>I also lead several other projects: some allowing media playback under more locked vendor-specific media APIs, but also debugging and reverse engineering tools helping front-end developpers to maintain those applications.<br>A part of the projects I maintain at Canal+ are <a href="https://github.com/canalplus/" target="_blank">open-source</a>¹.<br>I also maintain many <a href="https://github.com/peaberberian/" target="_blank">personal projects</a>.</p>
+  <p>I also lead several other projects: some allowing media playback under more locked vendor-specific media APIs, but also debugging and reverse engineering tools helping front-end developpers to maintain those applications.<br>A part of the projects I maintain at Canal+ are <a href="https://github.com/canalplus/" target="_blank">open-source</a>¹.<br>I also maintain many <a href="https://github.com/peaberberian/" target="_blank">personal projects</a>.</p>
 
-	<p class="asterisk"><span class="note">1</a>. Most projects at Canal+ are closed-source, including some that I lead. The few maintained open-sourced ones (that are under the <i>"canalplus"</i> organization on GitHub) all gravitate around the RxPlayer library and are all under my lead.</span></p>
+  <p class="asterisk"><span class="note">1</a>. Most projects at Canal+ are closed-source, including some that I lead. The few maintained open-sourced ones (that are under the <i>"canalplus"</i> organization on GitHub) all gravitate around the RxPlayer library and are all under my lead.</span></p>
 
-	<div class=\"separator\"></div>
+  <div class=\"separator\"></div>
 
-	<p>Previously, I worked on set-top boxes, to create large front-end applications with important stability constraints and many features not usually found in web platforms.<br/>Among them: updates, storage management, browsing in offline contexts, records scheduling, TV remote-based navigation, multi-devices support, media player integration and TV channel scanning.</p>
+  <p>Previously, I worked on set-top boxes, to create large front-end applications with important stability constraints and many features not usually found in web platforms.<br/>Among them: updates, storage management, browsing in offline contexts, records scheduling, TV remote-based navigation, multi-devices support, media player integration and TV channel scanning.</p>
 </span>`,
     },
     experiences: {
@@ -221,16 +221,16 @@ function getJobs(jobs, env) {
       (jobObj) =>
         `<div class="job-item item-group">
   <div class="group-header">
-		<span class= "item-group-img-container">
-			<img height="${IMAGE_HEIGHT}px" width="${IMAGE_WIDTH}px" class="job-company-img item-group-img"
-				alt="${jobObj.imgDescription}"
-				src="${env.getImageRootPath() + jobObj.img}" />
-		</span>
-		<div class="job-title item-group-header">
-			<span class="job-name item-group-name">${jobObj.jobTitle}</span>
-			<br />
-			<span class="job-date item-group-date">${jobObj.dateFrom} - ${jobObj.dateTo}</span>
-		</div>
+    <span class= "item-group-img-container">
+      <img height="${IMAGE_HEIGHT}px" width="${IMAGE_WIDTH}px" class="job-company-img item-group-img"
+        alt="${jobObj.imgDescription}"
+        src="${env.getImageRootPath() + jobObj.img}" />
+    </span>
+    <div class="job-title item-group-header">
+      <span class="job-name item-group-name">${jobObj.jobTitle}</span>
+      <br />
+      <span class="job-date item-group-date">${jobObj.dateFrom} - ${jobObj.dateTo}</span>
+    </div>
   </div>
   <div class="job-company item-group-loc">
     <span class="company-desc item-group-loc-desc">${jobObj.companyDescription}</span>
@@ -247,16 +247,16 @@ function getSchools(schools, env) {
       (schoolObj) =>
         `<div class="edu-item item-group">
   <div class="group-header">
-		<span class= "item-group-img-container">
-			<img height="${IMAGE_HEIGHT}px" width="${IMAGE_WIDTH}px" class="edu-school-img item-group-img"
-				alt="${schoolObj.imgDescription}"
-				src="${env.getImageRootPath() + schoolObj.img}" />
-		</span>
-		<div class="edu-title item-group-header">
-			<span class="edu-diploma item-group-name">${schoolObj.diploma}</span>
-			<br />
-			<span class="edu-date item-group-date">${schoolObj.dateFrom} - ${schoolObj.dateTo}</span>
-		</div>
+    <span class= "item-group-img-container">
+      <img height="${IMAGE_HEIGHT}px" width="${IMAGE_WIDTH}px" class="edu-school-img item-group-img"
+        alt="${schoolObj.imgDescription}"
+        src="${env.getImageRootPath() + schoolObj.img}" />
+    </span>
+    <div class="edu-title item-group-header">
+      <span class="edu-diploma item-group-name">${schoolObj.diploma}</span>
+      <br />
+      <span class="edu-date item-group-date">${schoolObj.dateFrom} - ${schoolObj.dateTo}</span>
+    </div>
   </div>
   <div class="edu-school item-group-loc">
     <span class="school-desc item-group-loc-desc">${schoolObj.schoolDescription}</span>

@@ -14,29 +14,29 @@ const MINIMUM_CELL_WIDTH = 20;
 const style = document.createElement("style");
 style.textContent = `
 .__table_app_spreadsheet {
-	overflow: auto;
-	margin: 20px;
-	background-color: var(--window-content-bg);
-	color: var(--window-text-color);
-	overflow: auto;
-	height: 100%;
-	width: 100%;
-	margin: 0;
-	padding: 0;
+  overflow: auto;
+  margin: 20px;
+  background-color: var(--window-content-bg);
+  color: var(--window-text-color);
+  overflow: auto;
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .__table_app_spreadsheet-table {
-	border-collapse: collapse;
-	table-layout: fixed;
+  border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .__table_app_spreadsheet-table th, 
 .__table_app_spreadsheet-table td {
-	border: 1px solid var(--window-line-color);
-	padding: 3px;
-	text-align: left;
-	position: relative;
-	box-sizing: border-box;
+  border: 1px solid var(--window-line-color);
+  padding: 3px;
+  text-align: left;
+  position: relative;
+  box-sizing: border-box;
   white-space: nowrap;
   overflow: hidden;
   max-height: 100%;
@@ -48,49 +48,49 @@ style.textContent = `
 }
 
 .__table_app_spreadsheet-table td {
-	text-align: right;
+  text-align: right;
 }
 
 .__table_app_spreadsheet-table th {
-	background-color: var(--app-primary-bg);
-	font-weight: bold;
-	position: relative;
-	user-select: none;
+  background-color: var(--app-primary-bg);
+  font-weight: bold;
+  position: relative;
+  user-select: none;
 }
 
 .__table_app_spreadsheet-table .header-row th {
-	text-align: center;
+  text-align: center;
 }
 
 .__table_app_spreadsheet-table tr > th:first-child {
-	text-align: center;
+  text-align: center;
 }
 
 .resizer {
-	position: absolute;
-	background: transparent;
-	z-index: 1;
+  position: absolute;
+  background: transparent;
+  z-index: 1;
 }
 
 .col-resizer {
-	width: 5px;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	cursor: col-resize;
+  width: 5px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  cursor: col-resize;
 }
 
 .row-resizer {
-	height: 5px;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	cursor: row-resize;
+  height: 5px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  cursor: row-resize;
 }
 
 .col-resizer:hover, 
 .row-resizer:hover {
-	background-color: var(--app-primary-color);
+  background-color: var(--app-primary-color);
 }
 
 .__table_app_spreadsheet-table td[contenteditable="true"] {
@@ -100,7 +100,7 @@ style.textContent = `
 .__table_app_spreadsheet-table td[contenteditable="true"]:focus {
   text-align: left;
   background-color: var(--sidebar-selected-bg-color);
-	color: var(--sidebar-selected-text-color);
+  color: var(--sidebar-selected-text-color);
   box-shadow: inset 0 0 3px rgba(0,0,0,0.1);
 }
 `;

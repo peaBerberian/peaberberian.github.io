@@ -117,7 +117,7 @@ function generateClock() {
       }
     }
     minuteMarkers += `
-		<!-- ${i}m -->
+    <!-- ${i}m -->
     <line x1="${elt[0]}" y1="${elt[1]}" x2="${elt[2]}" y2="${elt[3]}" stroke="#888888" stroke-width="1" stroke-linecap="round" />`;
   }
   clockId++;
@@ -157,7 +157,7 @@ function generateClock() {
   <g>
 ${minuteMarkers}
   </g>
-	<text class="clock-text" x="200" y="275" text-anchor="middle" font-family="monospace" font-size="22" fill="#666666"></text>
+  <text class="clock-text" x="200" y="275" text-anchor="middle" font-family="monospace" font-size="22" fill="#666666"></text>
   <!-- Hour markers -->
   <g>
     <!-- 12h -->

@@ -19,7 +19,7 @@ export default function createStorageSection(
   const localStorageSpaceUsgElt = document.createElement("span");
   localStorageSpaceUsgElt.textContent = formatSize(estimateLocalStorageSize());
   localStorageGrpElt.appendChild(strHtml`<div class="w-small-opt">
-	<span class="w-small-opt-desc">localStorage usage estimate</span>
+  <span class="w-small-opt-desc">localStorage usage estimate</span>
 ${localStorageSpaceUsgElt}
 </div>`);
 
@@ -49,8 +49,8 @@ ${localStorageSpaceUsgElt}
     settings.resetStateToDefault();
   };
   localStorageGrpElt.appendChild(strHtml`<div class="w-small-opt">
-	<span class="w-small-opt-desc">Reset to original settings</span>
-	${resetButtonElt}
+  <span class="w-small-opt-desc">Reset to original settings</span>
+  ${resetButtonElt}
 </div>`);
   section.appendChild(localStorageGrpElt);
 
@@ -62,7 +62,7 @@ ${localStorageSpaceUsgElt}
   const indexedDBSpaceUsgElt = document.createElement("span");
   indexedDBSpaceUsgElt.textContent = "Calculating...";
   userDataGrpElt.appendChild(strHtml`<div class="w-small-opt">
-	<span class="w-small-opt-desc">IndexedDB usage estimate</span>
+  <span class="w-small-opt-desc">IndexedDB usage estimate</span>
 <span>${indexedDBSpaceUsgElt}${createRecheckButton(reCheckStorage)}</span>
 </div>`);
   reCheckStorage();
@@ -116,8 +116,8 @@ ${localStorageSpaceUsgElt}
     reCheckStorage();
   };
   userDataGrpElt.appendChild(strHtml`<div class="w-small-opt">
-	<span class="w-small-opt-desc">Format IndexedDB storage</span>
-	${formatButtonElt}
+  <span class="w-small-opt-desc">Format IndexedDB storage</span>
+  ${formatButtonElt}
 </div>`);
 
   const integrityButtonElt = document.createElement("button");
@@ -137,8 +137,8 @@ ${localStorageSpaceUsgElt}
     reCheckStorage();
   };
   userDataGrpElt.appendChild(strHtml`<div class="w-small-opt">
-	<span class="w-small-opt-desc">Run integrity checks</span>
-	${integrityButtonElt}
+  <span class="w-small-opt-desc">Run integrity checks</span>
+  ${integrityButtonElt}
 </div>`);
   section.appendChild(userDataGrpElt);
   return section;

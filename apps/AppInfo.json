@@ -148,7 +148,7 @@
       "defaultHeight": 400,
       "defaultWidth": 300,
       "dependencies": [],
-			"sandboxed": true,
+      "sandboxed": true,
       "startMenu": {
         "list": "Desktop Apps"
       },
@@ -175,7 +175,7 @@
       "icon": "💣",
       "defaultHeight": 700,
       "defaultWidth": 600,
-			"sandboxed": true,
+      "sandboxed": true,
       "startMenu": {
         "list": "Games"
       },
@@ -366,7 +366,7 @@
       "icon": "🔑",
       "defaultHeight": 300,
       "defaultWidth": 450,
-			"sandboxed": true,
+      "sandboxed": true,
       "startMenu": {
         "list": "Misc"
       }
@@ -377,7 +377,7 @@
       "icon": "🕒",
       "defaultHeight": 250,
       "defaultWidth": 250,
-			"sandboxed": true,
+      "sandboxed": true,
       "startMenu": {
         "list": "Misc"
       }
@@ -434,7 +434,7 @@
       "icon": "🌐",
       "defaultHeight": 600,
       "defaultWidth": 855,
-			"sandboxed": true,
+      "sandboxed": true,
       "startMenu": {
         "list": "Misc"
       },

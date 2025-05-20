@@ -127,7 +127,7 @@ async function start() {
 
   function openPath(appPath, appArgs) {
     if (appArgs && appArgs.length > 0) {
-      appsLauncher.openApp(appPath, appArgs ?? []);
+      appsLauncher.openApp(appPath, appArgs);
     } else {
       // If there's no argument, just use the more compatible open:
       // It also works for non-executables

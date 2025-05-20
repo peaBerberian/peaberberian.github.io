@@ -15,6 +15,13 @@ export function create(_args, env) {
   applyStyle(containerElt, {
     backgroundColor: "var(--window-sidebar-bg)",
     color: "var(--window-text-color)",
+    // backgroundColor:
+    //   "linear-gradient(to-bottom, var(--window-content-bg), var(--window-sidebar-bg))",
+    // background: "var(--sidebar-hover-bg)",
+    // background:
+    //   "linear-gradient(180deg, var(--window-content-bg) 0%,  var(--sidebar-hover-bg) 50%)",
+    // background:
+    //   "linear-gradient(140deg, var(--window-sidebar-bg) 0%,  var(--sidebar-hover-bg) 80%)",
     padding: "5px",
     display: "flex",
     flexDirection: "column",

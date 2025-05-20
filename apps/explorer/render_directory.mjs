@@ -707,7 +707,7 @@ function createEmptyDirMessage(path) {
   emptyMessage.style.color = "var(--window-text-color)";
   if (path === "/userdata/" || path === "/userdata") {
     emptyMessage.innerHTML =
-      "You do not have anything stored in your user directory yet.<br><br><i>Start by uploading or saving some files in it first!</i><br><br><br><b>Files uploaded and saved here still stay on your computer, they are not stored nor sent to a server.</b>";
+      "You do not have anything stored in your user directory yet.<br><br><i>Start by uploading or saving some files in it first!</i><br><br><br><b>Files uploaded and saved here still stay on your computer, they are not sent to a server.</b>";
   } else {
     emptyMessage.textContent = "There's nothing in this directory (yet!)";
   }

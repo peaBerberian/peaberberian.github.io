@@ -97,7 +97,7 @@ function multiply(a, b) {
 function divide(a, b) {
   if (b.numerator === 0n) {
     // We got some really funny guy visiting the site today:
-    throw new Error("Error: A division by zero, what a mad lad! 🙀🙀");
+    throw new Error("Error: A division by zero, what a mad lad! \u200b🙀🙀");
   }
   return Fraction(a.numerator * b.denominator, a.denominator * b.numerator);
 }
@@ -173,7 +173,15 @@ export function create() {
   function updateDisplay() {
     if (fullExpression && waitingForOperand) {
       displayElt.textContent = fullExpression;
-    } else if (fullExpression && !waitingForOperand) {
+    } else if (
+      fullExpression &&
+      !waitingForOperand &&
+      /*
+       * Zero-Width-Space is a reserved char for easter eggs.
+       * So basically, `fullExpression` is not to be composed with here.
+       */
+      fullExpression.indexOf("\u200b") === -1
+    ) {
       displayElt.textContent = fullExpression + currentValue;
     } else {
       displayElt.textContent = currentValue || "0";
@@ -308,11 +316,19 @@ export function create() {
             return;
         }
 
+        fullExpression = isThatInfamousOperation(inputValue)
+          ? /*
+             * Note: Zero Width Space (\u200b) is the "joke" character.
+             * I added that as a quick hack to make easter eggs not break things:
+             * If there's a ZWS in it, there's a joke in it (like my grandfather
+             * always said).
+             */
+            result.toDecimal() + " \u200b(Look Ma, no rounding errors!)"
+          : "";
         currentValue = result.toDecimal();
         previousValue = null;
         operation = null;
         waitingForOperand = true;
-        fullExpression = "";
         updateDisplay();
       } catch (error) {
         currentValue = error.message;
@@ -323,6 +339,30 @@ export function create() {
         updateDisplay();
       }
     }
+  }
+
+  // That's also the first thing I try in a calculator hehe
+  function isThatInfamousOperation(inputValue) {
+    if (operation !== "+") {
+      return false;
+    }
+    if (
+      previousValue.numerator === 1n &&
+      previousValue.denominator === 10n &&
+      inputValue.numerator === 1n &&
+      inputValue.denominator === 5n
+    ) {
+      return true;
+    }
+    if (
+      inputValue.numerator === 1n &&
+      inputValue.denominator === 10n &&
+      previousValue.numerator === 1n &&
+      previousValue.denominator === 5n
+    ) {
+      return true;
+    }
+    return false;
   }
 
   // Button definitions

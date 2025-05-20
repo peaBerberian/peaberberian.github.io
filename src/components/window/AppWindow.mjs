@@ -192,15 +192,10 @@ export default class AppWindow extends EventEmitter {
     this.trigger("minimizing");
   }
 
-  deminimizeAndActivate() {
-    if (
-      this.isMinimizedOrMinimizing() &&
-      !this._performWindowTransition("deminimize")
-    ) {
-      // Did not succeed to deminimize, just exit before activating
-      return;
+  deminimize() {
+    if (this.isMinimizedOrMinimizing()) {
+      this._performWindowTransition("deminimize");
     }
-    this.activate();
   }
 
   /**
@@ -218,6 +213,9 @@ export default class AppWindow extends EventEmitter {
    */
   activate() {
     if (this.isActivated()) {
+      return;
+    }
+    if (this.element.dataset.state === "close") {
       return;
     }
     keepWindowActiveInCurrentEventLoopIteration(this.element);

@@ -6,6 +6,7 @@ import {
 } from "../constants.mjs";
 import { SETTINGS } from "../settings.mjs";
 import { addAbortableEventListener } from "../utils.mjs";
+import setUpContextMenu from "./context-menu.mjs";
 
 /**
  * Class simplifying the handling of the "Taskbar", which is the bar containing
@@ -30,7 +31,9 @@ export default class Taskbar {
       taskbarElt.getElementsByClassName("taskbar-items")[0];
     addResizeHandle(taskbarElt, this._abortController.signal);
     handleTaskbarMove(taskbarElt, this._abortController.signal);
-    this._taskbarItemMap = new WeakMap();
+    this._eltPerHandle = new WeakMap();
+    this._appCallbacksPerElt = new WeakMap();
+    this._setupContextMenu();
   }
 
   /**
@@ -43,20 +46,28 @@ export default class Taskbar {
    * @param {string} appText.title - Title of the application.
    * @param {Object} callbacks - Callbacks to interact with the window from the
    * taskbar.
-   * @param {Function} callbacks.toggleAppActivation - De-minimize (if it is
-   * minimized) or minimize (if it wasn't) a window.
-   * @param {Function} callbacks.closeApp - Close the corresponding window.
    */
-  addWindow(windowHandle, { icon, title }, { toggleAppActivation, closeApp }) {
+  addWindow(windowHandle, { icon, title }, callbacks) {
     const itemElt = document.createElement("div");
+    this._appCallbacksPerElt.set(itemElt, callbacks);
     itemElt.className = "taskbar-item";
     itemElt.tabIndex = "0";
     itemElt.addEventListener("mousedown", (evt) => {
       if (evt && evt.button == 1) {
         // middle click
-        closeApp();
+        callbacks.closeWindow();
       }
     });
+    const toggleAppActivation = () => {
+      if (callbacks.isWindowMinimized()) {
+        callbacks.restoreWindow();
+        callbacks.activateWindow();
+      } else if (callbacks.isWindowActivated()) {
+        callbacks.minimizeWindow();
+      } else {
+        callbacks.activateWindow();
+      }
+    };
     itemElt.addEventListener("click", (evt) => {
       if (evt && evt.button == 1) {
         // middle click
@@ -77,7 +88,7 @@ export default class Taskbar {
     titleElt.textContent = title;
     itemElt.appendChild(iconElt);
     itemElt.appendChild(titleElt);
-    this._taskbarItemMap.set(windowHandle, itemElt);
+    this._eltPerHandle.set(windowHandle, itemElt);
     this._taskbarItemsElt.appendChild(itemElt);
   }
 
@@ -90,7 +101,7 @@ export default class Taskbar {
    * @param {string} title - The title of the application.
    */
   updateTitle(windowHandle, icon, title) {
-    const itemElt = this._taskbarItemMap.get(windowHandle);
+    const itemElt = this._eltPerHandle.get(windowHandle);
     if (!itemElt) {
       return;
     }
@@ -111,7 +122,7 @@ export default class Taskbar {
    * wish to activate, or `null` if no window should be activated.
    */
   setActiveWindow(windowHandle) {
-    const itemElt = this._taskbarItemMap.get(windowHandle);
+    const itemElt = this._eltPerHandle.get(windowHandle);
     for (const currItemElt of this._taskbarItemsElt.getElementsByClassName(
       "taskbar-item",
     )) {
@@ -129,7 +140,7 @@ export default class Taskbar {
    * the window which should be deactivated.
    */
   deActiveWindow(windowHandle) {
-    const itemElt = this._taskbarItemMap.get(windowHandle);
+    const itemElt = this._eltPerHandle.get(windowHandle);
     if (itemElt) {
       itemElt.classList.remove("active");
     }
@@ -140,7 +151,7 @@ export default class Taskbar {
    * @returns {DOMRect|null}
    */
   getTaskBoundingClientRect(windowHandle) {
-    const itemElt = this._taskbarItemMap.get(windowHandle);
+    const itemElt = this._eltPerHandle.get(windowHandle);
     if (itemElt) {
       return itemElt.getBoundingClientRect();
     }
@@ -153,7 +164,7 @@ export default class Taskbar {
    * window that should be removed.
    */
   remove(windowHandle) {
-    const itemElt = this._taskbarItemMap.get(windowHandle);
+    const itemElt = this._eltPerHandle.get(windowHandle);
     if (itemElt) {
       itemElt.remove();
     }
@@ -167,6 +178,57 @@ export default class Taskbar {
     this._taskbarItemsElt.innerHTML = "";
     const taskbarLastElt = document.getElementById("taskbar-last");
     taskbarLastElt.innerHTML = "";
+  }
+
+  _setupContextMenu() {
+    const taskbarElt = document.getElementById("taskbar");
+    setUpContextMenu({
+      element: taskbarElt,
+      // filter: (e) => e.target === taskbarElt,
+      abortSignal: this._abortController.signal,
+      actions: [
+        // TODO: toggle start menu, adapt if there's actually tasks?
+        {
+          name: "minimize",
+          title: "Minimize all windows",
+          onClick: () => {
+            for (const elt of this._taskbarItemsElt.children) {
+              const cbs = this._appCallbacksPerElt.get(elt);
+              if (!cbs?.isWindowMinimized()) {
+                cbs.minimizeWindow();
+              }
+            }
+          },
+        },
+        {
+          name: "restore",
+          title: "Restore all windows",
+          height: "1.3rem",
+          svg: `<svg width="800px" height="800px" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><g transform="translate(-220.000000, -6919.000000)" fill="currentColor"><g transform="translate(56.000000, 160.000000)"><path d="M172,6769.586 L176.586,6765 L172,6765 L172,6763 L180,6763 L180,6771 L178,6771 L178,6766.414 L173.414,6771 L172,6769.586 Z M166,6761 L182,6761 L182,6777 L172,6777 L172,6771 L166,6771 L166,6761 Z M164,6779 L184,6779 L184,6759 L164,6759 L164,6779 Z"></path></g></g></g></svg>`,
+          onClick: () => {
+            for (const elt of this._taskbarItemsElt.children) {
+              const cbs = this._appCallbacksPerElt.get(elt);
+              if (cbs?.isWindowMinimized()) {
+                cbs.restoreWindow();
+              }
+            }
+          },
+        },
+        {
+          name: "close",
+          title: "Close all windows",
+          onClick: () => {
+            for (let i = this._taskbarItemsElt.children.length; i >= 0; i--) {
+              const cbs = this._appCallbacksPerElt.get(
+                this._taskbarItemsElt.children[i],
+              );
+              cbs?.closeWindow();
+            }
+          },
+        },
+      ],
+    });
   }
 }
 

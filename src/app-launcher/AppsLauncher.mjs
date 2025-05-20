@@ -121,7 +121,8 @@ export default class AppsLauncher {
       // exists. If so, activate it.
       const createdWindowForApp = this._getNextWindowForApp(app.id);
       if (createdWindowForApp !== null) {
-        createdWindowForApp.deminimizeAndActivate();
+        createdWindowForApp.deminimize();
+        createdWindowForApp.activate();
         return false;
       }
     }
@@ -151,8 +152,12 @@ export default class AppsLauncher {
     this._checkRelativeWindowPlacement(appWindow);
 
     this._taskbarManager.addWindow(appWindow, app, {
-      toggleAppActivation: () => appWindow.toggleActivation(),
-      closeApp: () => appWindow.close(),
+      isWindowActivated: () => appWindow.isActivated(),
+      isWindowMinimized: () => appWindow.isMinimizedOrMinimizing(),
+      minimizeWindow: () => appWindow.minimize(),
+      restoreWindow: () => appWindow.deminimize(),
+      activateWindow: () => appWindow.activate(),
+      closeWindow: () => appWindow.close(),
     });
 
     appWindow.addEventListener("closing", () => {

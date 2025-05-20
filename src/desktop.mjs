@@ -4,11 +4,10 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
-// - context menu in taskbar, taskbar items,  start menu, window header, and
-//   explorer at least?
 // - Storage settings
 // - notes quick save could detect if file change since last save
 // - quicklinks hover
+// - context menu in explorer?
 //
 // medium priority:
 // - confirmation alert when closing window with unsaved file.
@@ -18,6 +17,7 @@
 // - copy svg in passgen is broken on multiple devices
 // - paint: resize do not re-activate quick save
 // - drag and drop in explorer
+// - talk about explorer complexities in "about this website"
 //
 // low priority:
 // - filesystem: re-check that no error gives away the path
@@ -44,8 +44,7 @@
 //   and when it shows it disappears forever after like 2 seconds.
 // - block-iframe too much used sometimes?
 // - Allow to disable the i-frame warning in settings?
-// - End accessibility stuff (complete tab navigation, label for all interactive
-//   elements)
+// - End accessibility stuff (complete tab navigation for the start menu mainly)
 // - when side-by-side window snapping we should be able to resize both at the same time
 // - z-index normalization could be less frequent, I don't know much if this has
 //   an impact

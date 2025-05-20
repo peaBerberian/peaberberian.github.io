@@ -87,7 +87,7 @@ export default function setUpContextMenu({
   });
 
   element.addEventListener("contextmenu", (e) => {
-    if (!filter || !filter(e)) {
+    if (filter && !filter(e)) {
       return;
     }
     e.preventDefault();
@@ -95,21 +95,23 @@ export default function setUpContextMenu({
     contextMenuElt.style.display = "flex";
 
     if (
-      e.pageX + contextMenuElt.offsetWidth > containerElt.clientWidth &&
-      e.pageX - contextMenuElt.offsetWidth >= 0
+      e.pageX + 3 + contextMenuElt.offsetWidth > containerElt.clientWidth &&
+      e.pageX - 3 - contextMenuElt.offsetWidth >= 0
     ) {
-      contextMenuElt.style.left = e.pageX - contextMenuElt.offsetWidth + "px";
+      contextMenuElt.style.left =
+        e.pageX - 3 - contextMenuElt.offsetWidth + "px";
     } else {
-      contextMenuElt.style.left = e.pageX + "px";
+      contextMenuElt.style.left = e.pageX + 3 + "px";
     }
 
     if (
-      e.pageY + contextMenuElt.offsetHeight > containerElt.clientHeight &&
-      e.pageY - contextMenuElt.offsetHeight >= 0
+      e.pageY + 3 + contextMenuElt.offsetHeight > containerElt.clientHeight &&
+      e.pageY - 3 - contextMenuElt.offsetHeight >= 0
     ) {
-      contextMenuElt.style.top = e.pageY - contextMenuElt.offsetHeight + "px";
+      contextMenuElt.style.top =
+        e.pageY - 3 - contextMenuElt.offsetHeight + "px";
     } else {
-      contextMenuElt.style.top = e.pageY + "px";
+      contextMenuElt.style.top = e.pageY + 3 + "px";
     }
     requestAnimationFrame(() => {
       contextMenuElt.classList.add("show");

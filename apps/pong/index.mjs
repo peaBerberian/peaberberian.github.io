@@ -274,6 +274,20 @@ export function create(_args, env, abortSignal) {
 
       // Now the "paddles"
       ctx.fillStyle = objectsColor;
+      if (!hasStarted) {
+        ctx.font = "22px monospace";
+        ctx.fillText(
+          "Bot",
+          enemyPaddle.x + PADDLE_WIDTH + 8,
+          enemyPaddle.y + PADDLE_HEIGHT,
+        );
+        const metrics = ctx.measureText("You");
+        ctx.fillText(
+          "You",
+          userPaddle.x - PADDLE_WIDTH - 5 - metrics.width,
+          userPaddle.y + PADDLE_HEIGHT,
+        );
+      }
       ctx.fillRect(enemyPaddle.x, enemyPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
       ctx.fillRect(userPaddle.x, userPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
 

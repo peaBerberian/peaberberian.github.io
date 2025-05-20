@@ -162,7 +162,7 @@ const themes = {
     "#ffffff",
     // icon-inactive-text
     // (Text color for not-selected item in the desktop)
-    "#cccccc",
+    "#eeeeee",
     // icon-active-bg
     // (Background color for the selected item in the desktop)
     "#383838",
@@ -306,7 +306,7 @@ const themes = {
     "#ffffff",
     // icon-inactive-text
     // (Text color for not-selected item in the desktop)
-    "#9a9aa5",
+    "#ffffff",
     // icon-active-bg
     // (Background color for the selected item in the desktop)
     "#323239",

@@ -367,6 +367,21 @@
       }
     },
     {
+      "id": "docx",
+      "title": "Docx Reader (docx.js)",
+      "icon": "📘",
+      "dependencies": ["filePickerOpen"],
+      "defaultHeight": 600,
+      "defaultWidth": 900,
+      "startMenu": {
+        "list": "External Apps"
+      },
+      "defaultForExtensions": [
+        "docx",
+        "doc"
+      ]
+    },
+    {
       "id": "this-website",
       "title": "About This Website",
       "icon": "🌐",

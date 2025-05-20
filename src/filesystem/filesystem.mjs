@@ -17,6 +17,7 @@ import {
   APPS_DIR,
   SYSTEM_DIR,
   USER_DATA_DIR,
+  USER_CONFIG_DIR,
   DESKTOP_CONFIG,
   START_MENU_CONFIG,
   PROVIDERS_CONFIG,
@@ -161,8 +162,16 @@ class DesktopFileSystem {
   async mv(srcPath, baseDestPath) {
     let normalizedDest;
 
+    if (!canPathBeUpdated(srcPath)) {
+      throw new FileSystemError(
+        "PermissionError",
+        "The source directory is read-only",
+      );
+    }
+
     if (srcPath.endsWith("/")) {
       // Moving a Directory
+      // TODO: Did I actually check that this is a directory and the rest isn't?
       normalizedDest = baseDestPath.endsWith("/")
         ? baseDestPath
         : baseDestPath + "/";
@@ -175,7 +184,7 @@ class DesktopFileSystem {
           "Cannot move directory: moving inside itself",
         );
       }
-      if (normalizedDest === USER_DATA_DIR) {
+      if (!canPathBeUpdated(normalizedDest)) {
         throw new FileSystemError(
           "PermissionError",
           "The destination directory is read-only",
@@ -186,19 +195,12 @@ class DesktopFileSystem {
       normalizedDest = baseDestPath.endsWith("/")
         ? baseDestPath + getName(srcPath)
         : baseDestPath;
-    }
-
-    if (!srcPath.startsWith(USER_DATA_DIR) || srcPath === USER_DATA_DIR) {
-      throw new FileSystemError(
-        "PermissionError",
-        "The source directory is read-only",
-      );
-    }
-    if (!normalizedDest.startsWith(USER_DATA_DIR)) {
-      throw new FileSystemError(
-        "PermissionError",
-        "The destination directory is read-only",
-      );
+      if (!canPathBeWrittenIn(normalizedDest)) {
+        throw new FileSystemError(
+          "PermissionError",
+          "The destination directory is read-only",
+        );
+      }
     }
 
     const segmentedSrcPath = srcPath.split("/");
@@ -356,7 +358,7 @@ class DesktopFileSystem {
 
   async rmDir(path) {
     const normalizedPath = path.endsWith("/") ? path : path + "/";
-    if (!normalizedPath.startsWith(USER_DATA_DIR)) {
+    if (!canPathBeUpdated(normalizedPath)) {
       throw new FileSystemError(
         "PermissionError",
         "This directory is read-only",
@@ -463,7 +465,7 @@ class DesktopFileSystem {
       throw new FileSystemError("NoEntryError", "File not found: " + path);
     }
 
-    if (!path.startsWith(USER_DATA_DIR)) {
+    if (!canPathBeWrittenIn(path)) {
       throw new FileSystemError("NoEntryError", "File not found: " + path);
     }
 
@@ -502,7 +504,7 @@ class DesktopFileSystem {
 
   async mkdir(path) {
     const normalizedPath = path.endsWith("/") ? path : path + "/";
-    if (!normalizedPath.startsWith(USER_DATA_DIR)) {
+    if (!canPathBeWrittenIn(normalizedPath)) {
       throw new FileSystemError(
         "PermissionError",
         "This directory is read-only",
@@ -633,6 +635,10 @@ class DesktopFileSystem {
         0,
         USER_DATA_DIR.length - 1,
       );
+      const userConfigFullPath = USER_CONFIG_DIR.substring(
+        0,
+        USER_CONFIG_DIR.length - 1,
+      );
       return this._virtualRootDirs
         .map((d) => {
           const fullPath = d.substring(0, d.length - 1);
@@ -646,15 +652,26 @@ class DesktopFileSystem {
             size: 0,
           };
         })
-        .concat({
-          id: pathToId(userDataFullPath),
-          fullPath: userDataFullPath,
-          directory: "/",
-          name: getName(userDataFullPath),
-          type: "directory",
-          modified: DEFAULT_MODIFIED_DATE,
-          size: 0,
-        });
+        .concat(
+          {
+            id: pathToId(userDataFullPath),
+            fullPath: userDataFullPath,
+            directory: "/",
+            name: getName(userDataFullPath),
+            type: "directory",
+            modified: DEFAULT_MODIFIED_DATE,
+            size: 0,
+          },
+          {
+            id: pathToId(userConfigFullPath),
+            fullPath: userConfigFullPath,
+            directory: "/",
+            name: getName(userConfigFullPath),
+            type: "directory",
+            modified: DEFAULT_MODIFIED_DATE,
+            size: 0,
+          },
+        );
     }
     if (this._virtualRootDirs.includes(dirPath)) {
       if (dirPath === APPS_DIR) {
@@ -698,7 +715,7 @@ class DesktopFileSystem {
       );
     }
 
-    if (!dirPath.startsWith(USER_DATA_DIR)) {
+    if (!canPathBeWrittenIn(dirPath)) {
       throw new FileSystemError(
         "NoEntryError",
         "Invalid directory: " + dirPath,
@@ -723,7 +740,7 @@ class DesktopFileSystem {
         );
       request.onsuccess = () => {
         if (request.result.length === 0) {
-          if (dirPath === USER_DATA_DIR) {
+          if ([USER_DATA_DIR, USER_CONFIG_DIR].includes(dirPath)) {
             resolve([]);
           } else {
             // For now we placed a system file in all other directories
@@ -866,3 +883,13 @@ class DesktopFileSystem {
 
 const fs = new DesktopFileSystem();
 export default fs;
+
+function canPathBeWrittenIn(path) {
+  return [USER_DATA_DIR, USER_CONFIG_DIR].some((dir) => path.startsWith(dir));
+}
+
+function canPathBeUpdated(path) {
+  return [USER_DATA_DIR, USER_CONFIG_DIR].some(
+    (dir) => path.startsWith(dir) && path !== dir,
+  );
+}

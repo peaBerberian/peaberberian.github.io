@@ -399,7 +399,10 @@ function createExplorer(explorerType, args, env, abortSignal) {
       currentDirectoryAbortController = new AbortController();
       linkAbortControllerToSignal(currentDirectoryAbortController, abortSignal);
 
-      if (normalizedPath.startsWith("/userdata/")) {
+      if (
+        normalizedPath.startsWith("/userdata/") ||
+        normalizedPath.startsWith("/userconfig/")
+      ) {
         warningElt.style.display = "none";
       } else {
         warningElt.style.display = "block";
@@ -590,7 +593,10 @@ function createExplorer(explorerType, args, env, abortSignal) {
 
   function updateButtons(currentPath, selectedItems) {
     if (explorerType === "saver") {
-      if (currentPath.startsWith("/userdata/")) {
+      if (
+        currentPath.startsWith("/userdata/") ||
+        currentPath.startsWith("/userconfig/")
+      ) {
         enableHighlightedButton(validateButton);
       } else {
         disableButton(validateButton);
@@ -602,7 +608,10 @@ function createExplorer(explorerType, args, env, abortSignal) {
       disableToolButton("rename");
       disableToolButton("download");
     } else if (selectedItems.length === 1) {
-      if (currentPath.startsWith("/userdata/")) {
+      if (
+        currentPath.startsWith("/userdata/") ||
+        currentPath.startsWith("/userconfig/")
+      ) {
         enableToolButton("cut");
         enableToolButton("rename");
         enableToolButton("clear");
@@ -617,7 +626,10 @@ function createExplorer(explorerType, args, env, abortSignal) {
         disableToolButton("download");
       }
     } else {
-      if (currentPath.startsWith("/userdata/")) {
+      if (
+        currentPath.startsWith("/userdata/") ||
+        currentPath.startsWith("/userconfig/")
+      ) {
         enableToolButton("cut");
         enableToolButton("clear");
       } else {
@@ -634,7 +646,10 @@ function createExplorer(explorerType, args, env, abortSignal) {
       enableToolButton("previous");
     }
 
-    if (currentPath.startsWith("/userdata/")) {
+    if (
+      currentPath.startsWith("/userdata/") ||
+      currentPath.startsWith("/userconfig/")
+    ) {
       if (currentPath === "/userdata/") {
         disableToolButton("home");
       } else {

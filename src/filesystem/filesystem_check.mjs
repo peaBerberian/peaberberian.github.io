@@ -3,6 +3,7 @@ import {
   DIR_CONFIG_FILENAME,
   METADATA_STORE,
   USER_DATA_DIR,
+  USER_CONFIG_DIR,
   getDirPath,
   getName,
   pathToId,
@@ -58,8 +59,12 @@ async function checkReachability(db, metadata) {
   });
 
   reachablePaths.add(USER_DATA_DIR.substring(0, USER_DATA_DIR.length - 1));
+  reachablePaths.add(USER_CONFIG_DIR.substring(0, USER_CONFIG_DIR.length - 1));
   metadata.forEach((child) => {
-    if (child.directory === USER_DATA_DIR) {
+    if (
+      child.directory === USER_DATA_DIR ||
+      child.directory === USER_CONFIG_DIR
+    ) {
       markReachable(child.fullPath);
     }
   });
@@ -106,7 +111,11 @@ async function repairUnreachableEntry(db, entry, allPaths, reachablePaths) {
     for (const part of pathParts) {
       currentPath += "/" + part;
 
-      if (!allPaths.has(currentPath) && currentPath.startsWith(USER_DATA_DIR)) {
+      if (
+        !allPaths.has(currentPath) &&
+        (currentPath.startsWith(USER_DATA_DIR) ||
+          currentPath.startsWith(USER_CONFIG_DIR))
+      ) {
         const newDir = await createMissingDirectory(db, currentPath);
         allPaths.set(currentPath, newDir);
         reachablePaths.add(currentPath);

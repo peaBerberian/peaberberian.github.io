@@ -12,7 +12,6 @@
 // - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices, very mysterious that one
 // - drag and drop in explorer
-// - talk about explorer complexities in "about this website"
 // - Settings: Default apps
 // - pdf.js external relying on Mozilla CDN. (Useful as default app for pdf)
 //

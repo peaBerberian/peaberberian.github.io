@@ -166,6 +166,14 @@ ${createAppTitle("Some anecdotes", {})}
 
 <p>I like this browser trick, so didn't want to prevent it. Instead I tried to improve my bucket fill tool around this: I initially tried an advanced custom subpixel color detection but this was becoming way too complicated, for gains I'm not sure is worth it for a tool as rough and crude as a bucket fill.<br>So in the end I opted for a practical and relatively efficient solution: the bucket fill sometimes go a little beyond the actual "target" color, to reach those subpixels. I found that it seemed relatively invisible that this was going on, besides some aliasing.</p>
 
+<h3>The explorer app</h3>
+
+<p>Before this project, I never realized all the interactions we expect from an explorer application: drag and drop, multiple selections (with a selection zone), allow to open files with the favorite associated application and allow to open executables, predictable arrow navigation, special control and shift keys meaning, extensive context menu and keyboard shortcuts (to delete, rename, cut, copy, move, add shortcuts etc.), auto-updating directory listing, information on file size, grid and list views, image previews etc.</p>
+
+<p>Due to this writing that app was very overwhelming and the most demoralizing step by far - due to the amount of work I had in front of me from the beginning (I'm still not happy with it!).<br>Yet now that it's there (and with it the file picker) I think it totally changed the way this desktop can be approached: now files can be saved, opened and retrieved locally and it also brought the "quick save" notion: the ability to just do a quick ctrl+s or button click to save the current work.</p>
+
+<p>The desktop is definitely much better with it and it's now a core part of it.</p>
+
 <h3>The clock app</h3>
 
 <p>The simple clock app, weirdly enough, gave me a lot of difficulties to write.</p>

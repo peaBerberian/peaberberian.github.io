@@ -421,6 +421,9 @@
       "defaultWidth": 855,
       "startMenu": {
         "list": "Misc"
+      },
+      "desktop": {
+        "display": true
       }
     },
     {

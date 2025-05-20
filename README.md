@@ -75,7 +75,7 @@ here that I find interesting:
   reasons: the root directory is `/` with a "user" directory in it
   (`/userdata/`) and some directories with virtual files (not actually on
   disk, and computed at read time): `/apps/` for build-time apps, `/system/`
-  for start menu and desktop configurations.
+  for configuration objects.
 
 - As we're on the web platform, we do not have much control over memory and
   performance. At first I thought this would become ugly very quick but until

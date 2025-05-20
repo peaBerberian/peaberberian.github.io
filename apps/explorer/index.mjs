@@ -37,12 +37,19 @@ export function createFileOpener(args = {}, env, abortSignal) {
   return createExplorer("opener", args, env, abortSignal);
 }
 
-function createExplorer(
-  explorerType, // either "explorer", "opener" or "saver"
-  args,
-  { appUtils, open, filesystem },
-  abortSignal,
-) {
+export function createFileSaver(args = {}, env, abortSignal) {
+  return createExplorer("saver", args, env, abortSignal);
+}
+
+/**
+ * @param {string} explorerType - Either "explorer", "opener" or "saver".
+ * @param {Array.<Object>} args
+ * @param {Object} env
+ * @param {AbortSignal} abortSignal
+ * @returns {Object}
+ */
+function createExplorer(explorerType, args, env, abortSignal) {
+  const { appUtils, filesystem } = env;
   let options = {};
   for (const opt of args) {
     if (opt.type === "options") {
@@ -52,12 +59,24 @@ function createExplorer(
 
   const {
     title,
-    allowMultipleSelections,
     baseDirectory = "/userdata/",
+
+    // NOTE: only used for explorerType === "saver"
+    savedFileName = "new_file.txt",
+    savedFileData,
+
+    // NOTE: only pertinent for explorerType === "opener"
+    allowMultipleSelections = true,
   } = options;
-  const containerElt = createContainerElement();
+
   /**
-   * Global HTML container for the file explorer.
+   * Root element for this explorer.
+   * TODO: needed?
+   */
+  const containerElt = createContainerElement();
+
+  /**
+   * HTML container for the file explorer.
    * @type {HTMLElement}
    */
   const explorerContainer = document.createElement("div");
@@ -128,7 +147,13 @@ function createExplorer(
           {
             name: "undo",
             title: "Exit picker",
-            onClick: () => open([]),
+            onClick: () => {
+              if (explorerType === "saver") {
+                env.onSaved(null);
+              } else {
+                env.onOpen([]);
+              }
+            },
           },
         ]
       : []),
@@ -195,7 +220,6 @@ function createExplorer(
     },
   ]);
   disableToolButton("paste");
-  updateToolButtons(currentPath, selectedItems);
   explorerElt.appendChild(toolsElt);
 
   /**
@@ -241,11 +265,34 @@ function createExplorer(
     justifyContent: "space-between",
     alignItems: "center",
   });
-  const statusElt = document.createElement("div");
-  explorerStatusBarElt.appendChild(statusElt);
 
-  let openButton;
-  if (explorerType === "opener") {
+  let statusLeftElt;
+  if (explorerType === "saver") {
+    statusLeftElt = document.createElement("input");
+    statusLeftElt.type = "text";
+    statusLeftElt.value = savedFileName;
+    statusLeftElt.onkeydown = (e) => {
+      e.stopPropagation();
+      if (e.key === "Enter") {
+        e.preventDefault();
+        validateButton.click();
+      }
+    };
+    applyStyle(statusLeftElt, {
+      flex: "1",
+      padding: "5px 8px",
+      border: "1px solid var(--window-line-color)",
+      fontWeight: "bold",
+      fontSize: "1.1em",
+      color: "var(--app-primary-color)",
+    });
+  } else {
+    statusLeftElt = document.createElement("div");
+  }
+  explorerStatusBarElt.appendChild(statusLeftElt);
+
+  let validateButton;
+  if (explorerType === "opener" || explorerType === "saver") {
     const buttonContainerElt = document.createElement("div");
     applyStyle(buttonContainerElt, {
       display: "flex",
@@ -262,29 +309,72 @@ function createExplorer(
       fontWeight: "bold",
     });
     cancelButton.onclick = () => {
-      open([]);
+      if (explorerType === "saver") {
+        env.onSaved(null);
+      } else {
+        env.onOpen([]);
+      }
     };
-    openButton = document.createElement("button");
-    openButton.className = "btn";
-    openButton.textContent = "Open";
-    applyStyle(openButton, {
+    validateButton = document.createElement("button");
+    validateButton.className = "btn";
+    validateButton.textContent = explorerType === "opener" ? "Open" : "Save";
+    validateButton.onclick = async () => {
+      if (explorerType === "opener") {
+        env.onOpen(selectedItems.map((x) => x.path));
+      } else if (!statusLeftElt.value) {
+        showError(directoryContainer, "No file name entered.");
+      } else {
+        currentDirectoryComponent?.onDeactivate();
+        const maskContainer = addBlockingMask(explorerElt);
+        try {
+          const wantedPath = pathJoin(currentPath, statusLeftElt.value);
+          try {
+            await filesystem.stat(wantedPath);
+            const doIt = await spawnConfirmDialog(
+              maskContainer,
+              "Are you sure?",
+              `You're going to overwrite "${wantedPath}"`,
+            );
+
+            if (!doIt) {
+              removeBlockingMask(maskContainer, explorerElt);
+              currentDirectoryComponent.onActivate();
+              return;
+            }
+          } catch (err) {
+            // TODO: check if we're in a no entry error?
+          }
+          await filesystem.writeFile(wantedPath, savedFileData);
+          currentDirectoryComponent?.onActivate();
+          removeBlockingMask(maskContainer, explorerElt);
+          env.onSaved({ path: wantedPath });
+        } catch (err) {
+          currentDirectoryComponent?.onActivate();
+          removeBlockingMask(maskContainer, explorerElt);
+          showError(directoryContainer, err.toString());
+        }
+      }
+    };
+    applyStyle(validateButton, {
       padding: "4px 15px",
       fontSize: "1.1em",
       fontWeight: "bold",
     });
-    disableButton(openButton);
+    disableButton(validateButton);
     buttonContainerElt.appendChild(cancelButton);
-    buttonContainerElt.appendChild(openButton);
+    buttonContainerElt.appendChild(validateButton);
     explorerStatusBarElt.appendChild(buttonContainerElt);
   } else {
-    openButton = null;
+    validateButton = null;
   }
   explorerElt.appendChild(explorerStatusBarElt);
 
   explorerContainer.appendChild(explorerElt);
   containerElt.appendChild(explorerContainer);
 
+  updateButtons(currentPath, selectedItems);
   navigateToPath(currentPath);
+
   return {
     element: containerElt,
     onActivate: () => {
@@ -315,7 +405,7 @@ function createExplorer(
     pathBarElt.replaceWith(newPathBarElt);
     pathBarElt = newPathBarElt;
 
-    updateToolButtons(currentPath, selectedItems);
+    updateButtons(currentPath, selectedItems);
     const entries = await filesystem.readDir(path);
     if (currentDirectoryAbortController.signal.aborted) {
       return;
@@ -327,45 +417,16 @@ function createExplorer(
         path,
         callbacks: {
           navigateTo: navigateToPath,
-          escape: () => {
-            if (explorerType === "opener") {
-              open([]);
-            }
-          },
+          escape: onDirectoryEscape,
           deleteItems,
           cutItems,
           pasteItems,
           onSelectionChange: (items) => {
             selectedItems = items;
-            updateStatusElement(statusElt, items);
-            updateToolButtons(currentPath, selectedItems);
-
-            if (explorerType === "opener" && openButton) {
-              if (items.length === 0 || items.some((x) => x.isDirectory)) {
-                disableButton(openButton);
-                openButton.onclick = null;
-              } else {
-                if (!allowMultipleSelections && items.length > 1) {
-                  disableButton(openButton);
-                  openButton.onclick = null;
-                } else {
-                  enableHighlightedButton(openButton);
-                  openButton.onclick = () => open(items.map((x) => x.path));
-                }
-              }
-            }
+            updateStatusElement(explorerType, statusLeftElt, items);
+            updateButtons(currentPath, selectedItems);
           },
-          openFiles: (items) => {
-            if (
-              explorerType === "opener" &&
-              !allowMultipleSelections &&
-              items.length > 1
-            ) {
-              showError(directoryContainer, `Choose only one file.`);
-            } else {
-              open(items.map((x) => x.path));
-            }
-          },
+          openFiles: onDirectoryFilesOpen,
         },
       });
       if (cuttedSelection.length > 0) {
@@ -381,7 +442,7 @@ function createExplorer(
     } catch (err) {
       showError(directoryContainer, `Error loading directory: ${err.message}`);
     }
-    updateStatusElement(statusElt, []);
+    updateStatusElement(explorerType, statusLeftElt, []);
   }
 
   function navigateToParent() {
@@ -523,7 +584,14 @@ function createExplorer(
     );
   }
 
-  function updateToolButtons(currentPath, selectedItems) {
+  function updateButtons(currentPath, selectedItems) {
+    if (explorerType === "saver") {
+      if (currentPath.startsWith("/userdata/")) {
+        enableHighlightedButton(validateButton);
+      } else {
+        disableButton(validateButton);
+      }
+    }
     if (selectedItems.length === 0) {
       disableToolButton("cut");
       disableToolButton("clear");
@@ -577,12 +645,96 @@ function createExplorer(
       disableToolButton("newFile");
       disableToolButton("upload");
     }
+
+    if (explorerType === "opener" && validateButton) {
+      if (
+        selectedItems.length === 0 ||
+        selectedItems.some((x) => x.isDirectory)
+      ) {
+        disableButton(validateButton);
+        validateButton.onclick = null;
+      } else {
+        if (!allowMultipleSelections && selectedItems.length > 1) {
+          disableButton(validateButton);
+        } else {
+          enableHighlightedButton(validateButton);
+        }
+      }
+    }
+  }
+
+  function onDirectoryEscape() {
+    if (explorerType === "opener") {
+      env.onOpen([]);
+    } else if (explorerType === "saver") {
+      env.onSaved(null);
+    } else {
+      // refresh
+      navigateToPath(currentPath);
+    }
+  }
+
+  async function onDirectoryFilesOpen(items) {
+    switch (explorerType) {
+      case "saver": {
+        if (items.length > 1) {
+          showError(directoryContainer, `Choose only one file to replace.`);
+          return;
+        }
+        currentDirectoryComponent?.onDeactivate();
+        const maskContainer = addBlockingMask(explorerElt);
+        try {
+          const doIt = await spawnConfirmDialog(
+            maskContainer,
+            "Are you sure?",
+            `You're going to overwrite "${items[0].name}"`,
+          );
+
+          if (!doIt) {
+            removeBlockingMask(maskContainer, explorerElt);
+            currentDirectoryComponent.onActivate();
+            return;
+          }
+          currentDirectoryComponent?.onActivate();
+          removeBlockingMask(maskContainer, explorerElt);
+          env.onSaved({ path: items[0].path });
+        } catch (err) {
+          currentDirectoryComponent?.onActivate();
+          removeBlockingMask(maskContainer, explorerElt);
+          showError(directoryContainer, err.toString());
+        }
+        break;
+      }
+
+      case "opener": {
+        if (
+          explorerType === "opener" &&
+          !allowMultipleSelections &&
+          items.length > 1
+        ) {
+          showError(directoryContainer, `Choose only one file to open.`);
+        }
+        env.onOpen(items.map((x) => x.path));
+        break;
+      }
+
+      default: {
+        env.open(items.map((x) => x.path));
+        break;
+      }
+    }
   }
 }
 
-function updateStatusElement(statusElt, selectedItems) {
+function updateStatusElement(explorerType, statusLeftElt, selectedItems) {
+  if (explorerType === "saver") {
+    if (selectedItems.length === 1 && !selectedItems[0].isDirectory) {
+      statusLeftElt.value = selectedItems[0].name;
+    }
+    return;
+  }
   if (selectedItems.length === 0) {
-    statusElt.innerHTML = "0 item selected";
+    statusLeftElt.innerHTML = "0 item selected";
     return;
   }
   let status;
@@ -592,7 +744,7 @@ function updateStatusElement(statusElt, selectedItems) {
   } else {
     status = `${selectedItems.length} items selected`;
   }
-  statusElt.innerHTML =
+  statusLeftElt.innerHTML =
     status + (size > 0 ? ` <i>(${formatSize(size)})</i>` : "");
 }
 

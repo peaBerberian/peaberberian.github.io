@@ -173,6 +173,7 @@ export function disableButton(buttonElt) {
     transform: "none",
     pointerEvents: "none",
   });
+  buttonElt.setAttribute("disabled", "disabled");
   buttonElt.setAttribute("tabindex", "-1");
 }
 
@@ -185,6 +186,7 @@ export function enableHighlightedButton(buttonElt) {
     transform: "",
     pointerEvents: "auto",
   });
+  buttonElt.removeAttribute("disabled");
   buttonElt.setAttribute("tabindex", "0");
 }
 export function enableRegularButton(buttonElt) {
@@ -196,6 +198,7 @@ export function enableRegularButton(buttonElt) {
     transform: "",
     pointerEvents: "auto",
   });
+  buttonElt.removeAttribute("disabled");
   buttonElt.setAttribute("tabindex", "0");
 }
 

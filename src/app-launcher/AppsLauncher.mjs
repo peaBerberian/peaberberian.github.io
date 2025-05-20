@@ -363,7 +363,12 @@ export default class AppsLauncher {
 
       try {
         const openedFile = await filesystem.readFile(data, "arraybuffer");
-        const token = await this._pathTokenCreator.encryptPath(data);
+        let token = null;
+        try {
+          token = await this._pathTokenCreator.encryptPath(data);
+        } catch (err) {
+          console.error("Cannot create path encrypted token:", err);
+        }
         return this.openApp(defaultApps[extension], [
           {
             type: "file",
@@ -777,8 +782,12 @@ export default class AppsLauncher {
             Promise.all(
               files.map(async (filePath) => {
                 const data = await filesystem.readFile(filePath, "arraybuffer");
-                const token =
-                  await this._pathTokenCreator.encryptPath(filePath);
+                let token = null;
+                try {
+                  token = await this._pathTokenCreator.encryptPath(filePath);
+                } catch (err) {
+                  console.error("Cannot create path encrypted token:", err);
+                }
                 return {
                   filename: getName(filePath),
                   handle: token,
@@ -802,9 +811,12 @@ export default class AppsLauncher {
             if (!fileInfo) {
               return;
             }
-            const token = await this._pathTokenCreator.encryptPath(
-              fileInfo.path,
-            );
+            let token = null;
+            try {
+              token = await this._pathTokenCreator.encryptPath(fileInfo.path);
+            } catch (err) {
+              console.error("Cannot create path encrypted token:", err);
+            }
             return {
               filename: getName(fileInfo.path),
               filePath: dependencies.includes("filesystem")

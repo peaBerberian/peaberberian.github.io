@@ -873,6 +873,9 @@ ol {
 .quicklink-link {
   margin: 7px;
 }
+.quicklink-link:hover {
+  color: var(--app-primary-color);
+}
 .quicklink-img,
 .quicklink-img svg {
   height: 22px;

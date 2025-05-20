@@ -6,7 +6,6 @@
 // high priority:
 // - Storage settings
 // - notes quick save could detect if file change since last save
-// - quicklinks hover primary color
 // - context menu in explorer?
 //
 // medium priority:

@@ -109,14 +109,42 @@ export default async function run(options) {
         {
           outputFile: OUTPUT_APP_LIB_SCRIPT,
           input: path.join(DESKTOP_SRC_DIR, "app-lib/app-sandbox.mjs"),
+          banner: `/**
+ * This is the JavaScript file that is loaded for "sandboxed" apps, which are
+ * apps completely isolated from the desktop: they don't have any access to its
+ * data and they run parallely with it.
+ *
+ * This sandbox script takes care of the management of that application in the
+ * context of this desktop: receiving messages, forwarding events etc.
+ *
+ * It also preloads the common app libraries (called \`appUtils\`) and setup the
+ * app: load its script, mount it in the dom and call its lifecycle events.
+ */`,
         },
         {
           outputFile: path.join(OUTPUT_DIR, "desktop.js"),
           input: path.join(DESKTOP_SRC_DIR, "desktop.mjs"),
+          banner: `/**
+ * This is the code for the desktop itself, which is completely separated from
+ * any application's code.
+ *
+ * It takes care of anything related to the desktop: window management,
+ * launching apps, desktop icons rendering, taskbar management, notifications,
+ * filesystem implementation and other general stuff.
+ *
+ * When running an application (or when choosing to preload it), the desktop
+ * will load that application's script.
+ */`,
         },
-      ].map((bundle) =>
-        produceBundle(bundle.input, bundle.outputFile, options),
-      ),
+      ].map((bundle) => {
+        if (bundle.banner) {
+          return produceBundle(bundle.input, bundle.outputFile, {
+            ...options,
+            banner: bundle.banner,
+          });
+        }
+        return produceBundle(bundle.input, bundle.outputFile, options);
+      }),
     );
   }
 }
@@ -126,6 +154,8 @@ export default async function run(options) {
  * @param {string} inputFile - The entry file for the bundle
  * @param {string} outfile - Destination of the produced bundle.
  * @param {Object} options
+ * @param {string|undefined} [options.banner] - String to add at the beginning
+ * of the bundle. Nothing if undefined.
  * @param {boolean} [options.minify] - If `true`, the output will be minified.
  * @param {boolean} [options.watch] - If `true`, the RxPlayer's files involve
  * will be watched and the code re-built each time one of them changes.
@@ -136,6 +166,7 @@ export default async function run(options) {
  * @returns {Promise}
  */
 async function produceBundle(inputFile, outfile, options) {
+  const banner = options.banner;
   const minify = !!options.minify;
   const watch = !!options.watch;
   const isSilent = options.silent;
@@ -170,6 +201,11 @@ async function produceBundle(inputFile, outfile, options) {
   // Create a context for incremental builds
   try {
     const context = await esbuild[meth]({
+      banner: banner
+        ? {
+            js: banner,
+          }
+        : undefined,
       entryPoints: [inputFile],
       bundle: true,
       target: "es2020",
@@ -567,6 +603,7 @@ export default [`;
       bundlesToMake.push({
         outputFile,
         input: filePath,
+        banner: `/** This is the code for the app identified as "${app.id}". */`,
       });
 
       // The preload.after idea is to preload the app only after a low

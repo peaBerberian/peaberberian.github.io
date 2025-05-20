@@ -1,20 +1,27 @@
-export function create(_args, env) {
+const textDecoder = new TextDecoder();
+
+export function create(args, env) {
   const { applyStyle, constructAppHeaderLine } = env.appUtils;
   const containerElt = document.createElement("div");
+
+  let history = [];
+  let historyIndex = -1;
+  let lastSavedContent = null;
+
   applyStyle(containerElt, {
     position: "relative",
     height: "100%",
     overflow: "hidden",
     width: "100%",
   });
-  const { element, focus } = createEditor();
+  const { element, focus } = createNotes();
   containerElt.appendChild(element);
   return {
     element: containerElt,
     onActivate: focus,
   };
 
-  function createEditor() {
+  function createNotes() {
     const editorWrapperElt = document.createElement("div");
     applyStyle(editorWrapperElt, {
       width: "100%",
@@ -22,11 +29,6 @@ export function create(_args, env) {
       display: "flex",
       flexDirection: "column",
     });
-
-    let history = [];
-    let historyIndex = -1;
-    let lastSavedContent = null;
-
     const {
       element: headerElt,
       enableButton,
@@ -140,10 +142,35 @@ export function create(_args, env) {
     textArea.addEventListener("scroll", () => syncScroll());
     updateLineNumbers();
 
+    for (const opt of args) {
+      if (opt.type === "file") {
+        loadFile(opt);
+        break;
+      }
+    }
+
     return {
       element: editorWrapperElt,
       focus: () => textArea.focus({ preventScroll: true }),
     };
+
+    function loadFile(file) {
+      try {
+        const data = textDecoder.decode(file.data);
+        textArea.value = data;
+        env.updateTitle("📝", String(file.filename) + " - " + "Notes");
+      } catch (_err) {
+        // TODO: signal error
+      }
+      history.length = 0;
+      historyIndex = -1;
+      lastSavedContent = null;
+      disableButton("undo");
+      disableButton("redo");
+      disableButton("clear");
+      textArea.scrollTo(0, 0);
+      updateLineNumbers();
+    }
 
     function updateLineNumbers() {
       const lines = textArea.value.split("\n");

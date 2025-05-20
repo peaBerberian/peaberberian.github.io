@@ -724,7 +724,7 @@ function parseToWantedFormat(data, format) {
     } else if (data instanceof ArrayBuffer) {
       return data;
     } else if (typeof data === "object") {
-      return textEncoder.encode(JSON.stringify(data));
+      return textEncoder.encode(JSON.stringify(data, null, 2));
     } else {
       throw new Error("Impossible to parse to ArrayBuffer the wanted file");
     }
@@ -750,7 +750,7 @@ function parseToWantedFormat(data, format) {
   if (data instanceof ArrayBuffer) {
     return textDecoder.decode(data);
   }
-  return JSON.stringify(data);
+  return JSON.stringify(data, null, 2);
 }
 
 /**
@@ -766,7 +766,7 @@ function generateDesktopConfig() {
         const appArg = {
           type: "file",
           name: `${app.id}.run`,
-          data: textEncoder.encode(JSON.stringify(app)),
+          data: textEncoder.encode(JSON.stringify(app, null, 2)),
         };
         if (existingGroupList) {
           existingGroupList.push(appArg);

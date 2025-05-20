@@ -1,3 +1,4 @@
+// TODO: after refresh, reselect and re-scroll
 // TODO: reload or watch dir
 // TODO: image thumbnails
 // TODO: Drag and drop in directory and other apps

@@ -15,6 +15,7 @@
 // high priority:
 //
 // medium priority:
+// - desktop.config.json not serializable anymore :/
 // - image viewer touch controls
 // - Sometimes the focus in on a desktop icon, not on the app
 // - start menu should always do some kind of sublist when sublists are enabled

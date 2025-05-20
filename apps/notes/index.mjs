@@ -196,7 +196,7 @@ export function create(args, env) {
     applyStyle(linesElt, {
       backgroundColor: "var(--window-content-bg)",
       color: "var(--window-text-color)",
-      width: "40px",
+      minWidth: "40px",
       overflow: "hidden",
       textAlign: "right",
       padding: "8px 4px",

@@ -89,7 +89,7 @@ export function create(args, env) {
         iframeInfo.isLoaded = false;
         env
           .filePickerOpen({
-            title: "Open a PDF from files stored on this Web Desktop",
+            title: "Open a docx from files stored on this Web Desktop",
             allowMultipleSelections: false,
           })
           .then((files) => {

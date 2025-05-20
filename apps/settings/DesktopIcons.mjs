@@ -5,7 +5,7 @@ import {
 } from "./utils.mjs";
 
 export default function createDesktopIconsSection(
-  { settings, appUtils },
+  { filesystem, settings, appUtils },
   abortSignal,
 ) {
   const { createAppTitle, strHtml } = appUtils;
@@ -32,6 +32,17 @@ export default function createDesktopIconsSection(
       abortSignal,
     ),
   );
+  const resetButtonElt = document.createElement("button");
+  // TODO: w-small-opt btn has a weird style, investigate
+  resetButtonElt.className = "btn";
+  resetButtonElt.textContent = "Reset";
+  resetButtonElt.onclick = () => {
+    filesystem.rmFile("/userconfig/desktop.config.json");
+  };
+  generalGroupElt.appendChild(strHtml`<div class="w-small-opt">
+	<span class="w-small-opt-desc">Reset to original desktop icons</span>
+	${resetButtonElt}
+</div>`);
   section.appendChild(generalGroupElt);
   const colorGroupElt = strHtml`<div class="w-group"><h3>Colors</h3></div>`;
   const imgBgIconOpacitySlider = createNumericSliderOnRef(

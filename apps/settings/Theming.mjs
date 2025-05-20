@@ -1192,7 +1192,8 @@ export default function createThemeSection(
 }
 
 function constructThemePresetSelection(setTheme, strHtml) {
-  const themeOptElt = strHtml`<div class="w-small-opt">Choose a theme preset</div>`;
+  const themeOptElt = strHtml`<div>Choose a theme preset</div>`;
+  themeOptElt.style.marginBottom = "10px";
   const gridElt = strHtml`<div class="w-char-grid"></div>`;
   const themePickerElt = strHtml`<div class="w-char-picker">
 ${gridElt}

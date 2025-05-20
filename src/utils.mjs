@@ -92,15 +92,8 @@ export function createAppIframe(url) {
   // of the desktop OS weird if nothing is done about it.
   const blockerDiv = document.createElement("div");
   blockerDiv.className = "iframe-top-layer";
-  applyStyle(blockerDiv, {
-    height: "100%",
-    width: "100%",
-    position: "absolute",
-    backgroundColor: "#000000AA",
-    justifyContent: "center",
-    alignItems: "center",
-  });
   const blockerText = document.createElement("div");
+  blockerDiv.className = "iframe-top-layer";
   applyStyle(blockerText, {
     color: "white",
     fontStyle: "italic",

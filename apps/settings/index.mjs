@@ -6,6 +6,7 @@ import createWallpaperSection from "./Wallpaper.mjs";
 import createSystemSection from "./System.mjs";
 import createThemeSection from "./Theming.mjs";
 import createWindowSection from "./Window.mjs";
+import createApplicationsSection from "./Applications.mjs";
 import createDesktopIconsSection from "./DesktopIcons.mjs";
 
 /**
@@ -44,6 +45,12 @@ export function create(_args, env, abortSignal) {
       icon: settings.startMenuPic.getValue(),
       text: "Taskbar",
       section: "taskbar",
+      active: false,
+    },
+    {
+      icon: "🧩",
+      text: "Applications",
+      section: "applications",
       active: false,
     },
     { icon: "🤹", text: "Desktop Icons", section: "icons", active: false },
@@ -126,6 +133,11 @@ export function create(_args, env, abortSignal) {
       case "window":
         contentElt.appendChild(
           createWindowSection(env, childAbortController.signal),
+        );
+        break;
+      case "applications":
+        contentElt.appendChild(
+          createApplicationsSection(env, childAbortController.signal),
         );
         break;
       case "icons":

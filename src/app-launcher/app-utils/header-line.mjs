@@ -182,9 +182,7 @@ function createButtonElt(svg, title, height = "1.7rem", onClick) {
   });
   const svgWrapperElt = document.createElement("span");
   applyStyle(svgWrapperElt, {
-    // flex: "1 0 0",
     height: height,
-    // margin: "auto 0",
   });
   const buttonSvgElt = getSvg(svg);
   if (buttonSvgElt) {
@@ -196,6 +194,7 @@ function createButtonElt(svg, title, height = "1.7rem", onClick) {
     svgWrapperElt.appendChild(buttonSvgElt);
   }
   buttonWrapperElt.appendChild(svgWrapperElt);
+  svgWrapperElt.className = "w-tool-icon";
   buttonWrapperElt.onclick = (e) => {
     if (buttonWrapperElt.classList.contains("disabled")) {
       return;
@@ -212,21 +211,9 @@ function createButtonElt(svg, title, height = "1.7rem", onClick) {
   };
   buttonWrapperElt.title = title;
   const titleElt = document.createElement("span");
-  applyStyle(titleElt, {
-    fontSize: "0.9em",
-    padding: "0 2px",
-    // flex: "1 0 auto",
-    display: "-webkit-box",
-    WebkitLineClamp: "2",
-    WebkitBoxOrient: "vertical",
-    textOverflow: "ellipsis",
-    whiteSpace: "normal",
-    maxWidth: "6em",
-    width: "min-content",
-    overflow: "hidden",
-  });
   titleElt.textContent = title;
   buttonWrapperElt.appendChild(titleElt);
+  titleElt.className = "w-tool-title";
   buttonWrapperElt.setAttribute("tabindex", "0");
   return buttonWrapperElt;
 }

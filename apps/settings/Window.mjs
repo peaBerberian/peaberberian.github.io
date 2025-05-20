@@ -165,15 +165,6 @@ export default function createWindowSection(
     ["Active Header Text", settings.windowActiveHeaderTextColor],
     ["Inactive Header Background", settings.windowInactiveHeaderBgColor],
     ["Inactive Header Text", settings.windowIninactiveHeaderTextColor],
-    ["Regular Text", settings.windowTextColor],
-    ["Regular Background", settings.windowContentBgColor],
-    ["Alternative App Color", settings.appPrimaryColorBg],
-    ["Alternative App Background", settings.appPrimaryBgColor],
-    ["Application Lines", settings.windowLineColor],
-    ["Sidebar Background", settings.windowSidebarBgColor],
-    ["Sidebar Hover Background", settings.windowSidebarHoverBgColor],
-    ["Sidebar Selected Background", settings.windowSidebarSelectedBgColor],
-    ["Sidebar Selected Text", settings.windowSidebarSelectedTextColor],
   ].forEach(([text, ref]) => {
     colorGroupElt.appendChild(
       createColorPickerOnRef(ref, text, appUtils, abortSignal),

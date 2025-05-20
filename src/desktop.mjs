@@ -54,12 +54,6 @@
 //   info on what has been dropped
 // - apps can have an `env.drag` method (`"drag"` dependency?) to start drag
 //   and dropping
-//
-// Application settings:
-// sidebar position: Always on top / auto
-// Toolbar: Both title and icons, Icons only, text only
-// iframe blocker
-// colors
 
 import fs from "./filesystem/filesystem.mjs";
 import DesktopAppIcons from "./components/DesktopAppIcons.mjs";

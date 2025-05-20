@@ -99,7 +99,7 @@ export function createCheckboxOnRef({ ref, label }, appUtils, abortSignal) {
 }
 
 export function createDropdownOnRef(
-  { ref, options, label },
+  { ref, options, toRef = (val) => val, fromRef = (val) => val, label },
   appUtils,
   abortSignal,
 ) {
@@ -107,17 +107,17 @@ export function createDropdownOnRef(
   const selectEl = strHtml`<select class="w-select">
 ${options.map((o) => strHtml`<option value="${o}">${o}</option>`)}
 </select>`;
-  selectEl.value = ref.getValue();
+  selectEl.value = fromRef(ref.getValue());
   const wrapperEl = strHtml`<div class="w-small-opt">
 <label>${label}</label>
 ${selectEl}
 </div>`;
   selectEl.oninput = selectEl.onchange = function () {
-    ref.setValueIfChanged(selectEl.value);
+    ref.setValueIfChanged(toRef(selectEl.value));
   };
   ref.onUpdate(
     (val) => {
-      selectEl.value = val;
+      selectEl.value = fromRef(val);
     },
     { clearSignal: abortSignal },
   );

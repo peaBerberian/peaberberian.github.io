@@ -4,7 +4,6 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
-// - defaultBackground can be a color directly
 //
 // medium priority:
 // - image viewer touch controls
@@ -19,6 +18,7 @@
 // - explorer: when going to parent directory, focus the previous one by default?
 // - explorer: refresh button? (Only useful when updating the directory in
 //   another page)
+// - exploit default background for website apps?
 // - notes quick save could detect if file change since last save
 // - filesystem: Proxy local storage in `/system32/`?
 // - filesystem: When indexedDB is not available, fallback on in-memory

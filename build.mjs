@@ -603,6 +603,11 @@ export default [`;
           break;
 
         case "sandboxed":
+          if (!filePath) {
+            throw new Error(
+              `Error in app "${app.id}". Apps with a "sandboxed" property should list a script.`,
+            );
+          }
           if (typeof app.sandboxed !== "boolean") {
             throw new Error(
               `Error in app "${app.id}". Invalid "sandboxed" property: should be a boolean.`,
@@ -639,8 +644,6 @@ export default [`;
               `Error in app "${app.id}". Invalid "defaultHeight" property: should be a number.`,
             );
           }
-          uglyHandWrittenJsObject +=
-            "    defaultHeight: " + app.defaultHeight + ",\n";
           break;
 
         case "defaultWidth":
@@ -649,8 +652,6 @@ export default [`;
               `Error in app "${app.id}". Invalid "defaultWidth" property: should be a number.`,
             );
           }
-          uglyHandWrittenJsObject +=
-            "    defaultWidth: " + app.defaultWidth + ",\n";
           break;
 
         case "onlyOne":
@@ -665,6 +666,11 @@ export default [`;
           break;
 
         case "dependencies":
+          if (!filePath) {
+            throw new Error(
+              `Error in app "${app.id}". Apps with a "dependencies" property should list a script.`,
+            );
+          }
           if (!Array.isArray(app.dependencies)) {
             throw new Error(
               `Error in app "${app.id}". Invalid "dependencies" property: should be an array.`,
@@ -688,8 +694,6 @@ export default [`;
               );
             }
           }
-          uglyHandWrittenJsObject +=
-            "    dependencies: " + JSON.stringify(app.dependencies) + ",\n";
           break;
 
         case "provider":
@@ -781,12 +785,24 @@ export default [`;
       uglyHandWrittenJsObject += `    data: {
       lazyLoad: ${JSON.stringify(importPath)},
 `;
-      if (app.defaultBackground) {
+      if (app.defaultBackground !== undefined) {
         uglyHandWrittenJsObject += `      defaultBackground: ${JSON.stringify(app.defaultBackground)},
 `;
       }
       if (app.sandboxed) {
         uglyHandWrittenJsObject += `      sandboxed: true,
+`;
+      }
+      if (app.dependencies) {
+        uglyHandWrittenJsObject +=
+          "      dependencies: " + JSON.stringify(app.dependencies) + ",\n";
+      }
+      if (app.defaultHeight !== undefined) {
+        uglyHandWrittenJsObject += `      defaultHeight: ${JSON.stringify(app.defaultHeight)},
+`;
+      }
+      if (app.defaultWidth !== undefined) {
+        uglyHandWrittenJsObject += `      defaultWidth: ${JSON.stringify(app.defaultWidth)},
 `;
       }
       uglyHandWrittenJsObject += `    },
@@ -810,10 +826,18 @@ export default [`;
       }
     } else if (typeof app.website === "string" && app.website !== "") {
       uglyHandWrittenJsObject += `    data: {
-      website: ${JSON.stringify(app.website)}
+      website: ${JSON.stringify(app.website)},
 `;
-      if (app.defaultBackground) {
+      if (app.defaultBackground !== undefined) {
         uglyHandWrittenJsObject += `      defaultBackground: ${JSON.stringify(app.defaultBackground)},
+`;
+      }
+      if (app.defaultHeight !== undefined) {
+        uglyHandWrittenJsObject += `      defaultHeight: ${JSON.stringify(app.defaultHeight)},
+`;
+      }
+      if (app.defaultWidth !== undefined) {
+        uglyHandWrittenJsObject += `      defaultWidth: ${JSON.stringify(app.defaultWidth)},
 `;
       }
       uglyHandWrittenJsObject += `    },

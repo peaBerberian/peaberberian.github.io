@@ -415,6 +415,7 @@ function writeGeneratedAppFile(baseDir) {
                 "filesystem",
                 "filePickerOpen",
                 "filePickerSave",
+                "quickSave",
                 "open",
               ].includes(dep)
             ) {

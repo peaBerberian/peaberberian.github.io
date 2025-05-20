@@ -169,6 +169,12 @@ The following properties can be set for each application:
   - `"filePickerSave"`: Equivalent of `"filePickerOpen"` but this time to choose
     a save location (and save) for a file.
 
+  - `"quickSave"`: Allows to save files already communicated to the application
+    (either as an application's argument or through one of the file pickers),
+    just by communicating its file "handle". Allows to bypass the need to
+    open `"filePickerSave"` when the path to save at should not have change
+    (still without the application knowing where).
+
 - `"provider"` (`Array.<string>`, optional): The supplementary features the
   application can provide.
 

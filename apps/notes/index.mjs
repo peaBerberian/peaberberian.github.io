@@ -7,10 +7,11 @@ export function create(args, env) {
   const { constructAppHeaderLine } = env.appUtils;
   const containerElt = document.createElement("div");
 
+  let currentFileHandle = null;
+  let currentFilename = null;
   let history = [];
   let historyIndex = -1;
   let lastSavedContent = null;
-  let currentFilename = null;
 
   applyStyle(containerElt, {
     position: "relative",
@@ -179,6 +180,33 @@ export function create(args, env) {
         },
       },
       {
+        name: "quick-save",
+        onClick: async () => {
+          if (!currentFileHandle) {
+            showMessage(
+              element,
+              `❌ Cannot quick save: unknown file path.`,
+              5000,
+            );
+            return;
+          }
+          spinnerContainerElt.style.display = "flex";
+          statusBar.textContent = "Saving file...";
+          try {
+            const textEncoder = new TextEncoder();
+            const savedFileData = textEncoder.encode(textArea.value).buffer;
+            await env.quickSave(currentFileHandle, savedFileData);
+            disableButton("quick-save");
+            spinnerContainerElt.style.display = "none";
+            statusBar.textContent = "Ready";
+          } catch (err) {
+            spinnerContainerElt.style.display = "none";
+            statusBar.textContent = "Ready";
+            showMessage(element, "❌ " + err.toString(), 10000);
+          }
+        },
+      },
+      {
         name: "save",
         onClick: saveFile,
       },
@@ -186,6 +214,7 @@ export function create(args, env) {
     disableButton("undo");
     disableButton("redo");
     disableButton("clear");
+    disableButton("quick-save");
 
     const editorContentElt = document.createElement("div");
     editorContentElt.style.display = "flex";
@@ -282,6 +311,7 @@ export function create(args, env) {
       } catch (_err) {
         // TODO: signal error
       }
+      currentFileHandle = file.handle ?? null;
       history.length = 0;
       historyIndex = -1;
       lastSavedContent = null;
@@ -289,6 +319,7 @@ export function create(args, env) {
       disableButton("undo");
       disableButton("redo");
       disableButton("clear");
+      disableButton("quick-save");
       textArea.scrollTo(0, 0);
       updateLineNumbers();
     }
@@ -304,6 +335,7 @@ export function create(args, env) {
       disableButton("undo");
       disableButton("redo");
       disableButton("clear");
+      disableButton("quick-save");
       textArea.scrollTo(0, 0);
       updateLineNumbers();
     }
@@ -357,6 +389,9 @@ export function create(args, env) {
       if (historyIndex > 0) {
         enableButton("undo");
       }
+      if (currentFileHandle) {
+        enableButton("quick-save");
+      }
     }
 
     function undo() {
@@ -379,6 +414,9 @@ export function create(args, env) {
         disableButton("clear");
       } else {
         enableButton("clear");
+      }
+      if (currentFileHandle) {
+        enableButton("quick-save");
       }
       updateLineNumbers();
     }
@@ -403,6 +441,9 @@ export function create(args, env) {
       } else {
         enableButton("clear");
       }
+      if (currentFileHandle) {
+        enableButton("quick-save");
+      }
       updateLineNumbers();
     }
 
@@ -417,9 +458,11 @@ export function create(args, env) {
           savedFileData,
           savedFileName: currentFilename ?? "new_note.txt",
         });
+        currentFileHandle = saveData?.handle ?? null;
         spinnerContainerElt.style.display = "none";
         statusBar.textContent = "Ready";
         if (!saveData) {
+          disableButton("quick-save");
           return;
         }
         updateFilename(saveData.filename);
@@ -428,6 +471,7 @@ export function create(args, env) {
         statusBar.textContent = "Ready";
         showMessage(element, "❌ " + err.toString(), 10000);
       }
+      disableButton("quick-save");
     }
   }
 

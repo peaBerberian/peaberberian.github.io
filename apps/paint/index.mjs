@@ -31,6 +31,7 @@ export function create(_args, env, abortSignal) {
   let currentSize = 15;
   let hasSomethingDrawnOnCanvas = false;
   let hasUpdatesToSave = true;
+  let currentFileHandle = null;
 
   const history = [];
   let historyIndex = 0;
@@ -63,11 +64,16 @@ export function create(_args, env, abortSignal) {
     },
     { name: "separator" },
     { name: "download", onClick: downloadImage },
+    {
+      name: "quick-save",
+      onClick: quickSave,
+    },
     { name: "save", onClick: saveFile },
   ]);
   disableButton("undo");
   disableButton("redo");
   disableButton("clear");
+  disableButton("quick-save");
   wrapperElt.appendChild(headerElt);
 
   const contentElt = document.createElement("div");
@@ -337,6 +343,9 @@ export function create(_args, env, abortSignal) {
             hasSomethingDrawnOnCanvas = true;
             enableButton("clear");
             enableButton("undo");
+            if (currentFileHandle) {
+              enableButton("quick-save");
+            }
           }
         }
         break;
@@ -347,6 +356,9 @@ export function create(_args, env, abortSignal) {
             hasSomethingDrawnOnCanvas = true;
             enableButton("clear");
             enableButton("undo");
+            if (currentFileHandle) {
+              enableButton("quick-save");
+            }
           }
         }
         break;
@@ -379,6 +391,9 @@ export function create(_args, env, abortSignal) {
             hasSomethingDrawnOnCanvas = true;
             enableButton("clear");
             enableButton("undo");
+            if (currentFileHandle) {
+              enableButton("quick-save");
+            }
           }
         }
         break;
@@ -398,6 +413,9 @@ export function create(_args, env, abortSignal) {
             hasSomethingDrawnOnCanvas = true;
             enableButton("clear");
             enableButton("undo");
+            if (currentFileHandle) {
+              enableButton("quick-save");
+            }
           }
         }
         break;
@@ -423,6 +441,9 @@ export function create(_args, env, abortSignal) {
             hasSomethingDrawnOnCanvas = true;
             enableButton("clear");
             enableButton("undo");
+            if (currentFileHandle) {
+              enableButton("quick-save");
+            }
           }
         }
         break;
@@ -444,6 +465,9 @@ export function create(_args, env, abortSignal) {
             hasSomethingDrawnOnCanvas = true;
             enableButton("clear");
             enableButton("undo");
+            if (currentFileHandle) {
+              enableButton("quick-save");
+            }
           }
         }
         break;
@@ -469,6 +493,9 @@ export function create(_args, env, abortSignal) {
             hasSomethingDrawnOnCanvas = true;
             enableButton("clear");
             enableButton("undo");
+            if (currentFileHandle) {
+              enableButton("quick-save");
+            }
           }
         }
         break;
@@ -667,19 +694,54 @@ export function create(_args, env, abortSignal) {
 
   function saveFile() {
     canvas.toBlob(async (blob) => {
-      const savedFileData = await blob.arrayBuffer();
-      await env.filePickerSave({
-        title: "Choose where to save your (magnificient 👌) painting",
-        savedFileData,
-        savedFileName: "painting.png",
-      });
+      try {
+        const savedFileData = await blob.arrayBuffer();
+        const saveData = await env.filePickerSave({
+          title: "Choose where to save your (magnificient 👌) painting",
+          savedFileData,
+          savedFileName: "painting.png",
+        });
+        currentFileHandle = saveData?.handle ?? null;
+        disableButton("quick-save");
+      } catch (err) {
+        showMessage(wrapperElt, "❌ " + err.toString(), 10000);
+      }
     }, "image/png");
+  }
+
+  function quickSave() {
+    saveCurrentState();
+    canvas.toBlob(async (blob) => {
+      try {
+        const savedFileData = await blob.arrayBuffer();
+        if (!currentFileHandle) {
+          showMessage(
+            wrapperElt,
+            `❌ Cannot quick save: unknown file path.`,
+            5000,
+          );
+          return;
+        }
+        await env.quickSave(currentFileHandle, savedFileData);
+        if (hasUpdatesToSave) {
+          enableButton("quick-save");
+        } else {
+          disableButton("quick-save");
+        }
+      } catch (err) {
+        showMessage(wrapperElt, "❌ " + err.toString(), 10000);
+      }
+    });
   }
 
   function saveCurrentState() {
     if (!hasUpdatesToSave) {
       return;
     }
+    if (currentFileHandle) {
+      enableButton("quick-save");
+    }
+
     hasUpdatesToSave = false;
     const savedState = ctx.getImageData(0, 0, canvas.width, canvas.height);
     if (historyIndex !== history.length) {
@@ -708,6 +770,9 @@ export function create(_args, env, abortSignal) {
         enableButton("clear");
       } else {
         disableButton("clear");
+      }
+      if (currentFileHandle) {
+        enableButton("quick-save");
       }
     }
   }
@@ -858,4 +923,32 @@ function getSvg(svg) {
   svgWrapperElt.innerHTML = svg;
   const svgElt = svgWrapperElt.children[0];
   return svgElt;
+}
+
+function showMessage(containerElt, message, duration = 5000) {
+  const messageElt = document.createElement("div");
+  messageElt.textContent = message;
+  applyStyle(messageElt, {
+    position: "absolute",
+    top: "10px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    color: "white",
+    padding: "10px 20px",
+    borderRadius: "4px",
+    zIndex: "1000",
+    transition: "opacity 0.3s",
+    textAlign: "center",
+  });
+
+  containerElt.appendChild(messageElt);
+
+  setTimeout(() => {
+    messageElt.style.opacity = "0";
+    // After animation, remove
+    setTimeout(() => {
+      messageElt.remove();
+    }, 350);
+  }, duration);
 }

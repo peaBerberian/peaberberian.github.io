@@ -13,13 +13,14 @@
  */
 
 import {
+  APP_STYLE,
   IMAGE_ROOT_PATH,
   TASKBAR_MAX_HORIZONTAL_SIZE,
   TASKBAR_MAX_VERTICAL_SIZE,
   TASKBAR_MIN_HORIZONTAL_SIZE,
   TASKBAR_MIN_VERTICAL_SIZE,
 } from "./constants.mjs";
-import { SharedReference } from "./utils.mjs";
+import SharedReference from "./shared_reference.mjs";
 
 // Values copied from CSS:
 // TODO: read from CSS directly?
@@ -66,6 +67,12 @@ const DEFAULT_WINDOW_HEADER_HEIGHT = 35;
 const DEFAULT_WINDOW_BUTTON_SIZE = 18;
 
 /**
+ * Link keys of the `APP_STYLE` object to the reference linked to it.
+ * Constructed dynamically after this file evaluates.
+ */
+export const APP_STYLE_SETTINGS = {};
+
+/**
  * Tuples of all references defined here, their default value
  * and the localStorage property where they are at.
  *
@@ -83,6 +90,7 @@ let taskbarSizeContext;
  * - `"right"`: on the right of the page, `taskbarSize` is its width.
  */
 const taskbarLocation = createRefForState(
+  null,
   "taskbar-location",
   "bottom",
   (val) => {
@@ -149,7 +157,7 @@ const taskbarLocation = createRefForState(
 /** Global settings defined for the application, changing many UI parameters. */
 export const SETTINGS = {
   /** Display the "About me" App at start-up */
-  aboutMeStart: createRefForState("about-me-start", true),
+  aboutMeStart: createRefForState(null, "about-me-start", true),
 
   /** Persist any setting here in `localStorage` only if `true`. */
   persistSettings: createRefForState(null, true, (persistSettings) => {
@@ -161,23 +169,32 @@ export const SETTINGS = {
   }),
 
   /** If `false`, new entries cannot be added to the filesystem. */
-  storeNewDataInIndexedDB: createRefForState("store-new-data", true),
+  storeNewDataInIndexedDB: createRefForState(null, "store-new-data", true),
 
   /** If `true`, the IndexedDB filesystem will be checked at startup. */
-  performFileSystemCheckAtStartup: createRefForState("startup-fs-check", true),
+  performFileSystemCheckAtStartup: createRefForState(
+    null,
+    "startup-fs-check",
+    true,
+  ),
 
   /** Update the base font size to the given size in px. */
-  fontSize: createRefForState("font-size", DEFAULT_FONT_SIZE, (size) => {
-    window.requestAnimationFrame(() => {
-      document.documentElement.style.setProperty(
-        "--font-size",
-        String(size) + "px",
-      );
-    });
-  }),
+  fontSize: createRefForState(
+    "fontSize",
+    "font-size",
+    DEFAULT_FONT_SIZE,
+    (size) => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty(
+          APP_STYLE.fontSize.cssName,
+          String(size) + "px",
+        );
+      });
+    },
+  ),
 
   /** The style the button on a header should have. */
-  buttonStyle: createRefForState("button-style", "Colorful", (style) => {
+  buttonStyle: createRefForState(null, "button-style", "Colorful", (style) => {
     for (const prevClass of document.body.classList) {
       if (prevClass.endsWith("-w-buttons")) {
         document.body.classList.remove(prevClass);
@@ -191,7 +208,7 @@ export const SETTINGS = {
   }),
 
   /** Whether buttons are at the left or right of headers. */
-  buttonPosition: createRefForState("button-position", "Right", (pos) => {
+  buttonPosition: createRefForState(null, "button-position", "Right", (pos) => {
     for (const prevClass of document.body.classList) {
       if (prevClass.startsWith("w-btn-pos-")) {
         document.body.classList.remove(prevClass);
@@ -203,27 +220,32 @@ export const SETTINGS = {
   }),
 
   /** Whether app titles are at the left, center or right of headers. */
-  headerTitlePosition: createRefForState("title-position", "Left", (pos) => {
-    for (const prevClass of document.body.classList) {
-      if (prevClass.startsWith("w-title-pos-")) {
-        document.body.classList.remove(prevClass);
+  headerTitlePosition: createRefForState(
+    null,
+    "title-position",
+    "Left",
+    (pos) => {
+      for (const prevClass of document.body.classList) {
+        if (prevClass.startsWith("w-title-pos-")) {
+          document.body.classList.remove(prevClass);
+        }
       }
-    }
-    if (pos === "Center") {
-      document.body.classList.add("w-title-pos-center");
-    } else if (pos === "Right") {
-      document.body.classList.add("w-title-pos-right");
-    }
-  }),
+      if (pos === "Center") {
+        document.body.classList.add("w-title-pos-center");
+      } else if (pos === "Right") {
+        document.body.classList.add("w-title-pos-right");
+      }
+    },
+  ),
 
   /** If `true`, "snapping" a window to the top of the screen make if full-screen. */
-  topWindowSnapping: createRefForState("top-window-snapping", true),
+  topWindowSnapping: createRefForState(null, "top-window-snapping", true),
 
   /** If `true`, "snapping" a window to a side of the screen make if half-full-screen. */
-  sideWindowSnapping: createRefForState("side-window-snapping", true),
+  sideWindowSnapping: createRefForState(null, "side-window-snapping", true),
 
   /** How to display "tools" in concerned applications. */
-  toolbarFormat: createRefForState("toolbar-format", "both", (format) => {
+  toolbarFormat: createRefForState(null, "toolbar-format", "both", (format) => {
     if (format === "icon") {
       document.body.classList.add("no-tool-title");
     } else {
@@ -232,7 +254,7 @@ export const SETTINGS = {
   }),
 
   /** How to display the "sidebar" in concerned applications. */
-  sidebarFormat: createRefForState("sidebar-format", "auto", (format) => {
+  sidebarFormat: createRefForState(null, "sidebar-format", "auto", (format) => {
     if (format === "top") {
       document.body.classList.add("w-sidebar-top");
     } else {
@@ -241,6 +263,7 @@ export const SETTINGS = {
   }),
 
   showIframeBlockerHelp: createRefForState(
+    null,
     "i-frame-blocker-msg",
     true,
     (displayHelp) => {
@@ -252,9 +275,10 @@ export const SETTINGS = {
     },
   ),
 
-  moveAroundIcons: createRefForState("move-icons", true),
+  moveAroundIcons: createRefForState(null, "move-icons", true),
 
   dblClickHeaderFullScreen: createRefForState(
+    null,
     "dbl-click-header-full-screen",
     true,
   ),
@@ -264,14 +288,19 @@ export const SETTINGS = {
    * title displayed.
    * If `false`, they have just their icon.
    */
-  taskbarDisplayTitle: createRefForState("taskbar-app-title", true, (val) => {
-    const taskbarElt = document.getElementById("taskbar");
-    if (val) {
-      taskbarElt.classList.remove("no-title");
-    } else {
-      taskbarElt.classList.add("no-title");
-    }
-  }),
+  taskbarDisplayTitle: createRefForState(
+    null,
+    "taskbar-app-title",
+    true,
+    (val) => {
+      const taskbarElt = document.getElementById("taskbar");
+      if (val) {
+        taskbarElt.classList.remove("no-title");
+      } else {
+        taskbarElt.classList.add("no-title");
+      }
+    },
+  ),
 
   /**
    * If `true`, windows `left` and `top` position won't change on resize.
@@ -279,6 +308,7 @@ export const SETTINGS = {
    * dimensions and as such update on resize.
    */
   absoluteWindowPositioning: createRefForState(
+    null,
     "absolute-window-positioning",
     true,
   ),
@@ -288,19 +318,19 @@ export const SETTINGS = {
    * If `false`, they will be considered relative to the current page's
    * dimensions and as such update on resize.
    */
-  absoluteWindowSize: createRefForState("absolute-window-size", true),
+  absoluteWindowSize: createRefForState(null, "absolute-window-size", true),
 
   /**
    * If `true`, windows can leave the viewport.
    * If `false`, they will always be contained in the viewport.
    */
-  oobWindows: createRefForState("oob-windows", true),
+  oobWindows: createRefForState(null, "oob-windows", true),
 
   /** If set to `true`, enable the "sub-list" concept in the start menu. */
-  enableStartMenuSublists: createRefForState("start-sub-lists", true),
+  enableStartMenuSublists: createRefForState(null, "start-sub-lists", true),
 
   /** The character to show for the start menu. */
-  startMenuPic: createRefForState("start-menu-pic", "🚀", (pic) => {
+  startMenuPic: createRefForState(null, "start-menu-pic", "🚀", (pic) => {
     window.requestAnimationFrame(() => {
       document.getElementById("start-pic").textContent = pic;
     });
@@ -313,6 +343,7 @@ export const SETTINGS = {
    * -  If `type` is set to `"color"`, then `value should be an hex-encoded 24 bits color
    */
   desktopBackground: createRefForState(
+    null,
     "desktop-bg",
     {
       // Can be "image" or "color"
@@ -335,6 +366,7 @@ export const SETTINGS = {
 
   /** Defines the opacity of the taskbar, as a value from `0` to `1` */
   taskbarOpacity: createRefForState(
+    null,
     "taskbar-opacity",
     DEFAULT_TASKBAR_OPACITY,
     (opacityPercent) => {
@@ -354,6 +386,7 @@ export const SETTINGS = {
   ),
 
   taskbarActiveAppOpacity: createRefForState(
+    null,
     "taskbar-active-opacity",
     DEFAULT_TASKBAR_OPACITY,
     (opacityPercent) => {
@@ -369,6 +402,7 @@ export const SETTINGS = {
 
   /** Defines the background-color of the taskbar, as an hex-encoded 24 bits color */
   taskbarBgColor: createRefForState(
+    null,
     "taskbar-bg",
     DEFAULT_TASK_BG_COLOR,
     (color) => {
@@ -383,6 +417,7 @@ export const SETTINGS = {
 
   /** Defines the text color on the taskbar, as an hex-encoded 24 bits color */
   taskbarTextColor: createRefForState(
+    null,
     "taskbar-text",
     DEFAULT_TASK_TEXT_COLOR,
     (color) => {
@@ -397,6 +432,7 @@ export const SETTINGS = {
    * hex-encoded 24 bits color.
    */
   taskbarHoverColor: createRefForState(
+    null,
     "taskbar-hover",
     DEFAULT_TASK_HOVER_COLOR,
     (color) => {
@@ -411,6 +447,7 @@ export const SETTINGS = {
    * hex-encoded 24 bits color.
    */
   taskbarActiveBgColor: createRefForState(
+    null,
     "taskbar-active-bg",
     DEFAULT_TASK_ACTIVE_BG_COLOR,
     (color) => {
@@ -428,6 +465,7 @@ export const SETTINGS = {
    * hex-encoded 24 bits color.
    */
   taskbarInactiveBgColor: createRefForState(
+    null,
     "taskbar-inactive-bg",
     DEFAULT_TASK_INACTIVE_BG_COLOR,
     (color) => {
@@ -445,6 +483,7 @@ export const SETTINGS = {
    * 24 bits color.
    */
   startMenuBgColor: createRefForState(
+    null,
     "start-menu-bg",
     DEFAULT_START_MENU_BG,
     (color) => {
@@ -459,6 +498,7 @@ export const SETTINGS = {
    * color.
    */
   startMenuTextColor: createRefForState(
+    null,
     "start-menu-text",
     DEFAULT_START_MENU_TEXT,
     (color) => {
@@ -473,6 +513,7 @@ export const SETTINGS = {
    * element, as an hex-encoded 24 bits color.
    */
   startMenuActiveBgColor: createRefForState(
+    null,
     "start-menu-active-bg",
     DEFAULT_START_MENU_ACTIVE_BG,
     (color) => {
@@ -490,6 +531,7 @@ export const SETTINGS = {
    * hex-encoded 24 bits color.
    */
   startMenuIconBgColor: createRefForState(
+    null,
     "start-menu-icon-bg",
     DEFAULT_START_ICON_BG,
     (color) => {
@@ -500,6 +542,7 @@ export const SETTINGS = {
   ),
 
   allowManualTaskbarResize: createRefForState(
+    null,
     "manual-taskbar-resize",
     true,
     (isEnabled) => {
@@ -512,10 +555,11 @@ export const SETTINGS = {
     },
   ),
 
-  allowManualTaskbarMove: createRefForState("manual-taskbar-move", true),
+  allowManualTaskbarMove: createRefForState(null, "manual-taskbar-move", true),
 
   /** Space in-between tasks of the taskbar, in px. */
   taskbarTaskMargin: createRefForState(
+    null,
     "taskbar-task-margin",
     DEFAULT_SPACE_BETWEEN_TASKS,
     (margin) => {
@@ -539,6 +583,7 @@ export const SETTINGS = {
 
   /** Size in pixels for the taskbar. */
   taskbarSize: createRefForState(
+    null,
     "taskbar-size",
     DEFAULT_TASKBAR_SIZE,
     (height) => {
@@ -554,6 +599,7 @@ export const SETTINGS = {
 
   /** Height in pixel for a window's header element (containing text and buttons). */
   windowHeaderHeight: createRefForState(
+    null,
     "window-header-height",
     DEFAULT_WINDOW_HEADER_HEIGHT,
     (height) => {
@@ -568,6 +614,7 @@ export const SETTINGS = {
 
   /** Height in pixel for a window header's buttons */
   windowButtonSize: createRefForState(
+    null,
     "window-button-size",
     DEFAULT_WINDOW_BUTTON_SIZE,
     (height) => {
@@ -585,12 +632,13 @@ export const SETTINGS = {
    * the active window, as an hex-encoded 24 bits color.
    */
   windowActiveHeaderBgColor: createRefForState(
+    "windowActiveHeader",
     "window-active-header-bg-color",
     DEFAULT_WINDOW_ACTIVE_HEADER,
     (color) => {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
-          "--window-active-header",
+          APP_STYLE.windowActiveHeader.cssName,
           color,
         );
       });
@@ -602,12 +650,13 @@ export const SETTINGS = {
    * the active window, as an hex-encoded 24 bits color.
    */
   windowActiveHeaderTextColor: createRefForState(
+    "windowActiveHeaderText",
     "window-active-header-text-color",
     DEFAULT_WINDOW_ACTIVE_HEADER_TEXT,
     (color) => {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
-          "--window-active-header-text",
+          APP_STYLE.windowActiveHeaderText.cssName,
           color,
         );
       });
@@ -619,12 +668,13 @@ export const SETTINGS = {
    * hex-encoded 24 bits color.
    */
   windowInactiveHeaderBgColor: createRefForState(
+    "windowInactiveHeader",
     "window-inactive-header-bg-color",
     DEFAULT_WINDOW_INACTIVE_HEADER,
     (color) => {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
-          "--window-inactive-header",
+          APP_STYLE.windowInactiveHeader.cssName,
           color,
         );
       });
@@ -636,12 +686,13 @@ export const SETTINGS = {
    * hex-encoded 24 bits color.
    */
   windowIninactiveHeaderTextColor: createRefForState(
+    "windowInactiveHeaderText",
     "window-inactive-header-text-color",
     DEFAULT_WINDOW_INACTIVE_HEADER_TEXT,
     (color) => {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
-          "--window-inactive-header-text",
+          APP_STYLE.windowInactiveHeaderText.cssName,
           color,
         );
       });
@@ -653,12 +704,13 @@ export const SETTINGS = {
    * color.
    */
   windowTextColor: createRefForState(
+    "textColor",
     "window-text-color",
     DEFAULT_WINDOW_TEXT_COLOR,
     (color) => {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
-          "--window-text-color",
+          APP_STYLE.textColor.cssName,
           color,
         );
       });
@@ -670,12 +722,13 @@ export const SETTINGS = {
    * bits color.
    */
   windowContentBgColor: createRefForState(
+    "bgColor",
     "window-content-bg-color",
     DEFAULT_WINDOW_CONTENT_BG,
     (color) => {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
-          "--window-content-bg",
+          APP_STYLE.bgColor.cssName,
           color,
         );
       });
@@ -688,12 +741,13 @@ export const SETTINGS = {
    * color.
    */
   windowLineColor: createRefForState(
+    "lineColor",
     "window-line-color",
     DEFAULT_WINDOW_LINE_COLOR,
     (color) => {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
-          "--window-line-color",
+          APP_STYLE.lineColor.cssName,
           color,
         );
       });
@@ -705,12 +759,13 @@ export const SETTINGS = {
    * as an hex-encoded 24-bits color.
    */
   appPrimaryColorBg: createRefForState(
+    "primaryColor",
     "app-primary-color",
     DEFAULT_APP_PRIMARY_COLOR,
     (color) => {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
-          "--app-primary-color",
+          APP_STYLE.primaryColor.cssName,
           color,
         );
       });
@@ -724,11 +779,15 @@ export const SETTINGS = {
    * TODO: rename `disabledColor`?
    */
   appPrimaryBgColor: createRefForState(
+    "disabledColor",
     "app-primary-bg",
     DEFAULT_APP_PRIMARY_BG_COLOR,
     (color) => {
       window.requestAnimationFrame(() => {
-        document.documentElement.style.setProperty("--app-primary-bg", color);
+        document.documentElement.style.setProperty(
+          APP_STYLE.disabledColor.cssName,
+          color,
+        );
       });
     },
   ),
@@ -738,12 +797,13 @@ export const SETTINGS = {
    * color, as an hex-encoded 24 bits color.
    */
   windowSidebarBgColor: createRefForState(
+    "barBg",
     "window-sidebar-bg-color",
     DEFAULT_WINDOW_SIDEBAR_BG,
     (color) => {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
-          "--window-sidebar-bg",
+          APP_STYLE.barBg.cssName,
           color,
         );
       });
@@ -755,11 +815,15 @@ export const SETTINGS = {
    * color of hovered elements in it, as an hex-encoded 24 bits color.
    */
   windowSidebarHoverBgColor: createRefForState(
+    "barHoverBg",
     "window-sidebar-hover-bg",
     DEFAULT_SIDEBAR_HOVER_BG,
     (color) => {
       window.requestAnimationFrame(() => {
-        document.documentElement.style.setProperty("--sidebar-hover-bg", color);
+        document.documentElement.style.setProperty(
+          APP_STYLE.barHoverBg.cssName,
+          color,
+        );
       });
     },
   ),
@@ -769,12 +833,13 @@ export const SETTINGS = {
    * color of the currently-selected element, as an hex-encoded 24 bits color.
    */
   windowSidebarSelectedBgColor: createRefForState(
+    "barSelectedBg",
     "window-sidebar-selected-bg-color",
     DEFAULT_SIDEBAR_SELECTED_BG_COLOR,
     (color) => {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
-          "--sidebar-selected-bg-color",
+          APP_STYLE.barSelectedBg.cssName,
           color,
         );
       });
@@ -786,12 +851,13 @@ export const SETTINGS = {
    * inside it, as an hex-encoded 24 bits color.
    */
   windowSidebarSelectedTextColor: createRefForState(
+    "barSelectedText",
     "window-sidebar-selected-text-color",
     DEFAULT_SIDEBAR_SELECTED_TEXT_COLOR,
     (color) => {
       window.requestAnimationFrame(() => {
         document.documentElement.style.setProperty(
-          "--sidebar-selected-text-color",
+          APP_STYLE.barSelectedText.cssName,
           color,
         );
       });
@@ -800,6 +866,7 @@ export const SETTINGS = {
 
   /** Defines the height of borders around windows, in pixels. `0` to remove borders. */
   windowBorderSize: createRefForState(
+    null,
     "window-border-size",
     DEFAULT_WINDOW_BORDER_SIZE,
     (size) => {
@@ -817,6 +884,7 @@ export const SETTINGS = {
    * to `1`.
    */
   iconHoverOpacity: createRefForState(
+    null,
     "icon-hover-opacity",
     DEFAULT_ICON_HOVER_OPACITY,
     (opacityPercent) => {
@@ -835,6 +903,7 @@ export const SETTINGS = {
    * from `0` to `1`.
    */
   iconImageBgOpacity: createRefForState(
+    null,
     "icon-image-bg-opacity",
     DEFAULT_ICON_IMAGE_OPACITY,
     (opacityPercent) => {
@@ -850,6 +919,7 @@ export const SETTINGS = {
 
   /** Defines the opacity of selected icons, as a value from `0` to `1` */
   iconActiveOpacity: createRefForState(
+    null,
     "icon-active-opacity",
     DEFAULT_ICON_ACTIVE_OPACITY,
     (opacityPercent) => {
@@ -865,6 +935,7 @@ export const SETTINGS = {
 
   /** Defines the text color for the selected icon, as an hex-encoded 24 bits color */
   iconActiveTextColor: createRefForState(
+    null,
     "icon-active-text",
     DEFAULT_ICON_ACTIVE_TEXT_COLOR,
     (color) => {
@@ -879,6 +950,7 @@ export const SETTINGS = {
    * bits color.
    */
   iconInactiveTextColor: createRefForState(
+    null,
     "icon-text",
     DEFAULT_ICON_INACTIVE_TEXT_COLOR,
     (color) => {
@@ -896,6 +968,7 @@ export const SETTINGS = {
    * bits color.
    */
   iconActiveBgColor: createRefForState(
+    null,
     "icon-active-bg",
     DEFAULT_ICON_ACTIVE_COLOR,
     (color) => {
@@ -913,6 +986,7 @@ export const SETTINGS = {
    * bits color.
    */
   iconImageBgColor: createRefForState(
+    null,
     "icon-image-bg",
     DEFAULT_ICON_BG_COLOR,
     (color) => {
@@ -930,6 +1004,7 @@ export const SETTINGS = {
    * bits color.
    */
   iconHoverBgColor: createRefForState(
+    null,
     "icon-hover-bg",
     DEFAULT_ICON_HOVER_COLOR,
     (color) => {
@@ -941,83 +1016,6 @@ export const SETTINGS = {
       });
     },
   ),
-};
-
-/**
- * Object regrouping information about specifically style settings that will be
- * communicated to apps so they can style themselves.
- */
-export const APP_STYLE = {
-  fontSize: {
-    ref: SETTINGS.fontSize,
-    cssProp: "var(--font-size)",
-    cssName: "--font-size",
-  },
-  windowActiveHeader: {
-    ref: SETTINGS.windowActiveHeaderBgColor,
-    cssProp: "var(--window-active-header)",
-    cssName: "--window-active-header",
-  },
-  windowActiveHeaderText: {
-    ref: SETTINGS.windowActiveHeaderTextColor,
-    cssProp: "var(--window-active-header-text)",
-    cssName: "--window-active-header-text",
-  },
-  windowInactiveHeader: {
-    ref: SETTINGS.windowInactiveHeaderBgColor,
-    cssProp: "var(--window-inactive-header)",
-    cssName: "--window-inactive-header",
-  },
-  windowInactiveHeaderText: {
-    ref: SETTINGS.windowIninactiveHeaderTextColor,
-    cssProp: "var(--window-inactive-header-text)",
-    cssName: "--window-inactive-header-text",
-  },
-  textColor: {
-    ref: SETTINGS.windowTextColor,
-    cssProp: "var(--window-text-color)",
-    cssName: "--window-text-color",
-  },
-  bgColor: {
-    ref: SETTINGS.windowContentBgColor,
-    cssProp: "var(--window-content-bg)",
-    cssName: "--window-content-bg",
-  },
-  lineColor: {
-    ref: SETTINGS.windowLineColor,
-    cssProp: "var(--window-line-color)",
-    cssName: "--window-line-color",
-  },
-  primaryColor: {
-    ref: SETTINGS.appPrimaryColorBg,
-    cssProp: "var(--app-primary-color)",
-    cssName: "--app-primary-color",
-  },
-  disabledColor: {
-    ref: SETTINGS.appPrimaryBgColor,
-    cssProp: "var(--app-primary-bg)",
-    cssName: "--app-primary-bg",
-  },
-  barBg: {
-    ref: SETTINGS.windowSidebarBgColor,
-    cssProp: "var(--window-sidebar-bg)",
-    cssName: "--window-sidebar-bg",
-  },
-  barHoverBg: {
-    ref: SETTINGS.windowSidebarHoverBgColor,
-    cssProp: "var(--sidebar-hover-bg)",
-    cssName: "--sidebar-hover-bg",
-  },
-  barSelectedBg: {
-    ref: SETTINGS.windowSidebarSelectedBgColor,
-    cssProp: "var(--sidebar-selected-bg-color)",
-    cssName: "--sidebar-selected-bg-color",
-  },
-  barSelectedText: {
-    ref: SETTINGS.windowSidebarSelectedTextColor,
-    cssProp: "var(--sidebar-selected-text-color)",
-    cssName: "--sidebar-selected-text-color",
-  },
 };
 
 // function hexToPercentage(hex) {
@@ -1044,7 +1042,8 @@ function percentageToHex(percent) {
 /**
  * Create a `SharedReference` object for some given state, that will be stored
  * in local storage and retrieved on page re-launch.
- * @param {string|null} stateName - The name of the state to put in
+ * @param {string|null} appName
+ * @param {string|null} localStorageName - The name of the state to put in
  * local-storage.
  * Has to be forward-compatible (keep its name between versions), so a
  * forward-thinking name should be chosen.
@@ -1053,13 +1052,13 @@ function percentageToHex(percent) {
  * @param {*} defaultVal - Initial value for that state if none is stored yet.
  * @param {Function} onUpdate - Function to call when that value is updated.
  */
-function createRefForState(stateName, defaultVal, onUpdate) {
+function createRefForState(appName, localStorageName, defaultVal, onUpdate) {
   let initialValue;
-  if (stateName === null) {
+  if (localStorageName === null) {
     initialValue = defaultVal;
   } else {
     try {
-      const storedValue = localStorage.getItem(stateName);
+      const storedValue = localStorage.getItem(localStorageName);
       if (storedValue) {
         initialValue = JSON.parse(storedValue);
       }
@@ -1069,14 +1068,21 @@ function createRefForState(stateName, defaultVal, onUpdate) {
     }
   }
   const ref = new SharedReference(initialValue);
+  if (appName !== null) {
+    if (!APP_STYLE[appName]) {
+      console.error("Wrong settings creation: unknown `appName`", appName);
+    } else {
+      APP_STYLE_SETTINGS[appName] = ref;
+    }
+  }
   ref.onUpdate(
     (bg) => {
       try {
         if (onUpdate) {
           onUpdate(bg);
         }
-        if (stateName !== null) {
-          localStorage.setItem(stateName, JSON.stringify(bg));
+        if (localStorageName !== null) {
+          localStorage.setItem(localStorageName, JSON.stringify(bg));
         }
       } catch (_) {}
     },
@@ -1085,7 +1091,7 @@ function createRefForState(stateName, defaultVal, onUpdate) {
   if (onUpdate) {
     onUpdate(initialValue);
   }
-  allRefsAndDefaults.push([ref, defaultVal, stateName]);
+  allRefsAndDefaults.push([ref, defaultVal, localStorageName]);
   return ref;
 }
 
@@ -1103,19 +1109,19 @@ export function resetStateToDefault() {
 }
 
 export function setCurrentSettingsInStorage() {
-  allRefsAndDefaults.forEach(([ref, deflt, stateName]) => {
+  allRefsAndDefaults.forEach(([ref, deflt, localStorageName]) => {
     try {
-      if (!stateName) {
+      if (!localStorageName) {
         return;
       }
       const currentVal = ref.getValue();
-      const baseItem = localStorage.getItem(stateName);
+      const baseItem = localStorage.getItem(localStorageName);
       if (baseItem === null) {
         if (currentVal !== deflt) {
-          localStorage.setItem(stateName, JSON.stringify(currentVal));
+          localStorage.setItem(localStorageName, JSON.stringify(currentVal));
         }
       } else if (JSON.parse(baseItem) !== currentVal) {
-        localStorage.setItem(stateName, JSON.stringify(currentVal));
+        localStorage.setItem(localStorageName, JSON.stringify(currentVal));
       }
     } catch (_) {}
   });

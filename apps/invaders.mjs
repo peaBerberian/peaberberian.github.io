@@ -8,7 +8,9 @@ const PLAYER_DAMAGE_CHAR = "💥";
 const ALIEN_PROJECTILE_CHAR = "🐄";
 // const ALIEN_PROJECTILE_CHAR = "🧳";
 // const ALIEN_PROJECTILE_CHAR = "🔧";
-const PLAYER_PROJECTILE_CHAR = "🍅";
+// const PLAYER_PROJECTILE_CHAR = "🍅";
+// const PLAYER_PROJECTILE_CHAR = "🔴";
+const PLAYER_PROJECTILE_CHAR = "🔺";
 
 const style = document.createElement("style");
 style.textContent = `
@@ -379,8 +381,8 @@ export function create(_args, env) {
         width: bullet.width + "px",
         height: bullet.height + "px",
         fontSize: config.bulletSize + "px",
-        transformOrigin: "center center",
-        animation: "spin 1s infinite linear",
+        // transformOrigin: "center center",
+        // animation: "spin 1s infinite linear",
         // borderRadius: config.bulletSize + "px",
         // backgroundColor: env.STYLE.windowActiveHeaderText,
         userSelect: "none",

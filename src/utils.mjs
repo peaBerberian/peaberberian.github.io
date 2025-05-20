@@ -86,8 +86,6 @@ export function createExternalIframe(url, backgroundColor) {
     height: "100%",
     width: "100%",
     position: "relative",
-
-    // TODO: Through a constant?
     backgroundColor: backgroundColor ?? "var(--window-content-bg)",
   });
 

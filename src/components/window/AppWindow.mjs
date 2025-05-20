@@ -45,27 +45,39 @@ const contextMenuWrapperElt = document.getElementById("context-menu-wrapper");
 
 export default class AppWindow extends EventEmitter {
   /**
-   * @param {Object} appObj - Object describing this application (result of
-   * reading the corresponding app as an object in the filesystem).
    * @param {HTMLElement} initialContent - The application's initial content.
-   * As it may be replaced at any time, the reference of that element will not
-   * be stored.
    * @param {Object} options - Various options to configure how that new
    * application window will behave
    * @param {boolean} [options.skipAnim] - If set to `true`, we will not show the
    * open animation for this new window.
    * @param {boolean} [options.centered] - If set to `true`, the application
    * window will be centered relative to the desktop in which it can be moved.
+   * @param {number} [options.defaultHeight] - Default height of the window in
+   * CSS pixels without counting the window decorations (borders, header...).
+   * If not set, the general default will be used instead.
+   * @param {number} [options.defaultWidth] - Default width of the window in
+   * CSS pixels without counting the window decorations (like borders).
+   * If not set, the general default will be used instead.
+   * @param {string} [options.defaultIcon] - Default "icon" representing the
+   * application in that window.
+   * Can be updated at any time through the `updateTitle` method.
+   * If not set the window won't show an icon for now.
+   * @param {string} [options.defaultTitle] - Default "title" for the
+   * application in that window.
+   * Can be updated at any time through the `updateTitle` method.
+   * If not set the window won't have a title for now.
    */
-  constructor(appObj, initialContent, { skipAnim, centered } = {}) {
+  constructor(initialContent, options = {}) {
     super();
+    const {
+      skipAnim,
+      centered,
+      defaultHeight,
+      defaultWidth,
+      defaultIcon,
+      defaultTitle,
+    } = options;
 
-    /**
-     * Identifier for this application.
-     * TODO: A window shouldn't care about the app's id I guess
-     * @type {string}
-     */
-    this.appId = appObj.id;
     /**
      * The default height the window should have, in pixels.
      * Can be defined as a function for when the application wants to define
@@ -73,7 +85,7 @@ export default class AppWindow extends EventEmitter {
      * maximum width currently available.
      * @type {number|Function}
      */
-    this.defaultHeight = appObj.data.defaultHeight ?? DEFAULT_WINDOW_HEIGHT;
+    this.defaultHeight = defaultHeight ?? DEFAULT_WINDOW_HEIGHT;
     /**
      * The default width the window should have, in pixels.
      * Can be defined as a function for when the application wants to define
@@ -81,7 +93,7 @@ export default class AppWindow extends EventEmitter {
      * maximum width currently available.
      * @type {number|Function}
      */
-    this.defaultWidth = appObj.data.defaultWidth ?? DEFAULT_WINDOW_WIDTH;
+    this.defaultWidth = defaultWidth ?? DEFAULT_WINDOW_WIDTH;
     /**
      * Will allow to free resources linked to that window.
      * @private
@@ -94,8 +106,8 @@ export default class AppWindow extends EventEmitter {
      * @type {HTMLElement}
      */
     const appContainer = constructVisibleWindowScaffolding(
-      appObj.icon,
-      appObj.title,
+      defaultIcon ?? "",
+      defaultTitle ?? "",
     );
     appContainer.appendChild(initialContent);
     this.element = document.createElement("div");

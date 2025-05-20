@@ -4,7 +4,6 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
-// - disable quickSave when crypto.subtle is not available (HTTP-only?)
 //
 // medium priority:
 // - image viewer touch controls
@@ -49,8 +48,8 @@
 // - Remove app `id` inside the desktop and rely on `path` for `onlyOne`?
 // - paint: allow to change the file format
 // - Settings: Default apps
+// - Settings: Permissions
 
-import fs from "./filesystem/filesystem.mjs";
 import DesktopAppIcons from "./components/DesktopAppIcons.mjs";
 import StartMenu from "./components/StartMenu.mjs";
 import Taskbar from "./components/Taskbar.mjs";
@@ -76,12 +75,6 @@ console.log(
 async function start() {
   const desktopElt = document.getElementById("desktop");
 
-  // TODO: move to start menu
-  const startMenuApps = await fs.readFile(
-    "/system32/start_menu.config.json",
-    "object",
-  );
-
   /** Clock shown as a taskbar "applet". */
   const clockElt = initializeClockApplet();
   clockElt.onclick = function () {
@@ -99,8 +92,9 @@ async function start() {
 
   const taskbarManager = new Taskbar({ applets: [clockElt] });
   const appsLauncher = new AppsLauncher(desktopElt, taskbarManager);
+
   DesktopAppIcons(desktopElt, openPath);
-  StartMenu(startMenuApps.list, openPath);
+  StartMenu(openPath);
 
   // Open default app or asked one
   let wantedApp;

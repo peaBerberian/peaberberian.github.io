@@ -3,6 +3,7 @@ import {
   START_MENU_OPEN_ANIM_TIMER,
   CLOSE_MENU_OPEN_ANIM_TIMER,
 } from "../constants.mjs";
+import fs from "../filesystem/filesystem.mjs";
 import { SETTINGS } from "../settings.mjs";
 
 /**
@@ -43,16 +44,25 @@ const startPicElt = document.getElementById("start-pic");
 const startMenuElt = document.getElementById("start-menu");
 
 /**
- * @param {Array.<StartMenuAppObject>} apps - List of applications for which you
- * want to generate an icon, in order from the first displayed to the last
- * displayed.
  * @param {Function} onOpen - Callback that will be called when/if an app is
  * launched through its start menu entry, with the corresponding application
  * path.
  * @param {AbortSignal} [abortSignal] - AbortSignal allowing to free
  * all resources taken by this component.
  */
-export default function StartMenu(apps, openApp, abortSignal) {
+export default async function StartMenu(openApp, abortSignal) {
+  const startMenuApps = await fs.readFile(
+    "/system32/start_menu.config.json",
+    "object",
+  );
+
+  /**
+   * List of applications for which you want to generate an icon, in order from
+   * the first displayed to the last displayed.
+   * @type {Array.<StartMenuAppObject>}
+   */
+  const apps = startMenuApps.list;
+
   refreshStartMenu(startMenuElt, apps, openApp, {
     clientHeight: document.documentElement.clientHeight,
     clientWidth: document.documentElement.clientWidth,
@@ -274,7 +284,8 @@ function refreshStartMenu(
         const listIconElt = document.createElement("div");
         listIconElt.className = "start-icon";
 
-        // TODO: Find some way to centrally configure?
+        // TODO: Either find some way to centrally configure or enforce sublist
+        // at build-time?
         switch (appObj.name) {
           case "Games":
             listIconElt.textContent = "🎮";

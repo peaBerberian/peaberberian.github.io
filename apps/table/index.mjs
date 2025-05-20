@@ -1,6 +1,3 @@
-// TODO: I directly relied on CSS vars for that one. Relying on an i-frame (with
-// its own stylesheet) may be the best idea
-
 const DEFAULT_CELL_HEIGHT = 30;
 const DEFAULT_CELL_WIDTH = 100;
 const MINIMUM_CELL_HEIGHT = 20;

@@ -18,12 +18,13 @@ export default function renderDirectory({
     pasteItems,
   },
 }) {
-  const selectionZoneElt = document.createElement("div");
-  applyStyle(selectionZoneElt, {
+  /** The whole zone where the directory elements can be displayed. */
+  const directoryWrapperElt = document.createElement("div");
+  applyStyle(directoryWrapperElt, {
     top: "0px",
     left: "0px",
-    height: "100%",
-    width: "100%",
+    minHeight: "100%",
+    minWidth: "100%",
   });
 
   /**
@@ -61,6 +62,13 @@ export default function renderDirectory({
     timeStamp: -Infinity,
   };
 
+  /**
+   * We will only enable to focus elements on some conditions, such as when the
+   * directory is the current view.
+   */
+  let canFocusElements = false;
+
+  /** Object controlling the logic specific to mouse selections. */
   let mouseSelectInteractivity = null;
 
   /**
@@ -75,17 +83,20 @@ export default function renderDirectory({
     overflowX: "hidden",
     justifyContent: "space-evenly",
   });
-  selectionZoneElt.appendChild(itemsParentElt);
+  directoryWrapperElt.appendChild(itemsParentElt);
 
   const items = formatDirectoryEntries(dirEntries, path);
   if (items.length === 0) {
     const emptyMessage = createEmptyDirMessage(path);
-    selectionZoneElt.appendChild(emptyMessage);
+    directoryWrapperElt.appendChild(emptyMessage);
     return {
-      element: selectionZoneElt,
+      element: directoryWrapperElt,
       onActivate,
       onDeactivate,
       signalCutAction,
+      selectItems: () => {
+        /* noop */
+      },
     };
   }
 
@@ -223,7 +234,7 @@ export default function renderDirectory({
 
   mouseSelectInteractivity =
     itemsMap.size > 0
-      ? addMouseSelectInteractivity(selectionZoneElt, itemsMap, {
+      ? addMouseSelectInteractivity(directoryWrapperElt, itemsMap, {
           getSelectedItems: () => [...getSelectedItems()],
           selectItemElts,
           clearItemElts,
@@ -232,10 +243,27 @@ export default function renderDirectory({
       : null;
 
   return {
-    element: selectionZoneElt,
-    onActivate,
-    onDeactivate,
+    element: directoryWrapperElt,
+    onActivate: () => {
+      canFocusElements = true;
+      // TODO: actually focus last selected
+      onActivate();
+    },
+    onDeactivate: () => {
+      canFocusElements = false;
+      onDeactivate();
+    },
     signalCutAction,
+    selectItems: (items) => {
+      // NOTE: could be more performant. Here I didn't care much at this scale
+      const toSelect = itemsMap.entries().reduce((acc, [elt, item]) => {
+        if (items.some((c) => c.path === item.path)) {
+          acc.push(elt);
+        }
+        return acc;
+      }, []);
+      selectItemElts(toSelect, {});
+    },
   };
 
   function onItemClick(itemElt, item, { toggle, keepPrevious, clickBehavior }) {
@@ -302,7 +330,11 @@ export default function renderDirectory({
       }
     }
     const lastSelectedElement = itemElts[itemElts.length - 1];
-    if (lastSelectedElement && document.activeElement !== lastSelectedElement) {
+    if (
+      canFocusElements &&
+      lastSelectedElement &&
+      document.activeElement !== lastSelectedElement
+    ) {
       lastSelectedElement.dataset.ignoreNextFocusEvent = true;
       lastSelectedElement.focus({ preventScroll });
     }
@@ -563,6 +595,7 @@ export default function renderDirectory({
         selectedElt.blur();
         const lastSelectedElement = [...selectedElts.elements].pop();
         if (
+          canFocusElements &&
           lastSelectedElement &&
           document.activeElement !== lastSelectedElement
         ) {

@@ -42,6 +42,8 @@ const {
   WINDOW_OOB_SECURITY_PIX,
 } = CONSTANTS;
 
+const contextMenuWrapperElt = document.getElementById("context-menu-wrapper");
+
 export default class AppWindow extends EventEmitter {
   /**
    * @param {Object} appObj - Object describing this application (result of
@@ -766,6 +768,10 @@ export default class AppWindow extends EventEmitter {
     });
 
     addAbortableEventListener(document, "focusin", abortSignal, (evt) => {
+      if (contextMenuWrapperElt.contains(evt.target)) {
+        // Very ugly exception for context menus
+        return;
+      }
       if (windowElt.contains(evt.target)) {
         this.activate(windowElt);
       } else {

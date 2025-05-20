@@ -1,6 +1,8 @@
 import { BUTTONS_BY_NAME } from "../constants.mjs";
 import { addAbortableEventListener, applyStyle } from "../utils.mjs";
 
+const contextMenuWrapper = document.getElementById("context-menu-wrapper");
+
 // TODO: up/down navigation
 export default function setUpContextMenu({
   actions,
@@ -8,9 +10,10 @@ export default function setUpContextMenu({
   filter,
   abortSignal,
 }) {
-  const containerElt = document.body;
   const contextMenuElt = document.createElement("div");
   contextMenuElt.className = "context-menu";
+
+  const filterMap = new WeakMap();
 
   function createButtonElt(svg, title, height = "1.7rem", onClick) {
     const buttonWrapperElt = document.createElement("span");
@@ -67,6 +70,9 @@ export default function setUpContextMenu({
         borderBottom: "1px dotted var(--sidebar-hover-bg)",
       });
       contextMenuElt.appendChild(separatorElt);
+      if (actionData.filter) {
+        filterMap.set(separatorElt, actionData.filter);
+      }
     } else {
       const defaultButtonConfig = BUTTONS_BY_NAME[actionData.name] ?? [];
       const contextMenuItemElt = createButtonElt(
@@ -81,6 +87,9 @@ export default function setUpContextMenu({
       );
       contextMenuItemElt.tabIndex = "0";
       contextMenuItemElt.className = "context-menu-item";
+      if (actionData.filter) {
+        filterMap.set(contextMenuItemElt, actionData.filter);
+      }
       contextMenuElt.appendChild(contextMenuItemElt);
     }
   });
@@ -91,25 +100,40 @@ export default function setUpContextMenu({
     }
     e.preventDefault();
 
-    containerElt.appendChild(contextMenuElt);
-    contextMenuElt.style.display = "flex";
+    contextMenuWrapper.innerHTML = "";
+    contextMenuWrapper.appendChild(contextMenuElt);
+    contextMenuWrapper.style.display = "block";
 
-    if (
-      e.pageX + 3 + contextMenuElt.offsetWidth > containerElt.clientWidth &&
-      e.pageX - 3 - contextMenuElt.offsetWidth >= 0
-    ) {
-      contextMenuElt.style.left =
-        e.pageX - 3 - contextMenuElt.offsetWidth + "px";
+    for (const child of contextMenuElt.children) {
+      const filter = filterMap.get(child);
+      if (!filter || filter()) {
+        child.style.display = "flex";
+      } else {
+        child.style.display = "none";
+      }
+    }
+
+    if (e.pageX + 3 + contextMenuElt.offsetWidth > document.body.clientWidth) {
+      if (e.pageX - 3 - contextMenuElt.offsetWidth >= 0) {
+        contextMenuElt.style.left =
+          e.pageX - 3 - contextMenuElt.offsetWidth + "px";
+      } else {
+        contextMenuElt.style.left = "0px";
+      }
     } else {
       contextMenuElt.style.left = e.pageX + 3 + "px";
     }
 
     if (
-      e.pageY + 3 + contextMenuElt.offsetHeight > containerElt.clientHeight &&
-      e.pageY - 3 - contextMenuElt.offsetHeight >= 0
+      e.pageY + 3 + contextMenuElt.offsetHeight >
+      document.body.clientHeight
     ) {
-      contextMenuElt.style.top =
-        e.pageY - 3 - contextMenuElt.offsetHeight + "px";
+      if (e.pageY - 3 - contextMenuElt.offsetHeight >= 0) {
+        contextMenuElt.style.top =
+          e.pageY - 3 - contextMenuElt.offsetHeight + "px";
+      } else {
+        contextMenuElt.style.top = "0px";
+      }
     } else {
       contextMenuElt.style.top = e.pageY + 3 + "px";
     }
@@ -127,7 +151,7 @@ export default function setUpContextMenu({
   });
 
   addAbortableEventListener(document, "mousedown", abortSignal, (e) => {
-    if (!contextMenuElt.contains(e.target)) {
+    if (!contextMenuWrapper.contains(e.target)) {
       closeContextMenu();
     }
   });
@@ -138,6 +162,8 @@ export default function setUpContextMenu({
     contextMenuElt.remove();
     contextMenuElt.style.left = "";
     contextMenuElt.style.top = "";
+    contextMenuWrapper.innerHTML = "";
+    contextMenuWrapper.display = "none";
   }
 }
 

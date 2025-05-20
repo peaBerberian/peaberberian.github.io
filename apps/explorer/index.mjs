@@ -416,10 +416,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
       currentDirectoryAbortController = new AbortController();
       linkAbortControllerToSignal(currentDirectoryAbortController, abortSignal);
 
-      if (
-        normalizedPath.startsWith("/userdata/") ||
-        normalizedPath.startsWith("/userconfig/")
-      ) {
+      if (isUserDirectory(normalizedPath)) {
         warningElt.style.display = "none";
       } else {
         warningElt.style.display = "block";
@@ -439,7 +436,9 @@ function createExplorer(explorerType, args, env, abortSignal) {
       currentDirectoryComponent = renderDirectory({
         entries,
         path: normalizedPath,
+        contextMenuBase: constructContextMenu(),
         callbacks: {
+          setUpContextMenu: appUtils.setUpContextMenu,
           navigateTo: navigateToPath,
           escape: onDirectoryEscape,
           deleteItems,
@@ -452,6 +451,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
           },
           openFiles: onDirectoryFilesOpen,
         },
+        abortSignal: currentDirectoryAbortController.signal,
       });
       if (cuttedSelection.length > 0) {
         currentDirectoryComponent.signalCutAction(cuttedSelection);
@@ -610,6 +610,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
     ).then(
       () => {
         cuttedSelection = [];
+        currentDirectoryComponent?.signalCutAction(cuttedSelection);
         currentDirectoryComponent?.onActivate();
       },
       (err) => {
@@ -624,10 +625,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
 
   function updateButtons(currentPath, selectedItems) {
     if (explorerType === "saver") {
-      if (
-        currentPath.startsWith("/userdata/") ||
-        currentPath.startsWith("/userconfig/")
-      ) {
+      if (isUserDirectory(currentPath)) {
         enableHighlightedButton(validateButton);
       } else {
         disableButton(validateButton);
@@ -639,10 +637,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
       disableToolButton("rename");
       disableToolButton("download");
     } else if (selectedItems.length === 1) {
-      if (
-        currentPath.startsWith("/userdata/") ||
-        currentPath.startsWith("/userconfig/")
-      ) {
+      if (isUserDirectory(currentPath)) {
         enableToolButton("cut");
         enableToolButton("rename");
         enableToolButton("clear");
@@ -657,10 +652,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
         disableToolButton("download");
       }
     } else {
-      if (
-        currentPath.startsWith("/userdata/") ||
-        currentPath.startsWith("/userconfig/")
-      ) {
+      if (isUserDirectory(currentPath)) {
         enableToolButton("cut");
         enableToolButton("clear");
       } else {
@@ -677,10 +669,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
       enableToolButton("previous");
     }
 
-    if (
-      currentPath.startsWith("/userdata/") ||
-      currentPath.startsWith("/userconfig/")
-    ) {
+    if (isUserDirectory(currentPath)) {
       if (currentPath === "/userdata/") {
         disableToolButton("home");
       } else {
@@ -773,6 +762,87 @@ function createExplorer(explorerType, args, env, abortSignal) {
         break;
       }
     }
+  }
+
+  function constructContextMenu() {
+    return [
+      {
+        name: "upload",
+        title: "Load Files",
+        filter: () => isUserDirectory(currentPath),
+        onClick: onUploadClick,
+      },
+      {
+        name: "newDir",
+        height: "1.4em",
+        title: "New Directory",
+        svg: newDirectorySvg,
+        filter: () => isUserDirectory(currentPath),
+        onClick: onNewDirClick,
+      },
+      { name: "separator", filter: () => isUserDirectory(currentPath) },
+      {
+        name: "rename",
+        height: "1em",
+        title: "Rename selection",
+        svg: renameSvg,
+        filter: () => selectedItems.length === 1,
+        onClick: onRenameClick,
+      },
+      {
+        name: "download",
+        title: "Download selection",
+        filter: () =>
+          selectedItems.length === 1 && !selectedItems[0].isDirectory,
+        onClick: onDownloadClick,
+      },
+      {
+        name: "clear",
+        title: "Delete current selection",
+        filter: () => selectedItems.length > 0,
+        onClick: () => {
+          deleteItems(selectedItems);
+        },
+      },
+      {
+        name: "cut",
+        svg: cutSvg,
+        height: "1.4em",
+        title: "Cut current selection",
+        filter: () => selectedItems.length > 0,
+        onClick: () => {
+          cutItems(selectedItems);
+        },
+      },
+      { name: "separator", filter: () => selectedItems.length > 0 },
+      {
+        name: "paste",
+        svg: pasteSvg,
+        title: "Paste cut items",
+        height: "1em",
+        filter: () => cuttedSelection.length > 0,
+        onClick: () => {
+          pasteItems();
+        },
+      },
+      {
+        name: "retry",
+        title: "Refresh directory",
+        onClick: async () => {
+          const toSelect = selectedItems;
+          await navigateToPath(currentPath, true);
+          currentDirectoryComponent?.selectItems(toSelect);
+        },
+      },
+      {
+        name: "previous",
+        title: "Go to previous directory",
+        filter: () => currentPath !== "/",
+        onClick: () => {
+          navigateToParent();
+        },
+      },
+    ];
   }
 }
 
@@ -1073,4 +1143,8 @@ function removeBlockingMask(maskContainer, blockedElt) {
   for (const child of blockedElt.children) {
     child.removeAttribute("inert");
   }
+}
+
+function isUserDirectory(path) {
+  return path.startsWith("/userdata/") || path.startsWith("/userconfig/");
 }

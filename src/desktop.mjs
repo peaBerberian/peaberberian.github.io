@@ -4,7 +4,6 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
-// - context menu in explorer?
 //
 // medium priority:
 // - confirmation alert when closing window with unsaved file.

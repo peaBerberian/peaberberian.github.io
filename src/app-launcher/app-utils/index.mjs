@@ -6,6 +6,7 @@ import {
 } from "../../utils.mjs";
 import strHtml from "../../str-html.mjs";
 import { constructAppHeaderLine } from "./header-line.mjs";
+import setUpContextMenu from "../../components/context-menu.mjs";
 
 // ==== Utils for lazy-loaded applications ====
 
@@ -14,6 +15,7 @@ export default {
   applyStyle: applyStyle,
   strHtml: strHtml,
   constructAppHeaderLine: constructAppHeaderLine,
+  setUpContextMenu,
 
   // In rare situations:
   constructSidebarElt: constructSidebarElt,

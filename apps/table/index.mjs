@@ -131,7 +131,7 @@ export function create(_args, env, abortSignal) {
     disableButton,
   } = constructAppHeaderLine({
     newFile: {
-      title: "New blank sheet",
+      title: "New sheet",
       onClick: () => {
         history.length = 0;
         historyIndex = 0;

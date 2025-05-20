@@ -3,12 +3,15 @@ import {
   getFileIcon,
   pathJoin,
   getFileExtension,
+  cutSvg,
 } from "./utils.mjs";
 
 export default function renderDirectory({
   entries: dirEntries,
   path,
+  contextMenuBase,
   callbacks: {
+    setUpContextMenu,
     navigateTo,
     openFiles,
     onSelectionChange,
@@ -17,6 +20,7 @@ export default function renderDirectory({
     cutItems,
     pasteItems,
   },
+  abortSignal,
 }) {
   /** The whole zone where the directory elements can be displayed. */
   const directoryWrapperElt = document.createElement("div");
@@ -85,6 +89,15 @@ export default function renderDirectory({
   });
   directoryWrapperElt.appendChild(itemsParentElt);
 
+  setUpContextMenu({
+    element: directoryWrapperElt,
+    filter: (e) => {
+      return directoryWrapperElt === e.target || itemsParentElt === e.target;
+    },
+    abortSignal,
+    actions: contextMenuBase,
+  });
+
   const items = formatDirectoryEntries(dirEntries, path);
   if (items.length === 0) {
     const emptyMessage = createEmptyDirMessage(path);
@@ -131,6 +144,43 @@ export default function renderDirectory({
       borderRadius: "4px",
       cursor: "pointer",
       transition: "background-color 0.2s, color 0.2s",
+    });
+    setUpContextMenu({
+      element: itemElt,
+      filter: (e) => itemElt.contains(e.target),
+      abortSignal,
+      actions: [
+        {
+          name: "open",
+          title: "Open this " + (item.isDirectory ? "directory" : "file"),
+          onClick: () => {
+            if (item.isDirectory) {
+              navigateTo(item.path);
+            } else {
+              openFiles([item]);
+            }
+          },
+        },
+        {
+          name: "clear",
+          title: "Delete this " + (item.isDirectory ? "directory" : "file"),
+          height: "1.4em",
+          onClick: () => {
+            deleteItems([item]);
+          },
+        },
+        {
+          name: "cut",
+          height: "1.4em",
+          svg: cutSvg,
+          title: "Cut " + (item.isDirectory ? "directory" : "file"),
+          onClick: () => {
+            cutItems([item]);
+          },
+        },
+        { name: "separator" },
+        ...contextMenuBase,
+      ],
     });
 
     // TODO: For images, read and load preview?

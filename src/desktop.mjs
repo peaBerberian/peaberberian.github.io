@@ -4,10 +4,8 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // filesystem:
-// - Finish file explorer
-// - Open in text editor, image viewer, and sheets at least
-// - should probably do a video player but that's supposed to be my expertise so
-//   I'm afraid
+// - Open in sheets
+// - Begin save work
 // - When indexedDB is not available, fallback on in-memory
 // - Proxy local storage in `/system/`?
 // - watch API?
@@ -15,7 +13,6 @@
 // high priority:
 //
 // medium priority:
-// - desktop.config.json not serializable anymore :/
 // - image viewer touch controls
 // - Sometimes the focus in on a desktop icon, not on the app
 // - start menu should always do some kind of sublist when sublists are enabled

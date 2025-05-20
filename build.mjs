@@ -260,90 +260,204 @@ function writeGeneratedAppFile(baseDir) {
     id: ${JSON.stringify(app.id)},
 		title: ${JSON.stringify(app.title ?? "Unnamed Application")},
 `;
+    for (const key of Object.keys(app)) {
+      switch (key) {
+        case "id":
+        case "title":
+          // Already checked
+          break;
 
-    if (typeof app.icon === "string") {
-      uglyHandWrittenJsObject +=
-        "    icon: " + JSON.stringify(app.icon) + ",\n";
-    }
+        case "icon":
+          if (typeof app.icon !== "string") {
+            throw new Error(
+              `Error in app "${app.id}". Invalid "icon" property: should be a string.`,
+            );
+          }
+          uglyHandWrittenJsObject +=
+            "    icon: " + JSON.stringify(app.icon) + ",\n";
+          break;
 
-    if (typeof app.desktop === "object" && app.desktop !== null) {
-      uglyHandWrittenJsObject += `    desktop: {
+        case "desktop":
+          {
+            if (typeof app.desktop !== "object" || app.desktop === null) {
+              throw new Error(
+                `Error in app "${app.id}". Invalid "desktop" property: should be an object or not set.`,
+              );
+            }
+            uglyHandWrittenJsObject += `    desktop: {
 `;
-      if (!!app.desktop.display) {
-        uglyHandWrittenJsObject += "      display: true,\n";
-      }
-      if (typeof app.desktop.group === "string" && app.desktop.group !== "") {
-        uglyHandWrittenJsObject += `      group: ${JSON.stringify(app.desktop.group)},
+            if (!!app.desktop.display) {
+              uglyHandWrittenJsObject += "      display: true,\n";
+            }
+            if (
+              typeof app.desktop.group === "string" &&
+              app.desktop.group !== ""
+            ) {
+              uglyHandWrittenJsObject += `      group: ${JSON.stringify(app.desktop.group)},
 `;
-      }
-      uglyHandWrittenJsObject += `    },
+            }
+            uglyHandWrittenJsObject += `    },
 `;
-    }
+          }
+          break;
 
-    if (typeof app.startMenu === "object" && app.startMenu !== null) {
-      uglyHandWrittenJsObject += `    startMenu: {
+        case "startMenu":
+          {
+            if (typeof app.startMenu !== "object" || app.startMenu === null) {
+              throw new Error(
+                `Error in app "${app.id}". Invalid "startMenu" property: should be an object or not set.`,
+              );
+            }
+          }
+          uglyHandWrittenJsObject += `    startMenu: {
 `;
-      if (!!app.startMenu.display) {
-        uglyHandWrittenJsObject += "      display: true,\n";
-      }
-      if (typeof app.startMenu.list === "string" && app.startMenu.list !== "") {
-        uglyHandWrittenJsObject += `      list: ${JSON.stringify(app.startMenu.list)},
+          if (!!app.startMenu.display) {
+            uglyHandWrittenJsObject += "      display: true,\n";
+          }
+          if (
+            typeof app.startMenu.list === "string" &&
+            app.startMenu.list !== ""
+          ) {
+            uglyHandWrittenJsObject += `      list: ${JSON.stringify(app.startMenu.list)},
 `;
-      }
-      uglyHandWrittenJsObject += `    },
+          }
+          uglyHandWrittenJsObject += `    },
 `;
-    }
+          break;
 
-    if (typeof app.defaultHeight === "number") {
-      uglyHandWrittenJsObject +=
-        "    defaultHeight: " + app.defaultHeight + ",\n";
-    }
+        case "defaultHeight":
+          if (typeof app.defaultHeight !== "number") {
+            throw new Error(
+              `Error in app "${app.id}". Invalid "defaultHeight" property: should be a number.`,
+            );
+          }
+          uglyHandWrittenJsObject +=
+            "    defaultHeight: " + app.defaultHeight + ",\n";
+          break;
 
-    if (typeof app.defaultWidth === "number") {
-      uglyHandWrittenJsObject +=
-        "    defaultWidth: " + app.defaultWidth + ",\n";
-    }
+        case "defaultWidth":
+          if (typeof app.defaultWidth !== "number") {
+            throw new Error(
+              `Error in app "${app.id}". Invalid "defaultWidth" property: should be a number.`,
+            );
+          }
+          uglyHandWrittenJsObject +=
+            "    defaultWidth: " + app.defaultWidth + ",\n";
+          break;
 
-    if (!!app.onlyOne) {
-      uglyHandWrittenJsObject += "    onlyOne: true,\n";
-    }
+        case "onlyOne":
+          if (typeof app.onlyOne !== "boolean") {
+            throw new Error(
+              `Error in app "${app.id}". Invalid "defaultWidth" property: should be a number.`,
+            );
+          }
+          if (app.onlyOne) {
+            uglyHandWrittenJsObject += "    onlyOne: true,\n";
+          }
+          break;
 
-    if (Array.isArray(app.dependencies)) {
-      for (const dep of app.dependencies) {
-        if (!["settings", "filesystem", "filePickerOpen"].includes(dep)) {
+        case "dependencies":
+          if (!Array.isArray(app.dependencies)) {
+            throw new Error(
+              `Error in app "${app.id}". Invalid "dependencies" property: should be an array.`,
+            );
+          }
+          for (const dep of app.dependencies) {
+            if (
+              !["settings", "filesystem", "filePickerOpen", "open"].includes(
+                dep,
+              )
+            ) {
+              throw new Error(
+                `Error in app "${app.id}". One of the asked dependency does not exist: ${dep}`,
+              );
+            }
+          }
+          uglyHandWrittenJsObject +=
+            "    dependencies: " + JSON.stringify(app.dependencies) + ",\n";
+          break;
+
+        case "provider":
+          if (!Array.isArray(app.provider)) {
+            throw new Error(
+              `Error in app "${app.id}". Invalid "provider" property: should be an array.`,
+            );
+          }
+          for (const feature of app.provider) {
+            if (!["filePickerOpen"].includes(feature)) {
+              throw new Error(
+                `Error in app "${app.id}". Provider of unknown feature: ${feature}`,
+              );
+            }
+          }
+          uglyHandWrittenJsObject +=
+            "    provider: " + JSON.stringify(app.provider) + ",\n";
+          break;
+
+        case "defaultForExtensions":
+          if (!Array.isArray(app.defaultForExtensions)) {
+            throw new Error(
+              `Error in app "${app.id}". Invalid "defaultForExtensions" property: should be an array.`,
+            );
+          }
+          for (const ext of app.defaultForExtensions) {
+            if (typeof ext !== "string") {
+              throw new Error(
+                `Error in app "${app.id}". Indicates non-string extension as \`defaultForExtensions\``,
+              );
+            }
+          }
+          uglyHandWrittenJsObject +=
+            "    defaultForExtensions: " +
+            JSON.stringify(app.defaultForExtensions) +
+            ",\n";
+          break;
+
+        case "preload":
+          {
+            if (!filePath) {
+              throw new Error(
+                `Error in app "${app.id}". "preload" property for an external app`,
+              );
+            }
+            if (typeof app.preload !== "object" || app.preload === null) {
+              throw new Error(
+                `Error in app "${app.id}". Invalid "preload" property: should be an object.`,
+              );
+            }
+
+            const props = Object.keys(app.preload);
+            if (props.length !== 1 || props[0] !== "after") {
+              throw new Error(
+                `Error in app "${app.id}". Invalid "preload" property: Only "after" is handled for now.`,
+              );
+            }
+            if (typeof app.preload.after !== "number") {
+              throw new Error(
+                `Error in app "${app.id}". Invalid "preload" property: No "after" property.`,
+              );
+            }
+          }
+          break;
+
+        case "website":
+          if (filePath) {
+            throw new Error(
+              `Error in app "${app.id}". Declaring both internal app and "website". Choose one`,
+            );
+          }
+          if (typeof app.website !== "string") {
+            throw new Error(
+              `Error in app "${app.id}". Invalid "website" property: should be a string.`,
+            );
+          }
+          break;
+
+        default:
           throw new Error(
-            `Error in app "${app.id}". One of the asked dependency does not exist: ${dep}`,
+            `Error in app "${app.id}". Unrecognized property: ${key}`,
           );
-        }
       }
-      uglyHandWrittenJsObject +=
-        "    dependencies: " + JSON.stringify(app.dependencies) + ",\n";
-    }
-
-    if (Array.isArray(app.provider)) {
-      for (const feature of app.provider) {
-        if (!["filePickerOpen"].includes(feature)) {
-          throw new Error(
-            `Error in app "${app.id}". Provider of unknown feature: ${feature}`,
-          );
-        }
-      }
-      uglyHandWrittenJsObject +=
-        "    provider: " + JSON.stringify(app.provider) + ",\n";
-    }
-
-    if (Array.isArray(app.defaultForExtensions)) {
-      for (const ext of app.defaultForExtensions) {
-        if (typeof ext !== "string") {
-          throw new Error(
-            `Error in app "${app.id}": Indicates non-string extension as \`defaultForExtensions\``,
-          );
-        }
-      }
-      uglyHandWrittenJsObject +=
-        "    defaultForExtensions: " +
-        JSON.stringify(app.defaultForExtensions) +
-        ",\n";
     }
 
     if (filePath) {

@@ -1,10 +1,15 @@
 import { APP_STYLE, SETTINGS } from "../settings.mjs";
-import { addAbortableEventListener } from "../utils.mjs";
+import {
+  addAbortableEventListener,
+  applyStyle,
+  getErrorApp,
+  getSpinnerApp,
+} from "../utils.mjs";
 
 let appBaseUrl;
 // Some hack to check if a potentially-undefined global is defined.
 if (typeof __APP_BASE_URL__ === "string") {
-  appBaseUrl = __APP_BASE_URL__l;
+  appBaseUrl = __APP_BASE_URL__;
 } else {
   // Fun hacky part. My desktop is best when there's actual site isolation
   // between the desktop and apps. Due to how the web world works. The most
@@ -30,7 +35,17 @@ if (typeof __APP_BASE_URL__ === "string") {
 
 export function launchSandboxedApp(scriptUrl, appArgs, env, abortSignal) {
   let isInitiallyActivated = true;
+  const wrapperElt = document.createElement("div");
+  applyStyle(wrapperElt, {
+    position: "relative",
+    height: "100%",
+    width: "100%",
+  });
+  const spinnerElt = getSpinnerApp();
+  wrapperElt.appendChild(spinnerElt.element);
+
   const iframe = document.createElement("iframe");
+
   iframe.tabIndex = "0";
   // iframe.sandbox = "allow-scripts";
   iframe.style.height = "100%";
@@ -41,11 +56,31 @@ export function launchSandboxedApp(scriptUrl, appArgs, env, abortSignal) {
   iframe.style.border = "0";
   iframe.style.padding = "0";
   iframe.style.margin = "0";
+  iframe.style.overflow = "hidden";
   iframe.src = appBaseUrl + "/app.html";
+  iframe.style.display = "none";
 
+  wrapperElt.appendChild(iframe);
+
+  // TODO: when it loads multiple times
   iframe.addEventListener("load", () => {
     sendSettingsToIframe(iframe, abortSignal);
-    processEventsFromIframe(iframe, env, abortSignal);
+    processEventsFromIframe(
+      iframe,
+      env,
+      () => {
+        iframe.style.display = "block";
+        spinnerElt.onClose();
+        wrapperElt.removeChild(spinnerElt.element);
+      },
+      (err) => {
+        iframe.remove();
+        spinnerElt.onClose();
+        wrapperElt.removeChild(spinnerElt.element);
+        wrapperElt.appendChild(getErrorApp(err));
+      },
+      abortSignal,
+    );
     iframe.contentWindow.postMessage(
       {
         type: "__pwd__run-app",
@@ -67,7 +102,7 @@ export function launchSandboxedApp(scriptUrl, appArgs, env, abortSignal) {
   // });
 
   return {
-    element: iframe,
+    element: wrapperElt,
     onActivate: () => {
       if (!iframe.contentWindow) {
         isInitiallyActivated = true;
@@ -202,7 +237,7 @@ function sendSettingsToIframe(iframe, abortSignal) {
   );
 }
 
-function processEventsFromIframe(iframe, cbs, abortSignal) {
+function processEventsFromIframe(iframe, cbs, resolve, reject, abortSignal) {
   if (abortSignal.aborted) {
     return;
   }
@@ -222,6 +257,17 @@ function processEventsFromIframe(iframe, cbs, abortSignal) {
       case "__pwd__close-app":
         cbs.closeApp();
         break;
+
+      case "__pwd__loaded":
+        resolve();
+        break;
+
+      case "__pwd__error": {
+        const error = new Error(e.data.data.message);
+        error.name = e.data.data.name;
+        reject(error);
+        break;
+      }
     }
   });
 }

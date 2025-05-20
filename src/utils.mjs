@@ -615,3 +615,58 @@ export function createRootStyle(cssVarArray) {
   newStyle += "}";
   return newStyle;
 }
+
+/**
+ * @typedef {Object} SpinnerPlaceholderApp
+ * @property {HTMLElement} element - The container element in which the
+ * spinner is shown. Will be given as the initial element the window should
+ * display, that may then be replaced by the real window content.
+ * @param {Function} onClose - The spinner is only displayed after a timer, this
+ * function clears this timer.
+ */
+
+/**
+ * Information on spinner prepared just in case the application takes time
+ * to create.
+ * @returns {SpinnerPlaceholderApp}
+ */
+export function getSpinnerApp() {
+  const placeholderElt = document.createElement("div");
+  applyStyle(placeholderElt, {
+    height: "100%",
+    width: "100%",
+    position: "relative",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "var(--window-content-bg)",
+  });
+  const timeout = setTimeout(() => {
+    const spinnerElt = document.createElement("div");
+    spinnerElt.className = "spinner";
+    placeholderElt.appendChild(spinnerElt);
+  }, 200);
+  return {
+    element: placeholderElt,
+    onClose: () => clearTimeout(timeout),
+  };
+}
+
+export function getErrorApp(err) {
+  const errorElt = document.createElement("div");
+  applyStyle(errorElt, {
+    position: "relative",
+    width: "100%",
+    height: "100%",
+    backgroundColor: "var(--window-content-bg)",
+    padding: "10px",
+    overflow: "auto",
+  });
+  errorElt.appendChild(strHtml`<div>
+<h2>Oh no! This application crashed... 😿</h2>
+<p>Failed to load this application due to the following error:</p>
+<p style="font-family:monospace">${err.toString()}</p>
+</div>
+`);
+  return { element: errorElt };
+}

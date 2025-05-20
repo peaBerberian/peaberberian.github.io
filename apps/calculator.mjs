@@ -317,9 +317,10 @@ export function create(_args, env) {
             return;
         }
 
-        // if (isThatInfamousOperation(inputValue)) {
-        //   while (true) {}
-        // }
+        // Some (fun) isolation check
+        if (window.HANG_FOREVER && isThatInfamousOperation(inputValue)) {
+          while (true) {}
+        }
         fullExpression = isThatInfamousOperation(inputValue)
           ? /*
              * Note: Zero Width Space (\u200b) is the "joke" character.

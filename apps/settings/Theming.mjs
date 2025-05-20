@@ -107,16 +107,16 @@ const themes = {
     "#1a1a1a",
     // window-active-header
     // (Background color for the header and borders of the active window)
-    "#202020",
+    "#3b3b3b",
     // window-active-header-text
     // (Text color for the header and borders of the active window)
     "#ffffff",
     // window-inactive-header
     // (Background color for the header and borders of inactive windows)
-    "#2c2c2c",
+    "#737373",
     // window-inactive-header-text
     // (Text color for the header and borders of inactive windows)
-    "#aaaaaa",
+    "#000000",
     // window-sidebar-bg
     // (Background color for the optional sidebar of windows)
     "#252525",

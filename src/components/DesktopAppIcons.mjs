@@ -1,5 +1,4 @@
 // TODO: Rename icon?
-// TODO: context menu
 
 import fs from "../filesystem/filesystem.mjs";
 import {
@@ -10,6 +9,10 @@ import {
   ICON_Y_BASE,
   ICON_Y_OFFSET_FROM_HEIGHT,
   ICON_MARGIN,
+  codeImgSvg,
+  settingsSvg,
+  resetSvg,
+  clearSvg,
 } from "../constants.mjs";
 import {
   addAbortableEventListener,
@@ -21,6 +24,9 @@ import {
 } from "../utils.mjs";
 import { SETTINGS } from "../settings.mjs";
 import notificationEmitter from "./notification_emitter.mjs";
+import setUpContextMenu from "./context-menu.mjs";
+
+const USER_DESKTOP_CONFIG = "/userconfig/desktop.config.json";
 
 /**
  * Create Icon HMTLElement corresponding to the given apps and returns an
@@ -51,8 +57,9 @@ export default async function DesktopAppIcons(
   let lastAppListMemory;
   let currentAbortController = createLinkedAbortController(parentAbortSignal);
 
+  addContainerContextMenu(containerElt, onOpen, parentAbortSignal);
   fs.watch(
-    "/userconfig/desktop.config.json",
+    USER_DESKTOP_CONFIG,
     async () => {
       const abortSignal = currentAbortController.signal;
       const [hasChanged, newAppList] = await getAppList();
@@ -80,7 +87,7 @@ export default async function DesktopAppIcons(
 
   async function getAppList() {
     try {
-      const userConfig = await fs.readFile("/userconfig/desktop.config.json");
+      const userConfig = await fs.readFile(USER_DESKTOP_CONFIG);
       if (lastAppListMemory === userConfig) {
         return [false, JSON.parse(userConfig).list];
       }
@@ -91,7 +98,7 @@ export default async function DesktopAppIcons(
       } catch (err) {
         notificationEmitter.warning(
           "Invalid Desktop Config",
-          '"/userconfig/desktop.config.json" is not a valid JSON file.\nResetting it to its default value...',
+          `"${USER_DESKTOP_CONFIG}" is not a valid JSON file.\nResetting it to its default value...`,
         );
         throw new Error("Malformed config file");
       }
@@ -104,27 +111,22 @@ export default async function DesktopAppIcons(
         ) {
           notificationEmitter.warning(
             "Invalid Desktop Config",
-            '"/userconfig/desktop.config.json" contains invalid data.\nResetting it to its default value...',
+            `"${USER_DESKTOP_CONFIG}" contains invalid data.\nResetting it to its default value...`,
           );
           throw new Error("Malformed config file");
         }
       }
       return [true, tmpList];
     } catch (err) {
-      if (err.code !== "NoEntryError") {
-        console.warn('Failure to read "/userconfig/desktop.config.json":', err);
-        console.warn(`"/userconfig/desktop.config.json" will be reset`);
-      } else {
-        console.info(
-          `No "/userconfig/desktop.config.json" yet. Initializing one...`,
-        );
+      if (err.code === "NoEntryError") {
+        console.info(`No "${USER_DESKTOP_CONFIG}" yet. Initializing one...`);
       }
       const systemConfig = await fs.readFile(
         "/system32/default-desktop.json",
         "object",
       );
       lastAppListMemory = JSON.stringify(systemConfig, null, 2);
-      fs.writeFile("/userconfig/desktop.config.json", lastAppListMemory);
+      fs.writeFile(USER_DESKTOP_CONFIG, lastAppListMemory);
       return [true, systemConfig.list.slice()];
     }
   }
@@ -141,6 +143,9 @@ export default async function DesktopAppIcons(
       clearSignal: parentAbortSignal,
     });
     window.addEventListener("resize", recheckUpdate);
+    SETTINGS.canDeleteIcon.onUpdate(() => recheckUpdate(true), {
+      clearSignal: parentAbortSignal,
+    });
     SETTINGS.taskbarSize.onUpdate(recheckUpdate, {
       clearSignal: parentAbortSignal,
     });
@@ -155,7 +160,7 @@ export default async function DesktopAppIcons(
     containerElt.appendChild(iconWrapperElt);
     return recheckUpdate();
 
-    function recheckUpdate() {
+    function recheckUpdate(force) {
       return new Promise((resolve, reject) => {
         requestAnimationFrame(() => {
           try {
@@ -198,6 +203,9 @@ export default async function DesktopAppIcons(
               lastGrid = newGrid;
             };
 
+            if (force) {
+              doRefresh();
+            }
             if (newGrid[0] < lastGrid[0]) {
               if (newGrid[0] >= appList.length) {
                 // There's less apps than the first column anyway
@@ -287,6 +295,7 @@ export default async function DesktopAppIcons(
 
       let clickCount = 0;
       let lastClickTs = -Infinity;
+      addIconEltContextMenu(iconElt, appList, app, abortSignal);
       iconElt.onkeydown = (e) => onKeyDown(appList, iconElt, app, e);
       iconElt.addEventListener("blur", () => {
         iconElt.classList.remove("selected");
@@ -347,7 +356,7 @@ export default async function DesktopAppIcons(
             appList[i] = appList[j];
             appList[j] = tempApp1;
             lastAppListMemory = JSON.stringify({ list: appList }, null, 2);
-            fs.writeFile("/userconfig/desktop.config.json", lastAppListMemory);
+            fs.writeFile(USER_DESKTOP_CONFIG, lastAppListMemory);
             return;
           }
         }
@@ -381,7 +390,7 @@ export default async function DesktopAppIcons(
           const newAppList = JSON.stringify({ list: appList }, null, 2);
           // NOTE: We do not update `lastAppListMemory` because we DO want to
           // refresh here
-          fs.writeFile("/userconfig/desktop.config.json", newAppList);
+          fs.writeFile(USER_DESKTOP_CONFIG, newAppList);
         }
         break;
       }
@@ -485,6 +494,82 @@ export default async function DesktopAppIcons(
         break;
       }
     }
+  }
+
+  function addIconEltContextMenu(iconElt, appList, app, abortSignal) {
+    setUpContextMenu({
+      element: iconElt,
+      filter: (e) => iconElt.contains(e.target),
+      abortSignal,
+      actions: [
+        {
+          name: "open",
+          title: "Open icon",
+          height: "1.3em",
+          svg: `<svg width="800px" height="800px" viewBox="0 -0.5 21 21" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><g transform="translate(-139.000000, -560.000000)" fill="currentColor"><g transform="translate(56.000000, 160.000000)"><path d="M98.75,413 L101.9,413 L101.9,407 L98.75,407 L98.75,413 Z M90.35,405 L96.65,405 L96.65,402 L90.35,402 L90.35,405 Z M90.35,413 L96.65,413 L96.65,407 L90.35,407 L90.35,413 Z M90.35,418 L96.65,418 L96.65,415 L90.35,415 L90.35,418 Z M85.1,413 L88.25,413 L88.25,407 L85.1,407 L85.1,413 Z M98.75,405 L98.75,400 L88.25,400 L88.25,405 L83,405 L83,415 L88.25,415 L88.25,420 L98.75,420 L98.75,415 L104,415 L104,405 L98.75,405 Z"></path></g></g></g></svg>`,
+          onClick: () => {
+            onOpen(app.run, app.args ?? []);
+            iconElt.blur();
+          },
+        },
+        ...(SETTINGS.canDeleteIcon.getValue()
+          ? [
+              {
+                name: "clear",
+                title: "Delete desktop icon",
+                onClick: () => {
+                  if (!SETTINGS.canDeleteIcon.getValue()) {
+                    return;
+                  }
+                  const index = appList.indexOf(app);
+                  if (index >= 0) {
+                    appList.splice(index, 1);
+                    const newAppList = JSON.stringify(
+                      { list: appList },
+                      null,
+                      2,
+                    );
+                    // NOTE: We do not update `lastAppListMemory` because we DO want to
+                    // refresh here
+                    fs.writeFile(USER_DESKTOP_CONFIG, newAppList);
+                  }
+                },
+              },
+            ]
+          : []),
+        { name: "separator" },
+        {
+          name: "settings",
+          title: "Open settings",
+          svg: settingsSvg,
+          onClick: () => {
+            onOpen("/apps/settings.run", []);
+          },
+        },
+        {
+          name: "fullscreen",
+          title: "Toggle fullscreen",
+          onClick: () => {
+            if (document.fullscreenElement) {
+              document.exitFullscreen();
+            } else {
+              document.body.requestFullscreen();
+            }
+          },
+        },
+        {
+          name: "code",
+          title: "Go to the project's code repository",
+          onClick: () => {
+            // TODO: const
+            window.open(
+              "https://github.com/peaBerberian/peaberberian.github.io",
+              "_blank",
+            );
+          },
+        },
+      ],
+    });
   }
 }
 
@@ -715,4 +800,70 @@ function addMovingAroundListeners(
     dragBaseLeft = updatedLeft;
     dragBaseTop = updatedTop;
   }
+}
+
+function addContainerContextMenu(containerElt, onOpen, abortSignal) {
+  setUpContextMenu({
+    element: containerElt,
+    filter: (e) => e.target === containerElt,
+    abortSignal,
+    actions: [
+      {
+        name: "reset",
+        title: "Reset desktop icons to default",
+        svg: resetSvg,
+        onClick: () => {
+          // TODO: notif if fails
+          fs.rmFile(USER_DESKTOP_CONFIG);
+        },
+      },
+      // {
+      //   name: "add",
+      //   title: "Add shortcut icon",
+      //   svg: `<svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 12L12 12M12 12L17 12M12 12V7M12 12L12 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      // },
+      {
+        name: "clear",
+        title: "Clear all icons",
+        onClick: () => {
+          // TODO: notif if fails
+          fs.writeFile(
+            USER_DESKTOP_CONFIG,
+            JSON.stringify({ list: [] }, null, 2),
+          );
+        },
+      },
+      { name: "separator" },
+      {
+        name: "settings",
+        title: "Open settings",
+        svg: settingsSvg,
+        onClick: () => {
+          onOpen("/apps/settings.run", []);
+        },
+      },
+      {
+        name: "fullscreen",
+        title: "Toggle fullscreen",
+        onClick: () => {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          } else {
+            document.body.requestFullscreen();
+          }
+        },
+      },
+      {
+        name: "code",
+        title: "Go to the project's code repository",
+        onClick: () => {
+          // TODO: const
+          window.open(
+            "https://github.com/peaBerberian/peaberberian.github.io",
+            "_blank",
+          );
+        },
+      },
+    ],
+  });
 }

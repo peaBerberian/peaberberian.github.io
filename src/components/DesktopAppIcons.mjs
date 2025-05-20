@@ -527,30 +527,7 @@ export default async function DesktopAppIcons(
           },
         },
         { name: "separator" },
-        {
-          name: "settings",
-          title: "Open settings",
-          svg: settingsSvg,
-          onClick: () => {
-            onOpen("/apps/settings.run", []);
-          },
-        },
-        {
-          name: "fullscreen",
-          title: "Toggle fullscreen",
-          onClick: () => {
-            if (document.fullscreenElement) {
-              document.exitFullscreen();
-            } else {
-              document.body.requestFullscreen();
-            }
-          },
-        },
-        {
-          name: "code",
-          title: "Go to the project's code repository",
-          onClick: () => window.open(PROJECT_REPO, "_blank"),
-        },
+        ...getBasicContextMenuActions(),
       ],
     });
   }
@@ -790,72 +767,76 @@ function addContainerContextMenu(containerElt, onOpen, abortSignal) {
     element: containerElt,
     filter: (e) => e.target === containerElt,
     abortSignal,
-    actions: [
-      {
-        name: "reset",
-        title: "Reset desktop icons to default",
-        svg: resetSvg,
-        onClick: async () => {
-          try {
-            await fs.rmFile(USER_DESKTOP_CONFIG);
-          } catch (err) {
-            notificationEmitter.error(
-              "Desktop icons reset",
-              "Failed to reset desktop icons: " + err.toString(),
-            );
-          }
-        },
-      },
-      {
-        name: "add",
-        title: "Add desktop icons",
-        svg: `<svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 12L12 12M12 12L17 12M12 12V7M12 12L12 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-        onClick: () => {
-          onOpen("/apps/add-desktop-icon.run", []);
-        },
-      },
-      {
-        name: "clear",
-        title: "Clear all icons",
-        onClick: async () => {
-          try {
-            await fs.writeFile(
-              USER_DESKTOP_CONFIG,
-              JSON.stringify({ list: [] }, null, 2),
-            );
-          } catch (err) {
-            notificationEmitter.error(
-              "Desktop icons clear",
-              "Failed to clear desktop icons: " + err.toString(),
-            );
-          }
-        },
-      },
-      { name: "separator" },
-      {
-        name: "settings",
-        title: "Open settings",
-        svg: settingsSvg,
-        onClick: () => {
-          onOpen("/apps/settings.run", []);
-        },
-      },
-      {
-        name: "fullscreen",
-        title: "Toggle fullscreen",
-        onClick: () => {
-          if (document.fullscreenElement) {
-            document.exitFullscreen();
-          } else {
-            document.body.requestFullscreen();
-          }
-        },
-      },
-      {
-        name: "code",
-        title: "Go to the project's code repository",
-        onClick: () => window.open(PROJECT_REPO, "_blank"),
-      },
-    ],
+    actions: getBasicContextMenuActions(onOpen),
   });
+}
+
+function getBasicContextMenuActions(onOpen) {
+  return [
+    {
+      name: "reset",
+      title: "Reset desktop icons to default",
+      svg: resetSvg,
+      onClick: async () => {
+        try {
+          await fs.rmFile(USER_DESKTOP_CONFIG);
+        } catch (err) {
+          notificationEmitter.error(
+            "Desktop icons reset",
+            "Failed to reset desktop icons: " + err.toString(),
+          );
+        }
+      },
+    },
+    {
+      name: "add",
+      title: "Add desktop icons",
+      svg: `<svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 12L12 12M12 12L17 12M12 12V7M12 12L12 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      onClick: () => {
+        onOpen("/apps/add-desktop-icon.run", []);
+      },
+    },
+    {
+      name: "clear",
+      title: "Clear all icons",
+      onClick: async () => {
+        try {
+          await fs.writeFile(
+            USER_DESKTOP_CONFIG,
+            JSON.stringify({ list: [] }, null, 2),
+          );
+        } catch (err) {
+          notificationEmitter.error(
+            "Desktop icons clear",
+            "Failed to clear desktop icons: " + err.toString(),
+          );
+        }
+      },
+    },
+    { name: "separator" },
+    {
+      name: "settings",
+      title: "Open settings",
+      svg: settingsSvg,
+      onClick: () => {
+        onOpen("/apps/settings.run", []);
+      },
+    },
+    {
+      name: "fullscreen",
+      title: "Toggle fullscreen",
+      onClick: () => {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          document.body.requestFullscreen();
+        }
+      },
+    },
+    {
+      name: "code",
+      title: "Go to the project's code repository",
+      onClick: () => window.open(PROJECT_REPO, "_blank"),
+    },
+  ];
 }

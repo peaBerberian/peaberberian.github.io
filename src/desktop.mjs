@@ -4,7 +4,6 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
-// - notes quick save could detect if file change since last save
 // - context menu in explorer?
 //
 // medium priority:
@@ -23,6 +22,7 @@
 // - explorer: when going to parent directory, focus the previous one by default?
 // - explorer: refresh button? (Only useful when updating the directory in
 //   another page)
+// - notes quick save could detect if file change since last save
 // - filesystem: Proxy local storage in `/system32/`?
 // - filesystem: When indexedDB is not available, fallback on in-memory
 // - double clicking while moving on the second click probably shouldn't put in

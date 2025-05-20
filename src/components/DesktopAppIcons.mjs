@@ -597,6 +597,16 @@ function addMovingAroundListeners(
       },
     );
     addAbortableEventListener(iconElt, "touchend", abortSignal, onMouseUp);
+
+    // Without this, locking a phone (and a PC?) while moving an icon breaks
+    // the supposed invariants of our logic (icons are always placed on the
+    // valid spots of the grid initially)
+    addAbortableEventListener(
+      document,
+      "visibilitychange",
+      abortSignal,
+      onMouseUp,
+    );
     addAbortableEventListener(
       iconElt,
       "touchmove",

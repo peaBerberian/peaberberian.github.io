@@ -61,16 +61,36 @@ export default class AppsLauncher {
      */
     this._taskbarManager = taskbarManager;
 
+    /**
+     * Maintains a list of handles: Empty objects which are linked to file
+     * paths, so that applications may be able to update files without actually
+     * knowing their path.
+     */
+    this._fileHandles = new WeakMap();
+
+    // Now deactivate windows when the desktop is clicked on, as it seems to me
+    // like it would be expected.
+    //
+    // With a key exception: If a click began inside a window do not deactivaate
+    // that window (this also seems expected, especially when there are drag and
+    // drop, selection zones, etc.).
+    let mousedownTarget = null;
+    this._desktopElt.addEventListener("mousedown", (e) => {
+      mousedownTarget = e.target;
+    });
+
     this._desktopElt.addEventListener("click", (e) => {
       if (e.target === this._desktopElt) {
         // deactivate all windows
         this._windows.forEach((wdow) => {
+          if (mousedownTarget && wdow.element.contains(mousedownTarget)) {
+            return;
+          }
           wdow.deActivate();
         });
       }
+      mousedownTarget = null;
     });
-
-    this._fileHandles = new WeakMap();
   }
 
   /**

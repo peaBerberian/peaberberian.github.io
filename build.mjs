@@ -681,9 +681,12 @@ export default [`;
 
         case "defaultBackground": {
           if (
-            !["windowActiveHeader", "bgColor", "barBg"].includes(
-              app.defaultBackground,
-            ) &&
+            ![
+              "windowActiveHeader",
+              "bgColor",
+              "barBg",
+              "disabledColor",
+            ].includes(app.defaultBackground) &&
             !/^#[0-9a-zA-Z]{6}$/.test(app.defaultBackground)
           ) {
             throw new Error(

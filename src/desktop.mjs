@@ -4,12 +4,11 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
-// - Finish save work (save handles for apps)
 //
 // medium priority:
 // - image viewer touch controls
+// - Finish save work (save handles for apps)
 // - Actually enforce permissions by adding iframe with sandbox="allow-scripts"
-// - filesystem: watch API?
 // - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices
 //

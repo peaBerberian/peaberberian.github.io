@@ -173,7 +173,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
     { name: "separator" },
     {
       name: "upload",
-      title: "Upload Files",
+      title: "Load Files",
       onClick: onUploadClick,
     },
     {

@@ -121,7 +121,7 @@ onmessage = (e) => {
           parent.postMessage(
             {
               type: "__pwd__loaded",
-              value: null,
+              data: null,
             },
             desktopOrigin ?? "*",
           );
@@ -134,7 +134,7 @@ onmessage = (e) => {
           parent.postMessage(
             {
               type: "__pwd__error",
-              value: {
+              data: {
                 time: "run",
                 name: err.name,
                 message: err.message,

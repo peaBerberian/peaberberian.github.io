@@ -386,7 +386,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
     },
   };
 
-  async function navigateToPath(path) {
+  async function navigateToPath(path, keepScroll) {
     try {
       const normalizedPath = path.endsWith("/") ? path : path + "/";
       const entries = await filesystem.readDir(normalizedPath);
@@ -438,6 +438,9 @@ function createExplorer(explorerType, args, env, abortSignal) {
       }
       directoryContainer.innerHTML = "";
       directoryContainer.appendChild(currentDirectoryComponent.element);
+      if (!keepScroll) {
+        directoryContainer.scrollTo(0, 0);
+      }
       if (isAppActivated) {
         currentDirectoryComponent.onActivate();
       } else {
@@ -449,7 +452,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
         async () => {
           // Refresh
           const toSelect = selectedItems;
-          await navigateToPath(currentPath);
+          await navigateToPath(currentPath, true);
           currentDirectoryComponent?.selectItems(toSelect);
         },
         currentDirectoryAbortController.signal,
@@ -495,7 +498,6 @@ function createExplorer(explorerType, args, env, abortSignal) {
               `${items.length} files uploaded successfully`,
             );
           }
-          navigateToPath(currentPath);
         }
       },
       (err) => {
@@ -575,7 +577,6 @@ function createExplorer(explorerType, args, env, abortSignal) {
       () => {
         cuttedSelection = [];
         currentDirectoryComponent?.onActivate();
-        navigateToPath(currentPath);
       },
       (err) => {
         currentDirectoryComponent?.onActivate();

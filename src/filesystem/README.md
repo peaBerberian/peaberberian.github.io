@@ -79,6 +79,12 @@ can be discovered through `readDir`, but they should be always there:
 
   - `icon` (`string|undefined`): The icon to show for the application.
 
+    There's also a `version` property in that file, derived from the original
+    application list file.
+
+    The intent is to make it detectable if executables and files referenced here
+    could since be moved in a default system.
+
 - `system32/start_menu.config.json`: Contains metadata for the arrangement of
   apps in the start menu
 
@@ -114,6 +120,12 @@ can be discovered through `readDir`, but they should be always there:
 
   - `list` (`Array.<Object>`): The application objects inside that sublist.
     A sublist cannot contain another sublist.
+
+    There's also a `version` property in that file, derived from the original
+    application list file.
+
+    The intent is to make it detectable if executables and files referenced here
+    could since be moved in a default system.
 
 - `system32/default_apps.config.json`: Contains object where the keys are files
   extensions and the value is the path of the corresponding application to

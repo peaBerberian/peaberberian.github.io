@@ -36,7 +36,7 @@ lazily imported as an ES6 module through a dynamic import, such as
 ## The `AppInfo.json` file
 
 `AppInfo.json` contains the list of application that will be included in the
-desktop builds. It's a JSON file with for now a single key, `"apps"`, which is
+desktop builds. It's a JSON file with an `"apps"` property, which is
 set to an array of objects, each describing the properties wanted for that
 application. The order of that array is important, as it may be re-used for
 application listings in the desktops (e.g. earlier apps might be put before
@@ -197,6 +197,12 @@ The following properties can be set for each application:
     Applications with that feature should export a `createFileSaver` function
     (additionally to their `create` function).
 
+Note that the `AppInfo.json` file also contains a `version` property. It should
+only be updated if apps of a previous version of the file are changed or
+removed.
+The intent is to make it more easily detectable when a user already created e.g.
+shortcuts to now deleted applications.
+
 ## The `create` function
 
 The entry file of each application should export a `create` function in their main
@@ -224,6 +230,8 @@ depending on the application's needs:
 
     - The `getVersion` function, which returns the current version of the
       desktop OS.
+
+    - The `closeApp` function, allowing to close the current application.
 
     - Optionally, there may be the `dependencies` asked for the App in the
       `AppInfo.json` file (e.g. asking for the `settings` dependency will provide

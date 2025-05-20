@@ -241,6 +241,9 @@ function writeGeneratedAppFile(baseDir) {
     throw new Error(`Failed to parse "AppInfo.json": ${err}`);
   }
 
+  if (typeof json.version !== "number") {
+    throw new Error("Invalid AppInfo.json: invalid version property (number)");
+  }
   if (!Array.isArray(json?.apps)) {
     throw new Error("Invalid AppInfo.json: no apps Array");
   }
@@ -251,7 +254,9 @@ function writeGeneratedAppFile(baseDir) {
   const automaticDynImportsAfterTimer = [];
 
   /** I'll uglily write manually the JS code, being careful with it. */
-  let uglyHandWrittenJsObject = "export default [";
+  let uglyHandWrittenJsObject = `export const version = ${json.version};
+
+export default [`;
 
   for (let i = 0; i < json.apps.length; i++) {
     const app = json.apps[i];

@@ -349,6 +349,10 @@ function refreshStartMenu(
               String(offset + currentIdx * START_ITEM_HEIGHT) + "px";
           }
           startItemListElt.onmouseenter = () => {
+            if (!startMenuElt.classList.contains("active")) {
+              // Allows to ignore when the start menu is still opening
+              return;
+            }
             list.classList.add("active");
           };
           list.onmouseleave = (e) => {

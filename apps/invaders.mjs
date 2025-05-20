@@ -4,6 +4,26 @@ const RIGHT_KEYS = ["d", "arrowright"];
 const PLAYER_CHAR = "🛩️";
 const PLAYER_DAMAGE_CHAR = "💥";
 
+const style = document.createElement("style");
+style.textContent = `
+@keyframes circle {
+  0%   { transform: translate(5px, 0px); }
+  25%  { transform: translate(0px, -5px); }
+  50%  { transform: translate(-5px, 0px); }
+  75%  { transform: translate(0px, 5px); }
+  100% { transform: translate(5px, 0px); }
+}
+@keyframes swing {
+  0% {
+    transform: rotate(-15deg);
+  }
+  100% {
+    transform: rotate(15deg);
+  }
+}
+`;
+document.head.appendChild(style);
+
 export function create(_args, env) {
   const gameWrapper = document.createElement("div");
   applyStyle(gameWrapper, {
@@ -235,6 +255,12 @@ export function create(_args, env) {
           fontSize: config.enemySize + "px",
           userSelect: "none",
         });
+        if (row === 2) {
+          enemyElt.style.animation = "swing 2s ease-in-out infinite alternate";
+          enemyElt.transformOrigin = "top center";
+        } else if (row === 3) {
+          enemyElt.style.animation = "circle 3s infinite linear";
+        }
         gameArea.appendChild(enemyElt);
         enemy.element = enemyElt;
         gameState.enemies.push(enemy);
@@ -292,7 +318,7 @@ export function create(_args, env) {
               top: shield.y + "px",
               height: shield.height + "px",
               width: shield.width + "px",
-              background: env.STYLE.windowActiveHeaderText,
+              // background: env.STYLE.windowActiveHeaderText,
               opacity: "0.7",
               background: `linear-gradient(to top left, ${env.STYLE.windowActiveHeaderText}, #ccc 99%)`,
               // background: `radial-gradient(${env.STYLE.windowActiveHeaderText}, ${env.STYLE.windowActiveHeader} 80%)`,

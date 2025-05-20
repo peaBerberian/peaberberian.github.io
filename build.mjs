@@ -395,6 +395,17 @@ export default [`;
           }
           break;
 
+        case "defaultBackground": {
+          if (
+            !["windowActiveHeader", "bgColor"].includes(app.defaultBackground)
+          ) {
+            throw new Error(
+              `Error in app "${app.id}". Invalid "defaultBackground" property: unsupported value.`,
+            );
+          }
+          break;
+        }
+
         case "defaultHeight":
           if (typeof app.defaultHeight !== "number") {
             throw new Error(
@@ -542,6 +553,10 @@ export default [`;
       uglyHandWrittenJsObject += `    data: {
       lazyLoad: ${JSON.stringify(importPath)},
 `;
+      if (app.defaultBackground) {
+        uglyHandWrittenJsObject += `      defaultBackground: ${JSON.stringify(app.defaultBackground)},
+`;
+      }
       if (app.sandboxed) {
         uglyHandWrittenJsObject += `      sandboxed: true,
 `;
@@ -567,7 +582,12 @@ export default [`;
     } else if (typeof app.website === "string" && app.website !== "") {
       uglyHandWrittenJsObject += `    data: {
       website: ${JSON.stringify(app.website)}
-    },
+`;
+      if (app.defaultBackground) {
+        uglyHandWrittenJsObject += `      defaultBackground: ${JSON.stringify(app.defaultBackground)},
+`;
+      }
+      uglyHandWrittenJsObject += `    },
 `;
     }
     uglyHandWrittenJsObject += `  },

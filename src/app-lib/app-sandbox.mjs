@@ -118,11 +118,6 @@ onmessage = (e) => {
           onActivate = appInfo.onActivate;
           onDeactivate = appInfo.onDeactivate;
           onClose = appInfo.onClose;
-          if (isActivated) {
-            onActivate?.();
-          } else {
-            onDeactivate?.();
-          }
         })
         .catch((err) => {
           parent.postMessage(
@@ -165,6 +160,22 @@ onmessage = (e) => {
       appWrapperElt.classList.remove("active");
       onClose?.();
       break;
+
+    case "__pwd__keyup":
+    case "__pwd__keydown": {
+      const syntheticEvent = new KeyboardEvent(e.data.type.substring(7), {
+        key: e.data.key,
+        code: e.data.code,
+        keyCode: e.data.keyCode,
+        ctrlKey: e.data.ctrlKey,
+        shiftKey: e.data.shiftKey,
+        altKey: e.data.altKey,
+        metaKey: e.data.metaKey,
+        bubbles: true,
+        cancelable: true,
+      });
+      document.dispatchEvent(syntheticEvent);
+    }
   }
 };
 

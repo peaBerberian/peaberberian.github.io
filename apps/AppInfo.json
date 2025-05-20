@@ -162,6 +162,8 @@
       "icon": "👾",
       "defaultHeight": 400,
       "defaultWidth": 600,
+      "sandboxed": true,
+      "defaultBackground": "windowActiveHeader",
       "startMenu": {
         "list": "Games"
       },
@@ -192,6 +194,8 @@
       "startMenu": {
         "list": "Games"
       },
+      "sandboxed": true,
+      "defaultBackground": "windowActiveHeader",
       "desktop": {
         "display": true
       }

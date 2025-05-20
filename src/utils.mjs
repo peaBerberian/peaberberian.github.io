@@ -77,9 +77,10 @@ export function getMaxDesktopDimensions(taskbarLocation, taskbarSize) {
  * Creates an i-frame inside an application that follow this fake desktop's
  * rule.
  * @param {string} url - URL to set this i-frame to.
+ * @param {string|undefined} [backgroundColor]
  * @returns {HTMLElement} - A "div" containing the i-frame asked.
  */
-export function createExternalIframe(url) {
+export function createExternalIframe(url, backgroundColor) {
   const container = document.createElement("div");
   applyStyle(container, {
     height: "100%",
@@ -87,7 +88,7 @@ export function createExternalIframe(url) {
     position: "relative",
 
     // TODO: Through a constant?
-    backgroundColor: "var(--window-content-bg)",
+    backgroundColor: backgroundColor ?? "var(--window-content-bg)",
   });
 
   // Blocker DIV to work-around pointer-event-blocking that makes the behavior
@@ -628,9 +629,10 @@ export function createRootStyle(cssVarArray) {
 /**
  * Information on spinner prepared just in case the application takes time
  * to create.
+ * @param {string|undefined} [backgroundColor]
  * @returns {SpinnerPlaceholderApp}
  */
-export function getSpinnerApp() {
+export function getSpinnerApp(backgroundColor) {
   const placeholderElt = document.createElement("div");
   applyStyle(placeholderElt, {
     height: "100%",
@@ -639,7 +641,7 @@ export function getSpinnerApp() {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "var(--window-content-bg)",
+    backgroundColor: backgroundColor ?? "var(--window-content-bg)",
   });
   const timeout = setTimeout(() => {
     const spinnerElt = document.createElement("div");

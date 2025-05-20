@@ -1,8 +1,5 @@
-// TODO: Actually persist new icon grid
-// TODO: What to do if dragging and there's a window on top?
-// TODO: Delete key
 // TODO: Rename icon?
-// TODO: watch desktop.config.json?
+// TODO: context menu
 
 import fs from "../filesystem/filesystem.mjs";
 import {

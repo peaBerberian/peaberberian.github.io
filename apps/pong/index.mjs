@@ -52,7 +52,7 @@ export function create(_args, env, abortSignal) {
   containerElt.addEventListener("touchmove", onTouchMove);
 
   // Safari just selects all over the place like some maniac without this
-  containerElt.addEventListener("selectstart", (e) => e.preventDefault());
+  containerElt.onselectstart = (e) => e.preventDefault();
 
   return {
     element: containerElt,

@@ -668,9 +668,9 @@ function addMouseSelectInteractivity(
     document.body.appendChild(selectionBox);
   });
 
-  containerElt.addEventListener("selectstart", (e) => {
+  containerElt.onselectstart = (e) => {
     e.preventDefault();
-  });
+  };
 
   function onMouseMove(e) {
     if (!isSelecting) {

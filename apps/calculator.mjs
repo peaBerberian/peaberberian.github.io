@@ -147,6 +147,7 @@ export function create(_args, env) {
   applyStyle(displayElt, {
     backgroundColor: env.STYLE.bgColor,
     border: "2px solid " + env.STYLE.lineColor,
+    color: env.STYLE.textColor,
     padding: "10px",
     textAlign: "right",
     fontSize: "1.5em",
@@ -316,6 +317,9 @@ export function create(_args, env) {
             return;
         }
 
+        // if (isThatInfamousOperation(inputValue)) {
+        //   while (true) {}
+        // }
         fullExpression = isThatInfamousOperation(inputValue)
           ? /*
              * Note: Zero Width Space (\u200b) is the "joke" character.

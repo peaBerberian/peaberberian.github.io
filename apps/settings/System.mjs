@@ -2,7 +2,7 @@ import { createNumericSliderOnRef } from "./utils.mjs";
 
 export default function createSystemSection(env, abortSignal) {
   const { settings, appUtils } = env;
-  const { createAppTitle, strHtml, createFullscreenButton } = appUtils;
+  const { createAppTitle, strHtml } = appUtils;
   const currentVersion = env.getVersion();
   const section = strHtml`<div>${createAppTitle("System", {})}</div>`;
   section.dataset.section = "system";
@@ -48,34 +48,6 @@ export default function createSystemSection(env, abortSignal) {
   wholeAppGroup.appendChild(fontSizeSlider);
 
   section.appendChild(wholeAppGroup);
-
-  const usefulGroup = strHtml`<div class="w-group"><h3>Useful buttons!</h3></div>`;
-
-  const fullscreenButton = createFullscreenButton(abortSignal);
-  fullscreenButton.style.marginRight = "10px";
-  fullscreenButton.style.marginBottom = "10px";
-  usefulGroup.appendChild(fullscreenButton);
-
-  const resetButton = strHtml`<input class="btn" type="button" value="Reset all settings">`;
-  resetButton.style.marginRight = "10px";
-  resetButton.style.marginBottom = "10px";
-  resetButton.onclick = function () {
-    settings.resetStateToDefault();
-  };
-  usefulGroup.appendChild(resetButton);
-
-  const rebootButton = strHtml`<input class="btn" type="button" value="Fast Reboot">`;
-  rebootButton.style.marginRight = "10px";
-  rebootButton.style.marginBottom = "10px";
-  rebootButton.onclick = function () {
-    const fragmentIdx = location.href.indexOf("#");
-    const urlWithoutFragment =
-      fragmentIdx > 0 ? location.href.substring(0, fragmentIdx) : location.href;
-    window.location.href = urlWithoutFragment;
-    window.location.reload();
-  };
-  usefulGroup.appendChild(rebootButton);
-  section.appendChild(usefulGroup);
 
   const infoGroup = strHtml`<div class="w-group"><h3>Technical Information</h3></div>`;
 

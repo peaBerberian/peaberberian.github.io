@@ -8,6 +8,7 @@ import createThemeSection from "./Theming.mjs";
 import createWindowSection from "./Window.mjs";
 import createApplicationsSection from "./Applications.mjs";
 import createDesktopIconsSection from "./DesktopIcons.mjs";
+import createStorageSection from "./Storage.mjs";
 
 /**
  * Generate content of the "System Settings" application.
@@ -54,6 +55,7 @@ export function create(_args, env, abortSignal) {
       active: false,
     },
     { icon: "🤹", text: "Desktop Icons", section: "icons", active: false },
+    { icon: "💾", text: "Storage", section: "storage", active: false },
     { icon: "💻", text: "System", section: "system", active: false },
   ];
   updateSectionsIcons();
@@ -143,6 +145,11 @@ export function create(_args, env, abortSignal) {
       case "icons":
         contentElt.appendChild(
           createDesktopIconsSection(env, childAbortController.signal),
+        );
+        break;
+      case "storage":
+        contentElt.appendChild(
+          createStorageSection(env, childAbortController.signal),
         );
         break;
     }

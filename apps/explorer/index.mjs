@@ -818,7 +818,6 @@ async function createNewDirectory(fs, path, containerElt, msgContainerElt) {
       msgContainerElt,
       `Directory "${dirName}" created successfully`,
     );
-    debugger;
   } catch (error) {
     removeBlockingMask(maskContainer, containerElt);
     showError(msgContainerElt, `Failed to create directory: ${error.message}`);

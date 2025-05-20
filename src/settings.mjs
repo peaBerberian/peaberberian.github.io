@@ -66,7 +66,8 @@ const DEFAULT_WINDOW_HEADER_HEIGHT = 35;
 const DEFAULT_WINDOW_BUTTON_SIZE = 18;
 
 /**
- * Tuples of all references defined here and their default value.
+ * Tuples of all references defined here, their default value
+ * and the localStorage property where they are at.
  *
  * Used to be able to reset all the state to 0 when/if needed.
  */
@@ -149,6 +150,21 @@ const taskbarLocation = createRefForState(
 export const SETTINGS = {
   /** Display the "About me" App at start-up */
   aboutMeStart: createRefForState("about-me-start", true),
+
+  /** Persist any setting here in `localStorage` only if `true`. */
+  persistSettings: createRefForState(null, true, (persistSettings) => {
+    if (persistSettings) {
+      setCurrentSettingsInStorage();
+    } else {
+      clearSettingsStorage();
+    }
+  }),
+
+  /** If `false`, new entries cannot be added to the filesystem. */
+  storeNewDataInIndexedDB: createRefForState("store-new-data", true),
+
+  /** If `true`, the IndexedDB filesystem will be checked at startup. */
+  performFileSystemCheckAtStartup: createRefForState("startup-fs-check", true),
 
   /** Update the base font size to the given size in px. */
   fontSize: createRefForState("font-size", DEFAULT_FONT_SIZE, (size) => {
@@ -950,22 +966,29 @@ function percentageToHex(percent) {
 /**
  * Create a `SharedReference` object for some given state, that will be stored
  * in local storage and retrieved on page re-launch.
- * @param {string} stateName - The name of the state to put in local-storage.
+ * @param {string|null} stateName - The name of the state to put in
+ * local-storage.
  * Has to be forward-compatible (keep its name between versions), so a
  * forward-thinking name should be chosen.
+ *
+ * If `null`, the setting is not stored in localStorage.
  * @param {*} defaultVal - Initial value for that state if none is stored yet.
  * @param {Function} onUpdate - Function to call when that value is updated.
  */
 function createRefForState(stateName, defaultVal, onUpdate) {
   let initialValue;
-  try {
-    const storedValue = localStorage.getItem(stateName);
-    if (storedValue) {
-      initialValue = JSON.parse(storedValue);
-    }
-  } catch (_) {}
-  if (initialValue === undefined) {
+  if (stateName === null) {
     initialValue = defaultVal;
+  } else {
+    try {
+      const storedValue = localStorage.getItem(stateName);
+      if (storedValue) {
+        initialValue = JSON.parse(storedValue);
+      }
+    } catch (_) {}
+    if (initialValue === undefined) {
+      initialValue = defaultVal;
+    }
   }
   const ref = new SharedReference(initialValue);
   ref.onUpdate(
@@ -974,7 +997,9 @@ function createRefForState(stateName, defaultVal, onUpdate) {
         if (onUpdate) {
           onUpdate(bg);
         }
-        localStorage.setItem(stateName, JSON.stringify(bg));
+        if (stateName !== null) {
+          localStorage.setItem(stateName, JSON.stringify(bg));
+        }
       } catch (_) {}
     },
     { emitCurrentValue: false },
@@ -982,7 +1007,7 @@ function createRefForState(stateName, defaultVal, onUpdate) {
   if (onUpdate) {
     onUpdate(initialValue);
   }
-  allRefsAndDefaults.push([ref, defaultVal]);
+  allRefsAndDefaults.push([ref, defaultVal, stateName]);
   return ref;
 }
 
@@ -997,6 +1022,29 @@ export function resetStateToDefault() {
     });
     localStorage.clear();
   });
+}
+
+export function setCurrentSettingsInStorage() {
+  allRefsAndDefaults.forEach(([ref, deflt, stateName]) => {
+    try {
+      if (!stateName) {
+        return;
+      }
+      const currentVal = ref.getValue();
+      const baseItem = localStorage.getItem(stateName);
+      if (baseItem === null) {
+        if (currentVal !== deflt) {
+          localStorage.setItem(stateName, JSON.stringify(currentVal));
+        }
+      } else if (JSON.parse(baseItem) !== currentVal) {
+        localStorage.setItem(stateName, JSON.stringify(currentVal));
+      }
+    } catch (_) {}
+  });
+}
+
+export function clearSettingsStorage() {
+  localStorage.clear();
 }
 
 SETTINGS.resetStateToDefault = resetStateToDefault;

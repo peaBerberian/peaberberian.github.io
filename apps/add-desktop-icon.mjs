@@ -60,10 +60,22 @@ export function create(_args, env) {
               });
             }
           }
-          const baseConfig = await env.filesystem.readFile(
-            "/userconfig/desktop.config.json",
-            "object",
-          );
+          let baseConfig;
+          try {
+            baseConfig = await env.filesystem.readFile(
+              "/userconfig/desktop.config.json",
+              "object",
+            );
+          } catch (err) {
+            if (err.name !== "FileSystemError" || err.code !== "NoEntryError") {
+              throw err;
+            }
+            baseConfig = await env.filesystem.readFile(
+              "/system32/default-desktop.json",
+              "object",
+            );
+          }
+
           baseConfig.list.push(...newIcons);
           await env.filesystem.writeFile(
             "/userconfig/desktop.config.json",

@@ -124,9 +124,16 @@ export default class AppsLauncher {
           "Invalid app",
           `"${appPath}" is not a valid app path`,
         );
+      } else {
+        notificationEmitter.error(
+          "Invalid app",
+          `"${appPath}" does not lead to a valid executable`,
+        );
       }
       throw err;
     }
+
+    // TODO: check app format here
 
     if (!app) {
       notificationEmitter.error(

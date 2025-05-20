@@ -126,11 +126,11 @@ export default async function DesktopAppIcons(
       );
       lastAppListMemory = JSON.stringify(systemConfig, null, 2);
       try {
-        fs.writeFile(USER_DESKTOP_CONFIG, lastAppListMemory);
+        await fs.writeFile(USER_DESKTOP_CONFIG, lastAppListMemory);
       } catch (err) {
         console.info(
           "The desktop icons won't be persisted, cannot save file to IndexedDB storage:",
-          err,
+          err.toString(),
         );
       }
       return [true, systemConfig.list.slice()];

@@ -4,7 +4,6 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
-// - Storage settings
 // - notes quick save could detect if file change since last save
 // - context menu in explorer?
 //
@@ -52,17 +51,6 @@
 //   i-frame-capable websites are found.)
 // - Remove app `id` inside the desktop and rely on `path` for `onlyOne`?
 // - paint: allow to change the file format
-//
-// Settings:
-// User settings (localStorage Web API):
-// Usage Estimate
-// Persist settings
-// Reset settings
-//
-// User data (IndexedDB Web API)
-// Usage Estimate
-// Authorize write access
-// format
 
 import fs from "./filesystem/filesystem.mjs";
 import DesktopAppIcons from "./components/DesktopAppIcons.mjs";

@@ -44,6 +44,7 @@
 // - Do "fake" app store to actually add external apps? (without it, though they
 //   do not really take space, it still could clutter if enough interesting
 //   i-frame-capable websites are found.)
+// - Remove app `id` inside the desktop and rely on `path` for `onlyOne`?
 //
 // desktop ideas:
 // - Allow multi-selection which changes drag bahavior

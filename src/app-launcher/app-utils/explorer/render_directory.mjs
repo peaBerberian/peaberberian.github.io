@@ -1,3 +1,6 @@
+// TODO: Arrow key management with control could be much better handled with
+// some kept memory about the direction in which we were going
+
 import {
   applyStyle,
   getFileIcon,
@@ -90,9 +93,14 @@ export default function renderDirectory({
 
   for (const item of items) {
     const itemElt = document.createElement("div");
-    // TODO: After some difficulties this is only done through left/right
-    // navigation for now
-    // itemElt.tabIndex = "0";
+    itemElt.className = "dash-focus";
+    itemElt.tabIndex = "0";
+    itemElt.onfocus = () => {
+      if (!isItemEltSelected(itemElt)) {
+        selectItemElts([itemElt], { clearPrevious: false });
+      }
+    };
+    itemElt.style.outlineColor = "var(--sidebar-selected-bg-color)";
     applyStyle(itemElt, {
       display: "flex",
       gap: "5px",
@@ -137,9 +145,42 @@ export default function renderDirectory({
 
     // TODO: drag and drop
     itemElt.onmousedown = (e) => {
-      itemElt.focus({ preventScroll: true });
-      onItemClick(itemElt, item, e.ctrlKey);
       e.stopPropagation();
+      if (document.activeElement !== itemElt) {
+        itemElt.focus({ preventScroll: true });
+      }
+      if (e.shiftKey) {
+        const lastSelected = [...selectedElts.elements].pop();
+        if (lastSelected && lastSelected !== itemElt) {
+          let currentItemIdx = -1;
+          let lastSelectedIdx = -1;
+          const children = itemsParentElt.children;
+          for (let i = 0; i < children.length; i++) {
+            if (children[i] === lastSelected) {
+              lastSelectedIdx = i;
+            } else if (children[i] === itemElt) {
+              currentItemIdx = i;
+            }
+          }
+          if (currentItemIdx >= 0 && lastSelectedIdx >= 0) {
+            const toSelect =
+              currentItemIdx > lastSelectedIdx
+                ? [...itemsParentElt.children].slice(
+                    lastSelectedIdx,
+                    currentItemIdx + 1,
+                  )
+                : [...itemsParentElt.children].slice(
+                    currentItemIdx,
+                    lastSelectedIdx + 1,
+                  );
+            selectItemElts(toSelect, {
+              clearPrevious: false,
+            });
+            return;
+          }
+        }
+      }
+      onItemClick(itemElt, item, e.ctrlKey);
     };
 
     // Prevent Safari from selecting everything on earth
@@ -151,7 +192,7 @@ export default function renderDirectory({
 
   function onItemClick(itemElt, item, keepPreviousSelection) {
     if (allowMultipleSelections && keepPreviousSelection) {
-      if (selectedElts.elements.has(itemElt)) {
+      if (isItemEltSelected(itemElt)) {
         clearItemElts([itemElt]);
       } else {
         selectItemElts([itemElt], {
@@ -178,16 +219,20 @@ export default function renderDirectory({
 
   mouseSelectInteractivity =
     itemsMap.size > 0
-      ? addMouseSelectInteractivity(selectionZoneElt, itemsMap, selectedElts, {
+      ? addMouseSelectInteractivity(selectionZoneElt, itemsMap, {
           clearSelection,
           selectItemElts,
           clearItemElts,
+          isItemEltSelected,
         })
       : null;
 
   return { element: selectionZoneElt, onActivate, onDeactivate };
 
-  function selectItemElts(itemElts, { isClick, clearPrevious }) {
+  function selectItemElts(
+    itemElts,
+    { isClick = false, clearPrevious, preventScroll },
+  ) {
     if (clearPrevious) {
       for (const selectedElt of selectedElts.elements) {
         selectedElt.style.backgroundColor = "";
@@ -205,7 +250,7 @@ export default function renderDirectory({
     }
     for (const itemElt of itemElts) {
       const item = itemsMap.get(itemElt);
-      if (item && !selectedElts.elements.has(itemElt)) {
+      if (item && !isItemEltSelected(itemElt)) {
         selectedElts.elements.add(itemElt);
         selectedElts.items.push(item);
         itemElt.style.backgroundColor = "var(--sidebar-selected-bg-color)";
@@ -213,10 +258,14 @@ export default function renderDirectory({
       }
     }
     const lastSelectedElement = itemElts[itemElts.length - 1];
-    if (lastSelectedElement) {
-      lastSelectedElement.focus();
+    if (lastSelectedElement && document.activeElement !== lastSelectedElement) {
+      lastSelectedElement.focus({ preventScroll });
     }
     onSelectionChange(selectedElts.items);
+  }
+
+  function isItemEltSelected(itemElt) {
+    return selectedElts.elements.has(itemElt);
   }
 
   function onActivate() {
@@ -252,28 +301,36 @@ export default function renderDirectory({
       case "ArrowLeft": {
         e.preventDefault();
 
-        // TODO: When you go the other way, it should unselect
-
         if (selectedElts.items.length === 0) {
           const itemElt = itemsParentElt.children[0];
           if (itemElt) {
             selectItemElts([itemElt], {
-              isClick: false,
               clearPrevious: !e.ctrlKey && !e.shiftKey,
             });
           }
           return;
         }
 
-        /** @type {HTMLElement} */
-        const lastSelectedElement = [...selectedElts.elements].pop();
+        /** @type {Array.<HTMLElement>} */
+        const selectedElementsInOrder = [...selectedElts.elements];
 
-        const prevSibling = lastSelectedElement.previousElementSibling;
-        if (prevSibling) {
-          selectItemElts([prevSibling], {
-            isClick: false,
-            clearPrevious: !e.ctrlKey && !e.shiftKey,
-          });
+        while (true) {
+          const currentElementConsidered = selectedElementsInOrder.pop();
+          const prevSibling = currentElementConsidered.previousElementSibling;
+          if (!prevSibling) {
+            if (!e.ctrlKey && !e.shiftKey) {
+              selectItemElts([currentElementConsidered], {
+                clearPrevious: true,
+              });
+            }
+            break;
+          }
+          if (!isItemEltSelected(prevSibling)) {
+            selectItemElts([prevSibling], {
+              clearPrevious: !e.ctrlKey && !e.shiftKey,
+            });
+            break;
+          }
         }
         break;
       }
@@ -281,28 +338,124 @@ export default function renderDirectory({
       case "ArrowRight": {
         e.preventDefault();
 
-        // TODO: When you go the other way, it should unselect
-
         if (selectedElts.items.length === 0) {
           const itemElt = itemsParentElt.children[0];
           if (itemElt) {
             selectItemElts([itemElt], {
-              isClick: false,
               clearPrevious: !e.ctrlKey && !e.shiftKey,
             });
           }
           return;
         }
 
-        /** @type {HTMLElement} */
-        const lastSelectedElement = [...selectedElts.elements].pop();
+        /** @type {Array.<HTMLElement>} */
+        const selectedElementsInOrder = [...selectedElts.elements];
 
-        const nextSibling = lastSelectedElement.nextElementSibling;
-        if (nextSibling) {
-          selectItemElts([nextSibling], {
-            isClick: false,
-            clearPrevious: !e.ctrlKey && !e.shiftKey,
-          });
+        while (true) {
+          const currentElementConsidered = selectedElementsInOrder.pop();
+          const nextSibling = currentElementConsidered.nextElementSibling;
+          if (!nextSibling) {
+            if (!e.ctrlKey && !e.shiftKey) {
+              selectItemElts([currentElementConsidered], {
+                clearPrevious: true,
+              });
+            }
+            break;
+          }
+          if (!isItemEltSelected(nextSibling)) {
+            selectItemElts([nextSibling], {
+              clearPrevious: !e.ctrlKey && !e.shiftKey,
+            });
+            break;
+          }
+        }
+        break;
+      }
+
+      case "ArrowDown": {
+        e.preventDefault();
+
+        if (selectedElts.items.length === 0) {
+          const itemElt = itemsParentElt.children[0];
+          if (itemElt) {
+            selectItemElts([itemElt], {
+              clearPrevious: !e.ctrlKey && !e.shiftKey,
+            });
+          }
+          return;
+        }
+
+        /** @type {Array.<HTMLElement>} */
+        const selectedElementsInOrder = [...selectedElts.elements];
+
+        let found = false;
+        while (!found) {
+          const currentElementConsidered = selectedElementsInOrder.pop();
+          if (!currentElementConsidered) {
+            break;
+          }
+
+          const currentClientRect =
+            currentElementConsidered.getBoundingClientRect();
+
+          let nextSibling = currentElementConsidered.nextElementSibling;
+          while (nextSibling) {
+            const clientRect = nextSibling.getBoundingClientRect();
+            if (clientRect.left === currentClientRect.left) {
+              if (!isItemEltSelected(nextSibling)) {
+                selectItemElts([nextSibling], {
+                  clearPrevious: !e.ctrlKey && !e.shiftKey,
+                });
+                found = true;
+                break;
+              }
+            }
+            nextSibling = nextSibling.nextElementSibling;
+          }
+        }
+        break;
+      }
+
+      case "ArrowUp": {
+        e.preventDefault();
+
+        if (selectedElts.items.length === 0) {
+          const itemElt = itemsParentElt.children[0];
+          if (itemElt) {
+            selectItemElts([itemElt], {
+              clearPrevious: !e.ctrlKey && !e.shiftKey,
+            });
+          }
+          return;
+        }
+
+        /** @type {Array.<HTMLElement>} */
+        const selectedElementsInOrder = [...selectedElts.elements];
+
+        let found = false;
+        while (!found) {
+          const currentElementConsidered = selectedElementsInOrder.pop();
+          if (!currentElementConsidered) {
+            break;
+          }
+
+          const currentClientRect =
+            currentElementConsidered.getBoundingClientRect();
+
+          let previousSibling = currentElementConsidered.previousElementSibling;
+          while (previousSibling) {
+            const clientRect = previousSibling.getBoundingClientRect();
+            if (clientRect.left === currentClientRect.left) {
+              if (!isItemEltSelected(previousSibling)) {
+                selectItemElts([previousSibling], {
+                  clearPrevious: !e.ctrlKey && !e.shiftKey,
+                });
+                found = true;
+                break;
+              }
+            }
+            previousSibling = previousSibling.previousElementSibling;
+          }
         }
         break;
       }
@@ -340,7 +493,6 @@ export default function renderDirectory({
           lastClickInfo.element = null;
           lastClickInfo.timeStamp = -Infinity;
           selectItemElts(itemsParentElt.children, {
-            isClick: false,
             clearPrevious: true,
           });
           onSelectionChange(selectedElts.items);
@@ -361,7 +513,16 @@ export default function renderDirectory({
       selectedElts.elements.delete(selectedElt);
       selectedElt.style.backgroundColor = "";
       selectedElt.style.color = "";
-      selectedElt.blur();
+      if (document.activeElement === selectedElt) {
+        selectedElt.blur();
+        const lastSelectedElement = [...selectedElts.elements].pop();
+        if (
+          lastSelectedElement &&
+          document.activeElement !== lastSelectedElement
+        ) {
+          lastSelectedElement.focus({ preventScroll: true });
+        }
+      }
     }
     onSelectionChange(selectedElts.items);
   }
@@ -424,8 +585,7 @@ function createEmptyDirMessage(path) {
 function addMouseSelectInteractivity(
   containerElt,
   itemsMap,
-  selectedElts,
-  { clearSelection, selectItemElts, clearItemElts },
+  { clearSelection, selectItemElts, clearItemElts, isItemEltSelected },
 ) {
   let isSelecting = false;
   let startX = 0;
@@ -524,16 +684,14 @@ function addMouseSelectInteractivity(
       );
 
       if (isOverlapping) {
-        if (selectedElts.elements.has(itemElt)) {
+        if (isItemEltSelected(itemElt)) {
           return;
         }
-        selectItemElts([itemElt], { isClick: false, clearPrevious: false });
+        selectItemElts([itemElt], {
+          clearPrevious: false,
+          preventScroll: true,
+        });
       } else {
-        for (let i = selectedElts.items.length - 1; i >= 0; i--) {
-          if (selectedElts.items[i].path === item.path) {
-            selectedElts.items.splice(i, 1);
-          }
-        }
         clearItemElts([itemElt]);
       }
     });

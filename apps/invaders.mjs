@@ -3,6 +3,12 @@ const RIGHT_KEYS = ["d", "arrowright"];
 
 const PLAYER_CHAR = "🛩️";
 const PLAYER_DAMAGE_CHAR = "💥";
+// const ALIEN_PROJECTILE_CHAR = "🏀";
+// const ALIEN_PROJECTILE_CHAR = "🧶";
+const ALIEN_PROJECTILE_CHAR = "🐄";
+// const ALIEN_PROJECTILE_CHAR = "🧳";
+// const ALIEN_PROJECTILE_CHAR = "🔧";
+const PLAYER_PROJECTILE_CHAR = "🍅";
 
 const style = document.createElement("style");
 style.textContent = `
@@ -21,6 +27,14 @@ style.textContent = `
     transform: rotate(15deg);
   }
 }
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 `;
 document.head.appendChild(style);
 
@@ -32,7 +46,8 @@ export function create(_args, env) {
     justifyContent: "center",
     width: "100%",
     height: "100%",
-    backgroundColor: env.STYLE.windowActiveHeader,
+    backgroundColor: "#27272c",
+    // backgroundColor: env.STYLE.windowActiveHeader,
     position: "relative",
     overflow: "hidden",
     fontFamily: "monospace",
@@ -40,11 +55,11 @@ export function create(_args, env) {
   });
   const gameArea = document.createElement("div");
   applyStyle(gameArea, {
-    border: `1px dashed ${env.STYLE.windowActiveHeaderText}`,
+    // border: `1px dashed ${env.STYLE.windowActiveHeaderText}`,
     // width: "100%",
     // height: "100%",
     position: "relative",
-    overflow: "hidden",
+    overflow: "visible",
   });
   gameWrapper.appendChild(gameArea);
 
@@ -62,7 +77,8 @@ export function create(_args, env) {
     position: "absolute",
     top: "10px",
     left: "10px",
-    color: env.STYLE.windowActiveHeaderText,
+    color: "#fff",
+    // color: env.STYLE.windowActiveHeaderText,
     fontSize: Math.max(12, gameState.gameWidth * 0.025) + "px",
     zIndex: "1000",
     fontWeight: "bold",
@@ -85,9 +101,12 @@ export function create(_args, env) {
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    backgroundColor: env.STYLE.windowActiveHeader,
-    color: env.STYLE.windowActiveHeaderText,
-    border: "1px solid " + env.STYLE.windowActiveHeaderText,
+    // backgroundColor: env.STYLE.windowActiveHeader,
+    // color: env.STYLE.windowActiveHeaderText,
+    // border: "1px solid " + env.STYLE.windowActiveHeaderText,
+    backgroundColor: "#27272c",
+    color: "#fff",
+    border: "1px solid #fff",
     fontSize: "24px",
     textAlign: "center",
     display: "none",
@@ -106,9 +125,12 @@ export function create(_args, env) {
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    backgroundColor: env.STYLE.windowActiveHeader,
-    color: env.STYLE.windowActiveHeaderText,
-    border: "1px solid " + env.STYLE.windowActiveHeaderText,
+    // backgroundColor: env.STYLE.windowActiveHeader,
+    // color: env.STYLE.windowActiveHeaderText,
+    // border: "1px solid " + env.STYLE.windowActiveHeaderText,
+    backgroundColor: "#27272c",
+    color: "#fff",
+    border: "1px solid #fff",
     fontSize: "24px",
     textAlign: "center",
     display: "none",
@@ -172,7 +194,7 @@ export function create(_args, env) {
       fireRate: 200,
       playerSize: Math.max(20, 0.04 * gameState.gameWidth),
       enemySize: Math.max(16, 0.035 * gameState.gameWidth),
-      bulletSize: Math.max(7, 0.002 * gameState.gameWidth),
+      bulletSize: Math.max(14, 0.008 * gameState.gameWidth),
       hudSize: Math.max(12, 0.025 * gameState.gameWidth),
       shieldSize: Math.max(30, 0.06 * gameState.gameWidth),
     };
@@ -349,16 +371,18 @@ export function create(_args, env) {
       };
       const bulletElt = document.createElement("div");
       bulletElt.dataset.type = "bullet";
-      bulletElt.textContent = "";
+      bulletElt.textContent = PLAYER_PROJECTILE_CHAR;
       applyStyle(bulletElt, {
         position: "absolute",
         left: bullet.x + "px",
         top: bullet.y + "px",
         width: bullet.width + "px",
         height: bullet.height + "px",
-        borderRadius: config.bulletSize + "px",
         fontSize: config.bulletSize + "px",
-        backgroundColor: env.STYLE.windowActiveHeaderText,
+        transformOrigin: "center center",
+        animation: "spin 1s infinite linear",
+        // borderRadius: config.bulletSize + "px",
+        // backgroundColor: env.STYLE.windowActiveHeaderText,
         userSelect: "none",
       });
       gameArea.appendChild(bulletElt);
@@ -460,18 +484,21 @@ export function create(_args, env) {
       };
       const bulletElt = document.createElement("div");
       bulletElt.dataset.type = "enemy-bullet";
-      bulletElt.textContent = "";
+      bulletElt.textContent = ALIEN_PROJECTILE_CHAR;
+      // const actualSize = config.bulletSize * 2;
       applyStyle(bulletElt, {
         position: "absolute",
         left: bullet.x + "px",
         top: bullet.y + "px",
         fontSize: config.bulletSize + "px",
-        border: "1px solid " + env.STYLE.windowActiveHeaderText,
-        transform: "translate(2px, 2px)",
-        backgroundColor: "red",
+        // transform: `translate(${config.bulletSize - actualSize}px, ${config.bulletSize - actualSize}px)`,
         width: bullet.width + "px",
         height: bullet.height + "px",
-        borderRadius: `0px 0px ${bulletSize}px ${bulletSize}px`,
+        transformOrigin: "center center",
+        animation: "spin 3s infinite linear",
+        // backgroundColor: "red",
+        // borderRadius: `0px 0px ${bulletSize}px ${bulletSize}px`,
+        // border: "1px solid " + env.STYLE.windowActiveHeaderText,
         userSelect: "none",
       });
       gameArea.appendChild(bulletElt);

@@ -274,7 +274,7 @@ export default class AppsLauncher {
         return;
       }
       const defaultApps = await filesystem.readFile(
-        "/system/default_apps.config.json",
+        "/system32/default_apps.config.json",
         "object",
       );
       if (!defaultApps[extension]) {
@@ -435,7 +435,7 @@ export default class AppsLauncher {
       const fileOpenerAbortCtrl = createLinkedAbortController(appAbortSignal);
       try {
         const providers = await filesystem.readFile(
-          "/system/providers.config.json",
+          "/system32/providers.config.json",
           "object",
         );
         if (
@@ -494,7 +494,7 @@ export default class AppsLauncher {
       const fileSaverAbortCtrl = createLinkedAbortController(appAbortSignal);
       try {
         const providers = await filesystem.readFile(
-          "/system/providers.config.json",
+          "/system32/providers.config.json",
           "object",
         );
         if (

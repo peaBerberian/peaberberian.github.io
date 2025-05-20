@@ -13,7 +13,7 @@
 // - copy svg in passgen is broken on multiple devices
 //
 // low priority:
-// - filesystem: Proxy local storage in `/system/`?
+// - filesystem: Proxy local storage in `/system32/`?
 // - filesystem: When indexedDB is not available, fallback on in-memory
 // - double clicking while moving on the second click probably shouldn't put in
 //   fullscreen? To check what others are doing (ironically enough, I don't even
@@ -79,7 +79,7 @@ async function start() {
 
   // TODO: move to start menu
   const startMenuApps = await fs.readFile(
-    "/system/start_menu.config.json",
+    "/system32/start_menu.config.json",
     "object",
   );
 

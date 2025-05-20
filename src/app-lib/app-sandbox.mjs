@@ -222,9 +222,9 @@ window.addEventListener(
             requestObj.resolve(null);
           }
         } else {
-          const error = new Error(data.message);
-          if (data.name !== undefined) {
-            error.name = data.name;
+          const error = new Error(e.data.data.message);
+          if (e.data.data.name !== undefined) {
+            error.name = e.data.data.name;
           }
           requestObj.reject(error);
         }
@@ -260,9 +260,9 @@ window.addEventListener(
             }),
           );
         } else {
-          const error = new Error(data.message);
-          if (data.name !== undefined) {
-            error.name = data.name;
+          const error = new Error(e.data.data.message);
+          if (e.data.data.name !== undefined) {
+            error.name = e.data.data.name;
           }
           requestObj.reject(error);
         }
@@ -285,9 +285,9 @@ window.addEventListener(
         if (e.data.success) {
           requestObj.resolve();
         } else {
-          const error = new Error(data.message);
-          if (data.name !== undefined) {
-            error.name = data.name;
+          const error = new Error(e.data.data.message);
+          if (e.data.data.name !== undefined) {
+            error.name = e.data.data.name;
           }
           requestObj.reject(error);
         }

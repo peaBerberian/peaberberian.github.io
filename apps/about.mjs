@@ -124,6 +124,8 @@ export function create(_args, env) {
 
 	<p>You're here in my personal website which implements a (functional) desktop environment. Everything you see here has been done especially for this desktop without any external dependency.</p>
 
+	<p><b>Also note that everything you do here, even files you save or load on this site, never leaves your computer. This website does not track nor collect your data.</b> The only contacts with a server are to download the resources allowing to render the various applications (code, images...).</p>
+
 	<p>To contact me, you can send an e-mail to: <a href="mailto:paul.berberian@proton.me">paul.berberian@proton.me</a>.</p>
 
 	<p class="asterisk"><span class="note">1</a>. As long as we\'re still in 2025, that is.</span></p>

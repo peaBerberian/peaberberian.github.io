@@ -5,7 +5,7 @@
       "id": "about",
       "title": "About Me",
       "icon": "🙋🏻‍♂️",
-      "defaultHeight": 550,
+      "defaultHeight": 650,
       "defaultWidth": 855,
       "onlyOne": false,
       "dependencies": [],
@@ -374,10 +374,7 @@
       "startMenu": {
         "list": "External Apps"
       },
-      "defaultForExtensions": [
-        "docx",
-        "doc"
-      ]
+      "defaultForExtensions": ["docx", "doc"]
     },
     {
       "id": "xlsx",
@@ -389,10 +386,7 @@
       "startMenu": {
         "list": "External Apps"
       },
-      "defaultForExtensions": [
-        "xls",
-        "xlsx"
-      ]
+      "defaultForExtensions": ["xls", "xlsx"]
     },
     {
       "id": "pdf",
@@ -404,9 +398,7 @@
       "startMenu": {
         "list": "External Apps"
       },
-      "defaultForExtensions": [
-        "pdf"
-      ]
+      "defaultForExtensions": ["pdf"]
     },
     {
       "id": "this-website",

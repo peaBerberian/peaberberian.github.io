@@ -781,9 +781,12 @@ function addMouseSelectInteractivity(
   function onActivate() {
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("mouseleave", onMouseUp);
   }
   function onDeactivate() {
+    onMouseUp();
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
+    document.removeEventListener("mouseleave", onMouseUp);
   }
 }

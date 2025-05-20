@@ -5,7 +5,11 @@ import {
   TASKBAR_MAX_VERTICAL_SIZE,
 } from "../constants.mjs";
 import { SETTINGS } from "../settings.mjs";
-import { addAbortableEventListener } from "../utils.mjs";
+import {
+  addAbortableEventListener,
+  blockElementsFromTakingPointerEvents,
+  unblockElementsFromTakingPointerEvents,
+} from "../utils.mjs";
 import setUpContextMenu from "./context-menu.mjs";
 
 /**
@@ -266,12 +270,7 @@ function addResizeHandle(elt, abortSignal) {
     e.stopPropagation();
     e.preventDefault();
 
-    // This is a work-around for the fact that "iframe" elements may hide
-    // pointer events from us. Adding this class allows to put transparent
-    // elements on top of every iframe, blocking interactions with them but
-    // allowing us to track the resize operation even when the mouse temporarily
-    // goes over them.
-    document.body.classList.add("block-iframe");
+    blockElementsFromTakingPointerEvents();
 
     startX = e.clientX;
     startY = e.clientY;
@@ -324,7 +323,7 @@ function addResizeHandle(elt, abortSignal) {
   }
 
   function stopResize() {
-    document.body.classList.remove("block-iframe");
+    unblockElementsFromTakingPointerEvents();
     document.removeEventListener("mousemove", resize);
     document.removeEventListener("mouseup", stopResize);
   }

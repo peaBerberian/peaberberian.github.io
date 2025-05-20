@@ -85,6 +85,8 @@ export function createAppIframe(url) {
     height: "100%",
     width: "100%",
     position: "relative",
+
+    // TODO: Through a constant?
     backgroundColor: "var(--window-content-bg)",
   });
 
@@ -603,4 +605,13 @@ export function linkAbortControllerToSignal(
   abortController.signal.addEventListener("abort", () => {
     parentAbortSignal.removeEventListener("abort", onParentAbort);
   });
+}
+
+export function createRootStyle(cssVarArray) {
+  let newStyle = ":root {\n";
+  cssVarArray.forEach((v) => {
+    newStyle += "  " + v.cssName + ": " + v.value + ";\n";
+  });
+  newStyle += "}";
+  return newStyle;
 }

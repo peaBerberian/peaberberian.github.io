@@ -951,58 +951,72 @@ export const APP_STYLE = {
   fontSize: {
     ref: SETTINGS.fontSize,
     cssProp: "var(--font-size)",
+    cssName: "--font-size",
   },
   windowActiveHeader: {
     ref: SETTINGS.windowActiveHeaderBgColor,
     cssProp: "var(--window-active-header)",
+    cssName: "--window-active-header",
   },
   windowActiveHeaderText: {
     ref: SETTINGS.windowActiveHeaderTextColor,
     cssProp: "var(--window-active-header-text)",
+    cssName: "--window-active-header-text",
   },
   windowInactiveHeader: {
     ref: SETTINGS.windowInactiveHeaderBgColor,
     cssProp: "var(--window-inactive-header)",
+    cssName: "--window-inactive-header",
   },
   windowInactiveHeaderText: {
     ref: SETTINGS.windowIninactiveHeaderTextColor,
     cssProp: "var(--window-inactive-header-text)",
+    cssName: "--window-inactive-header-text",
   },
   textColor: {
     ref: SETTINGS.windowTextColor,
     cssProp: "var(--window-text-color)",
+    cssName: "--window-text-color",
   },
   bgColor: {
     ref: SETTINGS.windowContentBgColor,
     cssProp: "var(--window-content-bg)",
+    cssName: "--window-content-bg",
   },
   lineColor: {
     ref: SETTINGS.windowLineColor,
     cssProp: "var(--window-line-color)",
+    cssName: "--window-line-color",
   },
   primaryColor: {
     ref: SETTINGS.appPrimaryColorBg,
     cssProp: "var(--app-primary-color)",
+    cssName: "--app-primary-color",
   },
   disabledColor: {
     ref: SETTINGS.appPrimaryBgColor,
     cssProp: "var(--app-primary-bg)",
+    cssName: "--app-primary-bg",
   },
   barBg: {
     ref: SETTINGS.windowSidebarBgColor,
     cssProp: "var(--window-sidebar-bg)",
+    cssName: "--window-sidebar-bg",
   },
   barHoverBg: {
     ref: SETTINGS.windowSidebarHoverBgColor,
     cssProp: "var(--sidebar-hover-bg)",
+    cssName: "--sidebar-hover-bg",
   },
   barSelectedBg: {
     ref: SETTINGS.windowSidebarSelectedBgColor,
     cssProp: "var(--sidebar-selected-bg-color)",
+    cssName: "--sidebar-selected-bg-color",
   },
   barSelectedText: {
     ref: SETTINGS.windowSidebarSelectedTextColor,
     cssProp: "var(--sidebar-selected-text-color)",
+    cssName: "--sidebar-selected-text-color",
   },
 };
 

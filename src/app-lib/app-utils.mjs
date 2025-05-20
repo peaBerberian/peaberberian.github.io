@@ -1,30 +1,24 @@
-import { codeImgSvg, demoImgSvg, docImgSvg } from "../../constants.mjs";
-import {
-  applyStyle,
-  constructSidebarElt,
-  createAppIframe,
-} from "../../utils.mjs";
-import strHtml from "../../str-html.mjs";
+import setUpContextMenu from "../components/context-menu.mjs";
+import { codeImgSvg, demoImgSvg, docImgSvg } from "../constants.mjs";
+import strHtml from "../str-html.mjs";
+import { applyStyle, constructSidebarElt, createAppIframe } from "../utils.mjs";
 import { constructAppHeaderLine } from "./header-line.mjs";
-import setUpContextMenu from "../../components/context-menu.mjs";
 
-// ==== Utils for lazy-loaded applications ====
+export function getAppUtils() {
+  return {
+    // Often needed utils:
+    applyStyle: applyStyle,
+    strHtml: strHtml,
+    constructAppHeaderLine: constructAppHeaderLine,
+    setUpContextMenu,
 
-export default {
-  // Often needed utils:
-  applyStyle: applyStyle,
-  strHtml: strHtml,
-  constructAppHeaderLine: constructAppHeaderLine,
-  setUpContextMenu,
-
-  // In rare situations:
-  constructSidebarElt: constructSidebarElt,
-  createAppIframe: createAppIframe,
-  createAppTitle: createAppTitle,
-  createFullscreenButton: createFullscreenButton,
-};
-
-// ========
+    // In rare situations:
+    constructSidebarElt: constructSidebarElt,
+    createAppIframe: createAppIframe,
+    createAppTitle: createAppTitle,
+    createFullscreenButton: createFullscreenButton,
+  };
+}
 
 /**
  * Title `h2` element found in many mostly-textual app.

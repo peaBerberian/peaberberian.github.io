@@ -1,3 +1,7 @@
+// TODO: do not restart on activate
+// TODO: Clear bullets on next level
+// TODO: No shield health
+
 const LEFT_KEYS = ["a", "arrowleft"];
 const RIGHT_KEYS = ["d", "arrowright"];
 

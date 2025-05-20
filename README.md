@@ -22,52 +22,16 @@ proof-of-concept.
 After playing with multiple ideas, I've taken the following technical choices
 here that I find interesting:
 
-- Applications (`./apps/`), here called "apps", are totally separated from the
-  desktop code (`./src/`) and do not share any code besides what the desktop
-  may provide to them.
+- Applications and the desktop are completely separated codebases.
 
-  They are lazily loaded through dynamic imports by the desktop when the
-  application first needs to be run. They can receive arguments and call API
-  that the desktop communicated to them.
+- Applications can receive arguments (like files and flags) at launch and their
+  code is loaded lazily: only when executed.
 
-  They return the content of their own app only, and optionally some other
-  methods linked to their lifecycle (e.g. `onActivate`, `onDeactivate`...).
-
-- I also started implementing a permission-like system (here called
-  `dependencies`) where apps declare in advance what they will need and the
-  desktop will choose to give them interfaces to those or not (e.g. "filesystem"
-  access, desktop settings access, able to open other applications and files
-  etc.)
-
-  That permission system has some modern concepts, most notably an application
-  may have access to a file-picker to open and save files, but no direct access
-  to the filesystem.
-  The resulting application will never see paths nor the organization of files
-  (only the file-picker, another application, will), just data and filenames for
-  files the user explicitly chose to open through the file-picker.
-
-  Though because the next point is not yet finished, applications can today
-  theoretically be able to escape that limitation if motivated enough (e.g.
-  by reimplementing the whole filesystem logic).
-
-- A next step would be to run most applications in "sandboxed" iframes, to
-  ensure that their permissions can never be escaped and to also prevent a
-  misbehaving application from hanging the whole "system".
-
-  I tested this, it works as intended, but I did not actually fully implement it
-  for now... There's work to do like communication between iframe and the
-  desktop, and I focused for now on other, more visible, stuff!
-
-- I ended up implementing an "executable" format: a JS object that can be
-  serialized to JSON which contains metadata about the app and how to run it.
-
-  The desktop actually runs applications by running those executables after
-  reading them from the filesystem (read next point).
-
-  This makes it possible to "install" applications (by adding them to the
-  file system) and to let applications run other applications when they
-  have the permission (e.g. the file explorer runs applications when you
-  launch them from their location in the filesystem).
+  Many of them are "sandboxed": they are loaded in an iframe with only
+  hand-selected capabilities. This allows to enforce clear isolation, a
+  permission system (e.g. only a very few apps have access to the
+  filesystem), but also efficient memory management, especially when
+  opening and closing many apps in a single session.
 
 - I implemented a "filesystem", mostly backed by [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)-based
   storage.
@@ -76,6 +40,17 @@ here that I find interesting:
   reasons: the root directory is `/` with a "user" directory in it
   (`/userdata/`) and some directories with virtual files (not actually on
   disk, and computed at read time).
+
+- I ended up implementing an "executable" format: a JS object that can be
+  serialized to JSON which contains metadata about the app and how to run it.
+
+  The desktop actually runs applications by running those executables after
+  reading them from the filesystem.
+
+  This makes it possible to "install" applications (by adding them to the
+  file system) and to let applications run other applications when they
+  have the permission (e.g. the file explorer runs applications when you
+  launch them from their location in the filesystem).
 
 - As we're on the web platform, we do not have much control over memory and
   performance. At first I thought this would become ugly very quick but until
@@ -103,26 +78,8 @@ here that I find interesting:
      Seeing the simplicity with which complex ideas could be quickly implemented
      efficiently is what dragged me to this rabbit hole of implementing a desktop.
 
-  6. In all honesty, I didn't yet finish everything, especially the
-     application-in-iframe-sandbox idea, which may or may not have a visible
-     impact (I could see it going either way, to test with actual cases).
-
-- I'm still unsure of how to do keyboard shortcuts, as we're running on top of an
-  environment with already its fair share of it: the OS, the browser, and
-  maybe browser extensions (as a vimium user, I heavily dislike websites catching
-  random keys!). Also, the page could theoretically run in all kind of devices
-  with different interfaces (keyboard, touch, TV remote, game controller...).
-
-  For now, I only "catch" keys when it should be obvious (Escape key to abort
-  some stuff, navigation keys in some situations...), but keyboard shortcuts are
-  so linked to window managers that I think I'll need to work more on it at
-  some point.
-
-  My current idea is to just let the user declare them in the "settings app"
-  (not done yet).
-
-- I implemented a common UI design for most applications, which all respect the
-  current theme chosen in the settings by relying on CSS variables.
+- I implemented a common UI design for most base applications, which all respect
+  JKJthe current theme chosen in the settings by relying on CSS variables.
 
 - The icons in the desktop, the start menu, the taskbar and application windows
   (but not the application launcher relying on it) are all "components" with a
@@ -130,3 +87,19 @@ here that I find interesting:
   "dock" instead of a taskbar).
 
   I didn't give too much time yet on how this could be replaced though.
+
+### Note on keyboard shortcuts
+
+I'm still unsure of how to do keyboard shortcuts, as we're running on top of an
+environment with already its fair share of it: the OS, the browser, and
+maybe browser extensions (as a vimium user, I heavily dislike websites catching
+random keys!). Also, the page could theoretically run in all kind of devices
+with different interfaces (keyboard, touch, TV remote, game controller...).
+
+For now, I only "catch" keys when it should be obvious (Escape key to abort
+some stuff, navigation keys in some situations...), but keyboard shortcuts are
+so linked to window managers that I think I'll need to work more on it at
+some point.
+
+My current idea is to just let the user declare them in the "settings app"
+(not done yet).

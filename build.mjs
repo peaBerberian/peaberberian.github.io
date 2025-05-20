@@ -25,6 +25,7 @@ const GENERATED_APP_PATH = path.join(DESKTOP_SRC_DIR, "__generated_apps.mjs");
 
 const OUTPUT_DIR = path.join(PROJECT_ROOT_DIRECTORY, "dist");
 const OUTPUT_LAZY_LOADED_APPS = path.join(OUTPUT_DIR, "lazy");
+const OUTPUT_APP_LIB_SCRIPT = path.join(OUTPUT_DIR, "app-sandbox.js");
 
 /**
  * Produce the bundles for all application defined in `./apps/AppInfo.json` and
@@ -99,6 +100,10 @@ export default async function run(options) {
     return await Promise.all(
       [
         ...lazyLoadedApps,
+        {
+          outputFile: OUTPUT_APP_LIB_SCRIPT,
+          input: path.join(DESKTOP_SRC_DIR, "app-lib/app-sandbox.mjs"),
+        },
         {
           outputFile: path.join(OUTPUT_DIR, "desktop.js"),
           input: path.join(DESKTOP_SRC_DIR, "desktop.mjs"),
@@ -376,6 +381,14 @@ export default [`;
 `;
           break;
 
+        case "sandboxed":
+          if (typeof app.sandboxed !== "boolean") {
+            throw new Error(
+              `Error in app "${app.id}". Invalid "sandboxed" property: should be a boolean.`,
+            );
+          }
+          break;
+
         case "defaultHeight":
           if (typeof app.defaultHeight !== "number") {
             throw new Error(
@@ -522,7 +535,12 @@ export default [`;
       const importPath = `./lazy/${app.id}.js`;
       uglyHandWrittenJsObject += `    data: {
 			lazyLoad: ${JSON.stringify(importPath)},
-		},
+`;
+      if (app.sandboxed) {
+        uglyHandWrittenJsObject += `      sandboxed: true,
+`;
+      }
+      uglyHandWrittenJsObject += `    },
 `;
       const outputFile = path.join(OUTPUT_LAZY_LOADED_APPS, `${app.id}.js`);
       bundlesToMake.push({

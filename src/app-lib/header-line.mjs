@@ -1,5 +1,5 @@
-import { BUTTONS_BY_NAME, BUTTONS_LIST } from "../../constants.mjs";
-import { applyStyle } from "../../utils.mjs";
+import { BUTTONS_BY_NAME, BUTTONS_LIST } from "../constants.mjs";
+import { applyStyle } from "../utils.mjs";
 
 export function constructAppHeaderLine(buttonConfigs) {
   const headerElt = document.createElement("div");
@@ -25,19 +25,6 @@ export function constructAppHeaderLine(buttonConfigs) {
     buttonElt.onmousedown = (e) => e.preventDefault();
     buttonElt.onselect = (e) => e.preventDefault();
 
-    // TODO: CSS hover
-    // buttonElt.onmouseover = () => {
-    //   if (buttonElt.style.cursor === "pointer") {
-    //     buttonElt.style.color = "var(--sidebar-selected-bg-color)";
-    //   }
-    // };
-    // buttonElt.onmouseout = () => {
-    //   if (buttonElt.style.cursor === "pointer") {
-    //     buttonElt.style.color = "var(--window-text-color)";
-    //   } else {
-    //     buttonElt.style.color = "var(--sidebar-hover-bg)";
-    //   }
-    // };
     headerElt.appendChild(buttonElt);
   };
 

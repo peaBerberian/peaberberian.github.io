@@ -1,3 +1,10 @@
+// NOTE: This one is in a serie of 3 apps (docx, pdf, xlsx) which have been
+// quickly developed just to have some interesting things when opening common
+// (and recognized) formats in the explorer.
+// I did not spend any time making them useful nor factorizing code yet for
+// those: only good ol' copy-paste of what seemed to work for one of those (as
+// all programming should be ;))
+
 // For now this is just a very incomplete, unusable thing
 // TODO: navigate between page and stuff!
 // TODO: zoom
@@ -114,7 +121,7 @@ export function create(args, env) {
   // iframe.sandbox = "allow-scripts";
   iframe.style.height = "100%";
   iframe.style.width = "100%";
-  iframe.style.backgroundColor = "var(--window-content-bg)";
+  iframe.style.backgroundColor = "grey";
   iframe.style.border = "0";
   iframe.style.padding = "0";
   iframe.style.margin = "auto";
@@ -130,6 +137,7 @@ onmessage = (e) => {
   if (e.data.type === "open-file") {
     document.body.innerHTML = "";
     const statusElt = document.createElement("p");
+		statusElt.style.color = "white";
     statusElt.style.padding = "7px";
     statusElt.textContent = "Loading file...";
     document.body.appendChild(statusElt);

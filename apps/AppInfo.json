@@ -102,6 +102,7 @@
         "tsx",
         "go",
         "txt",
+        "md",
         "s",
         "S",
         "asm",
@@ -379,6 +380,21 @@
       "defaultForExtensions": [
         "docx",
         "doc"
+      ]
+    },
+    {
+      "id": "xlsx",
+      "title": "Xlsx Reader (xlsx.js)",
+      "icon": "📊",
+      "dependencies": ["filePickerOpen"],
+      "defaultHeight": 600,
+      "defaultWidth": 900,
+      "startMenu": {
+        "list": "External Apps"
+      },
+      "defaultForExtensions": [
+        "xls",
+        "xlsx"
       ]
     },
     {

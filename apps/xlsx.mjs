@@ -46,7 +46,7 @@ export function create(args, env) {
         const fileInputElt = document.createElement("input");
         fileInputElt.type = "file";
         fileInputElt.accept =
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         fileInputElt.multiple = false;
         fileInputElt.click();
         fileInputElt.addEventListener("cancel", () => {
@@ -120,28 +120,40 @@ export function create(args, env) {
   iframe.style.margin = "0";
   containerElt.appendChild(iframe);
 
-  // Yep, not too much effort for now on that one, just read some docx and
-  // goodbye
-  iframe.srcdoc = `<body style="margin: 0; padding: 7px; display: flex; justify-content: center">
-<script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
+  iframe.srcdoc = `<html><head>
+<style>
+table {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background-color: white;
+  border-collapse: collapse;
+}
+td, th {
+  border: 1px solid #000;
+}
+</style>
+</head>
+<body style="margin: 0; display: flex; justify-content: center">
+<script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
 <script type="module">
-import * as docxPreview from "https://cdn.jsdelivr.net/npm/docx-preview@0.3.5/+esm";
-
 onmessage = (e) => {
   if (e.data.type === "open-file") {
     document.body.innerHTML = "";
     const statusElt = document.createElement("p");
-		statusElt.style.color = "white";
-    statusElt.style.padding = "7px";
+    statusElt.style.color = "white";
     statusElt.textContent = "Loading file...";
     document.body.appendChild(statusElt);
-    docxPreview.renderAsync(new Blob([e.data.data]), document.body)
-      .then(() => {
-        statusElt.remove();
-      })
-      .catch((err) => {
-        statusElt.textContent = err.toString();
-      });
+
+    const workbook = XLSX.read(e.data.data, { type: 'array' });
+    const firstSheet = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheet];
+    const html = XLSX.utils.sheet_to_html(worksheet);
+    document.body.innerHTML = html;
   }
 };
 
@@ -186,7 +198,7 @@ function forwardEvent(eventType, originalEvent) {
   parent.postMessage(eventData, "*");
 }
 </script>
-</body>`;
+</body></html>`;
   iframe.addEventListener("load", () => {
     iframeInfo.isLoaded = true;
     if (iframeInfo.pendingFile) {

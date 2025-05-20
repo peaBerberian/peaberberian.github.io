@@ -22,16 +22,16 @@ proof-of-concept.
 After playing with multiple ideas, I've taken the following technical choices
 here that I find interesting:
 
-- Applications and the desktop are completely separated codebases.
+- Applications and the desktop they run in are completely different codebases.
 
-- Applications can receive arguments (like files and flags) at launch and their
-  code is loaded lazily: only when executed.
+  Going a step further and serving apps from a different domain than the desktop
+  allows parallelization and data isolation (thanks to a browser's cross-origin
+  mechanisms), so that's what I do in my hosted demo (though both multi-
+  domains and single-domain works with this project).
 
-  Many of them are "sandboxed": they are loaded in an iframe with only
-  hand-selected capabilities. This allows to enforce clear isolation, a
-  permission system (e.g. only a very few apps have access to the
-  filesystem), but also efficient memory management, especially when
-  opening and closing many apps in a single session.
+  It means that apps have no way to access what was not voluntarly provided to
+  it and also that a frozen application does not hang the whole desktop, like
+  it would without such isolation.
 
 - I implemented a "filesystem", mostly backed by [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)-based
   storage.
@@ -40,6 +40,14 @@ here that I find interesting:
   reasons: the root directory is `/` with a "user" directory in it
   (`/userdata/`) and some directories with virtual files (not actually on
   disk, and computed at read time).
+
+- Applications can receive arguments at launch (like file data and flags) and
+  their code is loaded only when executed.
+
+  Many of them are "sandboxed": Allowing not only to enforce a real and strong
+  permission system (e.g. only a very few apps have access to the
+  filesystem), but also efficient memory management, especially when
+  opening and closing many apps in a single session.
 
 - I ended up implementing an "executable" format: a JS object that can be
   serialized to JSON which contains metadata about the app and how to run it.

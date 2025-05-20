@@ -47,6 +47,9 @@ export function launchSandboxedApp(scriptUrl, appArgs, env, abortSignal) {
   const iframe = document.createElement("iframe");
 
   iframe.tabIndex = "0";
+
+  // TODO: this blocks apps from using stuff like WebWorkers, fetching their
+  // own resources etc.
   // iframe.sandbox = "allow-scripts";
   iframe.style.height = "100%";
   iframe.style.width = "100%";

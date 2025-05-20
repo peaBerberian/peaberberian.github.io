@@ -66,6 +66,15 @@ import Taskbar from "./components/Taskbar.mjs";
 import AppsLauncher from "./app-launcher/AppsLauncher.mjs";
 import initializeClockApplet from "./clock_applet.mjs";
 
+/**
+ * To bypass the initial app at start-up, this string can be set in the URL
+ * fragment.
+ *
+ * It should not conflict with an actuall app's `id` (else, the only effect is
+ * that it won't be loaded at start-up through that same fragment trick).
+ */
+const SPECIAL_NO_APP_STRING = "#";
+
 async function start() {
   const desktopElt = document.getElementById("desktop");
 
@@ -110,7 +119,7 @@ async function start() {
       skipAnim: true,
       centered: true,
     });
-  } else {
+  } else if (wantedApp !== SPECIAL_NO_APP_STRING) {
     appsLauncher.openApp(`/apps/${wantedApp}.run`, [], {
       skipAnim: true,
       centered: true,

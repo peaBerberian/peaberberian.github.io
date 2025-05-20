@@ -95,7 +95,6 @@ export function create(_args, env) {
   <li>Should the windows' position and size update accordingly with the page's dimensions?<br>This could be expected if you consider regular website behavior.</li>
   <li>Should the windows' position and size just stay as stable as possible even in those cases?<br>This seemed more practical to me when you just consider a desktop environment</li>
 </ol>
-<br>
 <p>I thought that both could make sense depending on the user, so I chose to propose both as two configuration toggles (one for positions, the other for dimensions). The first behavior is implemented under the hood through CSS percentage properties, the second as pixel properties - though it gets more complex when handling window moving and resizing.</p>
 
 <div class="separator"></div>
@@ -105,7 +104,6 @@ export function create(_args, env) {
 <li>A window that was previously entirely contained in the screen should always ENTIRELY stay inside the screen.</li>
 <li>Window placements should always seem logical from the user's point of view, even if the window is initially partially out of the screen.</li>
 </ol>
-<br>
 <p>I ended up on a simple rule in my logic reacting to page resizes: For windows entirely inside the screen, they always are re-rendered entirely inside the screen, and are moved in a predictable way if a resize meant they wouldn't. I also prefer updating position first and then dimensions if it doesn't fit the screen at all, as it seemed more useful to a user to keep the same dimensions than to keep the same positions.<br>
 If a window is partially out of the screen, I consider that the area in which it can be repainted is the screen extended to the edge of that window (instead of just what's visible), I then added checks for security paddings ensuring that windows always stay reachable.</p>
 <p>This should lead to always predictable and useful behavior.</p>

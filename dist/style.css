@@ -328,9 +328,8 @@ html {
   padding: 10px 15px 10px 25px;
 }
 .right-taskbar .start-item-back {
-	padding-left: 35px;
+  padding-left: 35px;
 }
-
 
 #start-menu .start-item:focus {
   outline: none;
@@ -830,8 +829,8 @@ html {
 }
 
 .start-item-back {
-	padding-left: 35px;
-	font-weight: bold;
+  padding-left: 35px;
+  font-weight: bold;
 }
 
 .s-list {
@@ -854,8 +853,8 @@ html {
   box-shadow: none;
   display: none;
   z-index: 1001;
-	max-height: 100%;
-	overflow: auto;
+  max-height: 100%;
+  overflow: auto;
 }
 
 .top-taskbar #start-menu .s-list {
@@ -882,11 +881,11 @@ html {
   box-shadow: none;
   display: none;
   z-index: 1001;
-	max-height: 100%;
-	overflow: auto;
+  max-height: 100%;
+  overflow: auto;
 }
 .right-taskbar #start-menu .s-list.dependent.active {
-	display: block;
+  display: block;
 }
 
 .s-list-wrapper {

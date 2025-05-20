@@ -98,7 +98,10 @@ export default class AppsLauncher {
   async openApp(appPath, appArgs, options = {}) {
     // we're given a path, from which we can get the app's executable format:
     // an object with all its metadata, including the script to import to run it.
-    const app = await filesystem.readFile(appPath, "object");
+    const app =
+      typeof appPath === "string"
+        ? await filesystem.readFile(appPath, "object")
+        : appPath;
 
     if (app.onlyOne) {
       // If only instance of the app can be created, check if this window already
@@ -239,17 +242,10 @@ export default class AppsLauncher {
         this._taskbarManager.updateTitle(windowId, newIcon, newTitle);
       },
       open: (path, args) => {
-        const tryOpen = (path) => {
-          // For now only open "executables"....
-          // TODO: More should be doable
-          if (path.endsWith(".run")) {
-            this.openApp(path, args ?? []);
-          }
-        };
         if (Array.isArray(path)) {
-          path.forEach(tryOpen);
+          path.forEach((p) => this.open(p, args));
         } else {
-          tryOpen(path, args);
+          this.open(path, args);
         }
       },
       CONSTANTS,
@@ -267,7 +263,7 @@ export default class AppsLauncher {
           this._createFilePickerOpen(
             appStack,
             appWindow,
-            config,
+            { type: "options", ...config },
             applicationAbortCtrl.signal,
           );
       }
@@ -291,6 +287,61 @@ export default class AppsLauncher {
 
     this._desktopElt.appendChild(appWindow.element);
     return true;
+  }
+
+  /**
+   * General open function for when the type of data to open is unknown.
+   * Optionally takes arguments in case a function is opened.
+   * TODO: is args actually used?
+   */
+  async open(data, args) {
+    // For now only open "executables"....
+    // TODO: More should be doable
+    if (typeof data === "string") {
+      if (data.endsWith(".run")) {
+        return this.openApp(data, args ?? []);
+      }
+
+      const lastIdxOfDot = data.lastIndexOf(".");
+      if (lastIdxOfDot < 0) {
+        // TODO: notification?
+        return;
+      }
+      const extension = data.substring(lastIdxOfDot + 1);
+      if (!extension || extension.includes("/")) {
+        // TODO: notification?
+        return;
+      }
+      const defaultApps = await filesystem.readFile(
+        "/system/default_apps.config.json",
+        "object",
+      );
+      if (!defaultApps[extension]) {
+        // TODO: notification?
+        return;
+      }
+
+      // TODO: what if fails? Also should we stat for max size before?
+      const openedFile = await filesystem.readFile(data, "arraybuffer");
+
+      // TODO: also maintain a handle to allow save?
+      return this.openApp(defaultApps[extension], [
+        {
+          type: "file",
+          filename: getName(data),
+          data: openedFile,
+        },
+        ...(args ?? []),
+      ]);
+    }
+
+    // If not a string but an object, some duck-typing time.
+    if (typeof data === "object" && data !== null) {
+      if (typeof data.id === "string" && typeof data.data === "object") {
+        // May be an executable
+        return this.openApp(data, args ?? []);
+      }
+    }
   }
 
   /**

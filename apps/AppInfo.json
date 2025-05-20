@@ -106,7 +106,17 @@
       },
       "desktop": {
         "display": true
-      }
+      },
+      "defaultForExtensions": [
+        "webp",
+        "jpg",
+        "avif",
+        "heif",
+        "jpeg",
+        "png",
+        "gif",
+        "svg"
+      ]
     },
     {
       "id": "bombsweeper",

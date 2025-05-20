@@ -25,6 +25,7 @@ const USER_DATA_DIR = "/userdata/";
 const DESKTOP_CONFIG = "desktop.config.json";
 const START_MENU_CONFIG = "start_menu.config.json";
 const PROVIDERS_CONFIG = "providers.config.json";
+const DEFAULT_APPS_CONFIG = "default_apps.config.json";
 
 const DIR_CONFIG_FILENAME = ".dir_config";
 
@@ -342,6 +343,10 @@ class DesktopFileSystem {
           const providersConfig = generateProvidersConfig();
           return parseToWantedFormat(providersConfig, format);
         }
+        if (wantedFile === DEFAULT_APPS_CONFIG) {
+          const defaultAppsConfig = generateDefaultAppsConfig();
+          return parseToWantedFormat(defaultAppsConfig, format);
+        }
       } catch (err) {
         throw new Error("Impossible to read corrupted file: " + path);
       }
@@ -517,20 +522,23 @@ class DesktopFileSystem {
         });
       }
       if (dirPath === SYSTEM_DIR) {
-        return [DESKTOP_CONFIG, START_MENU_CONFIG, PROVIDERS_CONFIG].map(
-          (filename) => {
-            const fullPath = SYSTEM_DIR + filename;
-            return {
-              id: pathToId(fullPath),
-              fullPath,
-              directory: SYSTEM_DIR,
-              name: filename,
-              type: "file",
-              modified: DEFAULT_MODIFIED_DATE,
-              size: 0,
-            };
-          },
-        );
+        return [
+          DESKTOP_CONFIG,
+          START_MENU_CONFIG,
+          PROVIDERS_CONFIG,
+          DEFAULT_APPS_CONFIG,
+        ].map((filename) => {
+          const fullPath = SYSTEM_DIR + filename;
+          return {
+            id: pathToId(fullPath),
+            fullPath,
+            directory: SYSTEM_DIR,
+            name: filename,
+            type: "file",
+            modified: DEFAULT_MODIFIED_DATE,
+            size: 0,
+          };
+        });
       }
       throw new Error("Invalid directory: " + dirPath);
     }
@@ -753,17 +761,20 @@ function generateDesktopConfig() {
   const groups = new Map();
   return {
     list: apps.reduce((acc, app) => {
-      const path = `/apps/${app.id}.run`;
       if (typeof app.desktop?.group === "string" && app.desktop.group !== "") {
         const existingGroupList = groups.get(app.desktop.group);
+        const appArg = {
+          type: "file",
+          name: `${app.id}.run`,
+          data: textEncoder.encode(JSON.stringify(app)),
+        };
         if (existingGroupList) {
-          existingGroupList.push(path);
+          existingGroupList.push(appArg);
         } else {
           const title = app.desktop.group;
           const icon = app.desktop.group === "External Apps" ? "📡" : "💽";
 
-          // app-group args are [icon, title, ...apps]
-          const newList = [icon, title, path];
+          const newList = [{ type: "options", icon, title }, appArg];
           groups.set(app.desktop.group, newList);
           acc.push({
             run: "/apps/app-group.run",
@@ -773,6 +784,7 @@ function generateDesktopConfig() {
           });
         }
       } else if (app.desktop?.display) {
+        const path = `/apps/${app.id}.run`;
         acc.push({
           run: path,
           args: [],
@@ -840,6 +852,25 @@ function generateProvidersConfig() {
         acc[feature].push(path);
       } else {
         acc[feature] = [path];
+      }
+    }
+    return acc;
+  }, {});
+}
+
+/**
+ * Generate config object for default app per extensions.
+ * @returns {Object}
+ */
+function generateDefaultAppsConfig() {
+  return apps.reduce((acc, app) => {
+    if (!Array.isArray(app.defaultForExtensions)) {
+      return acc;
+    }
+    const path = `/apps/${app.id}.run`;
+    for (const ext of app.defaultForExtensions) {
+      if (acc[ext] === undefined) {
+        acc[ext] = path;
       }
     }
     return acc;

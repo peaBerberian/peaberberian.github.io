@@ -1,38 +1,26 @@
+const textDecoder = new TextDecoder();
+
 /**
  * This is just an application which displays other applications and files
  * listed in arguments.
- *
- * To run it, provide to it as arguments:
- *
- *   1. The icon wanted for this app group.
- *
- *   2. The title wanted for this app group.
- *
- *   3-. Then a variable numbers of paths to the applications or files that
- *       should be listed in this application group.
- * @param {Array.<string>} args - The application arguments, as documented
- * above.
+ * @param {Array.<Object>} args - The application arguments,
  * @param {Object} env - Util functions coming from the environment
- * @param {Object} env.appUtils - Util libraries, not actual desktop API.
- * @param {Object} env.filesystem - Interface to interact with the desktop's
- * filesystem.
  * @param {function(string, string):undefined} env.updateTitle - Update the
  * title of the current application. First argument is the icon, second is the
  * title.
- * @param {function(string, Array.<string>):undefined} env.open - API allowing
- * to open new files and applications. The first argument is the path to the
- * application to run, the second are the arguments with which it should be
- * launched.
- * @param {function(HTMLElement, Object):undefined} env.appUtils.applyStyle -
- * Util function allowing to apply multiple CSS rules at once on an
- * `HTMLElement`.
+ * @param {Function} env.open - API allowing to open new files and applications.
  * @returns {Promise.<Object>}
  */
 export async function create(args = [], env) {
-  const applyStyle = env.appUtils.applyStyle;
-  if (args.length > 1) {
-    env.updateTitle(args[0], "Apps: " + args[1]);
+  const apps = [];
+  for (const opt of args) {
+    if (opt.type === "options" && opt.icon && opt.title) {
+      env.updateTitle(opt.icon, "Apps: " + opt.title);
+    } else if (opt.type === "file" && opt.data) {
+      apps.push(JSON.parse(textDecoder.decode(opt.data)));
+    }
   }
+
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
     backgroundColor: "var(--app-primary-bg)",
@@ -60,9 +48,6 @@ export async function create(args = [], env) {
     e.preventDefault();
   });
 
-  const appPaths = args.slice(2);
-  const appProms = appPaths.map((a) => env.filesystem.readFile(a, "object"));
-  const apps = await Promise.all(appProms);
   const icons = [];
   for (let i = 0; i < apps.length; i++) {
     const app = apps[i];
@@ -122,14 +107,14 @@ export async function create(args = [], env) {
         // Double click to open app
         if (clickCount && performance.now() - lastClickTs < 300) {
           clickCount = 0;
-          env.open(appPaths[i], []);
+          env.open(app, []);
         } else {
           clickCount = 1;
           lastClickTs = performance.now();
         }
       } else {
         clickCount = 0;
-        env.open(appPaths[i], []);
+        env.open(app, []);
       }
     });
     icon.addEventListener("mouseover", () => {
@@ -158,5 +143,19 @@ export async function create(args = [], env) {
     icon.classList.add("selected");
     icon.style.backgroundColor = "var(--sidebar-selected-bg-color)";
     icon.style.color = "var(--sidebar-selected-text-color)";
+  }
+}
+
+/**
+ * Apply multiple style attributes on a given element.
+ * @param {HTMLElement} element - The `HTMLElement` on which the style should be
+ * aplied.
+ * @param {Object} style - The dictionnary where keys are style names (JSified,
+ * e.g. `backgroundColor` not `background-color`) and values are the
+ * corresponding syle values.
+ */
+function applyStyle(element, style) {
+  for (const key of Object.keys(style)) {
+    element.style[key] = style[key];
   }
 }

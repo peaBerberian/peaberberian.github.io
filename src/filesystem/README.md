@@ -116,6 +116,10 @@ can be discovered through `readDir`, but they should be always there:
   - `list` (`Array.<Object>`): The application objects inside that sublist.
     A sublist cannot contain another sublist.
 
+- `system/default_apps.config.json`: Contains object where the keys are files
+  extensions and the value is the path of the corresponding application to
+  launch with that file in argument.
+
 - `system/providers.config.json`: Contain metadata on "providers", which are
   application with supplementary features.
 

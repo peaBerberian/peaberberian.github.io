@@ -1,5 +1,4 @@
-// TODO: Move to its own, "explorer", application
-//
+// TODO: reload or watch dir
 // TODO: image thumbnails
 // TODO: Drag and drop in directory and other apps
 // TODO: Better touch handling
@@ -7,7 +6,6 @@
 // TODO: Download multiple files as zip through Compress API?
 // TODO: context menu could make sense to begin here
 
-import { constructAppHeaderLine } from "../header-line.mjs";
 import renderDirectory from "./render_directory.mjs";
 import {
   applyStyle,
@@ -30,14 +28,28 @@ import {
   spawnConfirmDialog,
 } from "./dialogs.mjs";
 
-export function createFileOpener(
-  { title, allowMultipleSelections, baseDirectory = "/userdata/" } = {},
-  { onFilesOpened, filesystem },
+export function create(args = [], env, abortSignal) {
+  return createExplorer("explorer", args, env, abortSignal);
+}
+
+export function createFileOpener(args = {}, env, abortSignal) {
+  return createExplorer("opener", args, env, abortSignal);
+}
+
+function createExplorer(
+  explorerType, // either "explorer", "opener" or "saver"
+  args,
+  { appUtils, open, filesystem },
   abortSignal,
 ) {
+  const {
+    title,
+    allowMultipleSelections,
+    baseDirectory = "/userdata/",
+  } = args[0] ?? {};
   const containerElt = createContainerElement();
   /**
-   * Global HTML container for the file picker.
+   * Global HTML container for the file explorer.
    * @type {HTMLElement}
    */
   const explorerContainer = document.createElement("div");
@@ -55,10 +67,10 @@ export function createFileOpener(
     : baseDirectory + "/";
 
   /**
-   * Flex container of the various components of the file picker.
+   * Flex container of the various components of the file explorer.
    * @type {HTMLElement}
    */
-  const explorerElt = createFilePickerElement();
+  const explorerElt = createFileExplorerElement();
 
   if (title) {
     explorerElt.appendChild(constructTitleElement(title));
@@ -99,15 +111,19 @@ export function createFileOpener(
   // Create the toolbar now
 
   const {
-    element: filePickerToolsElt,
+    element: toolsElt,
     enableButton: enableToolButton,
     disableButton: disableToolButton,
-  } = constructAppHeaderLine([
-    {
-      name: "undo",
-      title: "Exit picker",
-      onClick: () => onFilesOpened([]),
-    },
+  } = appUtils.constructAppHeaderLine([
+    ...(explorerType !== "explorer"
+      ? [
+          {
+            name: "undo",
+            title: "Exit picker",
+            onClick: () => open([]),
+          },
+        ]
+      : []),
     { name: "separator" },
     {
       name: "previous",
@@ -170,8 +186,9 @@ export function createFileOpener(
       onClick: pasteItems,
     },
   ]);
+  disableToolButton("paste");
   updateToolButtons(currentPath, selectedItems);
-  explorerElt.appendChild(filePickerToolsElt);
+  explorerElt.appendChild(toolsElt);
 
   /**
    * Central element where the various files and directories will be displayed
@@ -209,46 +226,52 @@ export function createFileOpener(
    * show buttons.
    * @type {HTMLElement}
    */
-  const filePickerStatusBarElt = document.createElement("div");
-  applyStyle(filePickerStatusBarElt, {
+  const explorerStatusBarElt = document.createElement("div");
+  applyStyle(explorerStatusBarElt, {
     display: "flex",
     gap: "5px",
     justifyContent: "space-between",
     alignItems: "center",
   });
   const statusElt = document.createElement("div");
-  const buttonContainerElt = document.createElement("div");
-  applyStyle(buttonContainerElt, {
-    display: "flex",
-    gap: "5px",
-    flexWrap: "wrap",
-    justifyContent: "flex-end",
-  });
-  const cancelButton = document.createElement("button");
-  cancelButton.className = "btn";
-  cancelButton.textContent = "Cancel";
-  applyStyle(cancelButton, {
-    padding: "4px 15px",
-    fontSize: "1.1em",
-    fontWeight: "bold",
-  });
-  cancelButton.onclick = () => {
-    onFilesOpened([]);
-  };
-  const openButton = document.createElement("button");
-  openButton.className = "btn";
-  openButton.textContent = "Open";
-  applyStyle(openButton, {
-    padding: "4px 15px",
-    fontSize: "1.1em",
-    fontWeight: "bold",
-  });
-  disableButton(openButton);
-  buttonContainerElt.appendChild(cancelButton);
-  buttonContainerElt.appendChild(openButton);
-  filePickerStatusBarElt.appendChild(statusElt);
-  filePickerStatusBarElt.appendChild(buttonContainerElt);
-  explorerElt.appendChild(filePickerStatusBarElt);
+  explorerStatusBarElt.appendChild(statusElt);
+
+  let openButton;
+  if (explorerType === "opener") {
+    const buttonContainerElt = document.createElement("div");
+    applyStyle(buttonContainerElt, {
+      display: "flex",
+      gap: "5px",
+      flexWrap: "wrap",
+      justifyContent: "flex-end",
+    });
+    const cancelButton = document.createElement("button");
+    cancelButton.className = "btn";
+    cancelButton.textContent = "Cancel";
+    applyStyle(cancelButton, {
+      padding: "4px 15px",
+      fontSize: "1.1em",
+      fontWeight: "bold",
+    });
+    cancelButton.onclick = () => {
+      open([]);
+    };
+    openButton = document.createElement("button");
+    openButton.className = "btn";
+    openButton.textContent = "Open";
+    applyStyle(openButton, {
+      padding: "4px 15px",
+      fontSize: "1.1em",
+      fontWeight: "bold",
+    });
+    disableButton(openButton);
+    buttonContainerElt.appendChild(cancelButton);
+    buttonContainerElt.appendChild(openButton);
+    explorerStatusBarElt.appendChild(buttonContainerElt);
+  } else {
+    openButton = null;
+  }
+  explorerElt.appendChild(explorerStatusBarElt);
 
   explorerContainer.appendChild(explorerElt);
   containerElt.appendChild(explorerContainer);
@@ -296,7 +319,11 @@ export function createFileOpener(
         path,
         callbacks: {
           navigateTo: navigateToPath,
-          escape: () => onFilesOpened([]),
+          escape: () => {
+            if (explorerType === "opener") {
+              open([]);
+            }
+          },
           deleteItems,
           cutItems,
           pasteItems,
@@ -305,25 +332,30 @@ export function createFileOpener(
             updateStatusElement(statusElt, items);
             updateToolButtons(currentPath, selectedItems);
 
-            if (items.length === 0 || items.some((x) => x.isDirectory)) {
-              disableButton(openButton);
-              openButton.onclick = null;
-            } else {
-              if (!allowMultipleSelections && items.length > 1) {
+            if (explorerType === "opener" && openButton) {
+              if (items.length === 0 || items.some((x) => x.isDirectory)) {
                 disableButton(openButton);
                 openButton.onclick = null;
               } else {
-                enableHighlightedButton(openButton);
-                openButton.onclick = () =>
-                  onFilesOpened(items.map((x) => x.path));
+                if (!allowMultipleSelections && items.length > 1) {
+                  disableButton(openButton);
+                  openButton.onclick = null;
+                } else {
+                  enableHighlightedButton(openButton);
+                  openButton.onclick = () => open(items.map((x) => x.path));
+                }
               }
             }
           },
           openFiles: (items) => {
-            if (!allowMultipleSelections && items.length > 1) {
-              showError(selectionZoneElt, `Choose only one file.`);
+            if (
+              explorerType === "opener" &&
+              !allowMultipleSelections &&
+              items.length > 1
+            ) {
+              showError(directoryContainer, `Choose only one file.`);
             } else {
-              onFilesOpened(items.map((x) => x.path));
+              open(items.map((x) => x.path));
             }
           },
         },
@@ -339,7 +371,7 @@ export function createFileOpener(
         currentDirectoryComponent.onDeactivate();
       }
     } catch (err) {
-      showError(selectionZoneElt, `Error loading directory: ${err.message}`);
+      showError(directoryContainer, `Error loading directory: ${err.message}`);
     }
     updateStatusElement(statusElt, []);
   }
@@ -742,7 +774,7 @@ function constructPathBarElement(currentPath, navigateTo) {
   return pathBarElt;
 }
 
-function createFilePickerElement() {
+function createFileExplorerElement() {
   const explorerElt = document.createElement("div");
   applyStyle(explorerElt, {
     position: "absolute",

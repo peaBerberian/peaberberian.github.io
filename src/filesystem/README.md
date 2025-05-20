@@ -116,6 +116,18 @@ can be discovered through `readDir`, but they should be always there:
   - `list` (`Array.<Object>`): The application objects inside that sublist.
     A sublist cannot contain another sublist.
 
+- `system/providers.config.json`: Contain metadata on "providers", which are
+  application with supplementary features.
+
+  One example of such features would be `"filePickerOpen"`, allowing an
+  application to open a file picker to access a file from the file system
+  without actually having access to it.
+
+  It takes the form of an Object, where the keys are the features (e.g.
+  `"filePickerOpen"`) and where the value is an array of path to the
+  corresponding executable implementing those (e.g. `["/apps/explorer.run"]`),
+  by order of preference.
+
 ### `/userdata/`
 
 The root directory where the user can do whatever it wants: read/write.

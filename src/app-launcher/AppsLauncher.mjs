@@ -10,7 +10,7 @@ import {
   getMaxDesktopDimensions,
 } from "../utils.mjs";
 import appUtils from "./app-utils/index.mjs";
-import { createFileOpener } from "./app-utils/explorer/file-picker.mjs";
+// import { createFileOpener } from "./app-utils/explorer/explorer.mjs";
 import WindowedApplicationStack from "./windowed_application_stack.mjs";
 import strHtml from "../str-html.mjs";
 
@@ -68,6 +68,15 @@ export default class AppsLauncher {
      * @private
      */
     this._taskbarManager = taskbarManager;
+
+    /**
+     * Promise giving the list of application for each "provided" (by apps)
+     * features.
+     */
+    this._providersPromise = filesystem.readFile(
+      "/system/providers.config.json",
+      "object",
+    );
   }
 
   /**
@@ -214,41 +223,6 @@ export default class AppsLauncher {
       appWindow.setFullscreen();
     }
 
-    // TODO: Move this elsewhere
-    const filePickerOpen = (config) => {
-      return new Promise(async (resolveFilePicker, rejectFilePicker) => {
-        let filePickerElt;
-        const fileOpenerAbortCtrl = createLinkedAbortController(
-          applicationAbortCtrl.signal,
-        );
-        try {
-          const appObj = await this._launchApp(
-            createFileOpener,
-            config,
-            { onFilesOpened, filesystem }, // TODO: real env construction
-            fileOpenerAbortCtrl.signal,
-          );
-          filePickerElt = appObj.element;
-          appStack.push(appObj, appWindow.isActivated());
-        } catch (err) {
-          rejectFilePicker(err);
-        }
-
-        function onFilesOpened(files) {
-          fileOpenerAbortCtrl.abort();
-          appStack.popElement(filePickerElt, appWindow.isActivated());
-          const proms = files.map(async (filePath) => {
-            const data = await filesystem.readFile(filePath, "arraybuffer");
-            return {
-              filename: getName(filePath),
-              data,
-            };
-          });
-          Promise.all(proms).then(resolveFilePicker, rejectFilePicker);
-        }
-      });
-    };
-
     /**
      * Construct `env` object that is given to application as their link to the
      * desktop element.
@@ -264,7 +238,20 @@ export default class AppsLauncher {
         appWindow.updateTitle(newIcon, newTitle);
         this._taskbarManager.updateTitle(windowId, newIcon, newTitle);
       },
-      open: (path, args) => this.openApp(path, args),
+      open: (path, args) => {
+        const tryOpen = (path) => {
+          // For now only open "executables"....
+          // TODO: More should be doable
+          if (path.endsWith(".run")) {
+            this.openApp(path, args ?? []);
+          }
+        };
+        if (Array.isArray(path)) {
+          path.forEach(tryOpen);
+        } else {
+          tryOpen(path, args);
+        }
+      },
       CONSTANTS,
     };
 
@@ -276,7 +263,13 @@ export default class AppsLauncher {
         env.filesystem = filesystem;
       }
       if (app.dependencies.includes("filePickerOpen")) {
-        env.filePickerOpen = filePickerOpen;
+        env.filePickerOpen = (config) =>
+          this._createFilePickerOpen(
+            appStack,
+            appWindow,
+            config,
+            applicationAbortCtrl.signal,
+          );
       }
     }
 
@@ -346,18 +339,29 @@ export default class AppsLauncher {
    * succeded to launch the application, with the payload obtained from
    * launching it.
    */
-  async _launchApp(appData, appArgs, env, abortSignal) {
+  async _launchApp(
+    appData,
+    appArgs,
+    env,
+    abortSignal,
+    wantedExport = "create",
+  ) {
     const launchAfterPromise = (prom) => {
       return prom.then((appVal) =>
-        this._launchApp(appVal, appArgs, env, abortSignal),
+        this._launchApp(appVal, appArgs, env, abortSignal, wantedExport),
       );
     };
 
-    if (appData.create) {
-      const ret = appData.create(appArgs, env, abortSignal);
-      return this._launchApp(ret, appArgs, env, abortSignal);
+    if (typeof appData[wantedExport] === "function") {
+      const ret = appData[wantedExport](
+        appArgs,
+        env,
+        abortSignal,
+        wantedExport,
+      );
+      return this._launchApp(ret, appArgs, env, abortSignal, wantedExport);
     } else if (typeof appData === "function") {
-      return this._launchApp(appData(appArgs, env, abortSignal));
+      return this._launchApp(appData(appArgs, env, abortSignal, wantedExport));
     }
 
     let element;
@@ -393,6 +397,61 @@ export default class AppsLauncher {
       onClose = appData.onClose.bind(appData);
     }
     return { element, onActivate, onDeactivate, onClose };
+  }
+
+  _createFilePickerOpen(appStack, appWindow, config, appAbortSignal) {
+    return new Promise(async (resolveFilePicker, rejectFilePicker) => {
+      let filePickerElt;
+      const fileOpenerAbortCtrl = createLinkedAbortController(appAbortSignal);
+      try {
+        const providers = await this._providersPromise;
+        if (
+          !providers.filePickerOpen ||
+          providers.filePickerOpen.length === 0
+        ) {
+          rejectFilePicker(
+            new Error("No file picker provider found in this system."),
+          );
+          return;
+        }
+        const filePickerApp = await filesystem.readFile(
+          providers.filePickerOpen[0],
+          "object",
+        );
+        const appObj = await this._launchApp(
+          filePickerApp.data,
+          [config],
+          // TODO: More centralized and normalized env construction?
+          {
+            appUtils,
+            getImageRootPath: () => IMAGE_ROOT_PATH,
+            getVersion: () => __VERSION__,
+            CONSTANTS,
+            open: onFilesOpened,
+            filesystem,
+          },
+          fileOpenerAbortCtrl.signal,
+          "createFileOpener",
+        );
+        filePickerElt = appObj.element;
+        appStack.push(appObj, appWindow.isActivated());
+      } catch (err) {
+        rejectFilePicker(err);
+      }
+
+      function onFilesOpened(files) {
+        fileOpenerAbortCtrl.abort();
+        appStack.popElement(filePickerElt, appWindow.isActivated());
+        const proms = files.map(async (filePath) => {
+          const data = await filesystem.readFile(filePath, "arraybuffer");
+          return {
+            filename: getName(filePath),
+            data,
+          };
+        });
+        Promise.all(proms).then(resolveFilePicker, rejectFilePicker);
+      }
+    });
   }
 
   /**

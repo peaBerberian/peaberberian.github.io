@@ -487,7 +487,7 @@ export function create(_args, env) {
     buttonElement.addEventListener("mouseenter", () => {
       const currentBg = button.style?.backgroundColor || env.STYLE.bgColor;
       const hoverBg =
-        currentBg === env.STYLE.bgColor ? env.style.barHoverBg : currentBg;
+        currentBg === env.STYLE.bgColor ? env.STYLE.barHoverBg : currentBg;
       buttonElement.style.backgroundColor = hoverBg;
       buttonElement.style.filter = "brightness(0.9)";
     });

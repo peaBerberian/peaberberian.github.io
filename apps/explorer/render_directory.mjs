@@ -142,7 +142,11 @@ export default function renderDirectory({
     });
 
     const labelElt = document.createElement("div");
-    labelElt.textContent = item.name;
+
+    // We put ZWS before any "dot" as a smart trick to hint to the
+    // browser that it is a good place where breaking a name that is too long.
+    // It nicely map with a line break just for an extension.
+    labelElt.textContent = item.name.replace(/\./g, "\u200b.");
     applyStyle(labelElt, {
       textAlign: "center",
       width: "100%",

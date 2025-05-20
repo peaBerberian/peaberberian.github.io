@@ -12,20 +12,13 @@ export default function createApplicationsSection(
   const section = strHtml`<div>${createAppTitle("Applications", {})}</div>`;
   section.dataset.section = "applications";
 
-  const libGroup = strHtml`<div class="w-group"><h3>App libraries settings</h3></div>`;
+  const libGroup = strHtml`<div class="w-group"><h3>Common Settings</h3></div>`;
 
   libGroup.appendChild(
-    createDropdownOnRef(
+    createCheckboxOnRef(
       {
-        ref: settings.toolbarFormat,
-        options: ["Icons and text (default)", "Just icons"],
-        label: "Toolbar format (in concerned apps)",
-        fromRef: (value) => {
-          return value === "icon" ? "Just icons" : "Icons and text (default)";
-        },
-        toRef: (value) => {
-          return value === "Just icons" ? "icon" : "both";
-        },
+        ref: settings.aboutMeStart,
+        label: `Launch the "About Me" app on start-up by default`,
       },
       appUtils,
       abortSignal,
@@ -42,6 +35,23 @@ export default function createApplicationsSection(
         },
         toRef: (value) => {
           return value === "Always on top" ? "top" : "auto";
+        },
+      },
+      appUtils,
+      abortSignal,
+    ),
+  );
+  libGroup.appendChild(
+    createDropdownOnRef(
+      {
+        ref: settings.toolbarFormat,
+        options: ["Icons and text (default)", "Just icons"],
+        label: "Toolbar format (in concerned apps)",
+        fromRef: (value) => {
+          return value === "icon" ? "Just icons" : "Icons and text (default)";
+        },
+        toRef: (value) => {
+          return value === "Just icons" ? "icon" : "both";
         },
       },
       appUtils,

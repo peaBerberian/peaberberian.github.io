@@ -203,13 +203,20 @@ export default async function run(options) {
  */`,
         },
       ].map((bundle) => {
+        let opts = options;
         if (bundle.banner) {
-          return produceBundle(bundle.input, bundle.outputFile, {
+          opts = {
             ...options,
             banner: bundle.banner,
-          });
+          };
         }
-        return produceBundle(bundle.input, bundle.outputFile, options);
+        if (bundle.format) {
+          opts = {
+            ...options,
+            format: bundle.format,
+          };
+        }
+        return produceBundle(bundle.input, bundle.outputFile, opts);
       }),
     ).then(async (contexts) => {
       const cancelAll = () => {
@@ -251,6 +258,7 @@ async function produceBundle(inputFile, outfile, options) {
   const minify = !!options.minify;
   const watch = !!options.watch;
   const isSilent = options.silent;
+  const format = options.format;
   const globals = options.globals;
   const relativeInFile = path.relative(PROJECT_ROOT_DIRECTORY, inputFile);
   const relativeOutfile = path.relative(PROJECT_ROOT_DIRECTORY, outfile);
@@ -299,7 +307,7 @@ async function produceBundle(inputFile, outfile, options) {
         target: "es2020",
         minify,
         write: true,
-        format: "esm",
+        format: format ?? "iife",
         outfile,
         plugins: [esbuildStepsPlugin],
         define: {
@@ -613,9 +621,16 @@ export default [`;
               `Error in app "${app.id}". Invalid "sandboxed" property: should be a boolean.`,
             );
           }
+          if (Array.isArray(app.provider) && app.provider.length > 0) {
+            throw new Error(
+              `Error in app "${app.id}". Apps with a "sandboxed" property cannot be a "provider".`,
+            );
+          }
           if (Array.isArray(app.dependencies)) {
             for (const dep of app.dependencies) {
-              if (["CONSTANTS", "settings", "fileSystems"].includes(dep)) {
+              if (
+                ["CONSTANTS", "settings", "fileSystems", "open"].includes(dep)
+              ) {
                 throw new Error(
                   `Error in app "${app.id}". Invalid "sandboxed" property: incompatible with asked dependencies.`,
                 );
@@ -811,6 +826,7 @@ export default [`;
       bundlesToMake.push({
         outputFile,
         input: filePath,
+        format: "esm",
         banner: `/** This is the code for the app identified as "${app.id}". */`,
       });
 

@@ -97,7 +97,10 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
     sendSettingsToIframe(iframe, abortSignal);
     processEventsFromIframe(
       iframe,
-      env,
+      {
+        updateTitle: env.updateTitle,
+        closeApp: env.closeApp,
+      },
       () => {
         iframe.style.display = "block";
         spinnerElt.onClose();
@@ -127,6 +130,7 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
           scriptUrl: appData.lazyLoad,
           args: appArgs,
           desktopOrigin: window.location.origin,
+          dependencies: appData.dependencies,
         },
       },
       appDomain,
@@ -319,15 +323,37 @@ function processEventsFromIframe(iframe, cbs, resolve, reject, abortSignal) {
     }
     switch (e.data.type) {
       case "__pwd__forwarded-event":
+        // TODO: check correctness of forwarded event?
         handleForwardedEvent(iframe, e.data);
         break;
 
       case "__pwd__update-title":
-        cbs.updateTitle(e.data.data.icon, e.data.data.title);
+        checkTitleUpdateFormat(e.data);
+        cbs.updateTitle(e.data.icon, e.data.title);
         break;
 
       case "__pwd__close-app":
         cbs.closeApp();
+        break;
+
+      case "__pwd__quickSave":
+        // TODO:
+        cbs.quickSave(e.data.data);
+        break;
+
+      case "__pwd__picker_open":
+        // TODO:
+        cbs.filePickerOpen(e.data.data);
+        break;
+
+      case "__pwd__picker_save":
+        // TODO:
+        cbs.filePickerOpen(e.data.data);
+        break;
+
+      case "__pwd__notification":
+        // TODO:
+        cbs.notify(e.data.data);
         break;
 
       case "__pwd__loaded":
@@ -335,11 +361,37 @@ function processEventsFromIframe(iframe, cbs, resolve, reject, abortSignal) {
         break;
 
       case "__pwd__error": {
-        const error = new Error(e.data.data.message);
-        error.name = e.data.data.name;
+        const data = e.data.data;
+        checkErrorMsgFormat(data);
+        const error = new Error(data.message);
+        if (data.name !== undefined) {
+          error.name = data.name;
+        }
         reject(error);
         break;
       }
     }
   });
+}
+
+function checkErrorMsgFormat(data) {
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    (typeof data.name !== "string" && data.name !== undefined) ||
+    typeof data.message !== "string"
+  ) {
+    throw new Error("Cannot update title: wrong data format");
+  }
+}
+
+function checkTitleUpdateFormat(data) {
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    (typeof data.icon !== "string" && data.icon !== undefined) ||
+    typeof data.title !== "string"
+  ) {
+    throw new Error("Cannot update title: wrong data format");
+  }
 }

@@ -37,6 +37,8 @@ applyStyle(appWrapperElt, {
 });
 document.body.appendChild(appWrapperElt);
 
+let appAbortCtrl = null;
+
 /**
  * Origin indicated by the desktop when asking to run an app.
  * All subsequent messages should all come from this origin and all messages
@@ -44,7 +46,13 @@ document.body.appendChild(appWrapperElt);
  */
 let desktopOrigin;
 
-const applicationEnvironment = {
+let isAppInFocus = false;
+
+let onActivate;
+let onDeactivate;
+let onClose;
+
+const appEnv = {
   appUtils: getAppUtils(),
   getImageRootPath: () => IMAGE_ROOT_PATH,
   getVersion: () => __VERSION__,
@@ -61,134 +69,161 @@ const applicationEnvironment = {
   STYLE,
 };
 
-let isActivated = false;
-let onActivate;
-let onDeactivate;
-let onClose;
+/** The script might do prototype pollution. */
+const originalStopImmediatePropagation =
+  Event.prototype.stopImmediatePropagation;
 
-const abortCtrlr = new AbortController();
-
-onmessage = (e) => {
-  if (desktopOrigin && e.origin !== desktopOrigin) {
-    return;
-  }
-  switch (e.data.type) {
-    case "__pwd__sidebar-format-update": {
-      if (e.data.data === "top") {
-        document.body.classList.add("w-sidebar-top");
-      } else {
-        document.body.classList.remove("w-sidebar-top");
-      }
-      break;
+window.addEventListener(
+  "message",
+  (e) => {
+    if (desktopOrigin && e.origin !== desktopOrigin) {
+      return;
     }
-
-    case "__pwd__update-style": {
-      e.data.data.vars.forEach((v) => {
-        STYLE[v.name] = "var(" + v.cssName + ")";
-        document.documentElement.style.setProperty(
-          v.cssName,
-          v.value + (v.cssName.endsWith("-size") ? "px" : ""),
-        );
-      });
-      break;
-    }
-
-    case "__pwd__show-iframe-blocker": {
-      if (e.data.data) {
-        document.body.classList.remove("transparent-i-frame-top");
-      } else {
-        document.body.classList.add("transparent-i-frame-top");
+    switch (e.data.type) {
+      case "__pwd__sidebar-format-update": {
+        if (e.data.data === "top") {
+          document.body.classList.add("w-sidebar-top");
+        } else {
+          document.body.classList.remove("w-sidebar-top");
+        }
+        break;
       }
-      break;
-    }
 
-    case "__pwd__run-app":
-      e.stopImmediatePropagation();
-      isActivated = e.data.data.activate;
-      if (isActivated) {
-        appWrapperElt.classList.add("active");
-      } else {
-        appWrapperElt.classList.remove("active");
-      }
-      desktopOrigin = e.data.data.desktopOrigin;
-      launchAppFromScript(
-        e.data.data.scriptUrl,
-        e.data.data.args,
-        applicationEnvironment,
-        abortCtrlr.signal,
-      )
-        .then((appInfo) => {
-          parent.postMessage(
-            {
-              type: "__pwd__loaded",
-              data: null,
-            },
-            desktopOrigin ?? "*",
-          );
-          appWrapperElt.appendChild(appInfo.element);
-          onActivate = appInfo.onActivate;
-          onDeactivate = appInfo.onDeactivate;
-          onClose = appInfo.onClose;
-        })
-        .catch((err) => {
-          parent.postMessage(
-            {
-              type: "__pwd__error",
-              data: {
-                time: "run",
-                name: err.name,
-                message: err.message,
-              },
-            },
-            desktopOrigin ?? "*",
+      case "__pwd__update-style": {
+        e.data.data.vars.forEach((v) => {
+          STYLE[v.name] = "var(" + v.cssName + ")";
+          document.documentElement.style.setProperty(
+            v.cssName,
+            v.value + (v.cssName.endsWith("-size") ? "px" : ""),
           );
         });
-      break;
-
-    case "__pwd__activate":
-      e.stopImmediatePropagation();
-      if (isActivated) {
-        return;
+        break;
       }
-      isActivated = true;
-      appWrapperElt.classList.add("active");
-      onActivate?.();
-      break;
 
-    case "__pwd__deactivate":
-      e.stopImmediatePropagation();
-      if (!isActivated) {
-        return;
+      case "__pwd__show-iframe-blocker": {
+        if (e.data.data) {
+          document.body.classList.remove("transparent-i-frame-top");
+        } else {
+          document.body.classList.add("transparent-i-frame-top");
+        }
+        break;
       }
-      isActivated = false;
-      appWrapperElt.classList.remove("active");
-      onDeactivate?.();
-      break;
 
-    case "__pwd__close":
-      e.stopImmediatePropagation();
-      isActivated = false;
-      appWrapperElt.classList.remove("active");
-      onClose?.();
-      break;
+      case "__pwd__run-app":
+        originalStopImmediatePropagation.call(e);
+        // TODO: Also have id communicated just in case desktop initialize
+        // multiple times?
+        startApp(e.data.data);
+        break;
 
-    case "__pwd__keyup":
-    case "__pwd__keydown": {
-      const syntheticEvent = new KeyboardEvent(e.data.type.substring(7), {
-        key: e.data.key,
-        code: e.data.code,
-        keyCode: e.data.keyCode,
-        ctrlKey: e.data.ctrlKey,
-        shiftKey: e.data.shiftKey,
-        altKey: e.data.altKey,
-        metaKey: e.data.metaKey,
-        bubbles: true,
-        cancelable: true,
-      });
-      document.dispatchEvent(syntheticEvent);
+      case "__pwd__activate":
+        originalStopImmediatePropagation.call(e);
+        if (isAppInFocus) {
+          return;
+        }
+        isAppInFocus = true;
+        appWrapperElt.classList.add("active");
+        onActivate?.();
+        break;
+
+      case "__pwd__deactivate":
+        originalStopImmediatePropagation.call(e);
+        if (!isAppInFocus) {
+          return;
+        }
+        isAppInFocus = false;
+        appWrapperElt.classList.remove("active");
+        onDeactivate?.();
+        break;
+
+      case "__pwd__close":
+        originalStopImmediatePropagation.call(e);
+        isAppInFocus = false;
+        appWrapperElt.classList.remove("active");
+        onClose?.();
+        break;
+
+      case "__pwd__keyup":
+      case "__pwd__keydown": {
+        const syntheticEvent = new KeyboardEvent(e.data.type.substring(7), {
+          key: e.data.key,
+          code: e.data.code,
+          keyCode: e.data.keyCode,
+          ctrlKey: e.data.ctrlKey,
+          shiftKey: e.data.shiftKey,
+          altKey: e.data.altKey,
+          metaKey: e.data.metaKey,
+          bubbles: true,
+          cancelable: true,
+        });
+        document.dispatchEvent(syntheticEvent);
+      }
     }
+  },
+  true,
+);
+
+function startApp(data) {
+  appAbortCtrl?.abort(); // Abort previous app if one
+  appAbortCtrl = new AbortController();
+
+  isAppInFocus = data.activate;
+  if (isAppInFocus) {
+    appWrapperElt.classList.add("active");
+  } else {
+    appWrapperElt.classList.remove("active");
   }
-};
+  desktopOrigin = data.desktopOrigin;
+
+  data.dependencies = data.dependencies ?? [];
+  appEnv.notificationEmitter = data.dependencies.includes("notificationEmitter")
+    ? // TODO:
+      {}
+    : null;
+
+  appEnv.filePickerSave = data.dependencies.includes("filePickerSave")
+    ? // TODO:
+      () => {}
+    : null;
+
+  appEnv.filePickerOpen = data.dependencies.includes("filePickerOpen")
+    ? // TODO:
+      () => {}
+    : null;
+
+  appEnv.quickSave = data.dependencies.includes("quickSave")
+    ? // TODO:
+      () => {}
+    : null;
+
+  launchAppFromScript(data.scriptUrl, data.args, appEnv, appAbortCtrl.signal)
+    .then((appInfo) => {
+      parent.postMessage(
+        {
+          type: "__pwd__loaded",
+          data: null,
+        },
+        desktopOrigin ?? "*",
+      );
+      appWrapperElt.appendChild(appInfo.element);
+      onActivate = appInfo.onActivate;
+      onDeactivate = appInfo.onDeactivate;
+      onClose = appInfo.onClose;
+    })
+    .catch((err) => {
+      parent.postMessage(
+        {
+          type: "__pwd__error",
+          data: {
+            time: "run",
+            name: err.name,
+            message: err.message,
+          },
+        },
+        desktopOrigin ?? "*",
+      );
+    });
+}
 
 async function launchAppFromScript(scriptUrl, appArgs, env, abortSignal) {
   const appVal = await import(scriptUrl);

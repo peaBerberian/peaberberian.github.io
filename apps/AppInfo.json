@@ -382,6 +382,20 @@
       ]
     },
     {
+      "id": "pdf",
+      "title": "PDF Viewer (pdf.js) 🚧 Not finished",
+      "icon": "📑",
+      "defaultHeight": 950,
+      "defaultWidth": 1000,
+      "dependencies": ["filePickerOpen"],
+      "startMenu": {
+        "list": "External Apps"
+      },
+      "defaultForExtensions": [
+        "pdf"
+      ]
+    },
+    {
       "id": "this-website",
       "title": "About This Website",
       "icon": "🌐",

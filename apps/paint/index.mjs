@@ -212,6 +212,9 @@ export function create(_args, env, abortSignal) {
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.putImageData(resizingState, 0, 0);
           }
+          if (currentFile?.handle) {
+            enableButton("quick-save");
+          }
         });
       },
       onEnd: () => {

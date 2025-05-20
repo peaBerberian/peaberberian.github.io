@@ -4,16 +4,23 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
+// - Begin save work (filePickerSave + save handles for apps)
 //
 // medium priority:
 // - image viewer touch controls
-// - Sometimes the focus in on a desktop icon, not on the app
+// - If not clicking on start button or taskbar, the cursor should indicate move
+//   (when taskbar is not locked)
+// - Actually enforce permissions by adding iframe with sandbox="allow-scripts"
+// - filesystem: When indexedDB is not available, fallback on in-memory
+// - filesystem: watch API?
 // - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices
-// - If not clicking on start button or taskbar, the cursor is move when taskbar
-//   is not locked
 //
 // low priority:
+// - filesystem: Proxy local storage in `/system/`?
+// - double clicking while moving on the second click probably shouldn't put in
+//   fullscreen? To check what others are doing (ironically enough, I don't even
+//   use a floating WM day-to-day, forgot that stuff).
 // - windows moving when moving taskbar to top/bottom. Could be cool to stay in
 //   place if possible
 // - disable text shadows on icons if opacity big enough?
@@ -40,13 +47,7 @@
 // - Do "fake" app store to actually add external apps? (without it, though they
 //   do not really take space, it still could clutter if enough interesting
 //   i-frame-capable websites are found.)
-//
-// filesystem:
-// - Open in sheets
-// - Begin save work
-// - When indexedDB is not available, fallback on in-memory
-// - Proxy local storage in `/system/`?
-// - watch API?
+// - Sometimes the focus in on a desktop icon, not on the app
 //
 // desktop ideas:
 // - Allow multi-selection which changes drag bahavior
@@ -57,9 +58,6 @@
 //   info on what has been dropped
 // - apps can have an `env.drag` method (`"drag"` dependency?) to start drag
 //   and dropping
-//
-// application ideas:
-// - Actually enforce permissions by adding iframe with sandbox="allow-scripts"
 
 import fs from "./filesystem/filesystem.mjs";
 import DesktopAppIcons from "./components/DesktopAppIcons.mjs";

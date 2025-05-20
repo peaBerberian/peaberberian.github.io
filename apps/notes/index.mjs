@@ -1,7 +1,10 @@
 const textDecoder = new TextDecoder();
 
+// We might do more when put in a sandboxed i-frame?
+const MAX_FILE_MB = 2;
+
 export function create(args, env) {
-  const { applyStyle, constructAppHeaderLine } = env.appUtils;
+  const { constructAppHeaderLine } = env.appUtils;
   const containerElt = document.createElement("div");
 
   let history = [];
@@ -14,6 +17,21 @@ export function create(args, env) {
     overflow: "hidden",
     width: "100%",
   });
+
+  const spinnerContainerElt = document.createElement("div");
+  applyStyle(spinnerContainerElt, {
+    display: "none",
+    position: "absolute",
+    height: "100%",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  });
+  const spinnerElt = document.createElement("div");
+  spinnerElt.className = "spinner";
+  spinnerContainerElt.appendChild(spinnerElt);
+  containerElt.appendChild(spinnerContainerElt);
+
   const { element, focus } = createNotes();
   containerElt.appendChild(element);
   return {
@@ -33,10 +51,105 @@ export function create(args, env) {
       element: headerElt,
       enableButton,
       disableButton,
-    } = constructAppHeaderLine({
-      undo: { onClick: undo },
-      redo: { onClick: redo },
-      clear: {
+    } = constructAppHeaderLine([
+      {
+        name: "upload",
+        onClick: () => {
+          spinnerContainerElt.style.display = "flex";
+          statusBar.textContent = "Loading file...";
+
+          // Trick to open the file picker
+          const fileInputElt = document.createElement("input");
+          fileInputElt.type = "file";
+          fileInputElt.accept = "text/plain";
+          fileInputElt.multiple = false;
+          fileInputElt.click();
+          fileInputElt.addEventListener("cancel", async () => {
+            spinnerContainerElt.style.display = "none";
+            statusBar.textContent = "Ready";
+          });
+          fileInputElt.addEventListener("change", async (e) => {
+            const files = e.target.files;
+            if (files.length === 0) {
+              clearAndRestart();
+              return;
+            }
+            try {
+              if (files[0].size > MAX_FILE_MB * 1000000) {
+                clearAndRestart();
+                showMessage(
+                  element,
+                  `❌ File too big, there's a limit for now to ${MAX_FILE_MB} MB maximum.`,
+                  10000,
+                );
+                return;
+              }
+              const data = await files[0].arrayBuffer();
+              if (data.byteLength > MAX_FILE_MB * 1000000) {
+                clearAndRestart();
+                showMessage(
+                  element,
+                  `❌ File too big, there's a limit for now to ${MAX_FILE_MB} MB maximum.`,
+                  10000,
+                );
+                return;
+              }
+              loadFile({ data, filename: files[0].name });
+            } catch (err) {
+              clearAndRestart();
+              showMessage(element, "❌ " + err.toString(), 10000);
+            }
+            spinnerContainerElt.style.display = "none";
+            statusBar.textContent = "Ready";
+          });
+        },
+      },
+      {
+        name: "open",
+        onClick: () => {
+          spinnerContainerElt.style.display = "flex";
+          statusBar.textContent = "Loading file...";
+          env
+            .filePickerOpen({
+              title: "Open a text file stored on this Web Desktop",
+              allowMultipleSelections: false,
+            })
+            .then(
+              (files) => {
+                if (files.length === 0) {
+                  clearAndRestart();
+                  return;
+                }
+                if (files[0].data.byteLength > MAX_FILE_MB * 1000000) {
+                  clearAndRestart();
+                  showMessage(
+                    element,
+                    `❌ File too big, there's a limit for now to ${MAX_FILE_MB} MB maximum.`,
+                    10000,
+                  );
+                  return;
+                }
+                try {
+                  loadFile(files[0]);
+                } catch (err) {
+                  clearAndRestart();
+                  showMessage(element, "❌ " + err.toString(), 10000);
+                }
+                spinnerContainerElt.style.display = "none";
+                statusBar.textContent = "Ready";
+              },
+              (err) => {
+                clearAndRestart();
+                showMessage(element, "❌ " + err.toString(), 10000);
+              },
+            );
+        },
+      },
+      { name: "separator" },
+      { name: "undo", onClick: undo },
+      { name: "redo", onClick: redo },
+      {
+        name: "clear",
         onClick: () => {
           const hadSomethingWritten = textArea.value;
           statusBar.textContent = "Cleared";
@@ -48,7 +161,9 @@ export function create(args, env) {
           updateLineNumbers();
         },
       },
-      download: {
+      { name: "separator" },
+      {
+        name: "download",
         onClick: () => {
           if (typeof window.showSaveFilePicker === "function") {
             saveFile(textArea.value);
@@ -62,7 +177,7 @@ export function create(args, env) {
           }
         },
       },
-    });
+    ]);
     disableButton("undo");
     disableButton("redo");
     disableButton("clear");
@@ -162,6 +277,21 @@ export function create(args, env) {
       } catch (_err) {
         // TODO: signal error
       }
+      history.length = 0;
+      historyIndex = -1;
+      lastSavedContent = null;
+      disableButton("undo");
+      disableButton("redo");
+      disableButton("clear");
+      textArea.scrollTo(0, 0);
+      updateLineNumbers();
+    }
+
+    function clearAndRestart() {
+      spinnerContainerElt.style.display = "none";
+      statusBar.textContent = "Ready";
+      textArea.value = "";
+      env.updateTitle("📝", "Notes");
       history.length = 0;
       historyIndex = -1;
       lastSavedContent = null;
@@ -284,4 +414,46 @@ export function create(args, env) {
       console.error(err);
     }
   }
+}
+
+/**
+ * Apply multiple style attributes on a given element.
+ * @param {HTMLElement} element - The `HTMLElement` on which the style should be
+ * aplied.
+ * @param {Object} style - The dictionnary where keys are style names (JSified,
+ * e.g. `backgroundColor` not `background-color`) and values are the
+ * corresponding syle values.
+ */
+export function applyStyle(element, style) {
+  for (const key of Object.keys(style)) {
+    element.style[key] = style[key];
+  }
+}
+
+function showMessage(containerElt, message, duration = 5000) {
+  const messageElt = document.createElement("div");
+  messageElt.textContent = message;
+  applyStyle(messageElt, {
+    position: "absolute",
+    top: "10px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    color: "white",
+    padding: "10px 20px",
+    borderRadius: "4px",
+    zIndex: "1000",
+    transition: "opacity 0.3s",
+    textAlign: "center",
+  });
+
+  containerElt.appendChild(messageElt);
+
+  setTimeout(() => {
+    messageElt.style.opacity = "0";
+    // After animation, remove
+    setTimeout(() => {
+      messageElt.remove();
+    }, 350);
+  }, duration);
 }

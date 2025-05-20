@@ -52,6 +52,9 @@ export function create(args, env, parentAbortSignal) {
         fileInputElt.accept = "image/*";
         fileInputElt.multiple = true;
         fileInputElt.click();
+        fileInputElt.addEventListener("cancel", () => {
+          handleInputedFiles([]);
+        });
         fileInputElt.addEventListener("change", (e) => {
           const files = e.target.files;
           handleInputedFiles(files);
@@ -67,7 +70,7 @@ export function create(args, env, parentAbortSignal) {
             allowMultipleSelections: true,
           })
           .then(openFiles, (err) => {
-            showAppMessage(appContentAreaElt, "❌ " + err.toString(), 10000);
+            showMessage(appContentAreaElt, "❌ " + err.toString(), 10000);
           });
       },
     },
@@ -347,7 +350,7 @@ export function create(args, env, parentAbortSignal) {
 
         imgElt.src = event.target.result;
         imgElt.onerror = () => {
-          showAppMessage(
+          showMessage(
             appContentAreaElt,
             "❌ Error: Failed to load a file. Are you sure this is an image?",
           );
@@ -622,7 +625,7 @@ export function create(args, env, parentAbortSignal) {
 
       imgElt.onerror = () => {
         URL.revokeObjectURL(imgUrl);
-        showAppMessage(
+        showMessage(
           appContentAreaElt,
           "❌ Error: Failed to load a file. Are you sure this is an image?",
         );
@@ -720,7 +723,7 @@ function handleImageDragging(
   });
 }
 
-function showAppMessage(containerElt, message, duration = 5000) {
+function showMessage(containerElt, message, duration = 5000) {
   const messageElt = document.createElement("div");
   messageElt.textContent = message;
   applyStyle(messageElt, {

@@ -4,15 +4,13 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
-// - app.html contains everything directly
 //
 // medium priority:
-// - confirmation alert when closing window with unsaved file.
 // - image viewer touch controls
 // - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices, very mysterious that one
 // - drag and drop in explorer
-// - Settings: Default apps
+// - confirmation alert when closing window with unsaved file.
 // - pdf.js external relying on Mozilla CDN. (Useful as default app for pdf)
 //
 // low priority:
@@ -49,6 +47,7 @@
 //   i-frame-capable websites are found.)
 // - Remove app `id` inside the desktop and rely on `path` for `onlyOne`?
 // - paint: allow to change the file format
+// - Settings: Default apps
 
 import fs from "./filesystem/filesystem.mjs";
 import DesktopAppIcons from "./components/DesktopAppIcons.mjs";

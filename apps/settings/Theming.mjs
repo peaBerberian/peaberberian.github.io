@@ -495,68 +495,6 @@ const themes = {
     // icon-hover
     "#3A96AB",
   ],
-
-  cold: [
-    // button style,
-    "Sober",
-
-    // taskbar-bg
-    "#0095e6",
-    // taskbar-text
-    "#ffffff",
-    // taskbar-hover
-    "#8db6d3",
-    // taskbar-active-bg
-    "#00a3e0",
-    // taskbar-inactive-bg
-    "#a8d5f7",
-    // window-active-header
-    "#0077b6",
-    // window-active-header-text
-    "#ffffff",
-    // window-inactive-header
-    "#90c2e7",
-    // window-inactive-header-text
-    "#ffffff",
-    // window-sidebar-bg
-    "#caf0f8",
-    // window-text-color
-    "#023047",
-    // window-content-bg
-    "#ffffff",
-    // window-line-color
-
-    "#c1e0fe",
-    // app-primary-color
-    "#0096c7",
-    // app-primary-bg
-    "#e6f7ff",
-    // sidebar-hover-bg
-    "#ade8f4",
-    // sidebar-selected-bg-color
-    "#0096c7",
-    // sidebar-selected-text-color
-    "#ffffff",
-    // start-menu-text
-    "#023047",
-    // start-menu-bg
-    "#ffffff",
-    // start-menu-active-bg
-    "#ade8f4",
-    // start-icon-bg
-    "#48b0e8",
-    // icon-active-text
-    "#ffffff",
-    // icon-inactive-text
-    "#ffffff",
-    // icon-active-bg
-    "#00a3e0",
-    // icon-image-bg
-    "#bae1ff",
-    // icon-hover
-    "#0095ff",
-  ],
-
   hot: [
     // button style,
     "Sober",
@@ -1086,6 +1024,65 @@ const themes = {
     // icon-hover
     "#c8f0e0", // Shallow water highlight
   ],
+  island: [
+    // button style,
+    "Sober",
+    // taskbar-bg
+    "#0369a1",
+    // taskbar-text
+    "#ffffff",
+    // taskbar-hover
+    "#0ea5e9",
+    // taskbar-active-bg
+    "#098fce",
+    // taskbar-inactive-bg
+    "#003552",
+    // window-active-header
+    "#0076ad",
+    // window-active-header-text
+    "#fafaf9",
+    // window-inactive-header
+    "#a8a29e",
+    // window-inactive-header-text
+    "#ffffff",
+    // window-sidebar-bg
+    "#f5f5f4",
+    // window-text-color
+    "#1c1917",
+    // window-content-bg
+    "#f8fafc",
+    // window-line-color
+    "#d6d3d1",
+    // app-primary-color
+    "#098fce",
+    // (Background color used by some elements like buttons, disabled
+    // input and range input's line)
+    "#f1f5f9",
+    // sidebar-hover-bg
+    "#e7e5e4",
+    // sidebar-selected-bg-color
+    "#43a8db",
+    // sidebar-selected-text-color
+    "#ffffff",
+    // start-menu-text
+    "#1c1917",
+    // start-menu-bg
+    "#fafaf9",
+    // start-menu-active-bg
+    "#e7e5e4",
+    // start-icon-bg
+    "#d6d3d1",
+    // icon-active-text
+    "#ffffff",
+    // icon-inactive-text
+    "#ffffff",
+    // icon-active-bg
+    "#003857",
+    // icon-image-bg
+    "#005075",
+    // icon-hover
+    "#005075",
+  ],
 };
 
 export default function createThemeSection(
@@ -1205,7 +1202,7 @@ ${gridElt}
     ["🌚", "moon"],
     ["🤖", "robot"],
     ["🌊", "light"],
-    ["🥶", "cold"],
+    ["🏝️", "island"],
     ["🥵", "hot"],
     ["🔮", "crystal"],
     ["🍉", "watermelon"],

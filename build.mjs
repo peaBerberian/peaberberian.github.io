@@ -39,9 +39,18 @@ const OUTPUT_LAZY_LOADED_APPS = path.join(OUTPUT_DIR, "lazy");
  * replace an identifier with a string, call `JSON.stringify` on it).
  * @returns {Promise}
  */
-export default function run(options) {
+export default async function run(options) {
+  if (!options.watch) {
+    await reBuild();
+    return;
+  }
+
   return new Promise((_resolve, reject) => {
     let lastBuildContexts = reBuild().catch(reject);
+
+    if (!options.watch) {
+      return;
+    }
 
     const appInfoFile = path.join(APPS_SRC_DIR, "AppInfo.json");
 

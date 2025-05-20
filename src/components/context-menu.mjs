@@ -8,7 +8,7 @@ export default function setUpContextMenu({
   filter,
   abortSignal,
 }) {
-  const containerElt = document.getElementById("desktop");
+  const containerElt = document.body;
   const contextMenuElt = document.createElement("div");
   contextMenuElt.className = "context-menu";
   containerElt.appendChild(contextMenuElt);

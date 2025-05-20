@@ -14,6 +14,7 @@
 // - Actually enforce permissions by adding iframe with sandbox="allow-scripts"
 // - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices
+// - paint: resize do not re-activate quick save
 //
 // low priority:
 // - filesystem: re-check that no error gives away the path

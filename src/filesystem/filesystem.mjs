@@ -637,7 +637,7 @@ class DesktopFileSystem {
       });
 
       return metadata.reduce((acc, entry) => {
-        return acc + entry.size ?? 0;
+        return acc + (entry.size ?? 0);
       }, 0);
     });
   }

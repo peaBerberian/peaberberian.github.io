@@ -47,7 +47,10 @@ export function openDB() {
       db.createObjectStore(CONTENT_STORE, { keyPath: "id" });
     };
 
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const db = request.result;
+      resolve(db);
+    };
     request.onerror = () => reject(request.error);
   });
 }
@@ -302,4 +305,14 @@ export function getContainingDirectory(path) {
     return getDirPath(path.substring(0, path.length - 1));
   }
   return getDirPath(path);
+}
+
+export function isEntryPath(entry, path) {
+  if (entry.type !== "directory") {
+    return entry.fullPath === path;
+  }
+  if (!path.endsWith("/")) {
+    return false;
+  }
+  return entry.fullPath + "/" === path;
 }

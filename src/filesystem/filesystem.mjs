@@ -1,8 +1,6 @@
 // TODO: Make base mostly work even without `IndexedDB` API (just do not store
 // long term in that case)
 
-// TODO: Consistency check
-
 // TODO: For now I chose that all operations maintain a lock until finished to
 // prevent some weird states when there's multiple transactions involved.
 // However, IndexedDB has such a mechanism built-in called "transactions". I
@@ -12,6 +10,7 @@
 import apps from "../__generated_apps.mjs";
 
 import FileSystemError from "./error.mjs";
+import checkAndRepairIntegrity from "./filesystem_check.mjs";
 import {
   METADATA_STORE,
   CONTENT_STORE,
@@ -38,6 +37,7 @@ import {
   formatWrittenFileContent,
   pathJoin,
   getContainingDirectory,
+  isEntryPath,
 } from "./utils.mjs";
 
 export { getName, getDirPath, pathJoin };
@@ -47,6 +47,11 @@ class DesktopFileSystem {
     this._apps = apps;
     const setUpDb = () => {
       this._dbProm = openDB().then((db) => {
+        setTimeout(() => {
+          this._scheduleLockingOperation(() => {
+            return checkAndRepairIntegrity(db);
+          });
+        }, 500);
         db.addEventListener("close", () => {
           // TODO: If I wasn't lazy, I would have done that sweet exponential
           // backoff stuff.
@@ -99,7 +104,7 @@ class DesktopFileSystem {
       // see if we improve that in the future.
       const directory = getDirPath(filePath);
       const dirContent = await this._readDirEntries(directory);
-      const result = dirContent.find((x) => x.fullPath === filePath);
+      const result = dirContent.find((x) => isEntryPath(x, filePath));
       if (!result) {
         throw new FileSystemError("NoEntryError", "File not found");
       }
@@ -204,7 +209,7 @@ class DesktopFileSystem {
         const destEntries = await this._readDirEntries(
           getDirPath(normalizedDest.substring(0, normalizedDest.length - 1)),
         );
-        if (destEntries.some((e) => e.fullPath === normalizedDest)) {
+        if (destEntries.some((entry) => isEntryPath(entry, normalizedDest))) {
           throw new FileSystemError(
             "IllegalOperation",
             "Cannot move directory: destination path already exists",
@@ -217,7 +222,7 @@ class DesktopFileSystem {
         const dirContent = await this._readDirEntries(
           getContainingDirectory(srcPath),
         );
-        const result = dirContent.find((x) => x.fullPath === srcPath);
+        const result = dirContent.find((x) => isEntryPath(x, srcPath));
         if (!result) {
           throw new FileSystemError(
             "NoEntryError",
@@ -254,32 +259,36 @@ class DesktopFileSystem {
 
         allEntries.forEach((entry) => {
           const originalId = entry.id;
-          let newPath;
-          if (entry.fullPath === srcPath) {
-            newPath = normalizedDest;
+          let newFullPath;
+          if (isEntryPath(entry, srcPath)) {
+            newFullPath = normalizedDest.endsWith("/")
+              ? normalizedDest.substring(0, normalizedDest.length - 1)
+              : normalizedDest;
           } else {
             // Else, we're in a directory case where `normalizedDest` is the
             // destination directory.
             // Replace `srcPath` with it.
-            newPath = pathJoin(
+            newFullPath = pathJoin(
               normalizedDest,
               entry.fullPath.slice(srcPath.length),
             );
           }
 
-          if (entry.fullPath === newPath) {
+          const normalizedNewPath = entry.isDirectory
+            ? newFullPath + "/"
+            : newFullPath;
+          if (isEntryPath(entry, normalizedNewPath)) {
             return;
           }
 
-          const newDir = getContainingDirectory(newPath);
-
-          const newId = pathToId(newPath);
+          const newDir = getContainingDirectory(newFullPath);
+          const newId = pathToId(newFullPath);
           metadataStore.put({
             ...entry,
             id: newId,
-            fullPath: newPath,
+            fullPath: newFullPath,
             directory: newDir,
-            name: getName(newPath),
+            name: getName(newFullPath),
           });
           metadataStore.delete(originalId);
 
@@ -301,8 +310,8 @@ class DesktopFileSystem {
   }
 
   async rmDir(path) {
-    const fullPath = path.endsWith("/") ? path : path + "/";
-    if (!fullPath.startsWith(USER_DATA_DIR)) {
+    const normalizedPath = path.endsWith("/") ? path : path + "/";
+    if (!normalizedPath.startsWith(USER_DATA_DIR)) {
       throw new FileSystemError(
         "PermissionError",
         "This directory is read-only",
@@ -312,7 +321,7 @@ class DesktopFileSystem {
     return this._scheduleLockingOperation(async () => {
       const db = await this._dbProm;
 
-      const allEntries = await this._readDirRecursive(fullPath);
+      const allEntries = await this._readDirRecursive(normalizedPath);
       return new Promise((resolve, reject) => {
         const tx = db.transaction([METADATA_STORE, CONTENT_STORE], "readwrite");
         tx.onerror = () =>
@@ -427,8 +436,8 @@ class DesktopFileSystem {
           } catch (err) {
             throw new FileSystemError(
               "ParsingError",
-              "Impossible to read corrupted file: " + err?.toString?.() ??
-                "Unknown Error",
+              "Impossible to read corrupted file: " +
+                (err?.toString?.() ?? "Unknown Error"),
             );
           }
         };
@@ -437,16 +446,16 @@ class DesktopFileSystem {
   }
 
   async mkdir(path) {
-    const fullPath = path.endsWith("/") ? path : path + "/";
-    if (!fullPath.startsWith(USER_DATA_DIR)) {
+    const normalizedPath = path.endsWith("/") ? path : path + "/";
+    if (!normalizedPath.startsWith(USER_DATA_DIR)) {
       throw new FileSystemError(
         "PermissionError",
         "This directory is read-only",
       );
     }
 
-    const name = getName(fullPath);
-    const parentDir = getDirPath(fullPath.substring(0, fullPath.length - 1));
+    const name = getName(normalizedPath);
+    const parentDir = getContainingDirectory(normalizedPath);
 
     if (RESERVED_NAMES.includes(name)) {
       throw new FileSystemError(
@@ -486,6 +495,7 @@ class DesktopFileSystem {
           );
         tx.oncomplete = () => resolve();
 
+        const fullPath = normalizedPath.substring(0, normalizedPath.length - 1);
         const now = Date.now();
         store.put({
           id: pathToId(fullPath),
@@ -499,11 +509,11 @@ class DesktopFileSystem {
 
         // Simple fake file for now to always have at least one file in dirs
         // TODO: Remove the need for this
-        const systemFile = fullPath + DIR_CONFIG_FILENAME;
+        const systemFile = normalizedPath + DIR_CONFIG_FILENAME;
         store.put({
           id: pathToId(systemFile),
           fullPath: systemFile,
-          directory: fullPath,
+          directory: normalizedPath,
           name: DIR_CONFIG_FILENAME,
           type: "system",
           modified: now,
@@ -562,23 +572,28 @@ class DesktopFileSystem {
       );
     }
     if (dirPath === "/") {
+      const userDataFullPath = USER_DATA_DIR.substring(
+        0,
+        USER_DATA_DIR.length - 1,
+      );
       return this._virtualRootDirs
         .map((d) => {
+          const fullPath = d.substring(0, d.length - 1);
           return {
-            id: pathToId(d),
-            fullPath: d,
+            id: pathToId(fullPath),
+            fullPath,
             directory: "/",
-            name: getName(d),
+            name: getName(fullPath),
             type: "directory",
             modified: DEFAULT_MODIFIED_DATE,
             size: 0,
           };
         })
         .concat({
-          id: pathToId(USER_DATA_DIR),
-          fullPath: USER_DATA_DIR,
+          id: pathToId(userDataFullPath),
+          fullPath: userDataFullPath,
           directory: "/",
-          name: getName(USER_DATA_DIR),
+          name: getName(userDataFullPath),
           type: "directory",
           modified: DEFAULT_MODIFIED_DATE,
           size: 0,
@@ -691,7 +706,7 @@ class DesktopFileSystem {
         if (cursor) {
           const entry = cursor.value;
           if (
-            entry.fullPath === normalizedDirPath ||
+            isEntryPath(entry, normalizedDirPath) ||
             entry.fullPath.startsWith(normalizedDirPath)
           ) {
             allEntries.push(entry);

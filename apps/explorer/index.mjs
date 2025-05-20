@@ -66,6 +66,9 @@ function createExplorer(explorerType, args, env, abortSignal) {
 
     // NOTE: only pertinent for explorerType === "opener"
     allowMultipleSelections = true,
+
+    // NOTE: both for explorerType `"saver"` and `"opener"`
+    confirmValue = explorerType === "opener" ? "Open" : "Save",
   } = options;
 
   /**
@@ -335,7 +338,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
     };
     validateButton = document.createElement("button");
     validateButton.className = "btn";
-    validateButton.textContent = explorerType === "opener" ? "Open" : "Save";
+    validateButton.textContent = confirmValue;
     validateButton.onclick = async () => {
       if (explorerType === "opener") {
         env.onOpen(selectedItems.map((x) => x.path));

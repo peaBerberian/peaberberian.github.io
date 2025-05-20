@@ -125,7 +125,14 @@ export default async function DesktopAppIcons(
         "object",
       );
       lastAppListMemory = JSON.stringify(systemConfig, null, 2);
-      fs.writeFile(USER_DESKTOP_CONFIG, lastAppListMemory);
+      try {
+        fs.writeFile(USER_DESKTOP_CONFIG, lastAppListMemory);
+      } catch (err) {
+        console.info(
+          "The desktop icons won't be persisted, cannot save file to IndexedDB storage:",
+          err,
+        );
+      }
       return [true, systemConfig.list.slice()];
     }
   }
@@ -142,9 +149,6 @@ export default async function DesktopAppIcons(
       clearSignal: parentAbortSignal,
     });
     window.addEventListener("resize", recheckUpdate);
-    SETTINGS.canDeleteIcon.onUpdate(() => recheckUpdate(true), {
-      clearSignal: parentAbortSignal,
-    });
     SETTINGS.taskbarSize.onUpdate(recheckUpdate, {
       clearSignal: parentAbortSignal,
     });
@@ -379,9 +383,6 @@ export default async function DesktopAppIcons(
         break;
       }
       case "Delete": {
-        if (!SETTINGS.canDeleteIcon.getValue()) {
-          return;
-        }
         e.preventDefault();
         const index = appList.indexOf(app);
         if (index >= 0) {
@@ -511,31 +512,20 @@ export default async function DesktopAppIcons(
             iconElt.blur();
           },
         },
-        ...(SETTINGS.canDeleteIcon.getValue()
-          ? [
-              {
-                name: "clear",
-                title: "Delete icon",
-                onClick: () => {
-                  if (!SETTINGS.canDeleteIcon.getValue()) {
-                    return;
-                  }
-                  const index = appList.indexOf(app);
-                  if (index >= 0) {
-                    appList.splice(index, 1);
-                    const newAppList = JSON.stringify(
-                      { list: appList },
-                      null,
-                      2,
-                    );
-                    // NOTE: We do not update `lastAppListMemory` because we DO want to
-                    // refresh here
-                    fs.writeFile(USER_DESKTOP_CONFIG, newAppList);
-                  }
-                },
-              },
-            ]
-          : []),
+        {
+          name: "clear",
+          title: "Delete icon",
+          onClick: () => {
+            const index = appList.indexOf(app);
+            if (index >= 0) {
+              appList.splice(index, 1);
+              const newAppList = JSON.stringify({ list: appList }, null, 2);
+              // NOTE: We do not update `lastAppListMemory` because we DO want to
+              // refresh here
+              fs.writeFile(USER_DESKTOP_CONFIG, newAppList);
+            }
+          },
+        },
         { name: "separator" },
         {
           name: "settings",

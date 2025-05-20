@@ -26,6 +26,7 @@ export function create(_args, env) {
       title: "Choose apps or files that should be added as desktop shortcuts",
       allowMultipleSelections: true,
       baseDirectory: "/apps/",
+      confirmValue: "Add to desktop",
     })
     .then(
       async (files) => {

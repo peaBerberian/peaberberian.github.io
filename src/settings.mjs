@@ -238,8 +238,6 @@ export const SETTINGS = {
 
   moveAroundIcons: createRefForState("move-icons", true),
 
-  canDeleteIcon: createRefForState("can-delete-icon", true),
-
   dblClickHeaderFullScreen: createRefForState(
     "dbl-click-header-full-screen",
     true,

@@ -16,17 +16,7 @@ export default function createDesktopIconsSection(
     createCheckboxOnRef(
       {
         ref: settings.moveAroundIcons,
-        label: "Desktop icons can be moved around",
-      },
-      appUtils,
-      abortSignal,
-    ),
-  );
-  generalGroupElt.appendChild(
-    createCheckboxOnRef(
-      {
-        ref: settings.canDeleteIcon,
-        label: "Desktop icons can be deleted",
+        label: "Desktop icons can be moved around from the desktop",
       },
       appUtils,
       abortSignal,

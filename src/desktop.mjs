@@ -16,6 +16,8 @@
 // - copy svg in passgen is broken on multiple devices, very mysterious that one
 // - drag and drop in explorer
 // - talk about explorer complexities in "about this website"
+// - Settings: Default apps
+// - pdf.js external relying on Mozilla CDN. (Useful as default app for pdf)
 //
 // low priority:
 // - filesystem: re-check that no error gives away the path
@@ -50,6 +52,17 @@
 //   i-frame-capable websites are found.)
 // - Remove app `id` inside the desktop and rely on `path` for `onlyOne`?
 // - paint: allow to change the file format
+//
+// Settings:
+// User settings (localStorage Web API):
+// Usage Estimate
+// Persist settings
+// Reset settings
+//
+// User data (IndexedDB Web API)
+// Usage Estimate
+// Authorize write access
+// format
 
 import fs from "./filesystem/filesystem.mjs";
 import DesktopAppIcons from "./components/DesktopAppIcons.mjs";

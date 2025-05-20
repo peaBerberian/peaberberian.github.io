@@ -6,22 +6,24 @@
 // high priority:
 // - Storage settings
 // - notes quick save could detect if file change since last save
-// - quicklinks hover
+// - quicklinks hover primary color
 // - context menu in explorer?
+// - paint: resize do not re-activate quick save
 //
 // medium priority:
 // - confirmation alert when closing window with unsaved file.
 // - image viewer touch controls
 // - Actually enforce permissions by adding iframe with sandbox="allow-scripts"
 // - start menu should always do some kind of sublist when sublists are enabled
-// - copy svg in passgen is broken on multiple devices
-// - paint: resize do not re-activate quick save
+// - copy svg in passgen is broken on multiple devices, very mysterious that one
 // - drag and drop in explorer
 // - talk about explorer complexities in "about this website"
 //
 // low priority:
 // - filesystem: re-check that no error gives away the path
 // - explorer: when going to parent directory, focus the previous one by default?
+// - explorer: refresh button? (Only useful when updating the directory in
+//   another page)
 // - filesystem: Proxy local storage in `/system32/`?
 // - filesystem: When indexedDB is not available, fallback on in-memory
 // - double clicking while moving on the second click probably shouldn't put in
@@ -32,18 +34,15 @@
 // - disable text shadows on icons if opacity big enough?
 // - detect iframe URL change? Do something about github?
 // - Allow to auto-hide taskbar. Should be relatively simple.
-// - The clock icon's emoji reflect the current hour?
 // - get localStorage wallpaper before HTML body + external JS?
-// - Wallpaper: loading image from device
+// - Wallpaper: loading image from device + from local filesystem
 // - In relative window dimensions and positioning, once we go full height/width
 //   due to a browser window resize, we lose the "wanted" percentage size and
 //   position of that element
 // - all images are their height and width defined to avoid repaint effects
 // - taskbar hover opacity different?
 // - Safari has this weird almost-double scroll sometimes. Though only sometimes
-//   and when it shows it disappears forever after like 2 seconds.
 // - block-iframe too much used sometimes?
-// - Allow to disable the i-frame warning in settings?
 // - End accessibility stuff (complete tab navigation for the start menu mainly)
 // - when side-by-side window snapping we should be able to resize both at the same time
 // - z-index normalization could be less frequent, I don't know much if this has
@@ -52,7 +51,7 @@
 //   do not really take space, it still could clutter if enough interesting
 //   i-frame-capable websites are found.)
 // - Remove app `id` inside the desktop and rely on `path` for `onlyOne`?
-// - paint could change the file format
+// - paint: allow to change the file format
 
 import fs from "./filesystem/filesystem.mjs";
 import DesktopAppIcons from "./components/DesktopAppIcons.mjs";

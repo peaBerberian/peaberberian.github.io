@@ -58,7 +58,7 @@ export function create(args, env) {
 
           const reader = new FileReader();
           const file = files[0];
-          env.updateTitle("📘", file.name + " - Docx Reader (docx.js)");
+          env.updateTitle("📘", file.name + " - PDF Reader (pdf.js)");
           reader.onload = (event) => {
             openFile(file.name, event.target.result);
             containerElt.removeAttribute("inert");
@@ -79,7 +79,7 @@ export function create(args, env) {
         iframeInfo.isLoaded = false;
         env
           .filePickerOpen({
-            title: "Open a doc(x) from files stored on this Web Desktop",
+            title: "Open a PDF from files stored on this Web Desktop",
             allowMultipleSelections: false,
           })
           .then((files) => {
@@ -103,6 +103,7 @@ export function create(args, env) {
   ]);
   containerElt.appendChild(headerElt);
   const iframe = document.createElement("iframe");
+  iframe.tabIndex = "0";
   iframe.sandbox = "allow-scripts";
   iframe.style.height = "100%";
   iframe.style.width = "100%";
@@ -135,6 +136,47 @@ onmessage = (e) => {
       });
   }
 };
+
+["mousedown", "mouseup", "click", "touchstart", "touchend"].forEach(eventType => {
+  document.addEventListener(eventType, function(e) {
+    forwardEvent(eventType, e);
+  }, true);
+});
+[].forEach(eventType => {
+  document.addEventListener(eventType, function(e) {
+    forwardEvent(eventType, e);
+  }, true);
+});
+
+// Forward mouse and touch events to parent
+function forwardEvent(eventType, originalEvent) {
+  const eventData = {
+    type: "forwarded-event",
+    eventType: eventType,
+    clientX: originalEvent.clientX,
+    clientY: originalEvent.clientY,
+    pageX: originalEvent.pageX,
+    pageY: originalEvent.pageY,
+    button: originalEvent.button,
+    buttons: originalEvent.buttons,
+    ctrlKey: originalEvent.ctrlKey,
+    shiftKey: originalEvent.shiftKey,
+    altKey: originalEvent.altKey,
+    metaKey: originalEvent.metaKey,
+    timestamp: Date.now()
+  };
+
+  if (originalEvent.touches) {
+    eventData.touches = Array.from(originalEvent.touches).map(touch => ({
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      pageX: touch.pageX,
+      pageY: touch.pageY,
+      identifier: touch.identifier
+    }));
+  }
+  parent.postMessage(eventData, "*");
+}
 </script>
 </body>`;
   iframe.addEventListener("load", () => {
@@ -148,6 +190,14 @@ onmessage = (e) => {
         "*",
       );
       iframeInfo.pendingFile = null;
+    }
+  });
+  window.addEventListener("message", (e) => {
+    if (e.source !== iframe.contentWindow) {
+      return;
+    }
+    if (e.data.type === "forwarded-event") {
+      handleForwardedEvent(iframe, e.data);
     }
   });
   for (const arg of args) {
@@ -204,4 +254,34 @@ function showMessage(containerElt, message, duration = 5000) {
       messageElt.remove();
     }, 350);
   }, duration);
+}
+function handleForwardedEvent(iframe, eventData) {
+  if (eventData.eventType.startsWith("touch")) {
+    iframe.dispatchEvent(
+      new TouchEvent(eventData.eventType, {
+        bubbles: true,
+        cancelable: true,
+        touches: eventData.touches || [],
+        ctrlKey: eventData.ctrlKey,
+        shiftKey: eventData.shiftKey,
+        altKey: eventData.altKey,
+        metaKey: eventData.metaKey,
+      }),
+    );
+  } else {
+    iframe.dispatchEvent(
+      new MouseEvent(eventData.eventType, {
+        bubbles: true,
+        cancelable: true,
+        clientX: eventData.clientX,
+        clientY: eventData.clientY,
+        button: eventData.button,
+        buttons: eventData.buttons,
+        ctrlKey: eventData.ctrlKey,
+        shiftKey: eventData.shiftKey,
+        altKey: eventData.altKey,
+        metaKey: eventData.metaKey,
+      }),
+    );
+  }
 }

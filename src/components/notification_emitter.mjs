@@ -1,4 +1,4 @@
-import { applyStyle } from "../utils.mjs";
+import { applyStyle, idGenerator } from "../utils.mjs";
 
 const DEFAULT_NOTIF_DURATION = 8000;
 const NOTIF_STYLE = {
@@ -261,21 +261,3 @@ export class NotificationEmitter {
 }
 
 export default new NotificationEmitter();
-
-/**
- * Creates an ID generator which generates a number containing an incremented
- * number each time you call it.
- * @returns {Function}
- */
-function idGenerator() {
-  let prefix = "";
-  let currId = -1;
-  return function generateNewId() {
-    currId++;
-    if (currId >= Number.MAX_SAFE_INTEGER) {
-      prefix += "0";
-      currId = 0;
-    }
-    return prefix + String(currId);
-  };
-}

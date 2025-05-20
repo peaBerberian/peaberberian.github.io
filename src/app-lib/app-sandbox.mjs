@@ -9,7 +9,7 @@
  */
 
 import { IMAGE_ROOT_PATH, __VERSION__ } from "../constants.mjs";
-import { applyStyle } from "../utils.mjs";
+import { applyStyle, idGenerator } from "../utils.mjs";
 import { getAppUtils } from "./app-utils.mjs";
 import { constructAppWithSidebar } from "./sidebar.mjs";
 
@@ -17,16 +17,21 @@ import { constructAppWithSidebar } from "./sidebar.mjs";
  * CSS variables as they will be communicated to the app under the `STYLE`
  * environment variable.
  * Received from the parent.
+ * @type {Object.<string, string>}
  */
 const STYLE = {};
 
-/** Allows to generate unique string identifiers. */
+/**
+ * Allows to generate unique string identifiers.
+ * @type {function(): string}
+ */
 const generateNewId = idGenerator();
 
 /**
  * Some operations require a round trip to the desktop.
  *
  * This object stores metadata about those pending operations.
+ * @type {Map<string, PendingRequest>}
  */
 const pendingRequests = new Map();
 
@@ -57,13 +62,33 @@ let appAbortCtrl = null;
  * Origin indicated by the desktop when asking to run an app.
  * All subsequent messages should all come from this origin and all messages
  * should be sent to it.
+ * @type {string|undefined}
  */
 let desktopOrigin;
 
+/**
+ * If `true`, the app is currently "activated".
+ *
+ * If `false`, it is not.
+ * Used to track activation even when the app is not yet loaded.
+ * @type {Boolean}
+ */
 let isAppInFocus = false;
 
+/**
+ * App callback to call when the application is activated/focused.
+ * @type {Function|undefined}
+ */
 let onActivate;
+/**
+ * App callback to call when the application is deactivated/unfocused.
+ * @type {Function|undefined}
+ */
 let onDeactivate;
+/**
+ * App callback to call when the application is closed.
+ * @type {Function|undefined}
+ */
 let onClose;
 
 const appEnv = {
@@ -90,7 +115,9 @@ const appEnv = {
   STYLE,
 };
 
-/** The script might do prototype pollution. */
+// The script might do prototype pollution.
+// Just in case store `stopImmediatePropagation` before the application had the
+// chance to redefine it.
 const originalStopImmediatePropagation =
   Event.prototype.stopImmediatePropagation;
 
@@ -403,6 +430,9 @@ function startApp(data) {
 
   launchAppFromScript(data.scriptUrl, data.args, appEnv, appAbortCtrl.signal)
     .then((appInfo) => {
+      if (appAbortCtrl.signal.aborted) {
+        return;
+      }
       parent.postMessage(
         {
           type: "__pwd__loaded",
@@ -416,6 +446,9 @@ function startApp(data) {
       onClose = appInfo.onClose;
     })
     .catch((err) => {
+      if (appAbortCtrl.signal.aborted) {
+        return;
+      }
       parent.postMessage(
         {
           type: "__pwd__error",
@@ -430,8 +463,17 @@ function startApp(data) {
     });
 }
 
+/**
+ * @param {string} scriptUrl
+ * @param {Array.<Object>} appArgs
+ * @param {Object} env
+ * @param {AbortSignal} abortSignal
+ */
 async function launchAppFromScript(scriptUrl, appArgs, env, abortSignal) {
   const appVal = await import(scriptUrl);
+  if (abortSignal.aborted) {
+    return;
+  }
   if (typeof appVal?.create !== "function") {
     throw new Error(
       "Empty application JS file. " +
@@ -440,10 +482,28 @@ async function launchAppFromScript(scriptUrl, appArgs, env, abortSignal) {
   }
 
   const appRet = await appVal.create(appArgs, env, abortSignal);
+  if (abortSignal.aborted) {
+    return;
+  }
 
+  /**
+   * @type {HTMLElement|undefined}
+   */
   let element;
+  /**
+   * App callback to call when the application is activated/focused.
+   * @type {Function|undefined}
+   */
   let onActivate;
+  /**
+   * App callback to call when the application is deactivated/unfocused.
+   * @type {Function|undefined}
+   */
   let onDeactivate;
+  /**
+   * App callback to call when the application is closed.
+   * @type {Function|undefined}
+   */
   let onClose;
   if (appRet?.element == null) {
     if (Array.isArray(appRet?.sidebar) && appRet.sidebar.length > 0) {
@@ -528,19 +588,13 @@ function forwardEvent(eventType, originalEvent) {
 }
 
 /**
- * Creates an ID generator which generates a number containing an incremented
- * number each time you call it.
- * @returns {Function}
+ * Definition for the object keeping track of pending desktop requests.
+ * @typedef {Object} PendingRequest
+ * @property {string} requestId - The identifier uniquely identifying this
+ * request.
+ * @property {string} type - The name of the message that is awaited.
+ * @property {Function} resolve - The corresponding application's Promise's
+ * `resolve` function.
+ * @property {Function} reject - The corresponding application's Promise's
+ * `reject` function.
  */
-function idGenerator() {
-  let prefix = "";
-  let currId = -1;
-  return function generateNewId() {
-    currId++;
-    if (currId >= Number.MAX_SAFE_INTEGER) {
-      prefix += "0";
-      currId = 0;
-    }
-    return prefix + String(currId);
-  };
-}

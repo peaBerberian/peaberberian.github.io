@@ -711,9 +711,15 @@ export default class AppWindow extends EventEmitter {
     // Block clicks clearly on buttons from allowing to move or resize windows.
     [minimizeBtn, maximizeBtn, closeBtn].forEach((btn) => {
       if (btn) {
-        addAbortableEventListener(btn, "touchstart", abortSignal, (e) => {
-          e.stopPropagation();
-        });
+        addAbortableEventListener(
+          btn,
+          "touchstart",
+          abortSignal,
+          (e) => {
+            e.stopPropagation();
+          },
+          { passive: true },
+        );
         addAbortableEventListener(btn, "mousedown", abortSignal, (e) => {
           if (e.button !== 0) {
             // not left click

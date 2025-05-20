@@ -305,9 +305,15 @@ function handleTaskbarMove(taskbarElt, abortSignal) {
   // Reset some state on abort, just to be sure we're not left in an unwanted state
   abortSignal.addEventListener("abort", stopDragging);
 
-  addAbortableEventListener(taskbarElt, "touchstart", abortSignal, () => {
-    startDraggingTaskbar();
-  });
+  addAbortableEventListener(
+    taskbarElt,
+    "touchstart",
+    abortSignal,
+    () => {
+      startDraggingTaskbar();
+    },
+    { passive: true },
+  );
   addAbortableEventListener(taskbarElt, "touchend", abortSignal, stopDragging);
   addAbortableEventListener(
     taskbarElt,
@@ -315,13 +321,18 @@ function handleTaskbarMove(taskbarElt, abortSignal) {
     abortSignal,
     stopDragging,
   );
-  addAbortableEventListener(taskbarElt, "touchmove", abortSignal, (e) => {
-    if (e.touches.length === 1) {
-      const touch = e.touches[0];
-      e.preventDefault();
-      moveDraggedTaskbar(touch.clientX, touch.clientY);
-    }
-  });
+  addAbortableEventListener(
+    taskbarElt,
+    "touchmove",
+    abortSignal,
+    (e) => {
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        moveDraggedTaskbar(touch.clientX, touch.clientY);
+      }
+    },
+    { passive: true },
+  );
 
   // Safari just selects all over the place like some maniac without this
   addAbortableEventListener(taskbarElt, "selectstart", abortSignal, (e) => {

@@ -16,6 +16,8 @@ import * as path from "path";
 import { pathToFileURL, fileURLToPath } from "url";
 import esbuild from "esbuild";
 
+const DEFAULT_BASE_PATH = ".";
+
 const PROJECT_ROOT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 
 const DESKTOP_SRC_DIR = path.join(PROJECT_ROOT_DIRECTORY, "src");
@@ -30,7 +32,7 @@ const OUTPUT_APP_LIB_SCRIPT = path.join(OUTPUT_DIR, "app-sandbox.js");
 /**
  * Produce the bundles for all application defined in `./apps/AppInfo.json` and
  * for the desktop itself (`./src`) and output them in `./dist`.
- * @param {Object} options
+ * @param {Object} optionappBaseUrl]
  * @param {boolean} [options.minify] - If `true`, the output will be minified.
  * @param {boolean} [options.watch] - If `true`, the RxPlayer's files involve
  * will be watched and the code re-built each time one of them changes.
@@ -41,6 +43,11 @@ const OUTPUT_APP_LIB_SCRIPT = path.join(OUTPUT_DIR, "app-sandbox.js");
  * @returns {Promise}
  */
 export default async function run(options) {
+  const baseUrl = options.appBaseUrl ?? DEFAULT_BASE_PATH;
+  options.globals = {
+    __APP_BASE_URL__: JSON.stringify(baseUrl),
+    ...(options.globals ?? {}),
+  };
   if (!options.watch) {
     await reBuild();
     return;
@@ -84,7 +91,7 @@ export default async function run(options) {
   });
   async function reBuild() {
     // We'll create `GENERATED_APP_PATH` here:
-    const lazyLoadedApps = writeGeneratedAppFile(APPS_SRC_DIR);
+    const lazyLoadedApps = writeGeneratedAppFile(APPS_SRC_DIR, baseUrl);
 
     // Re-create the lazy-loaded destination folder, just to clean-up.
     try {
@@ -229,7 +236,7 @@ function getHumanReadableHours() {
  * @returns {Array.<Object>} - Defines the bundles to produce all apps, and
  * where to put them.
  */
-function writeGeneratedAppFile(baseDir) {
+function writeGeneratedAppFile(baseDir, appBaseUrl) {
   let fileContent;
   try {
     fileContent = fs.readFileSync(path.join(baseDir, "AppInfo.json"), {
@@ -314,7 +321,7 @@ export default [`;
     uglyHandWrittenJsObject += `
   {
     id: ${JSON.stringify(app.id)},
-		title: ${JSON.stringify(app.title ?? "Unnamed Application")},
+    title: ${JSON.stringify(app.title ?? "Unnamed Application")},
 `;
     for (const key of Object.keys(app)) {
       switch (key) {
@@ -532,9 +539,9 @@ export default [`;
 
     if (filePath) {
       // Here I will put the import path as a `lazyLoad` property.
-      const importPath = `./lazy/${app.id}.js`;
+      const importPath = appBaseUrl + `/lazy/${app.id}.js`;
       uglyHandWrittenJsObject += `    data: {
-			lazyLoad: ${JSON.stringify(importPath)},
+      lazyLoad: ${JSON.stringify(importPath)},
 `;
       if (app.sandboxed) {
         uglyHandWrittenJsObject += `      sandboxed: true,
@@ -560,8 +567,8 @@ export default [`;
       }
     } else if (typeof app.website === "string" && app.website !== "") {
       uglyHandWrittenJsObject += `    data: {
-			website: ${JSON.stringify(app.website)}
-		},
+      website: ${JSON.stringify(app.website)}
+    },
 `;
     }
     uglyHandWrittenJsObject += `  },
@@ -579,7 +586,7 @@ export default [`;
     jsFile += `
 
 setTimeout(
-	() => {
+  () => {
     // trick so our bundler doesn't try funky things like rewriting paths
     const importPath = ${JSON.stringify(timerImports.importPath)};
     import(importPath);
@@ -599,6 +606,7 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   let shouldWatch = false;
   let shouldMinify = false;
   let silent = false;
+  let appBaseUrl;
 
   for (let argOffset = 0; argOffset < args.length; argOffset++) {
     const currentArg = args[argOffset];
@@ -612,6 +620,18 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
       case "--watch":
         shouldWatch = true;
         break;
+
+      case "-a":
+      case "--app-base-url": {
+        argOffset++;
+        const wantedBaseUrl = args[argOffset];
+        if (wantedBaseUrl === undefined) {
+          console.error("ERROR: no base URL provided\n");
+          displayHelp();
+          process.exit(1);
+        }
+        appBaseUrl = wantedBaseUrl;
+      }
 
       case "-m":
       case "--minify":
@@ -636,6 +656,7 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   }
 
   run({
+    appBaseUrl,
     watch: shouldWatch,
     minify: shouldMinify,
     silent,
@@ -667,6 +688,8 @@ Usage: node build.mjs [OPTIONS]
 
 Available options:
   -h, --help                  Display this help message.
+  -a, --app-base-url          The base URL where apps are reachable.
+                              Defaults to relative from the desktop.
   -m, --minify                Minify the built bundle.
   -s, --silent                Don't log to stdout/stderr when bundling.
   -w, --watch                 Re-build each time any of the files depended on changed.`,

@@ -1,7 +1,11 @@
 import { APP_STYLE, SETTINGS } from "../settings.mjs";
-import { addAbortableEventListener, createRootStyle } from "../utils.mjs";
+import { addAbortableEventListener } from "../utils.mjs";
 
-const APP_LIB_PATH = "./app-sandbox.js";
+/**
+ * Some hack to check if a global is defined.
+ */
+const appBaseUrl =
+  typeof __APP_BASE_URL__ === "string" ? __APP_BASE_URL__ : ".";
 
 export function launchSandboxedApp(scriptUrl, appArgs, env, abortSignal) {
   let isInitiallyActivated = true;
@@ -16,15 +20,7 @@ export function launchSandboxedApp(scriptUrl, appArgs, env, abortSignal) {
   iframe.style.border = "0";
   iframe.style.padding = "0";
   iframe.style.margin = "0";
-  iframe.srcdoc = `<html>
-<head>
-<style>
-${createRootStyle(constructCssVarArray())}
-</style>
-<link rel="stylesheet" href="./app-style.css">
-</head>
-<body><script src="${APP_LIB_PATH}" type="module"></script></body>
-</html>`;
+  iframe.src = appBaseUrl + "/app.html";
 
   iframe.addEventListener("load", () => {
     sendSettingsToIframe(iframe, abortSignal);
@@ -129,16 +125,6 @@ function handleForwardedEvent(iframe, eventData) {
       }),
     );
   }
-}
-
-function constructCssVarArray() {
-  return Object.keys(APP_STYLE).map((key) => {
-    return {
-      name: key,
-      cssName: APP_STYLE[key].cssName,
-      value: APP_STYLE[key].ref.getValue(),
-    };
-  });
 }
 
 function sendSettingsToIframe(iframe, abortSignal) {

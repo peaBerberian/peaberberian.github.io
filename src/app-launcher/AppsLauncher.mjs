@@ -176,7 +176,7 @@ export default class AppsLauncher {
     );
 
     /** Window containing the application. */
-    const appWindow = new AppWindow(app, appStack.element, options);
+    const appWindow = new AppWindow(app, appStack.getElement(), options);
 
     // TODO: here instead?
     // The `AppWindow` doesn't really need to know about the app metadata

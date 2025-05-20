@@ -24,6 +24,8 @@ export function create(args, env, parentAbortSignal) {
     overflow: "hidden",
     backgroundColor: env.STYLE.bgColor,
   });
+  const spinnerContainerElt = createSpinnerElt();
+  containerElt.appendChild(spinnerContainerElt);
 
   /**
    * @type {AbortController|null}
@@ -46,31 +48,54 @@ export function create(args, env, parentAbortSignal) {
     {
       name: "upload",
       onClick: () => {
+        blockUi();
         // Trick to open the file picker
         const fileInputElt = document.createElement("input");
         fileInputElt.type = "file";
         fileInputElt.accept = "image/*";
         fileInputElt.multiple = true;
         fileInputElt.click();
-        fileInputElt.addEventListener("cancel", () => {
-          handleInputedFiles([]);
+        fileInputElt.addEventListener("cancel", async () => {
+          try {
+            await handleInputedFiles([]);
+          } catch (err) {
+            showMessage(appContentAreaElt, "❌ " + err.toString(), 5000);
+          }
+          unblockUi();
         });
-        fileInputElt.addEventListener("change", (e) => {
+        fileInputElt.addEventListener("error", async () => {
+          unblockUi();
+          showMessage(
+            appContentAreaElt,
+            "❌ Failed to open your file-picker",
+            5000,
+          );
+        });
+        fileInputElt.addEventListener("change", async (e) => {
           const files = e.target.files;
-          handleInputedFiles(files);
+          try {
+            await handleInputedFiles(files);
+          } catch (err) {
+            showMessage(appContentAreaElt, "❌ " + err.toString(), 5000);
+          }
+          unblockUi();
         });
       },
     },
     {
       name: "open",
       onClick: () => {
+        blockUi();
         env
           .filePickerOpen({
             title: "Open an image from files stored on this Web Desktop",
             allowMultipleSelections: true,
           })
-          .then(openFiles, (err) => {
-            showMessage(appContentAreaElt, "❌ " + err.toString(), 10000);
+          .then((filesInfo) => openFiles(filesInfo))
+          .then(() => unblockUi())
+          .catch((err) => {
+            showMessage(appContentAreaElt, "❌ " + err.toString(), 5000);
+            unblockUi();
           });
       },
     },
@@ -171,10 +196,16 @@ export function create(args, env, parentAbortSignal) {
   ["dragleave", "drop"].forEach((eventName) => {
     imgContainerElt.addEventListener(eventName, unhighlightDropZone);
   });
-  imgContainerElt.addEventListener("drop", (e) => {
+  imgContainerElt.addEventListener("drop", async (e) => {
+    blockUi();
     const dt = e.dataTransfer;
     const files = dt.files;
-    handleInputedFiles(files);
+    try {
+      await handleInputedFiles(files);
+    } catch (err) {
+      showMessage(appContentAreaElt, "❌ " + err.toString(), 5000);
+    }
+    unblockUi();
   });
 
   appContentAreaElt.appendChild(imgContainerElt);
@@ -315,82 +346,106 @@ export function create(args, env, parentAbortSignal) {
   }
 
   function handleInputedFiles(files) {
-    clear();
-    if (files.length === 0) {
-      updateDisplayedImage();
-      updateStatusBar();
-      return;
-    }
+    return new Promise((resolve, reject) => {
+      if (files.length === 0) {
+        resolve();
+        return;
+      }
+      clear();
 
-    let remainingToLoad = 0;
-    for (const file of files) {
-      disableButton("upload");
-      disableButton("open");
-      remainingToLoad++;
-      const imgElt = document.createElement("img");
-      applyStyle(imgElt, {
-        maxWidth: "100%",
-        maxHeight: "100%",
-        objectFit: "contain",
-        userSelect: "none",
-        position: "absolute",
-      });
-      imgElt.draggable = false;
-      imageTransformMap.set(imgElt, {
-        scale: 1,
-        rotation: 0,
-        translateX: 0,
-        translateY: 0,
-      });
-      updateImageTransform(imgElt);
-      const reader = new FileReader();
-
-      reader.onload = (event) => {
-        remainingToLoad--;
-        if (remainingToLoad === 0) {
+      let leftImgToProcess = files.length;
+      let lastError = null;
+      const onImageProcessed = () => {
+        leftImgToProcess--;
+        if (leftImgToProcess <= 0) {
           enableButton("upload");
           enableButton("open");
+          if (lastError) {
+            reject(lastError);
+          } else {
+            resolve();
+          }
         }
+      };
+      for (const file of files) {
+        disableButton("upload");
+        disableButton("open");
+        const imgElt = document.createElement("img");
+        applyStyle(imgElt, {
+          maxWidth: "100%",
+          maxHeight: "100%",
+          objectFit: "contain",
+          userSelect: "none",
+          position: "absolute",
+        });
+        imgElt.draggable = false;
+        imageTransformMap.set(imgElt, {
+          scale: 1,
+          rotation: 0,
+          translateX: 0,
+          translateY: 0,
+        });
+        updateImageTransform(imgElt);
+        const reader = new FileReader();
 
-        imgElt.src = event.target.result;
-        imgElt.onerror = () => {
-          showMessage(
-            appContentAreaElt,
-            "❌ Error: Failed to load a file. Are you sure this is an image?",
-          );
-          imgElt.remove();
+        reader.onerror = () => {
+          reader.onload = null;
+          reader.onabort = null;
+          lastError = new Error("Failed to read a file's data.");
+          onImageProcessed();
+        };
+        reader.onabort = () => {
+          reader.onload = null;
+          reader.onerror = null;
+          onImageProcessed();
+        };
+        reader.onload = (event) => {
+          reader.onerror = null;
+          reader.onabort = null;
+          imgElt.src = event.target.result;
+          imgElt.onload = onImageProcessed;
+          imgElt.onabort = onImageProcessed;
+          imgElt.onerror = () => {
+            imgElt.onload = null;
+            imgElt.onabort = null;
+            lastError = new Error(
+              "Failed to load a file. Are you sure this is an image?",
+            );
+            onImageProcessed();
 
-          for (let i = 0; i < loadedImages.length; i++) {
-            if (loadedImages[i].imgElt === imgElt) {
-              loadedImages.splice(i, 1);
+            imgElt.remove();
+            for (let i = 0; i < loadedImages.length; i++) {
+              if (loadedImages[i].imgElt === imgElt) {
+                loadedImages.splice(i, 1);
 
-              if (i !== currentImageIndex) {
-                updateStatusBar();
-              } else {
-                if (currentImageIndex >= loadedImages.length) {
-                  currentImageIndex = 0;
+                if (i !== currentImageIndex) {
+                  updateStatusBar();
+                } else {
+                  if (currentImageIndex >= loadedImages.length) {
+                    currentImageIndex = 0;
+                  }
+                  updateDisplayedImage();
+                  updateStatusBar();
                 }
-                updateDisplayedImage();
-                updateStatusBar();
               }
             }
+          };
+          imgContainerElt.appendChild(imgElt);
+          loadedImages.push({ imgElt, filename: file.name });
+          if (currentImageIndex === -1) {
+            currentImageIndex = 0;
+            enableButton("rotateLeft");
+            enableButton("rotateRight");
+          } else {
+            enableButton("previous");
+            enableButton("next");
           }
+          updateDisplayedImage();
+          updateStatusBar();
         };
-        imgContainerElt.appendChild(imgElt);
-        loadedImages.push({ imgElt, filename: file.name });
-        if (currentImageIndex === -1) {
-          currentImageIndex = 0;
-          enableButton("rotateLeft");
-          enableButton("rotateRight");
-        } else {
-          enableButton("previous");
-          enableButton("next");
-        }
-        updateDisplayedImage();
-        updateStatusBar();
-      };
-      reader.readAsDataURL(file);
-    }
+        reader.readAsDataURL(file);
+      }
+    });
   }
 
   function zoomOut() {
@@ -597,73 +652,100 @@ export function create(args, env, parentAbortSignal) {
   }
 
   function openFiles(files) {
-    if (files.length === 0) {
-      updateDisplayedImage();
-      updateStatusBar();
-      return;
-    }
-    clear();
-    for (const file of files) {
-      const imgElt = document.createElement("img");
-      applyStyle(imgElt, {
-        maxWidth: "100%",
-        maxHeight: "100%",
-        objectFit: "contain",
-        userSelect: "none",
-        position: "absolute",
-      });
-      imgElt.draggable = false;
-      imageTransformMap.set(imgElt, {
-        scale: 1,
-        rotation: 0,
-        translateX: 0,
-        translateY: 0,
-      });
+    return new Promise((resolve, reject) => {
+      if (files.length === 0) {
+        updateDisplayedImage();
+        updateStatusBar();
+        resolve();
+        return;
+      }
+      clear();
 
-      const { filename, data: arrayBuffer } = file;
-      const mimeType = guessMimeType(filename, arrayBuffer);
-      const blob = new Blob([arrayBuffer], { type: mimeType });
-      const imgUrl = URL.createObjectURL(blob);
-      updateImageTransform(imgElt);
-      imgElt.src = imgUrl;
-
-      imgElt.onerror = () => {
-        URL.revokeObjectURL(imgUrl);
-        showMessage(
-          appContentAreaElt,
-          "❌ Error: Failed to load a file. Are you sure this is an image?",
-        );
-        imgElt.remove();
-
-        for (let i = 0; i < loadedImages.length; i++) {
-          if (loadedImages[i].imgElt === imgElt) {
-            loadedImages.splice(i, 1);
-
-            if (i !== currentImageIndex) {
-              updateStatusBar();
-            } else {
-              if (currentImageIndex >= loadedImages.length) {
-                currentImageIndex = 0;
-              }
-              updateDisplayedImage();
-              updateStatusBar();
-            }
+      let leftImgToProcess = files.length;
+      let lastError = null;
+      const onImageProcessed = () => {
+        leftImgToProcess--;
+        if (leftImgToProcess <= 0) {
+          if (lastError) {
+            reject(lastError);
+          } else {
+            resolve();
           }
         }
       };
-      imgContainerElt.appendChild(imgElt);
-      loadedImages.push({ imgElt, filename });
-      if (currentImageIndex === -1) {
-        currentImageIndex = 0;
-        enableButton("rotateLeft");
-        enableButton("rotateRight");
-      } else {
-        enableButton("previous");
-        enableButton("next");
+      for (const file of files) {
+        const imgElt = document.createElement("img");
+        applyStyle(imgElt, {
+          maxWidth: "100%",
+          maxHeight: "100%",
+          objectFit: "contain",
+          userSelect: "none",
+          position: "absolute",
+        });
+        imgElt.draggable = false;
+        imageTransformMap.set(imgElt, {
+          scale: 1,
+          rotation: 0,
+          translateX: 0,
+          translateY: 0,
+        });
+
+        const { filename, data: arrayBuffer } = file;
+        const mimeType = guessMimeType(filename, arrayBuffer);
+        const blob = new Blob([arrayBuffer], { type: mimeType });
+        const imgUrl = URL.createObjectURL(blob);
+        updateImageTransform(imgElt);
+        imgElt.src = imgUrl;
+        imgElt.onload = onImageProcessed;
+        imgElt.onabort = onImageProcessed;
+        imgElt.onerror = () => {
+          lastError = new Error(
+            "Failed to load a file. Are you sure this is an image?",
+          );
+          URL.revokeObjectURL(imgUrl);
+          onImageProcessed();
+          imgElt.remove();
+          for (let i = 0; i < loadedImages.length; i++) {
+            if (loadedImages[i].imgElt === imgElt) {
+              loadedImages.splice(i, 1);
+
+              if (i !== currentImageIndex) {
+                updateStatusBar();
+              } else {
+                if (currentImageIndex >= loadedImages.length) {
+                  currentImageIndex = 0;
+                }
+                updateDisplayedImage();
+                updateStatusBar();
+              }
+            }
+          }
+        };
+        imgContainerElt.appendChild(imgElt);
+        loadedImages.push({ imgElt, filename });
+        if (currentImageIndex === -1) {
+          currentImageIndex = 0;
+          enableButton("rotateLeft");
+          enableButton("rotateRight");
+        } else {
+          enableButton("previous");
+          enableButton("next");
+        }
+        updateDisplayedImage();
+        updateStatusBar();
       }
-      updateDisplayedImage();
-      updateStatusBar();
-    }
+    });
+  }
+
+  function blockUi() {
+    spinnerContainerElt.style.display = "flex";
+    containerElt.style.opacity = 0.5;
+    containerElt.setAttribute("inert", true);
+  }
+  function unblockUi() {
+    spinnerContainerElt.style.display = "none";
+    containerElt.style.opacity = 1;
+    containerElt.removeAttribute("inert");
   }
 }
 
@@ -816,4 +898,21 @@ function applyStyle(element, style) {
   for (const key of Object.keys(style)) {
     element.style[key] = style[key];
   }
+}
+
+function createSpinnerElt() {
+  const spinnerContainerElt = document.createElement("div");
+  applyStyle(spinnerContainerElt, {
+    display: "none",
+    position: "absolute",
+    height: "100%",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: "9999",
+  });
+  const spinnerElt = document.createElement("div");
+  spinnerElt.className = "spinner";
+  spinnerContainerElt.appendChild(spinnerElt);
+  return spinnerContainerElt;
 }

@@ -1,3 +1,5 @@
+import { applyStyle } from "../utils.mjs";
+
 /**
  * A window can contain a stack of application. For example:
  *
@@ -20,36 +22,47 @@
  */
 export default class WindowedApplicationStack {
   /**
-   * @param {Object} initialElementObject
+   * @param {Object} initalApp
    * @param {boolean} isActivated - If `true`, the window is currently
    * activated. If `false`, it is deactivated.
    */
-  constructor(initialElementObject, isActivated) {
+  constructor(initalApp, isActivated) {
     this._appStack = [];
-    this.element = initialElementObject.element;
+    this.wrapper = document.createElement("div");
+    applyStyle(this.wrapper, {
+      position: "relative",
+      height: "100%",
+      width: "100%",
+    });
+
+    this.wrapper.appendChild(initalApp.element);
     /**
      * Callback that should be called when the application window is "activated".
      * @type {Function|null}
      */
-    this.onActivateCallback = initialElementObject.onActivate ?? null;
+    this.onActivateCallback = initalApp.onActivate ?? null;
     /**
      * Callback that should be called when the application window is
      * "deactivated" or closed.
      * @type {Function|null}
      */
-    this.onDeactivateCallback = initialElementObject.onDeactivate ?? null;
+    this.onDeactivateCallback = initalApp.onDeactivate ?? null;
     /**
      * Callback that should be called when the application window is
      * closed.
      * @type {Function|null}
      */
-    this.onCloseCallback = initialElementObject.onClose ?? null;
+    this.onCloseCallback = initalApp.onClose ?? null;
 
     if (isActivated) {
       this.onActivateCallback?.();
     } else {
       this.onDeactivateCallback?.();
     }
+  }
+
+  getElement() {
+    return this.wrapper;
   }
 
   /**
@@ -96,16 +109,23 @@ export default class WindowedApplicationStack {
   pop(isActivated) {
     this.onDeactivateCallback?.();
     this.onCloseCallback?.();
+    this._closeCurrentApp();
+    try {
+      this.currentAppElement()?.remove();
+    } catch (err) {}
     const lastWindow = this._appStack.pop();
     if (lastWindow) {
-      this.element.replaceWith(lastWindow.element);
-      this._setCurrentAppFromStack(lastWindow, isActivated);
+      this._restoreAppFromStack(lastWindow, isActivated);
       return true;
     }
     this.onActivateCallback = null;
     this.onDeactivateCallback = null;
     this.onCloseCallback = null;
     return false;
+  }
+
+  currentAppElement() {
+    return this.wrapper.children[this.wrapper.children.length - 1];
   }
 
   /**
@@ -117,7 +137,7 @@ export default class WindowedApplicationStack {
    * If `false`, there's no more element in the stack.
    */
   popElement(element, isActivated) {
-    if (this.element === element) {
+    if (this.currentAppElement() === element) {
       return this.pop(isActivated); // It is the current element, equivalent to a `pop`
     }
 
@@ -138,7 +158,8 @@ export default class WindowedApplicationStack {
       return false;
     }
 
-    this._setCurrentAppFromStack(newElt, isActivated);
+    this._closeCurrentApp();
+    this._restoreAppFromStack(newElt, isActivated);
     return true;
   }
 
@@ -150,15 +171,17 @@ export default class WindowedApplicationStack {
    * activated. If `false`, it is deactivated.
    */
   push(newAppObject, isActivated) {
+    this.onDeactivateCallback?.();
+    const element = this.currentAppElement();
     this._appStack.push({
-      element: this.element,
+      element,
+      previousDisplay: element.style.display,
       onActivateCallback: this.onActivateCallback,
       onDeactivateCallback: this.onDeactivateCallback,
       onCloseCallback: this.onCloseCallback,
     });
-    this.onDeactivateCallback?.();
-    this.element.replaceWith(newAppObject.element);
-    this._setCurrentAppFromAppObject(newAppObject, isActivated);
+    element.style.display = "none";
+    this._addCurrentAppFromAppObject(newAppObject, isActivated);
   }
 
   /**
@@ -176,12 +199,12 @@ export default class WindowedApplicationStack {
       currentApp.onDeactivateCallback?.();
       currentApp.onCloseCallback?.();
     }
-    this.element.replaceWith(newAppObject.element);
-    this._setCurrentAppFromAppObject(newAppObject, isActivated);
+    this.wrapper.innerHTML = "";
+    this._addCurrentAppFromAppObject(newAppObject, isActivated);
   }
 
-  _setCurrentAppFromAppObject(newAppObject, isActivated) {
-    this.element = newAppObject.element;
+  _addCurrentAppFromAppObject(newAppObject, isActivated) {
+    this.wrapper.appendChild(newAppObject.element);
     this.onActivateCallback = newAppObject.onActivate;
     this.onDeactivateCallback = newAppObject.onDeactivate;
     this.onCloseCallback = newAppObject.onClose;
@@ -192,8 +215,8 @@ export default class WindowedApplicationStack {
     }
   }
 
-  _setCurrentAppFromStack(stackObj, isActivated) {
-    this.element = stackObj.element;
+  _restoreAppFromStack(stackObj, isActivated) {
+    stackObj.element.style.display = stackObj.previousDisplay;
     this.onActivateCallback = stackObj.onActivateCallback;
     this.onDeactivateCallback = stackObj.onDeactivateCallback;
     this.onCloseCallback = stackObj.onCloseCallback;
@@ -201,6 +224,15 @@ export default class WindowedApplicationStack {
       this.onActivateCallback?.();
     } else {
       this.onDeactivateCallback?.();
+    }
+  }
+
+  _closeCurrentApp() {
+    const closedElement = this.wrapper.children[this.wrapper.length - 1];
+    if (closedElement) {
+      try {
+        this.wrapper.removeChild(closedElement);
+      } catch (_) {}
     }
   }
 }

@@ -156,7 +156,7 @@ export default async function run(options) {
 
   async function reBuild(abortSignal) {
     // We'll create `GENERATED_APP_PATH` here:
-    const lazyLoadedApps = writeGeneratedAppFile(APPS_SRC_DIR);
+    const lazyLoadedApps = checkAppInfoAndGenerateAppFile(APPS_SRC_DIR);
 
     // Re-create the lazy-loaded destination folder, just to clean-up.
     try {
@@ -242,6 +242,10 @@ export default async function run(options) {
  * @param {Object} options
  * @param {string|undefined} [options.banner] - String to add at the beginning
  * of the bundle. Nothing if undefined.
+ * @param {string|undefined} [options.format] - Format of the produced bundle,
+ * in the format defined by esbuild. The idea is mostly too choose between the
+ * default IIFE output and ESM, to preserve `export` statements in the output.
+ * IIFE by default.
  * @param {boolean} [options.minify] - If `true`, the output will be minified.
  * @param {boolean} [options.watch] - If `true`, the files involved will be
  * watched and the code re-built each time one of them changes.
@@ -307,6 +311,14 @@ async function produceBundle(inputFile, outfile, options) {
         target: "es2020",
         minify,
         write: true,
+        // NOTE: By default, I chose IIFE because this has a nice security
+        // benefit: If another script ever runs in that same environment, it
+        // won't be able to access data inside of that bundled script.
+        // Without this, there could be tricks where a dynamically-loaded script
+        // would be able to access some top-level variables.
+        //
+        // Yet some other format may also be needed. For example applications
+        // may need "ES6" to be able to export their main function.
         format: format ?? "iife",
         outfile,
         plugins: [esbuildStepsPlugin],
@@ -354,23 +366,49 @@ async function writeAppSandboxHtml(watch, isSilent, abortSignal) {
           return;
         }
         alreadyWaitingToBuild = true;
+
         if (prom) {
           await prom;
         }
-        // FIXME: There seemed to be many false positives here, no biggie but
-        // wasted fs writes and CPU cycles. Due to this I'm just for now
+
+        // NOTE: There seemed to be many false positives here, though no biggie
+        // just wasted fs writes and CPU cycles. Due to this I'm just for now
         // awaiting some ms to limit the amount.
         await new Promise((resolve) => {
           setTimeout(resolve, 200);
         });
 
+        const tryWatchFileRecursively = () => {
+          return new Promise((resolve) => {
+            try {
+              resolve(fs.watch(filePath, onFileChange));
+            } catch (err) {
+              setimeout(tryWatchFileRecursively, 500);
+            }
+          });
+        };
+
+        watcher = await tryWatchFileRecursively();
         alreadyWaitingToBuild = false;
         if (!isSilent) {
           const relative = path.relative(PROJECT_ROOT_DIRECTORY, filePath);
           logWarning(`${relative} updated. Rebuilding "${relativeOutfile}"...`);
         }
-        watcher = fs.watch(filePath, onFileChange);
-        prom = _writeSandbox();
+
+        prom = _writeSandbox().then(
+          () => {
+            prom = null;
+            if (!isSilent) {
+              logSuccess(`Re-bundling of "${relativeOutfile}" succeeded.`);
+            }
+          },
+          (err) => {
+            if (!isSilent) {
+              logError(`Re-bundling failed for "${relativeOutfile}":`, err);
+            }
+            throw err;
+          },
+        );
         watcher.close();
       }
       abortSignal.addEventListener("abort", () => {
@@ -379,9 +417,20 @@ async function writeAppSandboxHtml(watch, isSilent, abortSignal) {
     });
   }
 
-  prom = _writeSandbox().then(() => {
-    prom = null;
-  });
+  prom = _writeSandbox().then(
+    () => {
+      prom = null;
+      if (!isSilent) {
+        logSuccess(`Bundling of "${relativeOutfile}" succeeded.`);
+      }
+    },
+    (err) => {
+      if (!isSilent) {
+        logError(`Bundling failed for "${relativeOutfile}":`, err);
+      }
+      throw err;
+    },
+  );
   return prom;
 
   async function _writeSandbox() {
@@ -408,23 +457,14 @@ async function writeAppSandboxHtml(watch, isSilent, abortSignal) {
     await Promise.all([readSndbxScript, readCss]).then(([js, css]) => {
       return new Promise((resolve, reject) => {
         const fileStr = `<!-- HTML file for "sandboxed" apps, which are apps completely isolated from the desktop code -->
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-${css}</style>
-</head>
-<body>
-<script>
-${js}</script>
-</body>
-</html>`;
+<!DOCTYPE html><html><head>
+<style>${css}</style>
+</head><body>
+<script>${js}</script>
+</body></html>`;
         fs.writeFile(SANDBOX_HTML, fileStr, (err) => {
           if (err) {
             return reject(err);
-          }
-          if (!isSilent) {
-            logSuccess(`Bundling of "${relativeOutfile}" succeeded.`);
           }
           resolve();
         });
@@ -452,13 +492,13 @@ function getHumanReadableHours() {
 }
 
 /**
- * Write the app file inside the desktop's code, based on the apps defined in
- * `baseDir`.
+ * Write the app file inside the desktop's code, based on the `AppInfo.json` file
+ * defined in `baseDir`.
  * @param {string} baseDir
  * @returns {Array.<Object>} - Defines the bundles to produce all apps, and
  * where to put them.
  */
-function writeGeneratedAppFile(baseDir) {
+function checkAppInfoAndGenerateAppFile(baseDir) {
   let fileContent;
   try {
     fileContent = fs.readFileSync(path.join(baseDir, "AppInfo.json"), {
@@ -826,6 +866,10 @@ export default [`;
       bundlesToMake.push({
         outputFile,
         input: filePath,
+        /*
+         * We want to explicitly mark app files as "ESM" because their main
+         * export statements should be kept.
+         */
         format: "esm",
         banner: `/** This is the code for the app identified as "${app.id}". */`,
       });
@@ -979,10 +1023,6 @@ Will interpret the \`/apps/AppInfo.json\` first to find out all the apps it need
 bundle, and will advertise them to the desktop through a generated JS file.
 The bundled desktop will then be able to list those applications and load their app
 bundle when needed.
-
-For now, this script doesn't react to modifications of the \`/apps/AppInfo.json\` file,
-even in "watch" mode, meaning that this script should be relaunched anytime that json
-file is modified (which should mostly happen when adding new applications).
 
 Usage: node build.mjs [OPTIONS]
 

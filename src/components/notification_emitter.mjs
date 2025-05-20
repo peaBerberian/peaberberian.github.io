@@ -43,7 +43,48 @@ export class NotificationEmitter {
     document.body.appendChild(this.container);
   }
 
-  addNotification(type, title, message, duration = DEFAULT_NOTIF_DURATION) {
+  clear() {
+    this._notifs.forEach((notification) => {
+      applyStyle(notification.element, {
+        transform: "translateX(100%)",
+        opacity: "0",
+      });
+    });
+
+    setTimeout(() => {
+      this._notifs.forEach((notification) => {
+        if (notification.element.parentNode) {
+          notification.element.parentNode.removeChild(notification.element);
+        }
+      });
+      this._notifs = [];
+    }, 300);
+  }
+
+  success(title, message, duration) {
+    return this._addNotif("success", title, message, duration);
+  }
+
+  error(title, message, duration) {
+    return this._addNotif("error", title, message, duration);
+  }
+
+  warning(title, message, duration) {
+    return this._addNotif("warning", title, message, duration);
+  }
+
+  info(title, message, duration) {
+    return this._addNotif("info", title, message, duration);
+  }
+
+  destroy() {
+    if (this.container && this.container.parentNode) {
+      this.container.parentNode.removeChild(this.container);
+    }
+    this._notifs = [];
+  }
+
+  _addNotif(type, title, message, duration = DEFAULT_NOTIF_DURATION) {
     const id = generateNewId();
     const config = NOTIF_STYLE[type] ?? NOTIF_STYLE.info;
 
@@ -69,14 +110,14 @@ export class NotificationEmitter {
 
     if (duration > 0) {
       setTimeout(() => {
-        this.removeNotification(id);
+        this._removeNotif(id);
       }, duration);
     }
 
     return id;
   }
 
-  removeNotification(id) {
+  _removeNotif(id) {
     const notification = this._notifs.find((n) => n.id === id);
     if (!notification) return;
 
@@ -91,47 +132,6 @@ export class NotificationEmitter {
       }
       this._notifs = this._notifs.filter((n) => n.id !== id);
     }, 300);
-  }
-
-  clear() {
-    this._notifs.forEach((notification) => {
-      applyStyle(notification.element, {
-        transform: "translateX(100%)",
-        opacity: "0",
-      });
-    });
-
-    setTimeout(() => {
-      this._notifs.forEach((notification) => {
-        if (notification.element.parentNode) {
-          notification.element.parentNode.removeChild(notification.element);
-        }
-      });
-      this._notifs = [];
-    }, 300);
-  }
-
-  success(title, message, duration) {
-    return this.addNotification("success", title, message, duration);
-  }
-
-  error(title, message, duration) {
-    return this.addNotification("error", title, message, duration);
-  }
-
-  warning(title, message, duration) {
-    return this.addNotification("warning", title, message, duration);
-  }
-
-  info(title, message, duration) {
-    return this.addNotification("info", title, message, duration);
-  }
-
-  destroy() {
-    if (this.container && this.container.parentNode) {
-      this.container.parentNode.removeChild(this.container);
-    }
-    this._notifs = [];
   }
 
   _createNewNotif(config, title, message, id) {
@@ -219,7 +219,7 @@ export class NotificationEmitter {
     });
 
     closeBtn.addEventListener("click", () => {
-      this.removeNotification(id);
+      this._removeNotif(id);
     });
 
     const messageElt = document.createElement("p");

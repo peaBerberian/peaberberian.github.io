@@ -229,6 +229,9 @@ export default class AppWindow extends EventEmitter {
    * Bring window to back.
    */
   deActivate() {
+    if (!this.element.classList.contains("active")) {
+      return;
+    }
     this.element.classList.remove("active");
     this.trigger("deactivated");
     if (this.element.contains(document.activeElement)) {

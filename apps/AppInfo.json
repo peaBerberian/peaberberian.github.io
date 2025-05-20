@@ -156,6 +156,19 @@
       }
     },
     {
+      "id": "invaders",
+      "title": "Invaders",
+      "icon": "👾",
+      "defaultHeight": 400,
+      "defaultWidth": 600,
+      "startMenu": {
+        "list": "Games"
+      },
+      "desktop": {
+        "display": true
+      }
+    },
+    {
       "id": "bombsweeper",
       "title": "BombSweeper!",
       "icon": "💣",

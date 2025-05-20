@@ -431,6 +431,14 @@
       "desktop": {
         "display": true
       }
+    },
+    {
+      "id": "add-desktop-icon",
+      "title": "Add Desktop Icon",
+      "icon": "🤹‍♂️",
+      "defaultHeight": 700,
+      "defaultWidth": 700,
+      "dependencies": ["filePickerOpen", "filesystem", "notificationEmitter"]
     }
   ]
 }

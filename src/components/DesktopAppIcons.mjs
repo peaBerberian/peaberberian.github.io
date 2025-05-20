@@ -9,10 +9,9 @@ import {
   ICON_Y_BASE,
   ICON_Y_OFFSET_FROM_HEIGHT,
   ICON_MARGIN,
-  codeImgSvg,
   settingsSvg,
   resetSvg,
-  clearSvg,
+  PROJECT_REPO,
 } from "../constants.mjs";
 import {
   addAbortableEventListener,
@@ -516,7 +515,7 @@ export default async function DesktopAppIcons(
           ? [
               {
                 name: "clear",
-                title: "Delete desktop icon",
+                title: "Delete icon",
                 onClick: () => {
                   if (!SETTINGS.canDeleteIcon.getValue()) {
                     return;
@@ -560,13 +559,7 @@ export default async function DesktopAppIcons(
         {
           name: "code",
           title: "Go to the project's code repository",
-          onClick: () => {
-            // TODO: const
-            window.open(
-              "https://github.com/peaBerberian/peaberberian.github.io",
-              "_blank",
-            );
-          },
+          onClick: () => window.open(PROJECT_REPO, "_blank"),
         },
       ],
     });
@@ -812,25 +805,40 @@ function addContainerContextMenu(containerElt, onOpen, abortSignal) {
         name: "reset",
         title: "Reset desktop icons to default",
         svg: resetSvg,
-        onClick: () => {
-          // TODO: notif if fails
-          fs.rmFile(USER_DESKTOP_CONFIG);
+        onClick: async () => {
+          try {
+            await fs.rmFile(USER_DESKTOP_CONFIG);
+          } catch (err) {
+            notificationEmitter.error(
+              "Desktop icons reset",
+              "Failed to reset desktop icons: " + err.toString(),
+            );
+          }
         },
       },
-      // {
-      //   name: "add",
-      //   title: "Add shortcut icon",
-      //   svg: `<svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 12L12 12M12 12L17 12M12 12V7M12 12L12 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-      // },
+      {
+        name: "add",
+        title: "Add desktop icons",
+        svg: `<svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 12L12 12M12 12L17 12M12 12V7M12 12L12 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+        onClick: () => {
+          onOpen("/apps/add-desktop-icon.run", []);
+        },
+      },
       {
         name: "clear",
         title: "Clear all icons",
-        onClick: () => {
-          // TODO: notif if fails
-          fs.writeFile(
-            USER_DESKTOP_CONFIG,
-            JSON.stringify({ list: [] }, null, 2),
-          );
+        onClick: async () => {
+          try {
+            await fs.writeFile(
+              USER_DESKTOP_CONFIG,
+              JSON.stringify({ list: [] }, null, 2),
+            );
+          } catch (err) {
+            notificationEmitter.error(
+              "Desktop icons clear",
+              "Failed to clear desktop icons: " + err.toString(),
+            );
+          }
         },
       },
       { name: "separator" },
@@ -856,13 +864,7 @@ function addContainerContextMenu(containerElt, onOpen, abortSignal) {
       {
         name: "code",
         title: "Go to the project's code repository",
-        onClick: () => {
-          // TODO: const
-          window.open(
-            "https://github.com/peaBerberian/peaberberian.github.io",
-            "_blank",
-          );
-        },
+        onClick: () => window.open(PROJECT_REPO, "_blank"),
       },
     ],
   });

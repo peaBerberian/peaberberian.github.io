@@ -4,7 +4,7 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
-// - context menu in desktop, taskbar, start menu, and explorer at least?
+// - context menu in taskbar, start menu, and explorer at least?
 // - Storage settings
 // - notes quick save could detect if file change since last save
 //
@@ -66,6 +66,7 @@ import Taskbar from "./components/Taskbar.mjs";
 import AppsLauncher from "./app-launcher/AppsLauncher.mjs";
 import initializeClockApplet from "./clock_applet.mjs";
 import { SETTINGS } from "./settings.mjs";
+import { PROJECT_REPO } from "./constants.mjs";
 
 /**
  * To bypass the initial app at start-up, this string can be set in the URL
@@ -78,7 +79,7 @@ const SPECIAL_NO_APP_STRING = "#";
 
 console.log(
   "Welcome to my Web Desktop! This is an open-source project whose code can be found here:",
-  "https://github.com/peaBerberian/peaberberian.github.io",
+  PROJECT_REPO,
 );
 
 async function start() {
@@ -107,8 +108,8 @@ async function start() {
 
   const taskbarManager = new Taskbar({ applets: [clockElt] });
   const appsLauncher = new AppsLauncher(desktopElt, taskbarManager);
-  DesktopAppIcons(desktopElt, openAppFromPath);
-  StartMenu(startMenuApps.list, openAppFromPath);
+  DesktopAppIcons(desktopElt, openPath);
+  StartMenu(startMenuApps.list, openPath);
 
   // Open default app or asked one
   let wantedApp;
@@ -132,8 +133,14 @@ async function start() {
     });
   }
 
-  function openAppFromPath(appPath, appArgs) {
-    appsLauncher.openApp(appPath, appArgs ?? []);
+  function openPath(appPath, appArgs) {
+    if (appArgs && appArgs.length > 0) {
+      appsLauncher.openApp(appPath, appArgs ?? []);
+    } else {
+      // If there's no argument, just use the more compatible open:
+      // It also works for non-executables
+      appsLauncher.open(appPath);
+    }
   }
 }
 

@@ -79,7 +79,7 @@ export default function createSystemSection(env, abortSignal) {
 
   const infoGroup = strHtml`<div class="w-group"><h3>Technical Information</h3></div>`;
 
-  const linkToGitHub = strHtml`<div class="w-small-opt"><div>Link to GitHub</div><div><a href="https://github.com/peaBerberian/peaberberian.github.io" target="_blank">peaberberian.github.io</a></div>`;
+  const linkToGitHub = strHtml`<div class="w-small-opt"><div>Link to GitHub</div><div><a href="${env.CONSTANTS.PROJECT_REPO}" target="_blank">peaberberian.github.io</a></div>`;
   infoGroup.appendChild(linkToGitHub);
 
   const version = strHtml`<div class="w-small-opt"><div>version</div><div>${currentVersion}</div></div>`;

@@ -412,6 +412,7 @@ function writeGeneratedAppFile(baseDir) {
             if (
               ![
                 "settings",
+                "notificationEmitter",
                 "filesystem",
                 "filePickerOpen",
                 "filePickerSave",

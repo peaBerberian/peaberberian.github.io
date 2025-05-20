@@ -4,6 +4,9 @@
  */
 export const __VERSION__ = "0.1.0";
 
+export const PROJECT_REPO =
+  "https://github.com/peaBerberian/peaberberian.github.io";
+
 /**
  * Minimum size in pixels that may be configured for the taskbar part of the
  * screen when it is on the top or bottom sides.

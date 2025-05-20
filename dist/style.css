@@ -737,17 +737,17 @@ html {
 }
 
 .w-tools {
-	background-color: var(--window-sidebar-bg);
-	width: 100%;
-	overflow-x: auto;
-	overflow-y: hidden;
-	display: flex;
-	padding: 5px;
-	gap: 12px;
-	flex-shrink: 0;
-	border-bottom: 1px solid var(--window-line-color);
-	scrollbar-color: var(--sidebar-hover-bg) var(--window-sidebar-bg);
-	scrollbar-width: thin;
+  background-color: var(--window-sidebar-bg);
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: flex;
+  padding: 5px;
+  gap: 12px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--window-line-color);
+  scrollbar-color: var(--sidebar-hover-bg) var(--window-sidebar-bg);
+  scrollbar-width: thin;
 }
 
 .window ul,
@@ -1037,7 +1037,7 @@ ol {
   color: var(--window-text-color);
   /* border: 1px solid var(--window-line-color); */
   border: 0;
-	border-radius: 3px;
+  border-radius: 3px;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
   display: none;
   z-index: 2000;

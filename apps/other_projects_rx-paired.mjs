@@ -48,7 +48,7 @@ ${getRxPairedImg()}
     // TODO: A less hacky way may be found
     const placeholder = strHtml`<div />`;
     applyStyle(placeholder, {
-      border: "2px dotted var(--window-line-color)",
+      border: "2px dotted " + env.STYLE.lineColor,
       paddingTop: String((IMAGE_HEIGHT / IMAGE_WIDTH) * 100) + "%",
       position: "relative",
       display: "block",

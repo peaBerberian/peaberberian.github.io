@@ -22,7 +22,7 @@ export function create(args, env, parentAbortSignal) {
     width: "100%",
     height: "100%",
     overflow: "hidden",
-    backgroundColor: "var(--window-content-bg)",
+    backgroundColor: env.STYLE.bgColor,
   });
 
   /**
@@ -151,7 +151,7 @@ export function create(args, env, parentAbortSignal) {
     overflow: "hidden",
     textAlign: "center",
     height: "100%",
-    backgroundColor: "var(--app-primary-bg)",
+    backgroundColor: env.STYLE.disabledColor,
   });
 
   // Drag and drop handling
@@ -185,8 +185,8 @@ export function create(args, env, parentAbortSignal) {
     display: "flex",
     justifyContent: "space-between",
     padding: "4px 8px",
-    backgroundColor: "var(--window-sidebar-bg)",
-    borderTop: "1px solid var(--window-line-color)",
+    backgroundColor: env.STYLE.barBg,
+    borderTop: env.STYLE.lineColor,
   });
   containerElt.appendChild(statusBarElt);
 
@@ -538,7 +538,7 @@ export function create(args, env, parentAbortSignal) {
         justifyContent: "center",
         height: "100%",
         textAlign: "center",
-        color: "var(--window-text-color)",
+        color: env.STYLE.textColor,
         fontStyle: "italic",
         // fontSize: "1.5rem",
       });
@@ -586,10 +586,10 @@ export function create(args, env, parentAbortSignal) {
     updateDisplayedImage();
   }
   function highlightDropZone() {
-    imgContainerElt.style.backgroundColor = "var(--app-primary-color)";
+    imgContainerElt.style.backgroundColor = env.STYLE.primaryColor;
   }
   function unhighlightDropZone() {
-    imgContainerElt.style.backgroundColor = "var(--app-primary-bg)";
+    imgContainerElt.style.backgroundColor = env.STYLE.disabledColor;
   }
 
   function openFiles(files) {

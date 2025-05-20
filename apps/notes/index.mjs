@@ -197,28 +197,28 @@ export function create(args, env) {
 
   const linesElt = document.createElement("pre");
   applyStyle(linesElt, {
-    backgroundColor: "var(--window-content-bg)",
-    color: "var(--window-text-color)",
+    backgroundColor: env.STYLE.bgColor,
+    color: env.STYLE.textColor,
     minWidth: "40px",
     overflow: "hidden",
     textAlign: "right",
     padding: "8px 4px",
     fontFamily: "monospace",
-    borderRight: "2px solid var(--window-line-color)",
+    borderRight: "2px solid " + env.STYLE.lineColor,
     userSelect: "none",
   });
 
   const textArea = document.createElement("textarea");
   applyStyle(textArea, {
     flex: "1",
-    backgroundColor: "var(--window-content-bg)",
-    color: "var(--window-text-color)",
+    backgroundColor: env.STYLE.bgColor,
+    color: env.STYLE.textColor,
     border: "none",
     outline: "none",
     padding: "8px",
     resize: "none",
     fontFamily: "monospace",
-    fontSize: "var(--font-size)",
+    fontSize: env.STYLE.fontSize,
     whiteSpace: "pre",
     overflow: "auto",
   });
@@ -227,12 +227,12 @@ export function create(args, env) {
 
   const statusBar = document.createElement("div");
   applyStyle(statusBar, {
-    backgroundColor: "var(--window-sidebar-bg)",
-    borderTop: "1px solid var(--window-line-color)",
+    backgroundColor: env.STYLE.barBg,
+    borderTop: "1px solid " + env.STYLE.lineColor,
     padding: "4px",
     bottom: "0",
     width: "100%",
-    fontSize: "var(--font-size)",
+    fontSize: env.STYLE.fontSize,
   });
   statusBar.textContent = "Ready";
 

@@ -12,7 +12,7 @@ export function create(_args, env, abortSignal) {
   const use12HourClockFormat = is12HourClockFormat();
   const wrapper = document.createElement("div");
   applyStyle(wrapper, {
-    backgroundColor: "var(--app-primary-bg)",
+    backgroundColor: env.STYLE.disabledColor,
     position: "relative",
     height: "100%",
     width: "100%",

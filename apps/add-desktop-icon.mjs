@@ -5,7 +5,7 @@ export function create(_args, env) {
     height: "100%",
     overflow: "hidden",
     width: "100%",
-    backgroundColor: "var(--window-content-bg)",
+    backgroundColor: env.STYLE.bgColor,
   });
   const spinnerContainerElt = document.createElement("div");
   applyStyle(spinnerContainerElt, {

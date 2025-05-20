@@ -8,7 +8,8 @@ export function create(_args, env, abortSignal) {
   const { applyStyle } = env.appUtils;
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
-    backgroundColor: "var(--window-active-header)",
+    backgroundColor: env.STYLE.windowActiveHeader,
+    color: env.STYLE.windowActiveHeaderText,
     height: "100%",
     width: "100%",
     overflowY: "auto",
@@ -259,26 +260,19 @@ export function create(_args, env, abortSignal) {
     function drawTheObjects(withScore, withLine) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Quite unsure of which colors should be taken.
-      // I do it at each tick because I'm sure some persons will want to update
-      // the theme mid-game.
-      // TODO: optimize that shit? To check.
-      const objectsColor = getComputedStyle(canvas).getPropertyValue(
-        // "--app-primary-color",
-        // "--window-text-color",
-        // "--window-content-bg",
-        "--window-active-header-text",
-      );
-
-      // Doing the ball
+      // Ball
+      ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-      ctx.fillStyle = objectsColor;
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#000000";
       ctx.fill();
+      ctx.stroke();
       ctx.closePath();
 
       // Now the "paddles"
-      ctx.fillStyle = objectsColor;
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#000000";
       if (!hasStarted) {
         ctx.font = "22px monospace";
         ctx.fillText(
@@ -294,21 +288,28 @@ export function create(_args, env, abortSignal) {
         );
       }
       ctx.fillRect(enemyPaddle.x, enemyPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
+      ctx.strokeRect(enemyPaddle.x, enemyPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
       ctx.fillRect(userPaddle.x, userPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
+      ctx.strokeRect(userPaddle.x, userPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
 
       if (withScore) {
         // And now the score
         ctx.font = "32px monospace";
+        // NOTE: This text is not "bordered" with black meaning it won't be
+        // visible if the background is white.
+        // Maybe TODO?
         ctx.fillText(leftScore, canvas.width / 4, 50);
         ctx.fillText(rightScore, (3 * canvas.width) / 4, 50);
       }
 
       if (withLine) {
+        // NOTE: This one is also not "bordered" with black.
+        // As this is not required for the game, I did not care much
         ctx.setLineDash([10, 5]);
         ctx.beginPath();
         ctx.moveTo(canvas.width / 2, 0);
         ctx.lineTo(canvas.width / 2, canvas.height);
-        ctx.strokeStyle = objectsColor;
+        ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 3;
         ctx.stroke();
         ctx.setLineDash([]);

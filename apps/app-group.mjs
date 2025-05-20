@@ -21,11 +21,11 @@ export async function create(args = [], env) {
 
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
-    backgroundColor: "var(--app-primary-bg)",
+    backgroundColor: env.STYLE.disabledColor,
     height: "100%",
     width: "100%",
     overflowY: "auto",
-    color: "var(--window-text-color)",
+    color: env.STYLE.textColor,
     padding: "10px",
   });
   const iconsContainerElt = document.createElement("div");
@@ -80,7 +80,7 @@ export async function create(args = [], env) {
     iconImgElt.textContent = app.icon;
     const iconTextElt = document.createElement("span");
     applyStyle(iconTextElt, {
-      fontSize: "var(--font-size)",
+      fontSize: env.STYLE.fontSize,
       textAlign: "center",
       textOverflow: "ellipsis",
       whiteSpace: "normal",
@@ -116,12 +116,12 @@ export async function create(args = [], env) {
       }
     });
     icon.addEventListener("mouseover", () => {
-      icon.style.backgroundColor = "var(--sidebar-hover-bg)";
+      icon.style.backgroundColor = env.STYLE.barHoverBg;
     });
 
     icon.addEventListener("mouseout", () => {
       if (icon.classList.contains("selected")) {
-        icon.style.backgroundColor = "var(--sidebar-selected-bg-color)";
+        icon.style.backgroundColor = env.STYLE.barSelectedBg;
       } else {
         icon.style.backgroundColor = "transparent";
       }
@@ -139,8 +139,8 @@ export async function create(args = [], env) {
       i.classList.remove("selected");
     }
     icon.classList.add("selected");
-    icon.style.backgroundColor = "var(--sidebar-selected-bg-color)";
-    icon.style.color = "var(--sidebar-selected-text-color)";
+    icon.style.backgroundColor = env.STYLE.barSelectedBg;
+    icon.style.color = env.STYLE.barSelectedText;
   }
 }
 

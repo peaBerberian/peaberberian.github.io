@@ -122,7 +122,7 @@ function strToFraction(str) {
   return Fraction(BigInt(normalizedNum));
 }
 
-export function create() {
+export function create(_args, env) {
   let currentValue = "";
   let previousValue = null;
   let operation = null;
@@ -135,8 +135,8 @@ export function create() {
     flexDirection: "column",
     width: "100%",
     height: "100%",
-    backgroundColor: "var(--window-sidebar-bg)",
-    border: "1px solid var(--window-line-color)",
+    backgroundColor: env.STYLE.barBg,
+    border: "1px solid " + env.STYLE.lineColor,
     padding: "10px",
     fontFamily: "Arial, sans-serif",
     boxSizing: "border-box",
@@ -145,8 +145,8 @@ export function create() {
 
   const displayElt = document.createElement("div");
   applyStyle(displayElt, {
-    backgroundColor: "var(--window-content-bg)",
-    border: "2px solid var(--window-line-color)",
+    backgroundColor: env.STYLE.bgColor,
+    border: "2px solid " + env.STYLE.lineColor,
     padding: "10px",
     textAlign: "right",
     fontSize: "1.5em",
@@ -371,8 +371,8 @@ export function create() {
       text: "C",
       action: clear,
       style: {
-        backgroundColor: "var(--window-text-color)",
-        color: "var(--window-content-bg)",
+        backgroundColor: env.STYLE.textColor,
+        color: env.STYLE.bgColor,
       },
     },
     {
@@ -405,8 +405,8 @@ export function create() {
       text: "÷",
       action: () => performOperation("/"),
       style: {
-        backgroundColor: "var(--app-primary-color)",
-        color: "var(--window-content-bg)",
+        backgroundColor: env.STYLE.primaryColor,
+        color: env.STYLE.bgColor,
       },
     },
 
@@ -417,8 +417,8 @@ export function create() {
       text: "×",
       action: () => performOperation("*"),
       style: {
-        backgroundColor: "var(--app-primary-color)",
-        color: "var(--window-content-bg)",
+        backgroundColor: env.STYLE.primaryColor,
+        color: env.STYLE.bgColor,
       },
     },
 
@@ -429,8 +429,8 @@ export function create() {
       text: "-",
       action: () => performOperation("-"),
       style: {
-        backgroundColor: "var(--app-primary-color)",
-        color: "var(--window-content-bg)",
+        backgroundColor: env.STYLE.primaryColor,
+        color: env.STYLE.bgColor,
       },
     },
 
@@ -441,8 +441,8 @@ export function create() {
       text: "+",
       action: () => performOperation("+"),
       style: {
-        backgroundColor: "var(--app-primary-color)",
-        color: "var(--window-content-bg)",
+        backgroundColor: env.STYLE.primaryColor,
+        color: env.STYLE.bgColor,
       },
     },
 
@@ -457,8 +457,8 @@ export function create() {
       action: calculate,
       style: {
         fontWeight: "bold",
-        color: "var(--app-primary-color)",
-        backgroundColor: "var(--window-content-bg)",
+        color: env.STYLE.primaryColor,
+        backgroundColor: env.STYLE.bgColor,
       },
     },
   ];
@@ -469,9 +469,9 @@ export function create() {
     buttonElement.textContent = button.text;
 
     const baseStyle = {
-      backgroundColor: "var(--window-content-bg)",
-      color: "var(--window-text-color)",
-      border: "1px solid var(--window-line-color)",
+      backgroundColor: env.STYLE.bgColor,
+      color: env.STYLE.textColor,
+      border: "1px solid " + env.STYLE.lineColor,
       borderRadius: "4px",
       fontSize: "1.5em",
       fontWeight: "bold",
@@ -485,19 +485,16 @@ export function create() {
     applyStyle(buttonElement, baseStyle);
 
     buttonElement.addEventListener("mouseenter", () => {
-      const currentBg =
-        button.style?.backgroundColor || "var(--window-content-bg)";
+      const currentBg = button.style?.backgroundColor || env.STYLE.bgColor;
       const hoverBg =
-        currentBg === "var(--window-content-bg)"
-          ? "var(--sidebar-hover-bg)"
-          : currentBg;
+        currentBg === env.STYLE.bgColor ? env.style.barHoverBg : currentBg;
       buttonElement.style.backgroundColor = hoverBg;
       buttonElement.style.filter = "brightness(0.9)";
     });
 
     buttonElement.addEventListener("mouseleave", () => {
       buttonElement.style.backgroundColor =
-        button.style?.backgroundColor || "var(--window-content-bg)";
+        button.style?.backgroundColor || env.STYLE.bgColor;
       buttonElement.style.filter = "none";
     });
 

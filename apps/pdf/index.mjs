@@ -23,7 +23,7 @@ export function create(args, env) {
   containerElt.style.flexDirection = "column";
   containerElt.style.height = "100%";
   containerElt.style.width = "100%";
-  containerElt.style.backgroundColor = "var(--window-content-bg)";
+  containerElt.style.backgroundColor = env.STYLE.bgColor;
 
   const spinnerContainerElt = document.createElement("div");
   applyStyle(spinnerContainerElt, {

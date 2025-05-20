@@ -13,15 +13,8 @@ export function create(_args, env) {
   const { applyStyle } = env.appUtils;
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
-    backgroundColor: "var(--window-sidebar-bg)",
-    color: "var(--window-text-color)",
-    // backgroundColor:
-    //   "linear-gradient(to-bottom, var(--window-content-bg), var(--window-sidebar-bg))",
-    // background: "var(--sidebar-hover-bg)",
-    // background:
-    //   "linear-gradient(180deg, var(--window-content-bg) 0%,  var(--sidebar-hover-bg) 50%)",
-    // background:
-    //   "linear-gradient(140deg, var(--window-sidebar-bg) 0%,  var(--sidebar-hover-bg) 80%)",
+    backgroundColor: env.STYLE.barBg,
+    color: env.STYLE.textColor,
     padding: "5px",
     display: "flex",
     flexDirection: "column",
@@ -41,7 +34,7 @@ export function create(_args, env) {
   titleElt.textContent = "💣 BombSweeper!";
   applyStyle(titleElt, {
     marginTop: "15px",
-    color: "var(--app-primary-color)",
+    color: env.STYLE.primaryColor,
   });
   containerElt.appendChild(titleElt);
 
@@ -66,7 +59,7 @@ export function create(_args, env) {
 
   const statusElt = document.createElement("div");
   applyStyle(statusElt, {
-    color: "var(--window-text-color)",
+    color: env.STYLE.textColor,
   });
   containerElt.appendChild(statusElt);
 
@@ -83,7 +76,7 @@ export function create(_args, env) {
     gridTemplateRows: `repeat(${NUMBER_OF_ROWS}, 36px)`,
     gap: "2px",
     margin: "0 auto",
-    border: "6px solid var(--window-line-color)",
+    border: "6px solid " + env.STYLE.lineColor,
     borderCollapse: "collapse",
     boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
   });
@@ -247,7 +240,7 @@ export function create(_args, env) {
           justifyContent: "center",
           fontSize: "24px",
           cursor: "pointer",
-          border: "6px solid var(--window-line-color)",
+          border: "6px solid " + env.STYLE.lineColor,
         });
         cell.textContent = HIDDEN_CELL_VALUE;
 

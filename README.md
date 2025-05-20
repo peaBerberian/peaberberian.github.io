@@ -121,12 +121,8 @@ here that I find interesting:
   My current idea is to just let the user declare them in the "settings app"
   (not done yet).
 
-- For now I implemented a common UI design for most applications, which all
-  respect the current theme chosen in the settings by relying on CSS variables.
-
-  Though apps sometimes do have to explicitly write the CSS variable names in
-  their code. I'm still iterating on this as I don't think this is the best
-  solution yet.
+- I implemented a common UI design for most applications, which all respect the
+  current theme chosen in the settings by relying on CSS variables.
 
 - The icons in the desktop, the start menu, the taskbar and application windows
   (but not the application launcher relying on it) are all "components" with a

@@ -157,8 +157,8 @@ export function create(_args, env, abortSignal) {
     height: "100%",
     display: "flex",
     flexDirection: "column",
-    backgroundColor: "var(--window-sidebar-bg)",
-    borderRight: "var(--window-line-color)",
+    backgroundColor: env.STYLE.barBg,
+    borderRight: env.STYLE.lineColor,
     alignItems: "center",
     overflow: "auto",
     flexShrink: "0",
@@ -167,7 +167,7 @@ export function create(_args, env, abortSignal) {
   const restOfAppElt = document.createElement("div");
   applyStyle(restOfAppElt, {
     position: "relative",
-    backgroundColor: "var(--app-primary-bg)",
+    backgroundColor: env.STYLE.disabledColor,
     height: "100%",
     width: "100%",
     overflow: "auto",
@@ -183,7 +183,7 @@ export function create(_args, env, abortSignal) {
   canvasContainerElt.style.position = "relative";
   const canvas = document.createElement("canvas");
   applyStyle(canvas, {
-    border: "var(--window-line-color)",
+    border: env.STYLE.lineColor,
     boxShadow: "0 0 15px rgba(0, 0, 0, 0.3)",
   });
   canvasContainerElt.appendChild(canvas);
@@ -237,9 +237,9 @@ export function create(_args, env, abortSignal) {
   function activateTool(elt, name) {
     for (const tool of toolElements) {
       if (tool === elt) {
-        tool.children[0].setAttribute("fill", "var(--app-primary-color)");
+        tool.children[0].setAttribute("fill", env.STYLE.primaryColor);
       } else {
-        tool.children[0].setAttribute("fill", "var(--window-text-color)");
+        tool.children[0].setAttribute("fill", env.STYLE.textColor);
       }
     }
     currentTool = name;
@@ -977,8 +977,8 @@ export function create(_args, env, abortSignal) {
     const sizeSelectorElt = strHtml`<div class="size-selector" />`;
     applyStyle(sizeSelectorElt, {
       padding: "12px 5px",
-      background: "var(--window-content-bg)",
-      border: "5px solid var(--window-line-color)",
+      background: env.STYLE.bgColor,
+      border: "5px solid " + env.STYLE.lineColor,
     });
     const sizeOptionsElt = strHtml`<div class="size-options" />`;
     applyStyle(sizeOptionsElt, {
@@ -996,11 +996,9 @@ export function create(_args, env, abortSignal) {
         width: size + "px",
         height: size + "px",
         borderRadius: "50%",
-        border: "1px solid var(--window-line-color)",
+        border: "1px solid " + env.STYLE.lineColor,
         background:
-          size === defaultSize
-            ? "var(--app-primary-color)"
-            : "var(--window-text-color)",
+          size === defaultSize ? env.STYLE.primaryColor : env.STYLE.textColor,
         cursor: "pointer",
         transition: "transform 0.1s",
       });
@@ -1008,9 +1006,9 @@ export function create(_args, env, abortSignal) {
       const onClick = () => {
         for (const elt of sizeOptions) {
           if (elt === sizeOptionElt) {
-            elt.style.background = "var(--app-primary-color)";
+            elt.style.background = env.STYLE.primaryColor;
           } else {
-            elt.style.background = "var(--window-text-color)";
+            elt.style.background = env.STYLE.textColor;
           }
         }
         onChange(size);

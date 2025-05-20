@@ -1,5 +1,5 @@
 import * as CONSTANTS from "../constants.mjs";
-import { SETTINGS } from "../settings.mjs";
+import { APP_STYLE, SETTINGS } from "../settings.mjs";
 import filesystem, { getName } from "../filesystem/filesystem.mjs";
 import AppWindow from "../components/window/AppWindow.mjs";
 import notificationEmitter from "../components/notification_emitter.mjs";
@@ -722,6 +722,10 @@ export default class AppsLauncher {
 
       // TODO: remove need for that one
       CONSTANTS,
+      STYLE: Object.keys(APP_STYLE).reduce((acc, name) => {
+        acc[name] = APP_STYLE[name].cssProp;
+        return acc;
+      }, {}),
     };
 
     if (Array.isArray(dependencies)) {

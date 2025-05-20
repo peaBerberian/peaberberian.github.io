@@ -21,8 +21,8 @@ export function create(_args, env) {
   const { applyStyle } = env.appUtils;
   const wrapperElt = document.createElement("div");
   applyStyle(wrapperElt, {
-    backgroundColor: "var(--window-content-bg)",
-    color: "var(--window-text-color)",
+    backgroundColor: env.STYLE.bgColor,
+    color: env.STYLE.textColor,
     overflow: "hidden",
     textAlign: "center",
     height: "100%",
@@ -33,14 +33,14 @@ export function create(_args, env) {
   const outputAndCopyBtnElt = document.createElement("div");
   applyStyle(outputAndCopyBtnElt, {
     fontFamily: "monospace",
-    borderBottom: "1px solid var(--window-line-color)",
+    borderBottom: "1px solid " + env.STYLE.lineColor,
     padding: "5px",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     gap: "5px",
-    backgroundColor: "var(--sidebar-selected-bg-color)",
-    color: "var(--sidebar-selected-text-color)",
+    backgroundColor: env.STYLE.barSelectedBg,
+    color: env.STYLE.barSelectedText,
   });
   wrapperElt.appendChild(outputAndCopyBtnElt);
   const outputElt = document.createElement("div");
@@ -187,9 +187,9 @@ export function create(_args, env) {
 
       const pw = generatePassword();
       if (hidden === true) {
-        outputElt.style.color = "var(--sidebar-selected-bg-color)";
+        outputElt.style.color = env.STYLE.barSelectedBg;
       } else {
-        outputElt.style.color = "var(--sidebar-selected-text-color)";
+        outputElt.style.color = env.STYLE.barSelectedText;
       }
       outputElt.textContent = pw;
       if (navigator.clipboard != null) {

@@ -1,7 +1,3 @@
-// TODO: do not restart on activate
-// TODO: Clear bullets on next level
-// TODO: No shield health
-
 const LEFT_KEYS = ["a", "arrowleft"];
 const RIGHT_KEYS = ["d", "arrowright"];
 
@@ -9,8 +5,11 @@ const PLAYER_CHAR = "🛩️";
 const PLAYER_DAMAGE_CHAR = "💥";
 
 export function create(_args, env) {
-  const gameContainer = document.createElement("div");
-  applyStyle(gameContainer, {
+  const gameWrapper = document.createElement("div");
+  applyStyle(gameWrapper, {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     width: "100%",
     height: "100%",
     backgroundColor: env.STYLE.windowActiveHeader,
@@ -19,15 +18,24 @@ export function create(_args, env) {
     fontFamily: "monospace",
     cursor: "crosshair",
   });
+  const gameArea = document.createElement("div");
+  applyStyle(gameArea, {
+    border: `1px dashed ${env.STYLE.windowActiveHeaderText}`,
+    // width: "100%",
+    // height: "100%",
+    position: "relative",
+    overflow: "hidden",
+  });
+  gameWrapper.appendChild(gameArea);
 
   let gameState;
   let animationId;
   let currentlyPressedKeys = {};
-  let mouseX = null;
+  let playerMouseX = null;
   let mousePressed = false;
 
   let config = {};
-  initGame();
+  resetGameState();
 
   const hud = document.createElement("div");
   applyStyle(hud, {
@@ -39,7 +47,7 @@ export function create(_args, env) {
     zIndex: "1000",
     fontWeight: "bold",
   });
-  gameContainer.appendChild(hud);
+  gameArea.appendChild(hud);
 
   const playerElt = document.createElement("div");
   playerElt.textContent = PLAYER_CHAR;
@@ -49,7 +57,7 @@ export function create(_args, env) {
     zIndex: "10",
     userSelect: "none",
   });
-  gameContainer.appendChild(playerElt);
+  gameArea.appendChild(playerElt);
 
   const startScreen = document.createElement("div");
   applyStyle(startScreen, {
@@ -70,7 +78,7 @@ export function create(_args, env) {
   startScreen.innerHTML =
     'GAME OVER<br><span style="font-size: 16px;">Press R or Click to restart</span>';
   startScreen.innerHTML = `Invaders!<br><span style="font-size: ${config.hudSize}px;">Press Space or Click to Start</span>`;
-  gameContainer.appendChild(startScreen);
+  gameArea.appendChild(startScreen);
 
   const gameOverScreen = document.createElement("div");
   applyStyle(gameOverScreen, {
@@ -80,6 +88,7 @@ export function create(_args, env) {
     transform: "translate(-50%, -50%)",
     backgroundColor: env.STYLE.windowActiveHeader,
     color: env.STYLE.windowActiveHeaderText,
+    border: "1px solid " + env.STYLE.windowActiveHeaderText,
     fontSize: "24px",
     textAlign: "center",
     display: "none",
@@ -89,17 +98,20 @@ export function create(_args, env) {
   });
   gameOverScreen.innerHTML =
     'GAME OVER<br><span style="font-size: 16px;">Press R or Click to restart</span>';
-  gameContainer.appendChild(gameOverScreen);
+  gameArea.appendChild(gameOverScreen);
 
-  let resizeObserver;
-
+  tick();
   return {
-    element: gameContainer,
+    element: gameWrapper,
     onActivate,
     onDeactivate,
   };
 
-  function initGame() {
+  function resetGameState() {
+    clearEnemies();
+    clearShields();
+    clearBullets();
+    clearEnemyBullets();
     gameState = {
       player: {
         x: 0,
@@ -112,7 +124,7 @@ export function create(_args, env) {
       bullets: [],
       enemies: [],
       enemyBullets: [],
-      barriers: [],
+      shields: [],
       score: 0,
       started: false,
       gameOver: false,
@@ -122,12 +134,14 @@ export function create(_args, env) {
       gameHeight: 0,
       level: 1,
     };
-    updateGameSize();
+    recheckGameStartupSize();
   }
 
-  function updateGameSize() {
-    gameState.gameWidth = gameContainer.offsetWidth;
-    gameState.gameHeight = gameContainer.offsetHeight;
+  function recheckGameStartupSize() {
+    gameState.gameWidth = gameWrapper.offsetWidth;
+    gameState.gameHeight = gameWrapper.offsetHeight;
+    gameArea.style.height = gameWrapper.offsetHeight + "px";
+    gameArea.style.width = gameWrapper.offsetWidth + "px";
     config = {
       playerSpeed: 0.008 * gameState.gameWidth,
       bulletSpeed: 0.015 * gameState.gameHeight,
@@ -140,25 +154,58 @@ export function create(_args, env) {
       enemySize: Math.max(16, 0.035 * gameState.gameWidth),
       bulletSize: Math.max(7, 0.002 * gameState.gameWidth),
       hudSize: Math.max(12, 0.025 * gameState.gameWidth),
-      barrierSize: Math.max(30, 0.06 * gameState.gameWidth),
+      shieldSize: Math.max(30, 0.06 * gameState.gameWidth),
     };
     gameState.player.width = config.playerSize;
     gameState.player.height = config.playerSize;
     gameState.player.x = (gameState.gameWidth - gameState.player.width) / 2;
     gameState.player.y = gameState.gameHeight - gameState.player.height - 20;
     setupEnemies();
-    setupBarriers();
+    setupShields();
+  }
+
+  function clearEnemies() {
+    if (!gameState?.enemies) {
+      return;
+    }
+    for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+      gameState.enemies[i].element.remove();
+    }
+    gameState.enemies = [];
+  }
+
+  function clearShields() {
+    if (!gameState?.shields) {
+      return;
+    }
+    for (let i = gameState.shields.length - 1; i >= 0; i--) {
+      gameState.shields[i].element.remove();
+    }
+    gameState.shields = [];
+  }
+
+  function clearBullets() {
+    if (!gameState?.bullets) {
+      return;
+    }
+    for (let i = gameState.bullets.length - 1; i >= 0; i--) {
+      gameState.bullets[i].element.remove();
+    }
+    gameState.bullets = [];
+  }
+
+  function clearEnemyBullets() {
+    if (!gameState?.enemyBullets) {
+      return;
+    }
+    for (let i = gameState.enemyBullets.length - 1; i >= 0; i--) {
+      gameState.enemyBullets[i].element.remove();
+    }
+    gameState.enemyBullets = [];
   }
 
   function setupEnemies() {
-    gameState.enemies = [];
-    for (let i = gameContainer.children.length - 1; i >= 0; i--) {
-      const child = gameContainer.children[i];
-      if (child.dataset.type === "enemy") {
-        gameContainer.removeChild(child);
-      }
-    }
-
+    clearEnemies();
     const rows = 4;
     const cols = 9;
     const enemySize = config.enemySize || 25;
@@ -170,6 +217,8 @@ export function create(_args, env) {
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
         const enemy = {
+          row,
+          col,
           x: startX + col * spacing,
           y: startY + row * spacing,
           width: enemySize,
@@ -186,30 +235,30 @@ export function create(_args, env) {
           fontSize: config.enemySize + "px",
           userSelect: "none",
         });
-        gameContainer.appendChild(enemyElt);
+        gameArea.appendChild(enemyElt);
         enemy.element = enemyElt;
         gameState.enemies.push(enemy);
       }
     }
   }
 
-  function setupBarriers() {
-    gameState.barriers = [];
-    for (let i = gameContainer.children.length - 1; i >= 0; i--) {
-      const child = gameContainer.children[i];
-      if (child.dataset.type === "barrier") {
-        gameContainer.removeChild(child);
+  function setupShields() {
+    clearShields();
+    for (let i = gameArea.children.length - 1; i >= 0; i--) {
+      const child = gameArea.children[i];
+      if (child.dataset.type === "shield") {
+        gameArea.removeChild(child);
       }
     }
 
-    const numBarriers = 4;
-    const barrierSize = config.barrierSize || 40;
-    const totalWidth = numBarriers * barrierSize * 2;
+    const numShields = 4;
+    const shieldSize = config.shieldSize || 40;
+    const totalWidth = numShields * shieldSize * 2;
     const startX = (gameState.gameWidth - totalWidth) / 4;
-    const barrierY = gameState.gameHeight * 0.75;
+    const shieldY = gameState.gameHeight * 0.75;
 
-    for (let i = 0; i < numBarriers; i++) {
-      const baseX = startX + i * (barrierSize * 4);
+    for (let i = 0; i < numShields; i++) {
+      const baseX = startX + i * (shieldSize * 4);
       const pattern = [
         [1, 1, 1, 1, 1, 1],
         [1, 1, 1, 1, 1, 1],
@@ -218,31 +267,41 @@ export function create(_args, env) {
         [1, 0, 0, 0, 0, 1],
       ];
 
-      const blockSize = barrierSize / 6;
+      const blockSize = shieldSize / 6;
 
       for (let row = 0; row < pattern.length; row++) {
         for (let col = 0; col < pattern[row].length; col++) {
           if (pattern[row][col] === 1) {
-            const barrier = {
+            const shield = {
+              row,
+              col,
               x: baseX + col * blockSize,
-              y: barrierY + row * blockSize,
+              y: shieldY + row * blockSize,
               width: blockSize,
               height: blockSize,
-              health: 3,
+              // health: 3,
             };
-            const barrierElt = document.createElement("div");
-            barrierElt.dataset.type = "barrier";
-            barrierElt.textContent = "🟩";
-            applyStyle(barrierElt, {
+            const shieldElt = document.createElement("div");
+            shieldElt.dataset.type = "shield";
+            // shieldElt.textContent = "🛡️";
+            // shieldElt.textContent = "⬜";
+            // shieldElt.textContent = "◻️";
+            applyStyle(shieldElt, {
               position: "absolute",
-              left: barrier.x + "px",
-              top: barrier.y + "px",
-              fontSize: barrier.width * 0.8 + "px",
+              left: shield.x + "px",
+              top: shield.y + "px",
+              height: shield.height + "px",
+              width: shield.width + "px",
+              background: env.STYLE.windowActiveHeaderText,
+              opacity: "0.7",
+              background: `linear-gradient(to top left, ${env.STYLE.windowActiveHeaderText}, #ccc 99%)`,
+              // background: `radial-gradient(${env.STYLE.windowActiveHeaderText}, ${env.STYLE.windowActiveHeader} 80%)`,
+              // fontSize: shield.width + "px",
               userSelect: "none",
             });
-            gameContainer.appendChild(barrierElt);
-            barrier.element = barrierElt;
-            gameState.barriers.push(barrier);
+            gameArea.appendChild(shieldElt);
+            shield.element = shieldElt;
+            gameState.shields.push(shield);
           }
         }
       }
@@ -276,7 +335,7 @@ export function create(_args, env) {
         backgroundColor: env.STYLE.windowActiveHeaderText,
         userSelect: "none",
       });
-      gameContainer.appendChild(bulletElt);
+      gameArea.appendChild(bulletElt);
       bullet.element = bulletElt;
       gameState.bullets.push(bullet);
       gameState.lastShot = now;
@@ -294,8 +353,8 @@ export function create(_args, env) {
       );
     }
 
-    if (mouseX !== null) {
-      const targetX = mouseX - gameState.player.width / 2;
+    if (playerMouseX !== null) {
+      const targetX = playerMouseX - gameState.player.width / 2;
       const diff = targetX - gameState.player.x;
       const moveSpeed = Math.min(Math.abs(diff), config.playerSpeed * 2);
       if (Math.abs(diff) > 2) {
@@ -329,6 +388,8 @@ export function create(_args, env) {
   function updateEnemies() {
     if (gameState.enemies.length === 0) {
       gameState.level++;
+      clearEnemyBullets();
+      clearBullets();
       setupEnemies();
       config.enemyBaseSpeed += 0.5;
       config.enemySuppSpeed = 0;
@@ -387,7 +448,7 @@ export function create(_args, env) {
         borderRadius: `0px 0px ${bulletSize}px ${bulletSize}px`,
         userSelect: "none",
       });
-      gameContainer.appendChild(bulletElt);
+      gameArea.appendChild(bulletElt);
       bullet.element = bulletElt;
       gameState.enemyBullets.push(bullet);
     }
@@ -418,21 +479,21 @@ export function create(_args, env) {
       }
 
       if (!bulletHit) {
-        for (let k = gameState.barriers.length - 1; k >= 0; k--) {
-          const barrier = gameState.barriers[k];
+        for (let k = gameState.shields.length - 1; k >= 0; k--) {
+          const shield = gameState.shields[k];
           if (
-            bullet.x < barrier.x + barrier.width &&
-            bullet.x + bullet.width > barrier.x &&
-            bullet.y < barrier.y + barrier.height &&
-            bullet.y + bullet.height > barrier.y
+            bullet.x < shield.x + shield.width &&
+            bullet.x + bullet.width > shield.x &&
+            bullet.y < shield.y + shield.height &&
+            bullet.y + bullet.height > shield.y
           ) {
             gameState.bullets[i].element.remove();
             gameState.bullets.splice(i, 1);
-            barrier.health--;
-            if (barrier.health <= 0) {
-              gameState.barriers[k].element.remove();
-              gameState.barriers.splice(k, 1);
-            }
+            // shield.health--;
+            // if (shield.health <= 0) {
+            gameState.shields[k].element.remove();
+            gameState.shields.splice(k, 1);
+            // }
             break;
           }
         }
@@ -463,21 +524,21 @@ export function create(_args, env) {
       }
 
       if (!bulletHit) {
-        for (let k = gameState.barriers.length - 1; k >= 0; k--) {
-          const barrier = gameState.barriers[k];
+        for (let k = gameState.shields.length - 1; k >= 0; k--) {
+          const shield = gameState.shields[k];
           if (
-            bullet.x < barrier.x + barrier.width &&
-            bullet.x + bullet.width > barrier.x &&
-            bullet.y < barrier.y + barrier.height &&
-            bullet.y + bullet.height > barrier.y
+            bullet.x < shield.x + shield.width &&
+            bullet.x + bullet.width > shield.x &&
+            bullet.y < shield.y + shield.height &&
+            bullet.y + bullet.height > shield.y
           ) {
             gameState.enemyBullets[i].element.remove();
             gameState.enemyBullets.splice(i, 1);
-            barrier.health--;
-            if (barrier.health <= 0) {
-              gameState.barriers[k].element.remove();
-              gameState.barriers.splice(k, 1);
-            }
+            // shield.health--;
+            // if (shield.health <= 0) {
+            gameState.shields[k].element.remove();
+            gameState.shields.splice(k, 1);
+            // }
             break;
           }
         }
@@ -515,18 +576,18 @@ export function create(_args, env) {
         userSelect: "none",
       });
     });
-    gameState.barriers.forEach((barrier) => {
-      if (barrier.health === 3) {
-        barrier.element.textContent = "🟩"; // Full health - green
-      } else if (barrier.health === 2) {
-        barrier.element.textContent = "🟨"; // Damaged - yellow
-      } else {
-        barrier.element.textContent = "🟥"; // Very damaged - red
-      }
-      applyStyle(barrier.element, {
+    gameState.shields.forEach((shield) => {
+      // if (shield.health === 3) {
+      //   shield.element.textContent = "🟩"; // Full health - green
+      // } else if (shield.health === 2) {
+      //   shield.element.textContent = "🟨"; // Damaged - yellow
+      // } else {
+      //   shield.element.textContent = "🟥"; // Very damaged - red
+      // }
+      applyStyle(shield.element, {
         position: "absolute",
-        left: barrier.x + "px",
-        top: barrier.y + "px",
+        left: shield.x + "px",
+        top: shield.y + "px",
       });
     });
     gameState.bullets.forEach((bullet) => {
@@ -576,7 +637,19 @@ export function create(_args, env) {
   }
 
   function tick() {
-    if (!gameState.gameOver && gameState.started) {
+    if (!gameState.started) {
+      if (
+        gameState.gameWidth !== gameWrapper.offsetWidth ||
+        gameState.gameHeight !== gameWrapper.offsetHeight
+      ) {
+        recheckGameStartupSize();
+      }
+    } else if (
+      gameState.gameWidth > gameWrapper.offsetWidth ||
+      gameState.gameHeight > gameWrapper.offsetHeight
+    ) {
+      resetGameState();
+    } else if (!gameState.gameOver) {
       updatePlayer();
       updateBullets();
       updateEnemies();
@@ -588,44 +661,35 @@ export function create(_args, env) {
   }
 
   function restartGame() {
-    initGame();
-    updateGameSize();
+    resetGameState();
   }
 
   function onActivate() {
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("keyup", onKeyUp);
-    gameContainer.addEventListener("mousemove", onMouseMove);
-    gameContainer.addEventListener("touchmove", onMouseMove);
-    gameContainer.addEventListener("mousedown", onMouseDown);
-    gameContainer.addEventListener("mouseup", onMouseUp);
-    gameContainer.addEventListener("click", onClick);
-    // Observe container resize instead of window resize
-    if (window.ResizeObserver) {
-      resizeObserver = new ResizeObserver(() => {
-        updateGameSize();
-      });
-      resizeObserver.observe(gameContainer);
-    }
+    gameWrapper.addEventListener("mousemove", onMouseMove, { passive: true });
+    gameWrapper.addEventListener("touchmove", onMouseMove, { passive: true });
+    gameWrapper.addEventListener("mousedown", onMouseDown);
+    gameWrapper.addEventListener("mouseup", onMouseUp);
+    gameWrapper.addEventListener("click", onClick);
+    cancelAnimationFrame(animationId);
     tick();
   }
 
   function onDeactivate() {
     document.removeEventListener("keydown", onKeyDown);
     document.removeEventListener("keyup", onKeyUp);
-    gameContainer.removeEventListener("mousemove", onMouseMove);
-    gameContainer.removeEventListener("touchmove", onMouseMove);
-    gameContainer.removeEventListener("mousedown", onMouseDown);
-    gameContainer.removeEventListener("mouseup", onMouseUp);
-    gameContainer.removeEventListener("click", onClick);
-
-    if (resizeObserver) {
-      resizeObserver.disconnect();
-    }
-
-    if (animationId) {
-      cancelAnimationFrame(animationId);
-    }
+    gameWrapper.removeEventListener("mousemove", onMouseMove);
+    gameWrapper.removeEventListener("touchmove", onMouseMove);
+    gameWrapper.removeEventListener("mousedown", onMouseDown);
+    gameWrapper.removeEventListener("mouseup", onMouseUp);
+    gameWrapper.removeEventListener("click", onClick);
+    cancelAnimationFrame(animationId);
+    animationId = null;
+    //
+    // if (resizeObserver) {
+    //   resizeObserver.disconnect();
+    // }
   }
 
   function onKeyDown(e) {
@@ -633,7 +697,7 @@ export function create(_args, env) {
     currentlyPressedKeys[keyPressed] = true;
 
     if (LEFT_KEYS.includes(keyPressed) || RIGHT_KEYS.includes(keyPressed)) {
-      mouseX = null;
+      playerMouseX = null;
     }
 
     if (keyPressed === " ") {
@@ -645,7 +709,7 @@ export function create(_args, env) {
       }
     }
 
-    if (keyPressed === "r" && gameState.gameOver) {
+    if (keyPressed === "r") {
       restartGame();
     }
   }
@@ -667,9 +731,14 @@ export function create(_args, env) {
     } else {
       clientX = e.clientX;
     }
-    e.preventDefault();
-    const rect = gameContainer.getBoundingClientRect();
-    mouseX = clientX - rect.left;
+    const rect = gameArea.getBoundingClientRect();
+    playerMouseX = clientX - rect.left;
+    if (playerMouseX < 0) {
+      playerMouseX = 0;
+    }
+    if (playerMouseX > rect.width) {
+      playerMouseX = rect.width;
+    }
   }
 
   function onMouseDown(e) {

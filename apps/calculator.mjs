@@ -137,7 +137,6 @@ export function create() {
     height: "100%",
     backgroundColor: "var(--window-sidebar-bg)",
     border: "1px solid var(--window-line-color)",
-    borderRadius: "8px",
     padding: "10px",
     fontFamily: "Arial, sans-serif",
     boxSizing: "border-box",

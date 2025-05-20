@@ -33,7 +33,6 @@ export default function createDesktopIconsSection(
     ),
   );
   const resetButtonElt = document.createElement("button");
-  // TODO: w-small-opt btn has a weird style, investigate
   resetButtonElt.className = "btn";
   resetButtonElt.textContent = "Reset";
   resetButtonElt.onclick = () => {

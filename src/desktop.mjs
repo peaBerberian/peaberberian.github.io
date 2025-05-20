@@ -4,7 +4,8 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
-// - context menu in taskbar, start menu, and explorer at least?
+// - context menu in taskbar, taskbar items,  start menu, window header, and
+//   explorer at least?
 // - Storage settings
 // - notes quick save could detect if file change since last save
 //
@@ -15,6 +16,7 @@
 // - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices
 // - paint: resize do not re-activate quick save
+// - drag and drop in explorer
 //
 // low priority:
 // - filesystem: re-check that no error gives away the path
@@ -50,15 +52,7 @@
 //   do not really take space, it still could clutter if enough interesting
 //   i-frame-capable websites are found.)
 // - Remove app `id` inside the desktop and rely on `path` for `onlyOne`?
-//
-// desktop ideas:
-// - Allow multi-selection which changes drag bahavior
-// - Ctrl+A catched
-// - Enter to open
-// - optionally implement `onDrop` method on apps, which takes x, y, and the
-//   info on what has been dropped
-// - apps can have an `env.drag` method (`"drag"` dependency?) to start drag
-//   and dropping
+// - paint could change the file format
 
 import fs from "./filesystem/filesystem.mjs";
 import DesktopAppIcons from "./components/DesktopAppIcons.mjs";

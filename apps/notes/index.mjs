@@ -35,111 +35,11 @@ export function create(args, env) {
     enableButton,
     disableButton,
   } = constructAppHeaderLine([
-    {
-      name: "upload",
-      onClick: () => {
-        blockUi();
-        statusBar.textContent = "Loading file...";
-
-        // Trick to open the file picker
-        const fileInputElt = document.createElement("input");
-        fileInputElt.type = "file";
-        fileInputElt.accept = "text/plain";
-        fileInputElt.multiple = false;
-        fileInputElt.click();
-        fileInputElt.addEventListener("cancel", async () => {
-          unblockUi();
-          statusBar.textContent = "Ready";
-        });
-        fileInputElt.addEventListener("error", async () => {
-          unblockUi();
-          showMessage(
-            editorContentElt,
-            "❌ Failed to open your file-picker",
-            5000,
-          );
-        });
-        fileInputElt.addEventListener("change", async (e) => {
-          const files = e.target.files;
-          if (files.length === 0) {
-            clearAndRestart();
-            return;
-          }
-          try {
-            if (files[0].size > MAX_FILE_MB * 1000000) {
-              clearAndRestart();
-              showMessage(
-                editorContentElt,
-                `❌ File too big, there's a limit for now to ${MAX_FILE_MB} MB maximum.`,
-                7000,
-              );
-              return;
-            }
-            const data = await files[0].arrayBuffer();
-            if (data.byteLength > MAX_FILE_MB * 1000000) {
-              clearAndRestart();
-              showMessage(
-                editorContentElt,
-                `❌ File too big, there's a limit for now to ${MAX_FILE_MB} MB maximum.`,
-                7000,
-              );
-              return;
-            }
-            loadFile({ data, filename: files[0].name });
-          } catch (err) {
-            clearAndRestart();
-            showMessage(editorContentElt, "❌ " + err.toString(), 7000);
-          }
-          unblockUi();
-          statusBar.textContent = "Ready";
-          lastSavedContent = null;
-          saveState(false);
-        });
-      },
-    },
-    {
-      name: "open",
-      onClick: () => {
-        blockUi();
-        statusBar.textContent = "Loading file...";
-        env
-          .filePickerOpen({
-            title: "Open a text file stored on this Web Desktop",
-            allowMultipleSelections: false,
-          })
-          .then(
-            (files) => {
-              if (files.length === 0) {
-                clearAndRestart();
-                return;
-              }
-              if (files[0].data.byteLength > MAX_FILE_MB * 1000000) {
-                clearAndRestart();
-                showMessage(
-                  editorContentElt,
-                  `❌ File too big, there's a limit for now to ${MAX_FILE_MB} MB maximum.`,
-                  7000,
-                );
-                return;
-              }
-              try {
-                loadFile(files[0]);
-              } catch (err) {
-                clearAndRestart();
-                showMessage(editorContentElt, "❌ " + err.toString(), 7000);
-              }
-              unblockUi();
-              statusBar.textContent = "Ready";
-              lastSavedContent = null;
-              saveState(false);
-            },
-            (err) => {
-              clearAndRestart();
-              showMessage(editorContentElt, "❌ " + err.toString(), 7000);
-            },
-          );
-      },
-    },
+    { name: "upload", onClick: onUploadClick },
+    // To still work as expected just in case the app is "installed" without the
+    // `filePickerOpen` dependency enabled, just remove the button when it's not
+    // possible.
+    ...(env.filePickerOpen ? [{ name: "open", onClick: onOpenClick }] : []),
     { name: "separator" },
     { name: "undo", onClick: undo },
     { name: "redo", onClick: redo },
@@ -172,14 +72,8 @@ export function create(args, env) {
         }
       },
     },
-    {
-      name: "quick-save",
-      onClick: quickSave,
-    },
-    {
-      name: "save",
-      onClick: saveFile,
-    },
+    ...(env.quickSave ? [{ name: "quick-save", onClick: quickSave }] : []),
+    ...(env.filePickerSave ? [{ name: "save", onClick: saveFile }] : []),
   ]);
   disableButton("undo");
   disableButton("redo");
@@ -525,7 +419,7 @@ export function create(args, env) {
           e.preventDefault();
           if (currentFileHandle) {
             quickSave();
-          } else {
+          } else if (env.filePickerSave) {
             saveFile();
           }
         }
@@ -562,6 +456,102 @@ export function create(args, env) {
     spinnerContainerElt.style.display = "none";
     containerElt.style.opacity = 1;
     containerElt.removeAttribute("inert");
+  }
+
+  function onUploadClick() {
+    blockUi();
+    statusBar.textContent = "Loading file...";
+
+    // Trick to open the file picker
+    const fileInputElt = document.createElement("input");
+    fileInputElt.type = "file";
+    fileInputElt.accept = "text/plain";
+    fileInputElt.multiple = false;
+    fileInputElt.click();
+    fileInputElt.addEventListener("cancel", async () => {
+      unblockUi();
+      statusBar.textContent = "Ready";
+    });
+    fileInputElt.addEventListener("error", async () => {
+      unblockUi();
+      showMessage(editorContentElt, "❌ Failed to open your file-picker", 5000);
+    });
+    fileInputElt.addEventListener("change", async (e) => {
+      const files = e.target.files;
+      if (files.length === 0) {
+        clearAndRestart();
+        return;
+      }
+      try {
+        if (files[0].size > MAX_FILE_MB * 1000000) {
+          clearAndRestart();
+          showMessage(
+            editorContentElt,
+            `❌ File too big, there's a limit for now to ${MAX_FILE_MB} MB maximum.`,
+            7000,
+          );
+          return;
+        }
+        const data = await files[0].arrayBuffer();
+        if (data.byteLength > MAX_FILE_MB * 1000000) {
+          clearAndRestart();
+          showMessage(
+            editorContentElt,
+            `❌ File too big, there's a limit for now to ${MAX_FILE_MB} MB maximum.`,
+            7000,
+          );
+          return;
+        }
+        loadFile({ data, filename: files[0].name });
+      } catch (err) {
+        clearAndRestart();
+        showMessage(editorContentElt, "❌ " + err.toString(), 7000);
+      }
+      unblockUi();
+      statusBar.textContent = "Ready";
+      lastSavedContent = null;
+      saveState(false);
+    });
+  }
+  function onOpenClick() {
+    blockUi();
+    statusBar.textContent = "Loading file...";
+    env
+      .filePickerOpen({
+        title: "Open a text file stored on this Web Desktop",
+        allowMultipleSelections: false,
+      })
+      .then(
+        (files) => {
+          if (files.length === 0) {
+            clearAndRestart();
+            return;
+          }
+          if (files[0].data.byteLength > MAX_FILE_MB * 1000000) {
+            clearAndRestart();
+            showMessage(
+              editorContentElt,
+              `❌ File too big, there's a limit for now to ${MAX_FILE_MB} MB maximum.`,
+              7000,
+            );
+            return;
+          }
+          try {
+            loadFile(files[0]);
+          } catch (err) {
+            clearAndRestart();
+            showMessage(editorContentElt, "❌ " + err.toString(), 7000);
+          }
+          unblockUi();
+          statusBar.textContent = "Ready";
+          lastSavedContent = null;
+          saveState(false);
+        },
+        (err) => {
+          clearAndRestart();
+          showMessage(editorContentElt, "❌ " + err.toString(), 7000);
+        },
+      );
   }
 }
 

@@ -21,6 +21,10 @@ const DEFAULT_CANVAS_WIDTH = 800;
 
 export function create(_args, env, abortSignal) {
   const { strHtml, constructAppHeaderLine } = env.appUtils;
+
+  // TODO:  factorize all this. As this was one of the first app, I just wrote
+  // it too fast without thinking about organization yet.
+
   let lastX = 0;
   let lastY = 0;
   let startX = 0;
@@ -31,7 +35,9 @@ export function create(_args, env, abortSignal) {
   let currentSize = 15;
   let hasSomethingDrawnOnCanvas = false;
   let hasUpdatesToSave = true;
-  let currentFileHandle = null;
+  let currentFile = null;
+  let resizingState = null;
+  let isResizing = false;
 
   const history = [];
   let historyIndex = 0;
@@ -49,6 +55,67 @@ export function create(_args, env, abortSignal) {
     enableButton,
     disableButton,
   } = constructAppHeaderLine([
+    {
+      name: "upload",
+      onClick: () => {
+        // Trick to open the file picker
+        const fileInputElt = document.createElement("input");
+        fileInputElt.type = "file";
+        fileInputElt.accept = "image/*";
+        fileInputElt.multiple = false;
+        fileInputElt.click();
+        fileInputElt.addEventListener("change", (e) => {
+          const files = e.target.files;
+          if (!files[0]) {
+            return;
+          }
+          createImgFromFileUpload(files[0])
+            .then((img) => {
+              onNewImageLoaded({
+                img,
+                name: files[0].name,
+                type: files[0].type,
+              });
+            })
+            .catch((e) => {
+              showMessage(restOfAppElt, "❌ " + e.toString(), 5000);
+            });
+        });
+      },
+    },
+    {
+      name: "open",
+      onClick: () => {
+        env
+          .filePickerOpen({
+            title: "Open an image from files stored on this Web Desktop",
+            allowMultipleSelections: true,
+          })
+          .then(
+            (fileData) => {
+              if (!fileData || !fileData[0]) {
+                return;
+              }
+              createImgFromFileOpen(fileData[0])
+                .then(({ img, mimeType }) => {
+                  onNewImageLoaded({
+                    img,
+                    handle: fileData[0].handle,
+                    name: fileData[0].filename,
+                    type: mimeType,
+                  });
+                })
+                .catch((e) => {
+                  showMessage(restOfAppElt, "❌ " + e.toString(), 5000);
+                });
+            },
+            (err) => {
+              showMessage(restOfAppElt, "❌ " + err.toString(), 10000);
+            },
+          );
+      },
+    },
+    { name: "separator" },
     { name: "undo", onClick: undo },
     { name: "redo", onClick: redo },
     {
@@ -99,6 +166,7 @@ export function create(_args, env, abortSignal) {
   contentElt.appendChild(toolbarElt);
   const restOfAppElt = document.createElement("div");
   applyStyle(restOfAppElt, {
+    position: "relative",
     backgroundColor: "var(--app-primary-bg)",
     height: "100%",
     width: "100%",
@@ -106,8 +174,8 @@ export function create(_args, env, abortSignal) {
   });
   const canvasAreaElt = document.createElement("div");
   applyStyle(canvasAreaElt, {
-    width: String(DEFAULT_CANVAS_HEIGHT + 30) + "px",
-    height: String(DEFAULT_CANVAS_WIDTH + 30) + "px",
+    width: String(DEFAULT_CANVAS_WIDTH + 30) + "px",
+    height: String(DEFAULT_CANVAS_HEIGHT + 30) + "px",
     position: "relative",
   });
   const canvasContainerElt = document.createElement("div");
@@ -120,8 +188,6 @@ export function create(_args, env, abortSignal) {
   });
   canvasContainerElt.appendChild(canvas);
   canvasAreaElt.appendChild(canvasContainerElt);
-  let resizingState = null;
-  let isResizing = false;
   handleResizeOnCanvas(
     canvasContainerElt,
     { minHeight: 100, minWidth: 100 },
@@ -157,8 +223,8 @@ export function create(_args, env, abortSignal) {
 
   restOfAppElt.appendChild(canvasAreaElt);
   contentElt.appendChild(restOfAppElt);
-  canvas.width = String(DEFAULT_CANVAS_HEIGHT);
-  canvas.height = String(DEFAULT_CANVAS_WIDTH);
+  canvas.width = String(DEFAULT_CANVAS_WIDTH);
+  canvas.height = String(DEFAULT_CANVAS_HEIGHT);
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -316,6 +382,48 @@ export function create(_args, env, abortSignal) {
     },
   };
 
+  function onNewImageLoaded({ img, handle, name, type }) {
+    resizingState = null;
+    isResizing = false;
+    currentFile = {
+      handle: handle ?? null,
+      name: name ?? null,
+      type: type ?? "image/png",
+    };
+    lastX = 0;
+    lastY = 0;
+    startX = 0;
+    startY = 0;
+    isDrawing = false;
+    hasSomethingDrawnOnCanvas = false;
+    hasUpdatesToSave = true;
+    history.length = 0;
+    historyIndex = 0;
+    disableButton("undo");
+    disableButton("redo");
+    disableButton("clear");
+    disableButton("quick-save");
+    if (name) {
+      env.updateTitle("🖌️", name + " - Image Viewer");
+    } else {
+      env.updateTitle("🖌️", "Image Viewer");
+    }
+    applyStyle(canvasAreaElt, {
+      width: String(img.width + 30) + "px",
+      height: String(img.height + 30) + "px",
+    });
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // First fill everything white because those damn transparent image
+    // break everything
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.drawImage(img, 0, 0);
+  }
+
   /**
    * @param {KeyboardEvent} e
    */
@@ -325,7 +433,7 @@ export function create(_args, env, abortSignal) {
       case "s":
         if (e.ctrlKey) {
           e.preventDefault();
-          if (currentFileHandle) {
+          if (currentFile?.handle) {
             quickSave();
           } else {
             saveFile();
@@ -371,7 +479,9 @@ export function create(_args, env, abortSignal) {
       currentX > 0 &&
       currentX <= canvas.width &&
       currentY > 0 &&
-      currentY <= canvas.height;
+      currentY <= canvas.height &&
+      !toolbarElt.contains(e.target) &&
+      !headerElt.contains(e.target);
 
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
@@ -390,7 +500,7 @@ export function create(_args, env, abortSignal) {
             hasSomethingDrawnOnCanvas = true;
             enableButton("clear");
             enableButton("undo");
-            if (currentFileHandle) {
+            if (currentFile?.handle) {
               enableButton("quick-save");
             }
           }
@@ -403,7 +513,7 @@ export function create(_args, env, abortSignal) {
             hasSomethingDrawnOnCanvas = true;
             enableButton("clear");
             enableButton("undo");
-            if (currentFileHandle) {
+            if (currentFile?.handle) {
               enableButton("quick-save");
             }
           }
@@ -438,7 +548,7 @@ export function create(_args, env, abortSignal) {
             hasSomethingDrawnOnCanvas = true;
             enableButton("clear");
             enableButton("undo");
-            if (currentFileHandle) {
+            if (currentFile?.handle) {
               enableButton("quick-save");
             }
           }
@@ -460,7 +570,7 @@ export function create(_args, env, abortSignal) {
             hasSomethingDrawnOnCanvas = true;
             enableButton("clear");
             enableButton("undo");
-            if (currentFileHandle) {
+            if (currentFile?.handle) {
               enableButton("quick-save");
             }
           }
@@ -488,7 +598,7 @@ export function create(_args, env, abortSignal) {
             hasSomethingDrawnOnCanvas = true;
             enableButton("clear");
             enableButton("undo");
-            if (currentFileHandle) {
+            if (currentFile?.handle) {
               enableButton("quick-save");
             }
           }
@@ -512,7 +622,7 @@ export function create(_args, env, abortSignal) {
             hasSomethingDrawnOnCanvas = true;
             enableButton("clear");
             enableButton("undo");
-            if (currentFileHandle) {
+            if (currentFile?.handle) {
               enableButton("quick-save");
             }
           }
@@ -540,7 +650,7 @@ export function create(_args, env, abortSignal) {
             hasSomethingDrawnOnCanvas = true;
             enableButton("clear");
             enableButton("undo");
-            if (currentFileHandle) {
+            if (currentFile?.handle) {
               enableButton("quick-save");
             }
           }
@@ -746,14 +856,25 @@ export function create(_args, env, abortSignal) {
         const saveData = await env.filePickerSave({
           title: "Choose where to save your (magnificient 👌) painting",
           savedFileData,
-          savedFileName: "painting.png",
+          savedFileName: currentFile?.name ?? "painting.png",
         });
-        currentFileHandle = saveData?.handle ?? null;
+        if (!saveData) {
+          return;
+        }
+        currentFile = {
+          handle: saveData.handle ?? null,
+          name: saveData.filename ?? null,
+        };
+        if (saveData.filename) {
+          env.updateTitle("🖌️", saveData.filename + " - Image Viewer");
+        } else {
+          env.updateTitle("🖌️", "Image Viewer");
+        }
         disableButton("quick-save");
       } catch (err) {
         showMessage(wrapperElt, "❌ " + err.toString(), 10000);
       }
-    }, "image/png");
+    }, currentFile?.type ?? "image/png");
   }
 
   function quickSave() {
@@ -761,7 +882,7 @@ export function create(_args, env, abortSignal) {
     canvas.toBlob(async (blob) => {
       try {
         const savedFileData = await blob.arrayBuffer();
-        if (!currentFileHandle) {
+        if (!currentFile?.handle) {
           showMessage(
             wrapperElt,
             `❌ Cannot quick save: unknown file path.`,
@@ -769,7 +890,7 @@ export function create(_args, env, abortSignal) {
           );
           return;
         }
-        await env.quickSave(currentFileHandle, savedFileData);
+        await env.quickSave(currentFile.handle, savedFileData);
         if (hasUpdatesToSave) {
           enableButton("quick-save");
         } else {
@@ -785,7 +906,7 @@ export function create(_args, env, abortSignal) {
     if (!hasUpdatesToSave) {
       return;
     }
-    if (currentFileHandle) {
+    if (currentFile?.handle) {
       enableButton("quick-save");
     }
 
@@ -818,7 +939,7 @@ export function create(_args, env, abortSignal) {
       } else {
         disableButton("clear");
       }
-      if (currentFileHandle) {
+      if (currentFile?.handle) {
         enableButton("quick-save");
       }
     }
@@ -998,4 +1119,99 @@ function showMessage(containerElt, message, duration = 5000) {
       messageElt.remove();
     }, 350);
   }, duration);
+}
+
+function createImgFromFileUpload(file) {
+  if (!file.type.match("image.*")) {
+    showMessage(messageContainerElt, "❌ " + err.toString(), 10000);
+    return Promise.reject(new Error("This is not a recognized image format."));
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      const img = new Image();
+      img.onload = function () {
+        resolve(img);
+      };
+      img.onerror = function () {
+        reject(new Error("Error loading this image. Try a different file."));
+      };
+      img.src = event.target.result;
+    };
+
+    reader.onerror = function () {
+      reject(new Error("Error reading this file"));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+function createImgFromFileOpen(file) {
+  return new Promise((resolve, reject) => {
+    try {
+      const { filename, data: arrayBuffer } = file;
+      const img = new Image();
+      const mimeType = guessMimeType(filename, arrayBuffer);
+      const blob = new Blob([arrayBuffer], { type: mimeType });
+      const imgUrl = URL.createObjectURL(blob);
+      img.src = imgUrl;
+      img.onload = function () {
+        resolve({ img, mimeType });
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(imgUrl);
+        reject(
+          new Error("Failed to load a file. Are you sure this is an image?"),
+        );
+      };
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+// NOTE: Could be factorized with the image-viewer's (even the explorer) might
+// use this?
+function guessMimeType(filename, arrayBuffer) {
+  const uint8Array = new Uint8Array(arrayBuffer.slice(0, 4)); // Check first 4 bytes
+  const signature = Array.from(uint8Array)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .toUpperCase();
+
+  switch (signature) {
+    case "89504E47":
+      return "image/png";
+    case "FFD8FFDB":
+    case "FFD8FFE0":
+    case "FFD8FFE1":
+      return "image/jpeg";
+    case "47494638":
+      return "image/gif";
+    case "52494646":
+      return "image/webp";
+    case "49492A00":
+    case "4D4D002A":
+      return "image/tiff";
+    default: {
+      const extension = getFileExtension(filename);
+      if (extension) {
+        if (extension === "svg") {
+          return "image/svg+xml";
+        }
+        if (extension === "ico") {
+          return "image/x-icon";
+        }
+        return `image/${extension}`;
+      }
+      return "application/octet-stream"; // Fallback
+    }
+  }
+}
+
+function getFileExtension(filename) {
+  const dotIndex = filename.lastIndexOf(".");
+  return dotIndex === -1 ? "" : filename.slice(dotIndex + 1).toLowerCase();
 }

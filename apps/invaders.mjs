@@ -1,5 +1,3 @@
-// NOTE: This one was very quickly done before posting to HN, it may be
-// completely broken and not fun.
 const LEFT_KEYS = ["a", "arrowleft"];
 const RIGHT_KEYS = ["d", "arrowright"];
 
@@ -49,6 +47,29 @@ export function create() {
   });
   gameContainer.appendChild(playerElt);
 
+  const startScreen = document.createElement("div");
+  applyStyle(startScreen, {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    // backgroundColor: "var(--window-content-bg)",
+    // color: "var(--window-text-color)",
+    backgroundColor: "var(--window-active-header)",
+    color: "var(--window-active-header-text)",
+    border: "1px solid var(--window-active-header-text)",
+    fontSize: "24px",
+    textAlign: "center",
+    display: "none",
+    zIndex: "1001",
+    padding: "20px",
+    borderRadius: "10px",
+  });
+  startScreen.innerHTML =
+    'GAME OVER<br><span style="font-size: 16px;">Press R or Click to restart</span>';
+  startScreen.innerHTML = `Invaders!<br><span style="font-size: ${config.hudSize}px;">Press Space or Click to Start</span>`;
+  gameContainer.appendChild(startScreen);
+
   const gameOverScreen = document.createElement("div");
   applyStyle(gameOverScreen, {
     position: "absolute",
@@ -93,6 +114,7 @@ export function create() {
       enemyBullets: [],
       barriers: [],
       score: 0,
+      started: false,
       gameOver: false,
       lastShot: 0,
       enemyDirection: 1,
@@ -109,6 +131,7 @@ export function create() {
     config = {
       playerSpeed: 0.008 * gameState.gameWidth,
       bulletSpeed: 0.015 * gameState.gameHeight,
+      enemyBulletSpeed: 0.005 * gameState.gameHeight,
       enemyBaseSpeed: 0.002 * gameState.gameWidth,
       enemySuppSpeed: 0,
       enemyDropDistance: 0.05 * gameState.gameHeight,
@@ -227,8 +250,11 @@ export function create() {
   }
 
   function shoot() {
+    if (!gameState.started || gameState.gameOver) {
+      return;
+    }
     const now = performance.now();
-    if (now - gameState.lastShot > config.fireRate && !gameState.gameOver) {
+    if (now - gameState.lastShot > config.fireRate) {
       const bulletSize = config.bulletSize;
       const bullet = {
         x: gameState.player.x + gameState.player.width / 2 - bulletSize / 2,
@@ -291,7 +317,7 @@ export function create() {
     });
 
     gameState.enemyBullets = gameState.enemyBullets.filter((bullet) => {
-      bullet.y += config.bulletSpeed * 0.7;
+      bullet.y += config.enemyBulletSpeed;
       if (bullet.y >= gameState.height + bullet.height) {
         bullet.element.remove();
         return false;
@@ -538,12 +564,19 @@ export function create() {
       gameOverScreen.style.fontSize = config.hudSize * 1.5 + "px";
       gameOverScreen.innerHTML = `GAME OVER<br>FINAL SCORE: ${gameState.score}<br><span style="font-size: ${config.hudSize}px;">Press R or Click to restart</span>`;
     } else {
+      if (!gameState.started) {
+        startScreen.style.display = "block";
+        startScreen.style.fontSize = config.hudSize * 1.5 + "px";
+        startScreen.innerHTML = `Invaders!<br><span style="font-size: ${config.hudSize}px;">Press Space or Click to Start</span>`;
+      } else {
+        startScreen.style.display = "none";
+      }
       gameOverScreen.style.display = "none";
     }
   }
 
   function tick() {
-    if (!gameState.gameOver) {
+    if (!gameState.gameOver && gameState.started) {
       updatePlayer();
       updateBullets();
       updateEnemies();
@@ -574,7 +607,6 @@ export function create() {
       });
       resizeObserver.observe(gameContainer);
     }
-    updateGameSize();
     tick();
   }
 
@@ -606,7 +638,11 @@ export function create() {
 
     if (keyPressed === " ") {
       e.preventDefault();
-      shoot();
+      if (!gameState.started) {
+        gameState.started = true;
+      } else {
+        shoot();
+      }
     }
 
     if (keyPressed === "r" && gameState.gameOver) {
@@ -619,6 +655,9 @@ export function create() {
   }
 
   function onMouseMove(e) {
+    if (!gameState.started || gameState.gameOver) {
+      return;
+    }
     let clientX;
     if (e.touches?.length) {
       if (e.touches.length > 1) {
@@ -646,6 +685,8 @@ export function create() {
   function onClick() {
     if (gameState.gameOver) {
       restartGame();
+    } else if (!gameState.started) {
+      gameState.started = true;
     }
   }
 }

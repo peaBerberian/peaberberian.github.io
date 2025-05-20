@@ -721,6 +721,7 @@ export const SETTINGS = {
    * Defines a color used inside windows for disabled elements and colors that
    * should be set as a background (e.g. in a button), as an hex-encoded 24 bits
    * color.
+   * TODO: rename `disabledColor`?
    */
   appPrimaryBgColor: createRefForState(
     "app-primary-bg",

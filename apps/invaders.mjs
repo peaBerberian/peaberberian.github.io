@@ -4,12 +4,12 @@ const RIGHT_KEYS = ["d", "arrowright"];
 const PLAYER_CHAR = "🛩️";
 const PLAYER_DAMAGE_CHAR = "💥";
 
-export function create() {
+export function create(_args, env) {
   const gameContainer = document.createElement("div");
   applyStyle(gameContainer, {
     width: "100%",
     height: "100%",
-    backgroundColor: "var(--window-active-header)",
+    backgroundColor: env.STYLE.windowActiveHeader,
     position: "relative",
     overflow: "hidden",
     fontFamily: "monospace",
@@ -30,7 +30,7 @@ export function create() {
     position: "absolute",
     top: "10px",
     left: "10px",
-    color: "var(--window-active-header-text)",
+    color: env.STYLE.windowActiveHeaderText,
     fontSize: Math.max(12, gameState.gameWidth * 0.025) + "px",
     zIndex: "1000",
     fontWeight: "bold",
@@ -53,11 +53,9 @@ export function create() {
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    // backgroundColor: "var(--window-content-bg)",
-    // color: "var(--window-text-color)",
-    backgroundColor: "var(--window-active-header)",
-    color: "var(--window-active-header-text)",
-    border: "1px solid var(--window-active-header-text)",
+    backgroundColor: env.STYLE.windowActiveHeader,
+    color: env.STYLE.windowActiveHeaderText,
+    border: "1px solid " + env.STYLE.windowActiveHeaderText,
     fontSize: "24px",
     textAlign: "center",
     display: "none",
@@ -76,10 +74,8 @@ export function create() {
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    // backgroundColor: "var(--window-content-bg)",
-    // color: "var(--window-text-color)",
-    backgroundColor: "var(--window-active-header)",
-    color: "var(--window-active-header-text)",
+    backgroundColor: env.STYLE.windowActiveHeader,
+    color: env.STYLE.windowActiveHeaderText,
     fontSize: "24px",
     textAlign: "center",
     display: "none",
@@ -273,7 +269,7 @@ export function create() {
         height: bullet.height + "px",
         borderRadius: config.bulletSize + "px",
         fontSize: config.bulletSize + "px",
-        backgroundColor: "var(--window-active-header-text)",
+        backgroundColor: env.STYLE.windowActiveHeaderText,
         userSelect: "none",
       });
       gameContainer.appendChild(bulletElt);
@@ -379,7 +375,7 @@ export function create() {
         left: bullet.x + "px",
         top: bullet.y + "px",
         fontSize: config.bulletSize + "px",
-        border: "1px solid var(--window-active-header-text)",
+        border: "1px solid " + env.STYLE.windowActiveHeaderText,
         transform: "translate(2px, 2px)",
         backgroundColor: "red",
         width: bullet.width + "px",

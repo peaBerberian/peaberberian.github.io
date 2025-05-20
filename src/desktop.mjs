@@ -5,15 +5,16 @@
 //
 // high priority:
 // - Storage settings
-// - context menu
+// - context menu in desktop, taskbar, start menu, and explorer at least?
 // - notification system
-// - Finish save work (save handles for apps)
+// - ctrl+s in paint and note
 //
 // medium priority:
 // - image viewer touch controls
 // - Actually enforce permissions by adding iframe with sandbox="allow-scripts"
 // - start menu should always do some kind of sublist when sublists are enabled
 // - copy svg in passgen is broken on multiple devices
+// - paint can open images
 //
 // low priority:
 // - filesystem: Proxy local storage in `/system32/`?

@@ -1,4 +1,4 @@
-# peaberberian.github.io
+# Paul's Web Desktop
 
 This is my personal website, which takes the form of a desktop environment,
 done with no external library nor dependency (besides a JS bundler to produce

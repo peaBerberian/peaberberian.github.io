@@ -40,10 +40,7 @@
       "icon": "💽",
       "defaultHeight": 400,
       "defaultWidth": 460,
-      "dependencies": ["open"],
-      "preload": {
-        "after": 150
-      }
+      "dependencies": ["open"]
     },
     {
       "id": "explorer",

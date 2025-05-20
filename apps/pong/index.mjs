@@ -162,7 +162,7 @@ export function create(_args, env, abortSignal) {
     // As a quick win to make the game more alive, I just randomize the enemy
     // speed each collision with the user
     // This may be totally nonsensical, I'm not too used to that type of dev.
-    let currEnemySpeed = 15;
+    let currEnemySpeed = 8;
 
     drawTheObjects(false, false);
 
@@ -195,10 +195,14 @@ export function create(_args, env, abortSignal) {
       // Move the enemy paddle
       // TODO: Stop iterating with insane logic and find a good smart one :D
       const paddleCenter = enemyPaddle.y + PADDLE_HEIGHT / 2;
-      if (paddleCenter < ball.y - 10) {
-        enemyPaddle.y += Math.min(2 + currEnemySpeed, ball.y - paddleCenter);
+      if (paddleCenter < ball.y - 20) {
+        enemyPaddle.y += Math.min(12, ball.y - paddleCenter, currEnemySpeed);
+      } else if (paddleCenter > ball.y + 20) {
+        enemyPaddle.y -= Math.min(12, paddleCenter - ball.y, currEnemySpeed);
+      } else if (paddleCenter < ball.y - 10) {
+        enemyPaddle.y += Math.min(7, ball.y - paddleCenter, currEnemySpeed);
       } else if (paddleCenter > ball.y + 10) {
-        enemyPaddle.y -= Math.min(paddleCenter - ball.y, 2 + currEnemySpeed);
+        enemyPaddle.y -= Math.min(7, paddleCenter - ball.y, currEnemySpeed);
       } else if (paddleCenter < ball.y - 5) {
         enemyPaddle.y += 1;
       } else if (paddleCenter > ball.y + 5) {
@@ -226,16 +230,17 @@ export function create(_args, env, abortSignal) {
       } else if (ball.dx > 0) {
         if (checkPaddleBallCollision(userPaddle, ball)) {
           // Mario Kart that thing
+          // NOTE: before the
           if (rightScore - leftScore > 3) {
-            currEnemySpeed = 15;
+            currEnemySpeed = 12;
           } else if (rightScore - leftScore >= 2) {
-            currEnemySpeed = getRandomNumber(9, 13);
+            currEnemySpeed = getRandomNumber(10, 12);
           } else if (rightScore - leftScore <= -1) {
-            currEnemySpeed = getRandomNumber(0, 5);
+            currEnemySpeed = getRandomNumber(9, 11);
           } else if (rightScore - leftScore <= -3) {
-            currEnemySpeed = 0;
+            currEnemySpeed = getRandomNumber(8, 10);
           } else {
-            currEnemySpeed = getRandomNumber(0, 10);
+            currEnemySpeed = 5;
           }
         }
       }

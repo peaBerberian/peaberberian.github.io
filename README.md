@@ -26,12 +26,12 @@ here that I find interesting:
 
   Going a step further and serving apps from a different domain than the desktop
   allows parallelization and data isolation (thanks to a browser's cross-origin
-  mechanisms), so that's what I do in my hosted demo (though both multi-
-  domains and single-domain works with this project).
+  mechanisms), so that's what I do in my hosted demo for some of them (the
+  ones declared as "sandboxed" in the config).
 
-  It means that apps have no way to access what was not voluntarly provided to
-  it and also that a frozen application does not hang the whole desktop, like
-  it would without such isolation.
+  It means that those apps have no way to access what was not voluntarly
+  provided to it and also that a frozen application does not hang the whole
+  desktop, like it would without such isolation.
 
 - I implemented a "filesystem", mostly backed by [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)-based
   storage.

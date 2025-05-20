@@ -1,5 +1,3 @@
-import strHtml from "./str-html.mjs";
-
 /**
  * Function adding an event listener also accepting an `AbortSignal` for
  * automatic removal of that event listener.
@@ -156,15 +154,26 @@ export function createExternalIframe(url, backgroundColor) {
  * @returns {HTMLElement} - The sidebar `HTMLElement`.
  */
 export function constructSidebarElt(sections, onChangeSection) {
-  const sidebarElt = strHtml`<div class="w-sidebar"/>`;
+  const sidebarElt = document.createElement("div");
+  sidebarElt.className = "w-sidebar";
 
   const sidebarItemElements = sections.map((item) => {
-    const itemIcon = item.icon
-      ? strHtml`<span class="w-sidebar-icon">${item.icon}</span>`
-      : null;
-    const itemElement = strHtml`<div class="w-sidebar-item${item.active ? " active" : ""}" tabindex="0">
-${itemIcon}${item.text}
-</div>`;
+    const itemElement = document.createElement("div");
+    itemElement.className = "w-sidebar-item" + (item.active ? " active" : "");
+    itemElement.tabIndex = "0";
+
+    if (item.icon) {
+      const itemIcon = document.createElement("span");
+      itemIcon.className = "w-sidebar-icon";
+      itemIcon.textContent = item.icon;
+      itemElement.appendChild(itemIcon);
+    }
+
+    const itemTitle = document.createElement("span");
+    itemTitle.className = "w-sidebar-title";
+    itemTitle.textContent = item.text;
+    itemElement.appendChild(itemTitle);
+
     itemElement.onkeydown = (e) => {
       if (e.key === "Enter") {
         itemElement.click();
@@ -664,11 +673,13 @@ export function getErrorApp(err) {
     padding: "10px",
     overflow: "auto",
   });
-  errorElt.appendChild(strHtml`<div>
-<h2>Oh no! This application crashed... 😿</h2>
-<p>Failed to load this application due to the following error:</p>
-<p style="font-family:monospace">${err.toString()}</p>
-</div>
-`);
+  const errorDiv = document.createElement("div");
+  errorDiv.innerHTML = `<h2>Oh no! This application crashed... 😿</h2>
+<p>Failed to load this application due to the following error:</p>`;
+  const pErrorMsgElt = document.createElement("p");
+  pErrorMsgElt.style.fontFamily = "monospace";
+  pErrorMsgElt.textContent = err.toString();
+  errorDiv.appendChild(pErrorMsgElt);
+  errorElt.appendChild(errorDiv);
   return { element: errorElt };
 }

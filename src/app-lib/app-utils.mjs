@@ -1,6 +1,5 @@
 import setUpContextMenu from "../components/context-menu.mjs";
 import { codeImgSvg, demoImgSvg, docImgSvg } from "../constants.mjs";
-import strHtml from "../str-html.mjs";
 import { constructSidebarElt, createExternalIframe } from "../utils.mjs";
 import { constructAppHeaderLine } from "./header-line.mjs";
 
@@ -26,7 +25,11 @@ export function getAppUtils() {
  * @returns {HTMLElement}
  */
 function createAppTitle(title, ql) {
-  return strHtml`<h2 class="app-title">${title} ${constructQuicklinks(ql ?? {})}</h2>`;
+  const h2Elt = document.createElement("h2");
+  h2Elt.className = "app-title";
+  h2Elt.appendChild(document.createTextNode(title));
+  h2Elt.appendChild(constructQuicklinks(ql ?? {}));
+  return h2Elt;
 }
 
 /**
@@ -42,9 +45,12 @@ function constructQuicklinks(ql) {
     imgWrapper.className = "quicklink-img";
     imgWrapper.title = "Link to its demo page";
     imgWrapper.alt = "Link to demo page";
-    links.push(
-      strHtml`<a class="quicklink-link" href="${ql.demo}" target="_blank">${imgWrapper}</a>`,
-    );
+    const aElt = document.createElement("a");
+    aElt.className = "quicklink-link";
+    aElt.href = ql.demo;
+    aElt.target = "_blank";
+    aElt.appendChild(imgWrapper);
+    links.push(aElt);
   }
   if (ql.github) {
     const imgWrapper = document.createElement("span");
@@ -52,9 +58,12 @@ function constructQuicklinks(ql) {
     imgWrapper.className = "quicklink-img";
     imgWrapper.title = "Link to its code repository";
     imgWrapper.alt = "Link to its code repository";
-    links.push(
-      strHtml`<a class="quicklink-link" href="${ql.github}" target="_blank">${imgWrapper}</a>`,
-    );
+    const aElt = document.createElement("a");
+    aElt.className = "quicklink-link";
+    aElt.href = ql.github;
+    aElt.target = "_blank";
+    aElt.appendChild(imgWrapper);
+    links.push(aElt);
   }
   if (ql.doc) {
     const imgWrapper = document.createElement("span");
@@ -62,11 +71,19 @@ function constructQuicklinks(ql) {
     imgWrapper.className = "quicklink-img";
     imgWrapper.title = "Link to its API documentation";
     imgWrapper.alt = "Link to its API documentation";
-    links.push(
-      strHtml`<a class="quicklink-link" href="${ql.doc}" target="_blank">${imgWrapper}</a>`,
-    );
+    const aElt = document.createElement("a");
+    aElt.className = "quicklink-link";
+    aElt.href = ql.doc;
+    aElt.target = "_blank";
+    aElt.appendChild(imgWrapper);
+    links.push(aElt);
   }
-  return strHtml`<span class="quickLinks">${links}</span>`;
+  const quickLinksElt = document.createElement("span");
+  quickLinksElt.className = "quickLinks";
+  for (const lnk of links) {
+    quickLinksElt.appendChild(lnk);
+  }
+  return quickLinksElt;
 }
 
 /**
@@ -77,7 +94,10 @@ function constructQuicklinks(ql) {
  * @returns {HTMLElement}
  */
 function createFullscreenButton(abortSignal) {
-  const fullscreenButton = strHtml`<input class="btn" type="button" value="">`;
+  const fullscreenButton = document.createElement("input");
+  fullscreenButton.className = "btn";
+  fullscreenButton.type = "button";
+  fullscreenButton.value = "";
   function updateFullScreenText() {
     const fullscreenText =
       document.fullscreenElement === null

@@ -295,13 +295,6 @@ ol {
   overflow-y: auto;
 }
 
-.w-sidebar-title {
-  padding: 20px 15px;
-  font-size: 1.3em;
-  font-weight: 500;
-  border-bottom: 1px solid var(--window-line-color);
-}
-
 .w-sidebar-item {
   padding: 15px;
   cursor: pointer;

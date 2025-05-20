@@ -35,7 +35,6 @@ export function constructAppWithSidebar(sections, abortSignal) {
     childAbortController.abort();
   });
 
-  // const sidebarTitle = strHtml`<div class="sidebar-title">...</div>`;
   const container = document.createElement("div");
   container.className = "w-container";
   const content = document.createElement("div");

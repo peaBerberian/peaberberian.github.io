@@ -149,6 +149,7 @@
       "defaultWidth": 300,
       "dependencies": [],
       "sandboxed": true,
+      "defaultBackground": "barBg",
       "startMenu": {
         "list": "Desktop Apps"
       },
@@ -160,8 +161,8 @@
       "id": "invaders",
       "title": "Invaders",
       "icon": "👾",
-      "defaultHeight": 400,
-      "defaultWidth": 600,
+      "defaultHeight": 600,
+      "defaultWidth": 800,
       "sandboxed": true,
       "defaultBackground": "windowActiveHeader",
       "startMenu": {
@@ -178,6 +179,7 @@
       "defaultHeight": 700,
       "defaultWidth": 600,
       "sandboxed": true,
+      "defaultBackground": "barBg",
       "startMenu": {
         "list": "Games"
       },

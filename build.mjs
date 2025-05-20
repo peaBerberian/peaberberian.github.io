@@ -433,7 +433,9 @@ export default [`;
 
         case "defaultBackground": {
           if (
-            !["windowActiveHeader", "bgColor"].includes(app.defaultBackground)
+            !["windowActiveHeader", "bgColor", "barBg"].includes(
+              app.defaultBackground,
+            )
           ) {
             throw new Error(
               `Error in app "${app.id}". Invalid "defaultBackground" property: unsupported value.`,

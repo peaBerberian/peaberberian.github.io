@@ -608,6 +608,15 @@ export default [`;
               `Error in app "${app.id}". Invalid "sandboxed" property: should be a boolean.`,
             );
           }
+          if (Array.isArray(app.dependencies)) {
+            for (const dep of app.dependencies) {
+              if (["CONSTANTS", "settings", "fileSystems"].includes(dep)) {
+                throw new Error(
+                  `Error in app "${app.id}". Invalid "sandboxed" property: incompatible with asked dependencies.`,
+                );
+              }
+            }
+          }
           break;
 
         case "defaultBackground": {
@@ -664,6 +673,7 @@ export default [`;
           for (const dep of app.dependencies) {
             if (
               ![
+                "CONSTANTS",
                 "settings",
                 "notificationEmitter",
                 "filesystem",

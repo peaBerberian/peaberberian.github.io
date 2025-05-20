@@ -183,7 +183,7 @@
       }
     },
     {
-      "id": "rx-player",
+      "id": "other_projects_rx-player",
       "title": "RxPlayer",
       "icon": "⏯️",
       "defaultHeight": 720,
@@ -196,7 +196,7 @@
       }
     },
     {
-      "id": "wasp-hls",
+      "id": "other_projects_wasp-hls",
       "title": "WASP-HLS",
       "icon": "🐝",
       "defaultHeight": 720,
@@ -209,7 +209,7 @@
       }
     },
     {
-      "id": "rx-paired",
+      "id": "other_projects_rx-paired",
       "title": "RxPaired",
       "icon": "📈",
       "defaultHeight": 700,
@@ -222,7 +222,7 @@
       }
     },
     {
-      "id": "eme-spy",
+      "id": "other_projects_eme-spy",
       "title": "EMESpy",
       "icon": "🕵️",
       "defaultHeight": 500,
@@ -235,7 +235,7 @@
       }
     },
     {
-      "id": "mse-spy",
+      "id": "other_projects_mse-spy",
       "title": "MSESpy",
       "icon": "👓",
       "defaultHeight": 500,
@@ -248,7 +248,7 @@
       }
     },
     {
-      "id": "isobmff-inspector",
+      "id": "other_projects_isobmff-inspector",
       "title": "isobmff-inspector",
       "icon": "📹",
       "startMenu": {
@@ -259,7 +259,7 @@
       }
     },
     {
-      "id": "gif-renderer",
+      "id": "other_projects_gif-renderer",
       "title": "gif-renderer.rs",
       "icon": "🏇",
       "startMenu": {
@@ -270,7 +270,7 @@
       }
     },
     {
-      "id": "str-html",
+      "id": "other_projects_str-html",
       "title": "str-html",
       "icon": "📄",
       "startMenu": {
@@ -281,7 +281,7 @@
       }
     },
     {
-      "id": "readme",
+      "id": "other_projects_readme",
       "title": "README",
       "icon": "📖",
       "startMenu": {
@@ -292,7 +292,7 @@
       }
     },
     {
-      "id": "keyboard9",
+      "id": "other_projects_keyboard9",
       "title": "keyboard9",
       "icon": "⌨️",
       "startMenu": {
@@ -303,7 +303,7 @@
       }
     },
     {
-      "id": "bif-inspector",
+      "id": "other_projects_bif-inspector",
       "title": "bif-inspector",
       "icon": "🖼️",
       "startMenu": {

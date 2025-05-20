@@ -1,13 +1,11 @@
 // TODO: Move to its own, "explorer", application
 //
 // TODO: image thumbnails
-// TODO: Drag and drop in directory?
-// TODO: Cut (Move) button
-// TODO: Paste (Move) button
+// TODO: Drag and drop in directory and other apps
 // TODO: Better touch handling
-// TODO: check mv inside itself if it works
 // TODO: escape when there's a mask
 // TODO: Download multiple files as zip through Compress API?
+// TODO: context menu could make sense to begin here
 
 import { constructAppHeaderLine } from "../header-line.mjs";
 import renderDirectory from "./render_directory.mjs";
@@ -23,7 +21,14 @@ import {
   linkAbortControllerToSignal,
   showAppMessage,
   renameSvg,
+  cutSvg,
+  pasteSvg,
 } from "./utils.mjs";
+import {
+  askUserForUpload,
+  askForUserInput,
+  spawnConfirmDialog,
+} from "./dialogs.mjs";
 
 export function createFileOpener(
   { title, allowMultipleSelections, baseDirectory = "/userdata/" } = {},
@@ -45,7 +50,9 @@ export function createFileOpener(
    * Currently displayed path.
    * @type {string}
    */
-  let currentPath = baseDirectory;
+  let currentPath = baseDirectory.endsWith("/")
+    ? baseDirectory
+    : baseDirectory + "/";
 
   /**
    * Flex container of the various components of the file picker.
@@ -65,13 +72,36 @@ export function createFileOpener(
   let pathBarElt = constructPathBarElement(currentPath, navigateToPath);
   explorerElt.appendChild(pathBarElt);
 
+  /**
+   * The "clipboard", basically, allowing to move around files.
+   */
+  let cuttedSelection = [];
+
+  /**
+   * The currently visually-selected items in the directory part.
+   */
+  let selectedItems = [];
+
+  /**
+   * If `true` the application is currently the active one.
+   * If `false`, it does not have the focus.
+   *
+   * Useful to determine if we should be catching keys.
+   */
+  let isAppActivated = false;
+
+  /**
+   * The directory rendering itself is done by another function. This is the
+   * component object of the active directory render function.
+   */
+  let currentDirectoryComponent;
+
   // Create the toolbar now
 
-  let selectedItems = [];
   const {
-    element: filePickerHeaderElt,
-    enableButton: enableHeaderButton,
-    disableButton: disableHeaderButton,
+    element: filePickerToolsElt,
+    enableButton: enableToolButton,
+    disableButton: disableToolButton,
   } = constructAppHeaderLine([
     {
       name: "undo",
@@ -96,68 +126,12 @@ export function createFileOpener(
     {
       name: "upload",
       title: "Upload Files",
-      onClick: () => {
-        currentDirElementInfo?.onDeactivate();
-        const maskContainer = addBlockingMask(explorerElt);
-        uploadFiles(filesystem, currentPath, allowMultipleSelections).then(
-          (items) => {
-            currentDirElementInfo?.onActivate();
-            removeBlockingMask(maskContainer, explorerElt);
-            if (items.length > 0) {
-              if (items.length === 1) {
-                showAppMessage(containerElt, `File uploaded successfully`);
-              } else {
-                showAppMessage(
-                  containerElt,
-                  `${items.length} files uploaded successfully`,
-                );
-              }
-              navigateToPath(currentPath);
-            }
-          },
-          (err) => {
-            currentDirElementInfo?.onActivate();
-            removeBlockingMask(maskContainer, explorerElt);
-            showError(containerElt, err.message);
-          },
-        );
-      },
+      onClick: onUploadClick,
     },
     {
       name: "download",
       title: "Download file",
-      onClick: () => {
-        if (selectedItems.length === 0) {
-          return;
-        }
-        currentDirElementInfo?.onDeactivate();
-        const maskContainer = addBlockingMask(explorerElt);
-        const { name, path } = selectedItems[0];
-        return filesystem.readFile(path, "arraybuffer").then(
-          (fileData) => {
-            const blob = new Blob([fileData], {
-              type: "application/octet-stream",
-            });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = name;
-            a.style.display = "none";
-            a.click();
-            setTimeout(() => {
-              URL.revokeObjectURL(url);
-            }, 100);
-            currentDirElementInfo?.onActivate();
-            removeBlockingMask(maskContainer, explorerElt);
-          },
-          (err) => {
-            showError(
-              containerElt,
-              `Failed to create download: ${err.message}`,
-            );
-          },
-        );
-      },
+      onClick: onDownloadClick,
     },
     { name: "separator" },
     {
@@ -165,17 +139,7 @@ export function createFileOpener(
       height: "1em",
       title: "New Directory",
       svg: newDirectorySvg,
-      onClick: () => {
-        currentDirElementInfo?.onDeactivate();
-        createNewDirectory(filesystem, currentPath, explorerElt).then(
-          (refresh) => {
-            currentDirElementInfo?.onActivate();
-            if (refresh) {
-              navigateToPath(currentPath);
-            }
-          },
-        );
-      },
+      onClick: onNewDirClick,
     },
     {
       name: "clear",
@@ -188,27 +152,26 @@ export function createFileOpener(
       height: "1em",
       title: "Rename item",
       svg: renameSvg,
-      onClick: () => {
-        if (selectedItems.length === 0) {
-          return;
-        }
-        currentDirElementInfo?.onDeactivate();
-        renameItem(
-          filesystem,
-          currentPath,
-          selectedItems[0].name,
-          selectedItems[0].isDirectory,
-          explorerElt,
-        ).then((refresh) => {
-          currentDirElementInfo?.onActivate();
-          if (refresh) {
-            navigateToPath(currentPath);
-          }
-        });
-      },
+      onClick: onRenameClick,
+    },
+    { name: "separator" },
+    {
+      name: "cut",
+      height: "1em",
+      title: "Cut (selection)",
+      svg: cutSvg,
+      onClick: () => cutItems(selectedItems),
+    },
+    {
+      name: "paste",
+      height: "1em",
+      title: "Paste",
+      svg: pasteSvg,
+      onClick: pasteItems,
     },
   ]);
-  explorerElt.appendChild(filePickerHeaderElt);
+  updateToolButtons(currentPath, selectedItems);
+  explorerElt.appendChild(filePickerToolsElt);
 
   /**
    * Central element where the various files and directories will be displayed
@@ -225,6 +188,10 @@ export function createFileOpener(
   });
   explorerElt.appendChild(directoryContainer);
 
+  /**
+   * Optional warning element that shows in yellow below the directory space.
+   * @type {HTMLElement}
+   */
   const warningElt = document.createElement("div");
   applyStyle(warningElt, {
     padding: "5px",
@@ -286,121 +253,97 @@ export function createFileOpener(
   explorerContainer.appendChild(explorerElt);
   containerElt.appendChild(explorerContainer);
 
-  let isAppActivated = false;
-  let currentDirElementInfo;
   navigateToPath(currentPath);
   return {
     element: containerElt,
     onActivate: () => {
       isAppActivated = true;
-      currentDirElementInfo?.onActivate();
+      currentDirectoryComponent?.onActivate();
     },
     onDeactivate: () => {
       isAppActivated = false;
-      currentDirElementInfo?.onDeactivate();
+      currentDirectoryComponent?.onDeactivate();
     },
   };
 
   async function navigateToPath(path) {
-    currentDirElementInfo?.onDeactivate();
+    currentDirectoryComponent?.onDeactivate();
     currentDirectoryAbortController.abort();
     currentDirectoryAbortController = new AbortController();
     linkAbortControllerToSignal(currentDirectoryAbortController, abortSignal);
-    if (path === "/") {
-      disableHeaderButton("previous");
-    } else {
-      enableHeaderButton("previous");
-    }
 
-    disableHeaderButton("rename");
-    disableHeaderButton("download");
-    disableHeaderButton("clear");
     if (path.startsWith("/userdata/") || path === "/userdata") {
-      if (path === "/userdata/" || path === "/userdata") {
-        disableHeaderButton("home");
-      } else {
-        enableHeaderButton("home");
-      }
-      enableHeaderButton("newDir");
-      enableHeaderButton("newFile");
-      enableHeaderButton("upload");
       warningElt.style.display = "none";
     } else {
-      enableHeaderButton("home");
-      disableHeaderButton("newDir");
-      disableHeaderButton("newFile");
-      disableHeaderButton("upload");
       warningElt.style.display = "block";
     }
-    currentPath = path;
+
+    currentPath = path.endsWith("/") ? path : path + "/";
+    selectedItems = [];
     const newPathBarElt = constructPathBarElement(path, navigateToPath);
     pathBarElt.replaceWith(newPathBarElt);
     pathBarElt = newPathBarElt;
+
+    updateToolButtons(currentPath, selectedItems);
     const entries = await filesystem.readDir(path);
     if (currentDirectoryAbortController.signal.aborted) {
       return;
     }
 
     try {
-      currentDirElementInfo = renderDirectory({
+      currentDirectoryComponent = renderDirectory({
         entries,
         path,
-        allowMultipleSelections,
         callbacks: {
           navigateTo: navigateToPath,
           escape: () => onFilesOpened([]),
           deleteItems,
+          cutItems,
+          pasteItems,
           onSelectionChange: (items) => {
             selectedItems = items;
-            updateStatusElement(statusElt, allowMultipleSelections, items);
-            if (
-              (!currentPath.startsWith("/userdata/") &&
-                currentPath !== "/userdata") ||
-              selectedItems.length !== 1
-            ) {
-              disableHeaderButton("rename");
-            } else {
-              enableHeaderButton("rename");
-            }
-            if (selectedItems.length !== 1 || selectedItems[0].isDirectory) {
-              disableHeaderButton("download");
-            } else {
-              enableHeaderButton("download");
-            }
+            updateStatusElement(statusElt, items);
+            updateToolButtons(currentPath, selectedItems);
 
-            if (
-              (!currentPath.startsWith("/userdata/") &&
-                currentPath !== "/userdata") ||
-              items.length === 0
-            ) {
-              disableHeaderButton("clear");
-            } else {
-              enableHeaderButton("clear");
-            }
             if (items.length === 0 || items.some((x) => x.isDirectory)) {
               disableButton(openButton);
               openButton.onclick = null;
             } else {
-              enableHighlightedButton(openButton);
-              openButton.onclick = () =>
-                onFilesOpened(items.map((x) => x.path));
+              if (!allowMultipleSelections && items.length > 1) {
+                disableButton(openButton);
+                openButton.onclick = null;
+              } else {
+                enableHighlightedButton(openButton);
+                openButton.onclick = () =>
+                  onFilesOpened(items.map((x) => x.path));
+              }
             }
           },
-          openFiles: (items) => onFilesOpened(items.map((x) => x.path)),
+          openFiles: (items) => {
+            if (!allowMultipleSelections && items.length > 1) {
+              showError(selectionZoneElt, `Choose only one file.`);
+            } else {
+              onFilesOpened(items.map((x) => x.path));
+            }
+          },
         },
       });
+      if (cuttedSelection.length > 0) {
+        currentDirectoryComponent.signalCutAction(cuttedSelection);
+      }
       directoryContainer.innerHTML = "";
-      directoryContainer.appendChild(currentDirElementInfo.element);
+      directoryContainer.appendChild(currentDirectoryComponent.element);
       if (isAppActivated) {
-        currentDirElementInfo.onActivate();
+        currentDirectoryComponent.onActivate();
       } else {
-        currentDirElementInfo.onDeactivate();
+        currentDirectoryComponent.onDeactivate();
       }
     } catch (err) {
       showError(selectionZoneElt, `Error loading directory: ${err.message}`);
     }
-    updateStatusElement(statusElt, allowMultipleSelections, []);
+    updateStatusElement(statusElt, []);
   }
+
   function navigateToParent() {
     if (currentPath === "/") {
       return;
@@ -415,27 +358,191 @@ export function createFileOpener(
     if (items.length === 0) {
       return;
     }
-    currentDirElementInfo?.onDeactivate();
+    currentDirectoryComponent?.onDeactivate();
     performItemsDeletion(filesystem, items, explorerElt).then((refresh) => {
-      currentDirElementInfo?.onActivate();
+      currentDirectoryComponent?.onActivate();
       if (refresh) {
         navigateToPath(currentPath);
       }
     });
   }
+
+  function onUploadClick() {
+    currentDirectoryComponent?.onDeactivate();
+    const maskContainer = addBlockingMask(explorerElt);
+    askUserForUpload(filesystem, currentPath).then(
+      (items) => {
+        currentDirectoryComponent?.onActivate();
+        removeBlockingMask(maskContainer, explorerElt);
+        if (items.length > 0) {
+          if (items.length === 1) {
+            showAppMessage(containerElt, `File uploaded successfully`);
+          } else {
+            showAppMessage(
+              containerElt,
+              `${items.length} files uploaded successfully`,
+            );
+          }
+          navigateToPath(currentPath);
+        }
+      },
+      (err) => {
+        currentDirectoryComponent?.onActivate();
+        removeBlockingMask(maskContainer, explorerElt);
+        showError(containerElt, err.message);
+      },
+    );
+  }
+
+  function onDownloadClick() {
+    if (selectedItems.length === 0) {
+      return;
+    }
+    currentDirectoryComponent?.onDeactivate();
+    const maskContainer = addBlockingMask(explorerElt);
+    const { name, path } = selectedItems[0];
+    return filesystem.readFile(path, "arraybuffer").then(
+      (fileData) => {
+        const blob = new Blob([fileData], {
+          type: "application/octet-stream",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        a.style.display = "none";
+        a.click();
+        setTimeout(() => {
+          URL.revokeObjectURL(url);
+        }, 100);
+        currentDirectoryComponent?.onActivate();
+        removeBlockingMask(maskContainer, explorerElt);
+      },
+      (err) => {
+        showError(containerElt, `Failed to create download: ${err.message}`);
+      },
+    );
+  }
+
+  function onNewDirClick() {
+    currentDirectoryComponent?.onDeactivate();
+    createNewDirectory(filesystem, currentPath, explorerElt).then((refresh) => {
+      currentDirectoryComponent?.onActivate();
+      if (refresh) {
+        navigateToPath(currentPath);
+      }
+    });
+  }
+
+  function onRenameClick() {
+    if (selectedItems.length === 0) {
+      return;
+    }
+    currentDirectoryComponent?.onDeactivate();
+    renameItem(
+      filesystem,
+      currentPath,
+      selectedItems[0].name,
+      selectedItems[0].isDirectory,
+      explorerElt,
+    ).then((refresh) => {
+      currentDirectoryComponent?.onActivate();
+      if (refresh) {
+        navigateToPath(currentPath);
+      }
+    });
+  }
+
+  function cutItems(cuttedItems) {
+    cuttedSelection = [...cuttedItems];
+    enableToolButton("paste");
+    currentDirectoryComponent?.signalCutAction(cuttedSelection);
+  }
+
+  function pasteItems() {
+    disableToolButton("paste");
+    currentDirectoryComponent?.onDeactivate();
+    performMoveOperation(
+      filesystem,
+      cuttedSelection,
+      currentPath,
+      explorerElt,
+    ).then(
+      () => {
+        cuttedSelection = [];
+        currentDirectoryComponent?.onActivate();
+        navigateToPath(currentPath);
+      },
+      (err) => {
+        currentDirectoryComponent?.onActivate();
+        if (cuttedSelection.length > 0) {
+          enableToolButton("paste");
+        }
+        showError(containerElt, `Failed to create paste: ${err.message}`);
+      },
+    );
+  }
+
+  function updateToolButtons(currentPath, selectedItems) {
+    if (selectedItems.length === 0) {
+      disableToolButton("cut");
+      disableToolButton("clear");
+      disableToolButton("rename");
+      disableToolButton("download");
+    } else if (selectedItems.length === 1) {
+      if (currentPath.startsWith("/userdata/")) {
+        enableToolButton("cut");
+        enableToolButton("rename");
+        enableToolButton("clear");
+      } else {
+        disableToolButton("cut");
+        disableToolButton("rename");
+        disableToolButton("clear");
+      }
+      if (!selectedItems[0].isDirectory) {
+        enableToolButton("download");
+      } else {
+        disableToolButton("download");
+      }
+    } else {
+      if (currentPath.startsWith("/userdata/")) {
+        enableToolButton("cut");
+        enableToolButton("clear");
+      } else {
+        disableToolButton("cut");
+        disableToolButton("clear");
+      }
+      disableToolButton("rename");
+      disableToolButton("download");
+    }
+
+    if (currentPath === "/") {
+      disableToolButton("previous");
+    } else {
+      enableToolButton("previous");
+    }
+
+    if (currentPath.startsWith("/userdata/")) {
+      if (currentPath === "/userdata/") {
+        disableToolButton("home");
+      } else {
+        enableToolButton("home");
+      }
+      enableToolButton("newDir");
+      enableToolButton("newFile");
+      enableToolButton("upload");
+    } else {
+      enableToolButton("home");
+      disableToolButton("newDir");
+      disableToolButton("newFile");
+      disableToolButton("upload");
+    }
+  }
 }
 
-function updateStatusElement(
-  statusElt,
-  allowMultipleSelections,
-  selectedItems,
-) {
+function updateStatusElement(statusElt, selectedItems) {
   if (selectedItems.length === 0) {
-    if (allowMultipleSelections) {
-      statusElt.innerHTML = "0 item selected";
-    } else {
-      statusElt.innerHTML = "No item selected";
-    }
+    statusElt.innerHTML = "0 item selected";
     return;
   }
   let status;
@@ -510,17 +617,21 @@ async function renameItem(fs, dir, filename, isDirectory, containerElt) {
   return true;
 }
 
-// TODO:
-// async function performMoveOperation(fs, items, destDir, containerElt) {
-//   try {
-//     for (const item of items) {
-//       await fs.mv(item.path, destDir + "/");
-//     }
-//     showAppMessage(containerElt, `Directory renamed successfully`);
-//   } catch (error) {
-//     showError(containerElt, `Failed to rename directory: ${error.message}`);
-//   }
-// }
+async function performMoveOperation(fs, items, destDir, containerElt) {
+  const normalizedDest = destDir.endsWith("/") ? destDir : destDir + "/";
+  try {
+    for (const item of items) {
+      const normalizedPath =
+        item.isDirectory && !item.path.endsWith("/")
+          ? item.path + "/"
+          : item.path;
+      await fs.mv(normalizedPath, normalizedDest);
+    }
+    showAppMessage(containerElt, `Files moved successfully`);
+  } catch (error) {
+    showError(containerElt, `Failed to move files: ${error.message}`);
+  }
+}
 
 async function performItemsDeletion(fs, items, containerElt) {
   const maskContainer = addBlockingMask(containerElt);
@@ -556,45 +667,6 @@ async function performItemsDeletion(fs, items, containerElt) {
     showError(containerElt, `Failed to delete: ${error.message}`);
   }
   return true;
-}
-
-function uploadFiles(fs, currentPath, allowMultipleSelections) {
-  return new Promise((resolve, reject) => {
-    const fileInputElt = document.createElement("input");
-    fileInputElt.style.display = "none";
-    fileInputElt.type = "file";
-    if (allowMultipleSelections) {
-      fileInputElt.multiple = true;
-    }
-    fileInputElt.click();
-
-    fileInputElt.addEventListener("cancel", async () => {
-      resolve([]);
-    });
-
-    fileInputElt.addEventListener("error", async () => {
-      reject(new Error(`Failed to get files from your computer.`));
-    });
-
-    fileInputElt.addEventListener("change", async (e) => {
-      const files = e.target.files;
-      if (files.length === 0) {
-        resolve([]);
-      }
-      try {
-        const names = [];
-        for (const file of files) {
-          names.push(file.name);
-          const filePath = pathJoin(currentPath, file.name);
-          const fileAB = await file.arrayBuffer();
-          await fs.writeFile(filePath, fileAB);
-        }
-        resolve(names);
-      } catch (error) {
-        reject(new Error(`Failed to upload file: ${error.message}`));
-      }
-    });
-  });
 }
 
 function constructPathBarElement(currentPath, navigateTo) {
@@ -702,225 +774,6 @@ function constructTitleElement(title) {
     // backgroundColor: "var(--window-sidebar-bg)",
   });
   return labelElt;
-}
-
-async function askForUserInput(
-  containerElt,
-  title,
-  message,
-  defaultValue = "",
-) {
-  return new Promise((resolve) => {
-    const overlay = document.createElement("div");
-    applyStyle(overlay, {
-      position: "absolute",
-      inset: "0px",
-      backgroundColor: "var(--window-content-bg)",
-      opacity: "0.5",
-      zIndex: "2",
-      height: "100%",
-      width: "100%",
-    });
-    containerElt.appendChild(overlay);
-
-    const promptInputElt = document.createElement("input");
-    promptInputElt.type = "text";
-    promptInputElt.value = defaultValue;
-    applyStyle(promptInputElt, {
-      width: "100%",
-      padding: "8px",
-      marginBottom: "15px",
-    });
-    const cancelButtonElt = document.createElement("button");
-    cancelButtonElt.className = "btn";
-    cancelButtonElt.textContent = "Cancel";
-    applyStyle(cancelButtonElt, {
-      margin: "5px",
-      padding: "4px 15px",
-      fontSize: "1.1em",
-      fontWeight: "bold",
-    });
-    const okButtonElt = document.createElement("button");
-    okButtonElt.className = "btn";
-    okButtonElt.textContent = "OK";
-    applyStyle(okButtonElt, {
-      margin: "5px",
-      padding: "4px 15px",
-      fontSize: "1.1em",
-      fontWeight: "bold",
-    });
-    disableButton(okButtonElt);
-
-    const titleElt = document.createElement("h3");
-    applyStyle(titleElt, {
-      color: "var(--app-primary-color)",
-      marginTop: "0",
-      marginBottom: "15px",
-    });
-    titleElt.textContent = title;
-
-    const messageElt = document.createElement("p");
-    applyStyle(messageElt, {
-      marginBottom: "15px",
-    });
-    messageElt.textContent = message;
-
-    const innerElt = document.createElement("div");
-    applyStyle(innerElt, {
-      boxShadow: "0 -2px 10px rgba(0, 0, 0, 0.3)",
-      position: "relative",
-      padding: "20px",
-      border: "1px solid var(--window-line-color)",
-      zIndex: "3",
-      backgroundColor: "var(--window-content-bg)",
-      top: "50%",
-      transform: "translateY(-50%)",
-      maxWidth: "90%",
-      width: "35em",
-      margin: "auto",
-    });
-    innerElt.appendChild(titleElt);
-    innerElt.appendChild(messageElt);
-    innerElt.appendChild(promptInputElt);
-    const buttonsContainerElt = document.createElement("div");
-    applyStyle(buttonsContainerElt, {
-      display: "flex",
-      justifyContent: "flex-end",
-    });
-    buttonsContainerElt.appendChild(cancelButtonElt);
-    buttonsContainerElt.appendChild(okButtonElt);
-    innerElt.appendChild(buttonsContainerElt);
-    containerElt.appendChild(innerElt);
-
-    promptInputElt.focus();
-    promptInputElt.select();
-
-    okButtonElt.addEventListener("click", onOk);
-    cancelButtonElt.addEventListener("click", onCancel);
-
-    promptInputElt.oninput = () => {
-      if (promptInputElt.value) {
-        enableHighlightedButton(okButtonElt);
-      } else {
-        disableButton(okButtonElt);
-      }
-    };
-
-    promptInputElt.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        onOk();
-      }
-      if (e.key === "Escape") {
-        onCancel();
-      }
-    });
-    overlay.onclick = () => resolve(null);
-
-    function onOk() {
-      overlay.remove();
-      innerElt.remove();
-      resolve(promptInputElt.value);
-    }
-
-    function onCancel() {
-      overlay.remove();
-      innerElt.remove();
-      resolve(null);
-    }
-  });
-}
-
-async function spawnConfirmDialog(containerElt, title, message) {
-  return new Promise((resolve) => {
-    const overlay = document.createElement("div");
-    applyStyle(overlay, {
-      position: "absolute",
-      inset: "0px",
-      backgroundColor: "var(--window-content-bg)",
-      opacity: "0.5",
-      zIndex: "2",
-      height: "100%",
-      width: "100%",
-    });
-    containerElt.appendChild(overlay);
-
-    const noButtonElt = document.createElement("button");
-    noButtonElt.className = "btn";
-    noButtonElt.textContent = "No";
-    applyStyle(noButtonElt, {
-      margin: "5px",
-      padding: "4px 15px",
-      fontSize: "1.1em",
-      fontWeight: "bold",
-    });
-    const yesButtonElt = document.createElement("button");
-    yesButtonElt.className = "btn";
-    yesButtonElt.textContent = "Yes";
-    applyStyle(yesButtonElt, {
-      margin: "5px",
-      padding: "4px 15px",
-      fontSize: "1.1em",
-      fontWeight: "bold",
-    });
-    enableHighlightedButton(yesButtonElt);
-
-    const titleElt = document.createElement("h3");
-    applyStyle(titleElt, {
-      color: "var(--app-primary-color)",
-      marginTop: "0",
-      marginBottom: "15px",
-    });
-    titleElt.textContent = title;
-
-    const messageElt = document.createElement("div");
-    applyStyle(messageElt, {
-      marginBottom: "10px",
-    });
-    messageElt.textContent = message;
-
-    const innerElt = document.createElement("div");
-    applyStyle(innerElt, {
-      boxShadow: "0 -2px 10px rgba(0, 0, 0, 0.3)",
-      position: "relative",
-      padding: "20px",
-      border: "1px solid var(--window-line-color)",
-      zIndex: "3",
-      backgroundColor: "var(--window-content-bg)",
-      top: "50%",
-      transform: "translateY(-50%)",
-      maxWidth: "90%",
-      width: "35em",
-      margin: "auto",
-    });
-    innerElt.appendChild(titleElt);
-    innerElt.appendChild(messageElt);
-    const buttonsContainerElt = document.createElement("div");
-    applyStyle(buttonsContainerElt, {
-      display: "flex",
-      justifyContent: "center",
-    });
-    buttonsContainerElt.appendChild(noButtonElt);
-    buttonsContainerElt.appendChild(yesButtonElt);
-    innerElt.appendChild(buttonsContainerElt);
-    containerElt.appendChild(innerElt);
-
-    yesButtonElt.addEventListener("click", onYes);
-    noButtonElt.addEventListener("click", onNo);
-    overlay.onclick = () => resolve(null);
-    yesButtonElt.focus();
-
-    function onYes() {
-      overlay.remove();
-      innerElt.remove();
-      resolve(true);
-    }
-
-    function onNo() {
-      overlay.remove();
-      innerElt.remove();
-      resolve(false);
-    }
-  });
 }
 
 /**

@@ -193,6 +193,21 @@
       }
     },
     {
+      "id": "cheese",
+      "title": "Cheese Eater",
+      "icon": "🐭",
+      "defaultHeight": 640,
+      "defaultWidth": 640,
+      "startMenu": {
+        "list": "Games"
+      },
+      "sandboxed": true,
+      "defaultBackground": "windowActiveHeader",
+      "desktop": {
+        "display": true
+      }
+    },
+    {
       "id": "pong",
       "title": "Pong",
       "icon": "🏓",

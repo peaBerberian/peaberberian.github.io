@@ -1,0 +1,13 @@
+/** This is the code for the app identified as "other_projects_rx-paired". */
+var a="https://github.com/canalplus/RxPaired";function h(i,n){let{createAppTitle:o}=n.appUtils;return n.updateTitle(null,"Other Projects: RxPaired"),{sidebar:[{text:"Overview",render:d},{text:"Why this project",centered:!0,render:l}]};function d(){let e=document.createElement("div");e.appendChild(o("RxPaired",{github:a}));let t=document.createElement("p");t.innerHTML=`<a href="${a}" target="_blank">RxPaired</a> is a remote debugger lightweight on resources, with an RxPlayer specialization.<br>
+We use it daily at Canal+ Group to debug our applications.`,e.appendChild(t);let r=document.createElement("p");return r.innerHtml="Here's what it looks like when running",e.appendChild(r),e.appendChild(c()),e}function l(){let e=document.createElement("div");e.appendChild(o("Why creating this?",{}));let t=document.createElement("div");return t.innerHTML=`<p>This project is linked to Canal+' media player: the RxPlayer.</p>
+
+  <p>The RxPlayer runs in production on many devices with low performances (e.g. some old smart TVs, set-top boxes and usb dongles) which can frequently show issues.<br>
+  We previously relied on tools such as Google Chrome's or webkit's own inspectors but on constrained devices, those debuggers have endurance issues: they cannot run for sometimes more than a minute.</p>
+
+  <div class="separator"></div>
+
+  <p>The global idea of RxPaired, is that the tested device will regularly send "enriched" logs (the basic logs with some more information added, such as timestamps, info on HTTP traffic etc.), either through a WebSocket connection or through HTTP POST requests. Then, the "inspector" part of that tool - running on your computer and receiving such logs - exploit the received metadata.<br>
+  We added a lot of features over time: time-travel (being able to "rewind time" to see conditions when a previous log was sent), network-bandwidth estimates, being able to send instructions to the device etc.</p>
+
+  <p>We even saw usage for cases which do not rely on the RxPlayer, where it is used as a lightweight log server when the browser's own debugger is not reliable / easily usable.</p>`,e.appendChild(t),e}function c(){let e=document.createElement("div");s(e,{border:"2px dotted "+n.STYLE.lineColor,paddingTop:String(580/1e3*100)+"%",position:"relative",display:"block"});let t=document.createElement("img");return s(t,{width:"100%",position:"absolute",top:0}),t.src=n.getImageRootPath()+"rx-paired-screenshot.png",t.alt="RxPaired's screenshot",e.appendChild(t),e}}function s(i,n){for(let o of Object.keys(n))i.style[o]=n[o]}export{h as create};

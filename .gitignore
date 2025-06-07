@@ -1,4 +1,5 @@
 dist/*.js
+dist/sandbox.html
 dist/lazy/
 !/dist/dinoeufdepaques.js
 

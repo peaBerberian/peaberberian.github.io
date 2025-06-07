@@ -26,7 +26,7 @@ export function getAppUtils() {
  */
 function createAppTitle(title, ql) {
   const h2Elt = document.createElement("h2");
-  h2Elt.className = "app-title";
+  h2Elt.className = "app-titl";
   h2Elt.appendChild(document.createTextNode(title));
   h2Elt.appendChild(constructQuicklinks(ql ?? {}));
   return h2Elt;

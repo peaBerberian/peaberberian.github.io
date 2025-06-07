@@ -350,7 +350,7 @@ export function create(_args, env, abortSignal) {
         draw(touch);
       }
     },
-    { passive: true },
+    { passive: false },
   );
 
   // Prevent the canvas from scrolling around on touch

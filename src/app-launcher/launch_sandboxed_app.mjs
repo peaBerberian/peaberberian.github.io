@@ -87,7 +87,7 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
   iframe.style.padding = "0";
   iframe.style.margin = "0";
   iframe.style.overflow = "hidden";
-  iframe.src = appBaseUrl + "/app.html";
+  iframe.src = appBaseUrl + "/sandbox.html";
   iframe.style.display = "none";
 
   wrapperElt.appendChild(iframe);

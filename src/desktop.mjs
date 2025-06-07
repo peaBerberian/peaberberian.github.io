@@ -4,6 +4,7 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
+// - defaultBackground can be a color directly
 //
 // medium priority:
 // - image viewer touch controls

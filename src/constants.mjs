@@ -217,3 +217,66 @@ export const BUTTONS_BY_NAME = BUTTONS_LIST.reduce((acc, val) => {
   acc[val.name] = val;
   return acc;
 }, {});
+
+/**
+ * Object regrouping information about specifically style settings that will be
+ * communicated to apps so they can style themselves.
+ */
+export const APP_STYLE = {
+  fontSize: {
+    cssProp: "var(--font-size)",
+    cssName: "--font-size",
+  },
+  windowActiveHeader: {
+    cssProp: "var(--window-active-header)",
+    cssName: "--window-active-header",
+  },
+  windowActiveHeaderText: {
+    cssProp: "var(--window-active-header-text)",
+    cssName: "--window-active-header-text",
+  },
+  windowInactiveHeader: {
+    cssProp: "var(--window-inactive-header)",
+    cssName: "--window-inactive-header",
+  },
+  windowInactiveHeaderText: {
+    cssProp: "var(--window-inactive-header-text)",
+    cssName: "--window-inactive-header-text",
+  },
+  textColor: {
+    cssProp: "var(--window-text-color)",
+    cssName: "--window-text-color",
+  },
+  bgColor: {
+    cssProp: "var(--window-content-bg)",
+    cssName: "--window-content-bg",
+  },
+  lineColor: {
+    cssProp: "var(--window-line-color)",
+    cssName: "--window-line-color",
+  },
+  primaryColor: {
+    cssProp: "var(--app-primary-color)",
+    cssName: "--app-primary-color",
+  },
+  disabledColor: {
+    cssProp: "var(--app-primary-bg)",
+    cssName: "--app-primary-bg",
+  },
+  barBg: {
+    cssProp: "var(--window-sidebar-bg)",
+    cssName: "--window-sidebar-bg",
+  },
+  barHoverBg: {
+    cssProp: "var(--sidebar-hover-bg)",
+    cssName: "--sidebar-hover-bg",
+  },
+  barSelectedBg: {
+    cssProp: "var(--sidebar-selected-bg-color)",
+    cssName: "--sidebar-selected-bg-color",
+  },
+  barSelectedText: {
+    cssProp: "var(--sidebar-selected-text-color)",
+    cssName: "--sidebar-selected-text-color",
+  },
+};

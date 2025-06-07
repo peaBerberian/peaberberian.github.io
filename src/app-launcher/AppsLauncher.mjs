@@ -1,5 +1,5 @@
 import * as CONSTANTS from "../constants.mjs";
-import { APP_STYLE, SETTINGS } from "../settings.mjs";
+import { SETTINGS } from "../settings.mjs";
 import filesystem, { getName } from "../filesystem/filesystem.mjs";
 import AppWindow from "../components/window/AppWindow.mjs";
 import notificationEmitter from "../components/notification_emitter.mjs";
@@ -9,6 +9,8 @@ import {
   createLinkedAbortController,
   getErrorApp,
   getMaxDesktopDimensions,
+  parseAppDefaultBackground,
+  constructAppStyleObject,
 } from "../utils.mjs";
 import { getAppUtils } from "../app-lib/app-utils.mjs";
 import { constructAppWithSidebar } from "../app-lib/sidebar.mjs";
@@ -158,10 +160,9 @@ export default class AppsLauncher {
     /** `AbortController` linked to the life of this application. */
     const applicationAbortCtrl = new AbortController();
 
-    const defaultBackground = app.data.defaultBackground
-      ? (APP_STYLE[app.data.defaultBackground]?.cssProp ??
-        APP_STYLE.bgColor.cssProp)
-      : APP_STYLE.bgColor.cssProp;
+    const defaultBackground = parseAppDefaultBackground(
+      app.data.defaultBackground,
+    );
 
     /**
      * Object defining metadata on the application currently visible and
@@ -439,10 +440,9 @@ export default class AppsLauncher {
       if (method !== "create") {
         console.warn('Not calling "create" on an i-frame application.');
       }
-      const backgroundColor = appData.defaultBackground
-        ? (APP_STYLE[appData.defaultBackground]?.cssProp ??
-          APP_STYLE.bgColor.cssProp)
-        : APP_STYLE.bgColor.cssProp;
+      const backgroundColor = parseAppDefaultBackground(
+        appData.defaultBackground,
+      );
       const iframeContainer = createExternalIframe(
         appData.website,
         backgroundColor,
@@ -734,10 +734,7 @@ export default class AppsLauncher {
       closeApp: () => appWindow.close(),
       // TODO: remove need for that one
       CONSTANTS,
-      STYLE: Object.keys(APP_STYLE).reduce((acc, name) => {
-        acc[name] = APP_STYLE[name].cssProp;
-        return acc;
-      }, {}),
+      STYLE: constructAppStyleObject(),
     };
 
     if (Array.isArray(dependencies)) {

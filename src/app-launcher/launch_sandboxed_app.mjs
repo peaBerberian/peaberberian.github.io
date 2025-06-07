@@ -1,9 +1,11 @@
-import { APP_STYLE, SETTINGS } from "../settings.mjs";
+import { APP_STYLE } from "../constants.mjs";
+import { APP_STYLE_SETTINGS, SETTINGS } from "../settings.mjs";
 import {
   addAbortableEventListener,
   applyStyle,
   getErrorApp,
   getSpinnerApp,
+  parseAppDefaultBackground,
 } from "../utils.mjs";
 
 let appBaseUrl;
@@ -64,10 +66,7 @@ if (typeof __APP_BASE_URL__ === "string") {
 export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
   let isIframeLoaded = false;
   let isActivated = true;
-  const backgroundColor = appData.defaultBackground
-    ? (APP_STYLE[appData.defaultBackground]?.cssProp ??
-      APP_STYLE.bgColor.cssProp)
-    : APP_STYLE.bgColor.cssProp;
+  const backgroundColor = parseAppDefaultBackground(appData.defaultBackground);
   const wrapperElt = document.createElement("div");
   applyStyle(wrapperElt, {
     position: "relative",
@@ -262,8 +261,8 @@ function sendSettingsToIframe(iframe, abortSignal) {
   }
 
   // TODO: more efficient for initial?
-  Object.keys(APP_STYLE).forEach((key) => {
-    APP_STYLE[key].ref.onUpdate(
+  Object.keys(APP_STYLE_SETTINGS).forEach((key) => {
+    APP_STYLE_SETTINGS[key].onUpdate(
       (newVal) => {
         iframe.contentWindow.postMessage(
           {

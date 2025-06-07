@@ -82,14 +82,13 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
   iframe.tabIndex = "0";
   iframe.style.height = "100%";
   iframe.style.width = "100%";
-
   iframe.style.backgroundColor = backgroundColor;
   iframe.style.border = "0";
   iframe.style.padding = "0";
   iframe.style.margin = "0";
   iframe.style.overflow = "hidden";
-  iframe.src = appBaseUrl + "/sandbox.html";
   iframe.style.display = "none";
+  iframe.src = appBaseUrl + "/sandbox.html";
 
   wrapperElt.appendChild(iframe);
 
@@ -303,6 +302,7 @@ function sendSettingsToIframe(iframe, abortSignal) {
   );
   SETTINGS.showIframeBlockerHelp.onUpdate(
     (shouldShow) => {
+      iframe.src = appBaseUrl + "/sandbox.html";
       iframe.contentWindow.postMessage(
         {
           type: "__pwd__show-iframe-blocker",
@@ -330,7 +330,7 @@ function processEventsFromIframe(iframe, cbs, resolve, reject, abortSignal) {
         break;
 
       case "__pwd__update-title":
-        checkTitleUpdateFormat(e.data);
+        checkUpdateTitleMessageData(e.data);
         cbs.updateTitle(e.data.icon, e.data.title);
         break;
 
@@ -342,7 +342,7 @@ function processEventsFromIframe(iframe, cbs, resolve, reject, abortSignal) {
         if (typeof e.data.requestId !== "string") {
           throw new Error("No requestId for a filePickerOpen");
         }
-        checkFilePickerOpen(e.data.data);
+        checkFilePickerOpenMessageData(e.data.data);
         handleAsyncResponse(
           cbs.filePickerOpen({
             title: e.data.data.title,
@@ -359,7 +359,7 @@ function processEventsFromIframe(iframe, cbs, resolve, reject, abortSignal) {
         if (typeof e.data.requestId !== "string") {
           throw new Error("No requestId for a filePickerSave");
         }
-        checkFilePickerSave(e.data.data);
+        checkFilePickerSaveMessageData(e.data.data);
         handleAsyncResponse(
           cbs.filePickerSave({
             title: e.data.data.title,
@@ -377,7 +377,7 @@ function processEventsFromIframe(iframe, cbs, resolve, reject, abortSignal) {
         if (typeof e.data.requestId !== "string") {
           throw new Error("No requestId for a quickSave");
         }
-        checkQuickSave(e.data.data);
+        checkQuickSaveMessageData(e.data.data);
         handleAsyncResponse(
           cbs.quickSave(e.data.data.handle, e.data.data.data),
           e.data.type,
@@ -398,7 +398,7 @@ function processEventsFromIframe(iframe, cbs, resolve, reject, abortSignal) {
 
       case "__pwd__error": {
         const data = e.data.data;
-        checkErrorMsgFormat(data);
+        checkErrorMessageData(data);
         const error = new Error(data.message);
         if (data.name !== undefined) {
           error.name = data.name;
@@ -439,7 +439,7 @@ function processEventsFromIframe(iframe, cbs, resolve, reject, abortSignal) {
   }
 }
 
-function checkErrorMsgFormat(data) {
+function checkErrorMessageData(data) {
   if (
     typeof data !== "object" ||
     data === null ||
@@ -450,7 +450,7 @@ function checkErrorMsgFormat(data) {
   }
 }
 
-function checkTitleUpdateFormat(data) {
+function checkUpdateTitleMessageData(data) {
   if (
     typeof data !== "object" ||
     data === null ||
@@ -461,7 +461,7 @@ function checkTitleUpdateFormat(data) {
   }
 }
 
-function checkFilePickerOpen(data) {
+function checkFilePickerOpenMessageData(data) {
   if (
     typeof data !== "object" ||
     data === null ||
@@ -476,7 +476,7 @@ function checkFilePickerOpen(data) {
   }
 }
 
-function checkFilePickerSave(data) {
+function checkFilePickerSaveMessageData(data) {
   if (
     typeof data !== "object" ||
     data === null ||
@@ -500,7 +500,7 @@ function checkFilePickerSave(data) {
   }
 }
 
-function checkQuickSave(data) {
+function checkQuickSaveMessageData(data) {
   if (
     typeof data !== "object" ||
     data === null ||

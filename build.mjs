@@ -206,13 +206,13 @@ export default async function run(options) {
         let opts = options;
         if (bundle.banner) {
           opts = {
-            ...options,
+            ...opts,
             banner: bundle.banner,
           };
         }
         if (bundle.format) {
           opts = {
-            ...options,
+            ...opts,
             format: bundle.format,
           };
         }
@@ -456,7 +456,18 @@ async function writeAppSandboxHtml(watch, isSilent, abortSignal) {
 
     await Promise.all([readSndbxScript, readCss]).then(([js, css]) => {
       return new Promise((resolve, reject) => {
-        const fileStr = `<!-- HTML file for "sandboxed" apps, which are apps completely isolated from the desktop code -->
+        const fileStr = `<!--
+This is the HTML page that is loaded for "sandboxed" apps, which are apps completely
+isolated from the desktop: they don't have any access to its data and they run
+parallely with it.
+
+This is done as a security and isolation (storage API isolation, memory isolation,
+logic pallalelism) mechanism.
+
+A postMessage-based API is provided to those apps to allow interaction with the
+desktop (e.g. file opening/saving capabilities), but all those operations are
+tightly controlled by the desktop.
+-->
 <!DOCTYPE html><html><head>
 <style>${css}</style>
 </head><body>

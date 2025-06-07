@@ -1,4 +1,15 @@
-<!-- HTML file for "sandboxed" apps, which are apps completely isolated from the desktop code -->
+<!--
+This is the HTML page that is loaded for "sandboxed" apps, which are apps completely
+isolated from the desktop: they don't have any access to its data and they run
+parallely with it.
+
+This is done as a security and isolation (storage API isolation, memory isolation,
+logic pallalelism) mechanism.
+
+A postMessage-based API is provided to those apps to allow interaction with the
+desktop (e.g. file opening/saving capabilities), but all those operations are
+tightly controlled by the desktop.
+-->
 <!DOCTYPE html>
 <html>
   <head>

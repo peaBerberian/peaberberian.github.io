@@ -16,6 +16,7 @@ import { getAppUtils } from "../app-lib/app-utils.mjs";
 import { constructAppWithSidebar } from "../app-lib/sidebar.mjs";
 import WindowedApplicationStack from "./windowed_application_stack.mjs";
 import { launchSandboxedApp } from "./launch_sandboxed_app.mjs";
+import PathTokenCreator from "./path_token_creator.mjs";
 
 const { BASE_WINDOW_Z_INDEX, IMAGE_ROOT_PATH, __VERSION__ } = CONSTANTS;
 
@@ -65,11 +66,10 @@ export default class AppsLauncher {
     this._taskbarManager = taskbarManager;
 
     /**
-     * Maintains a list of handles: Empty objects which are linked to file
-     * paths, so that applications may be able to update files without actually
-     * knowing their path.
+     * Encrypt and decrypt file system paths to tokens so the app is not aware
+     * of the actual file system paths.
      */
-    this._fileHandles = new WeakMap();
+    this._pathTokenCreator = new PathTokenCreator();
 
     // Now deactivate windows when the desktop is clicked on, as it seems to me
     // like it would be expected.
@@ -363,15 +363,13 @@ export default class AppsLauncher {
 
       try {
         const openedFile = await filesystem.readFile(data, "arraybuffer");
-
-        const handle = {};
-        this._fileHandles.set(handle, data);
+        const token = await this._pathTokenCreator.encryptPath(data);
         return this.openApp(defaultApps[extension], [
           {
             type: "file",
             filename: getName(data),
             data: openedFile,
-            handle,
+            handle: token,
           },
         ]);
       } catch (err) {
@@ -750,10 +748,10 @@ export default class AppsLauncher {
         env.notificationEmitter = notificationEmitter;
       }
       if (dependencies.includes("quickSave")) {
-        env.quickSave = (handle, content) => {
-          const filePath = this._fileHandles.get(handle);
+        env.quickSave = async (handle, content) => {
+          const filePath = await this._pathTokenCreator.decryptPath(handle);
           if (!filePath) {
-            return Promise.reject(new Error("Unknown file handle."));
+            throw new Error("Unknown file handle.");
           }
           return filesystem.writeFile(filePath, content);
         };
@@ -779,11 +777,11 @@ export default class AppsLauncher {
             Promise.all(
               files.map(async (filePath) => {
                 const data = await filesystem.readFile(filePath, "arraybuffer");
-                const handle = {};
-                this._fileHandles.set(handle, filePath);
+                const token =
+                  await this._pathTokenCreator.encryptPath(filePath);
                 return {
                   filename: getName(filePath),
-                  handle,
+                  handle: token,
                   filePath: dependencies.includes("filesystem")
                     ? filePath
                     : null,
@@ -800,16 +798,19 @@ export default class AppsLauncher {
             appStack,
             appWindow,
             abortSignal,
-          ).then((fileInfo) => {
+          ).then(async (fileInfo) => {
             if (!fileInfo) {
               return;
             }
-            const handle = {};
-            this._fileHandles.set(handle, fileInfo.path);
+            const token = await this._pathTokenCreator.encryptPath(
+              fileInfo.path,
+            );
             return {
               filename: getName(fileInfo.path),
-              filePath: dependencies.includes("filesystem") ? filePath : null,
-              handle,
+              filePath: dependencies.includes("filesystem")
+                ? fileInfo.path
+                : null,
+              handle: token,
             };
           });
       }

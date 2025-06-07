@@ -20,18 +20,7 @@ export function create(args, env) {
     width: "100%",
   });
 
-  const spinnerContainerElt = document.createElement("div");
-  applyStyle(spinnerContainerElt, {
-    display: "none",
-    position: "absolute",
-    height: "100%",
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-  });
-  const spinnerElt = document.createElement("div");
-  spinnerElt.className = "spinner";
-  spinnerContainerElt.appendChild(spinnerElt);
+  const spinnerContainerElt = createSpinnerElt();
   containerElt.appendChild(spinnerContainerElt);
 
   const editorWrapperElt = document.createElement("div");
@@ -49,7 +38,7 @@ export function create(args, env) {
     {
       name: "upload",
       onClick: () => {
-        spinnerContainerElt.style.display = "flex";
+        blockUi();
         statusBar.textContent = "Loading file...";
 
         // Trick to open the file picker
@@ -59,8 +48,16 @@ export function create(args, env) {
         fileInputElt.multiple = false;
         fileInputElt.click();
         fileInputElt.addEventListener("cancel", async () => {
-          spinnerContainerElt.style.display = "none";
+          unblockUi();
           statusBar.textContent = "Ready";
+        });
+        fileInputElt.addEventListener("error", async () => {
+          unblockUi();
+          showMessage(
+            editorContentElt,
+            "❌ Failed to open your file-picker",
+            5000,
+          );
         });
         fileInputElt.addEventListener("change", async (e) => {
           const files = e.target.files;
@@ -93,7 +90,7 @@ export function create(args, env) {
             clearAndRestart();
             showMessage(editorContentElt, "❌ " + err.toString(), 7000);
           }
-          spinnerContainerElt.style.display = "none";
+          unblockUi();
           statusBar.textContent = "Ready";
           lastSavedContent = null;
           saveState(false);
@@ -103,7 +100,7 @@ export function create(args, env) {
     {
       name: "open",
       onClick: () => {
-        spinnerContainerElt.style.display = "flex";
+        blockUi();
         statusBar.textContent = "Loading file...";
         env
           .filePickerOpen({
@@ -131,7 +128,7 @@ export function create(args, env) {
                 clearAndRestart();
                 showMessage(editorContentElt, "❌ " + err.toString(), 7000);
               }
-              spinnerContainerElt.style.display = "none";
+              unblockUi();
               statusBar.textContent = "Ready";
               lastSavedContent = null;
               saveState(false);
@@ -313,7 +310,7 @@ export function create(args, env) {
   }
 
   function clearAndRestart() {
-    spinnerContainerElt.style.display = "none";
+    unblockUi();
     statusBar.textContent = "Ready";
     textArea.value = "";
     history.length = 0;
@@ -461,7 +458,7 @@ export function create(args, env) {
   }
 
   async function saveFile() {
-    spinnerContainerElt.style.display = "flex";
+    blockUi();
     statusBar.textContent = "Saving file...";
     try {
       const textEncoder = new TextEncoder();
@@ -472,12 +469,12 @@ export function create(args, env) {
         savedFileName: currentFilename ?? "new_note.txt",
       });
       if (!saveData) {
-        spinnerContainerElt.style.display = "none";
+        unblockUi();
         statusBar.textContent = "Ready";
         return;
       }
       currentFileHandle = saveData?.handle ?? null;
-      spinnerContainerElt.style.display = "none";
+      unblockUi();
       statusBar.textContent = "Ready";
       if (!saveData) {
         disableButton("quick-save");
@@ -485,7 +482,7 @@ export function create(args, env) {
       }
       updateFilename(saveData.filename);
     } catch (err) {
-      spinnerContainerElt.style.display = "none";
+      unblockUi();
       statusBar.textContent = "Ready";
       showMessage(editorContentElt, "❌ " + err.toString(), 7000);
     }
@@ -501,17 +498,14 @@ export function create(args, env) {
       );
       return;
     }
-    spinnerContainerElt.style.display = "flex";
     statusBar.textContent = "Saving file...";
     try {
       const textEncoder = new TextEncoder();
       const savedFileData = textEncoder.encode(textArea.value).buffer;
       await env.quickSave(currentFileHandle, savedFileData);
       disableButton("quick-save");
-      spinnerContainerElt.style.display = "none";
       statusBar.textContent = "Ready";
     } catch (err) {
-      spinnerContainerElt.style.display = "none";
       statusBar.textContent = "Ready";
       showMessage(editorContentElt, "❌ " + err.toString(), 7000);
     }
@@ -555,6 +549,17 @@ export function create(args, env) {
         break;
     }
   }
+
+  function blockUi() {
+    spinnerContainerElt.style.display = "flex";
+    containerElt.style.opacity = 0.5;
+    containerElt.setAttribute("inert", true);
+  }
+  function unblockUi() {
+    spinnerContainerElt.style.display = "none";
+    containerElt.style.opacity = 1;
+    containerElt.removeAttribute("inert");
+  }
 }
 
 /**
@@ -597,4 +602,21 @@ function showMessage(containerElt, message, duration = 5000) {
       messageElt.remove();
     }, 350);
   }, duration);
+}
+
+function createSpinnerElt() {
+  const spinnerContainerElt = document.createElement("div");
+  applyStyle(spinnerContainerElt, {
+    display: "none",
+    position: "absolute",
+    height: "100%",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: "9999",
+  });
+  const spinnerElt = document.createElement("div");
+  spinnerElt.className = "spinner";
+  spinnerContainerElt.appendChild(spinnerElt);
+  return spinnerContainerElt;
 }

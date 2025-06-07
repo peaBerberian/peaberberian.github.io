@@ -18,6 +18,12 @@ export function create(_args, env) {
         render: getConfigurable,
       },
       {
+        text: "Making it secure",
+        centered: true,
+        icon: "🔐",
+        render: getSecure,
+      },
+      {
         text: "Why so many emojis?",
         centered: true,
         icon: "😵‍💫",
@@ -48,7 +54,7 @@ export function create(_args, env) {
     overviewContainer.appendChild(overviewText);
     overviewText.innerHTML = `<p>I initially envisionned a simple desktop environment where I could list my open-source projects to replace my previously minimal (some said bland) personal website.</p>
 
-<p>However, I so loved writing the fake OS parts that I ended up implementing many nice features (customization, a permission system for apps, a filesystem) and multiple applications (though all fairly minimal, I will admit!), in "vanilla" (meaning: depending on no framework/library) JavaScript/HTML/CSS.</p>
+<p>However, I so loved writing the fake OS parts that I ended up implementing many nice features (customization, a filesystem, sandboxed apps with a permission system) and multiple applications (though all fairly minimal, I will admit!), in "vanilla" (meaning: depending on no framework/library) JavaScript/HTML/CSS.</p>
 
 <p>So there has been a change of plan: it's not a listing of other projects anymore, now it's its own thing as a JS desktop environment!</p>`;
     return overviewContainer;
@@ -64,7 +70,7 @@ export function create(_args, env) {
 <ul>
   <li>Almost all animations are done mostly in CSS. Those are generally much more efficient that doing the same animations with JavaScript code.</li>
   <li>To avoid too many heavy repaints, I added specific checks ensuring that the content stood the same in some particular situations.<br>For example, on page resize I pre-check the dimensions of the new grid of desktop icons and check if their organization would change horizontally or vertically entirely with JS computations, before deciding to interact with the DOM.</li>
-  <li>I've been also very careful with the browser API with which I interacted again to avoid repaints: I rarely rely on web API which would need the browser to internally re-check element positions for example, preferring to ensure that the browser can optimize its rendering the best it can. I also grouped most DOM mutations together, generally inside <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame">requestAnimationFrame</a> callbacks.</li>
+  <li>I've been also very careful with the browser API with which I interacted again to avoid repaints: I rarely rely on web API which would need the browser to internally re-check element positions for example, preferring to ensure that the browser can optimize its rendering the best it can. I also grouped most DOM mutations together, generally inside <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame" target="_blank">requestAnimationFrame</a> callbacks.</li>
   <li>When windows are moved or resized, I tried to make it apparent through CSS to the browser that it should have no impact on other elements beside z-positioning.</li>
   <li>I've tried to also be frugal with memory usage, by only storing what's needed and being very careful with the potentiality of memory leaks (here the main culprits would be event listeners).</li>
 </ul>`;
@@ -104,6 +110,45 @@ If a window is partially out of the screen, I consider that the area in which it
 <p>This should lead to always predictable and useful behavior.</p>
 </div>`;
     return configContainer;
+  }
+
+  function getSecure() {
+    const secureContainer = document.createElement("div");
+    secureContainer.appendChild(createAppTitle("Making it secure", {}));
+
+    const secureText = document.createElement("div");
+    secureContainer.appendChild(secureText);
+    secureText.innerHTML = `<p>Even though this is a simple personal project, this desktop is actually developed with some high security constraints.</p>
+
+<div class="separator"></div>
+<h3>filesystem access from apps</h3>
+<p>The main constraint I imposed is that "apps" are less trusted than the desktop itself regarding user data: most apps should not have access to the filesystem directly for example, and when they do (e.g. to edit and save a file) they should just obtain the strict minimum: the file's data, and maybe the file's name.<br><br>
+Specifically in the case of a file, this was done by not giving direct filesystem access to most applications, but instead to allow them to spawn a more-trusted "file-picker" application, which takes the relay when opening or saving a file.</p>
+<p>To take as an example, let's say you want to edit a locally-stored image with the "Paint" application. What actually happens is:</p>
+<ol>
+  <li>You click on the "open" button</li>
+  <li>Paint ask the desktop to open a file-picker so the user may choose a file to open</li>
+  <li>Here, the desktop takes back control from the app, and opens the more trusted "explorer" app in its place so you can choose a file without "Paint" actually seeing what you're doing.</li>
+  <li>You chose a file explicitly through the file picker.</li>
+  <li>The desktop is notified, close the file picker, read the file that was selected and only communicate back the file data and title to the "Paint" app, but not its path nor any other metadata (note: the only reason the file name is also communicated is that apps often want this info, for example to indicate to the user which file they're currently editing).</li>
+</ol>
+<p>And the same thing happens when you save a file.</p>
+<pThis way, apps are able to operate on file without having access to the filesystem nor seeing the path of files (which could be sensitive - e.g. contain the name of the person as a directory, or other personal data).</p>
+<div class="separator"></div>
+<h3>Special case: the "quick save" feature</h3>
+<p>Speaking of files, it becomes even more interesting to write about the "quick save" button some apps have (including "Paint").</p>
+<p>The quick save button basically allows to save the current changes to an opened file, without having to re-select it in a file picker at each save.<br>Yet I just wrote that applications have no idea where the files are stored, so how can they indicate to the desktop the path at which the file should be saved?</p>
+<p>They could be communicating back the corresponding file name but it would be perfectly possible that a user opened multiple files stored at different places yet with the same file name, so this doesn't work.<br>Instead, apps are given a opaque "handle", which is actually a cryptographically-secure hash value storing the full path of the corresponding file, with the desktop being the only one with the key (the encryption used is AES-256-GCM).<br>This trick allows for the desktop to let applications keep the list of loaded paths themselves (the desktop doesn't have to maintain a list of opened files) without them being able to see nor update that path.</p>
+<div class="separator"></div>
+<h3>Exploiting site-isolation to our advantage</h3>
+<p>Yet all those tricks may not be enough if the application can just access the actual storage source.</p>
+<p>At a lower-level, user storage is implemented by relying on several browser API, mainly <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage" target="_blank">the localStorage API</a> and more importantly <a href="https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API" target="_blank">the IndexedDB API</a>.<br>
+An app could there theoretically call those browser API directly to read stored data without notifying the desktop.</p>
+<p>To prevent this purely theoretical case, this desktop exploits for some apps a browser security feature called <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy" target="_blank">the "Same-origin" policy</a>.</p>
+<p>It gets technical, but the simple idea is to run applications as <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/iframe" target="_blank">iframe elements</a> which are associated to another "origin" than the desktop.<br>Doing that prevent the application from being able to access many resources that the desktop can access, including the aforementioned storage API.</p>
+<p>As a very nice side-effect, running the application in an isolated iframe like this will also allow it to run in parallel with the desktop.<br>The main advantage of this in our case is that an application doing some heavy processing will not hang the whole desktop. With this, I could even implement an "app responsiveness check" in the desktop code, to e.g. allow to kill unresponsive app.<br>I did not take the time to do this yet.</p>
+</div>`;
+    return secureContainer;
   }
 
   function getEmojis() {
@@ -193,7 +238,7 @@ If a window is partially out of the screen, I consider that the area in which it
 
 <p>So I spent much more efforts compiling things left and right, asking both LLM to make something look good and searching the web for SVG resources and examples.</p>
 
-<p>At one point I had something I considered perfect: the SVG was self-animating through an <a href="https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/animateTransform">animateTransform</a> element.</p>
+<p>At one point I had something I considered perfect: the SVG was self-animating through an <a href="https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/animateTransform" target="_blank">animateTransform</a> element.</p>
 
 <p>To show off even more, I made the initial background of the "app" transparent with a CSS blur. That is admiteddly very easy to do in CSS but gives an impressive result, so it seemed to be a good thing to add.</p>
 

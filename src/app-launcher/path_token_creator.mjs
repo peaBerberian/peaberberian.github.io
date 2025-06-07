@@ -11,17 +11,17 @@
  * path (as it may contain user-sensitive information).
  *
  * Yet, it would be nicer if the desktop doesn't need to perform bookkeeping,
- * where e.g. would have to explictly "free" paths that are not needed anymore
- * to be able to free the "resource" from memory (well, just the path string
- * in our case, but theoretically we could imagine some apps doing whatever it
- * wants with thousands of paths during its runtime).
+ * where e.g. apps would have to explictly "free" paths that are not needed
+ * anymore to be able to free the "resource" from memory (well, just the path
+ * string in our case, but theoretically we could imagine some apps doing
+ * whatever it wants with thousands of paths during its runtime).
  *
  * So there was 2 ideas here:
  *
  * 1. The initial one was to declare an "empty object" (`{}`) handle and use a
  *    JS WeakMap inside the desktop to add a weak reference to that path, so
- *    that if the root app does not have the reference to the handle anymore,
- *    the path is collected.
+ *    that if the app does not have the reference to the handle anymore, the
+ *    path is collected.
  *
  *    This idea was efficient and worked well but is not really portable on
  *    "sandboxed" applications, as they don't run in the same environment and

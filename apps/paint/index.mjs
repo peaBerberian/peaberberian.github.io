@@ -50,6 +50,8 @@ export function create(_args, env, abortSignal) {
     display: "flex",
     flexDirection: "column",
   });
+  const spinnerContainerElt = createSpinnerElt();
+  wrapperElt.appendChild(spinnerContainerElt);
   const {
     element: headerElt,
     enableButton,
@@ -58,15 +60,24 @@ export function create(_args, env, abortSignal) {
     {
       name: "upload",
       onClick: () => {
+        blockUi();
         // Trick to open the file picker
         const fileInputElt = document.createElement("input");
         fileInputElt.type = "file";
         fileInputElt.accept = "image/*";
         fileInputElt.multiple = false;
         fileInputElt.click();
+        fileInputElt.addEventListener("error", () => {
+          unblockUi();
+          showMessage(restOfAppElt, "❌ Failed to open your file-picker", 5000);
+        });
+        fileInputElt.addEventListener("cancel", () => {
+          unblockUi();
+        });
         fileInputElt.addEventListener("change", (e) => {
           const files = e.target.files;
           if (!files[0]) {
+            unblockUi();
             return;
           }
           createImgFromFileUpload(files[0])
@@ -76,8 +87,10 @@ export function create(_args, env, abortSignal) {
                 name: files[0].name,
                 type: files[0].type,
               });
+              unblockUi();
             })
             .catch((e) => {
+              unblockUi();
               showMessage(restOfAppElt, "❌ " + e.toString(), 5000);
             });
         });
@@ -86,14 +99,16 @@ export function create(_args, env, abortSignal) {
     {
       name: "open",
       onClick: () => {
+        blockUi();
         env
           .filePickerOpen({
             title: "Open an image from files stored on this Web Desktop",
-            allowMultipleSelections: true,
+            allowMultipleSelections: false,
           })
           .then(
             (fileData) => {
               if (!fileData || !fileData[0]) {
+                unblockUi();
                 return;
               }
               createImgFromFileOpen(fileData[0])
@@ -104,12 +119,15 @@ export function create(_args, env, abortSignal) {
                     name: fileData[0].filename,
                     type: mimeType,
                   });
+                  unblockUi();
                 })
                 .catch((e) => {
+                  unblockUi();
                   showMessage(restOfAppElt, "❌ " + e.toString(), 5000);
                 });
             },
             (err) => {
+              unblockUi();
               showMessage(restOfAppElt, "❌ " + err.toString(), 10000);
             },
           );
@@ -142,7 +160,6 @@ export function create(_args, env, abortSignal) {
   disableButton("clear");
   disableButton("quick-save");
   wrapperElt.appendChild(headerElt);
-
   const contentElt = document.createElement("div");
   applyStyle(contentElt, {
     height: "100%",
@@ -859,6 +876,7 @@ export function create(_args, env, abortSignal) {
   }
 
   function saveFile() {
+    blockUi();
     canvas.toBlob(async (blob) => {
       try {
         const savedFileData = await blob.arrayBuffer();
@@ -868,6 +886,7 @@ export function create(_args, env, abortSignal) {
           savedFileName: currentFile?.name ?? "painting.png",
         });
         if (!saveData) {
+          unblockUi();
           return;
         }
         currentFile = {
@@ -883,6 +902,7 @@ export function create(_args, env, abortSignal) {
       } catch (err) {
         showMessage(wrapperElt, "❌ " + err.toString(), 10000);
       }
+      unblockUi();
     }, currentFile?.type ?? "image/png");
   }
 
@@ -1095,6 +1115,17 @@ export function create(_args, env, abortSignal) {
 
     return { r, g, b };
   }
+
+  function blockUi() {
+    spinnerContainerElt.style.display = "flex";
+    wrapperElt.style.opacity = 0.5;
+    wrapperElt.setAttribute("inert", true);
+  }
+  function unblockUi() {
+    spinnerContainerElt.style.display = "none";
+    wrapperElt.style.opacity = 1;
+    wrapperElt.removeAttribute("inert");
+  }
 }
 
 function getSvg(svg) {
@@ -1225,4 +1256,21 @@ function guessMimeType(filename, arrayBuffer) {
 function getFileExtension(filename) {
   const dotIndex = filename.lastIndexOf(".");
   return dotIndex === -1 ? "" : filename.slice(dotIndex + 1).toLowerCase();
+}
+
+function createSpinnerElt() {
+  const spinnerContainerElt = document.createElement("div");
+  applyStyle(spinnerContainerElt, {
+    display: "none",
+    position: "absolute",
+    height: "100%",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: "9999",
+  });
+  const spinnerElt = document.createElement("div");
+  spinnerElt.className = "spinner";
+  spinnerContainerElt.appendChild(spinnerElt);
+  return spinnerContainerElt;
 }

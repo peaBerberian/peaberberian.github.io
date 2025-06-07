@@ -97,14 +97,13 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
     sendSettingsToIframe(iframe, abortSignal);
     processEventsFromIframe(
       iframe,
-      {
-        updateTitle: env.updateTitle,
-        closeApp: env.closeApp,
-      },
+      env,
       () => {
         iframe.style.display = "block";
         spinnerElt.onClose();
-        wrapperElt.removeChild(spinnerElt.element);
+        try {
+          wrapperElt.removeChild(spinnerElt.element);
+        } catch (err) {}
         if (isActivated) {
           iframe.contentWindow?.postMessage(
             {
@@ -116,9 +115,11 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
         }
       },
       (err) => {
-        iframe.remove();
-        spinnerElt.onClose();
-        wrapperElt.removeChild(spinnerElt.element);
+        try {
+          iframe.remove();
+          spinnerElt.onClose();
+          wrapperElt.removeChild(spinnerElt.element);
+        } catch (err) {}
         wrapperElt.appendChild(getErrorApp(err));
       },
       abortSignal,
@@ -336,19 +337,51 @@ function processEventsFromIframe(iframe, cbs, resolve, reject, abortSignal) {
         cbs.closeApp();
         break;
 
+      case "__pwd__filePickerOpen":
+        if (typeof e.data.requestId !== "string") {
+          throw new Error("No requestId for a filePickerOpen");
+        }
+        checkFilePickerOpen(e.data.data);
+        handleAsyncResponse(
+          cbs.filePickerOpen({
+            title: e.data.data.title,
+            baseDirectory: e.data.data.baseDirectory,
+            allowMultipleSelections: e.data.data.allowMultipleSelections,
+            confirmValue: e.data.data.confirmValue,
+          }),
+          e.data.type,
+          e.data.requestId,
+        );
+        break;
+
+      case "__pwd__filePickerSave":
+        if (typeof e.data.requestId !== "string") {
+          throw new Error("No requestId for a filePickerSave");
+        }
+        checkFilePickerSave(e.data.data);
+        handleAsyncResponse(
+          cbs.filePickerSave({
+            title: e.data.data.title,
+            baseDirectory: e.data.data.baseDirectory,
+            savedFileName: e.data.data.savedFileName,
+            savedFileData: e.data.data.savedFileData,
+            confirmValue: e.data.data.confirmValue,
+          }),
+          e.data.type,
+          e.data.requestId,
+        );
+        break;
+
       case "__pwd__quickSave":
-        // TODO:
-        cbs.quickSave(e.data.data);
-        break;
-
-      case "__pwd__picker_open":
-        // TODO:
-        cbs.filePickerOpen(e.data.data);
-        break;
-
-      case "__pwd__picker_save":
-        // TODO:
-        cbs.filePickerOpen(e.data.data);
+        if (typeof e.data.requestId !== "string") {
+          throw new Error("No requestId for a quickSave");
+        }
+        checkQuickSave(e.data.data);
+        handleAsyncResponse(
+          cbs.quickSave(e.data.data.handle, e.data.data.data),
+          e.data.type,
+          e.data.requestId,
+        );
         break;
 
       case "__pwd__notification":
@@ -372,6 +405,35 @@ function processEventsFromIframe(iframe, cbs, resolve, reject, abortSignal) {
       }
     }
   });
+
+  function handleAsyncResponse(operationProm, type, requestId) {
+    operationProm
+      .then((val) => {
+        iframe.contentWindow?.postMessage(
+          {
+            type,
+            requestId,
+            success: true,
+            data: val,
+          },
+          appDomain,
+        );
+      })
+      .catch((err) => {
+        iframe.contentWindow?.postMessage(
+          {
+            type,
+            requestId,
+            success: false,
+            data: {
+              name: err.name,
+              message: err.message,
+            },
+          },
+          appDomain,
+        );
+      });
+  }
 }
 
 function checkErrorMsgFormat(data) {
@@ -393,5 +455,63 @@ function checkTitleUpdateFormat(data) {
     typeof data.title !== "string"
   ) {
     throw new Error("Cannot update title: wrong data format");
+  }
+}
+
+function checkFilePickerOpen(data) {
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    (typeof data.title !== "string" && data.title !== undefined) ||
+    (typeof data.baseDirectory !== "string" &&
+      data.baseDirectory !== undefined) ||
+    (typeof data.allowMultipleSelections !== "boolean" &&
+      data.allowMultipleSelections !== undefined) ||
+    (typeof data.confirmValue !== "string" && data.confirmValue !== undefined)
+  ) {
+    throw new Error("Cannot spawn filePickerOpen: wrong data format");
+  }
+}
+
+function checkFilePickerSave(data) {
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    (typeof data.title !== "string" && data.title !== undefined) ||
+    (typeof data.baseDirectory !== "string" &&
+      data.baseDirectory !== undefined) ||
+    (typeof data.savedFileName !== "string" &&
+      data.savedFileName !== undefined) ||
+    (typeof data.confirmValue !== "string" && data.confirmValue !== undefined)
+  ) {
+    throw new Error("Cannot spawn filePickerSave: wrong data format");
+  }
+  if (
+    typeof data.savedFileData !== "string" &&
+    !(data.savedFileData instanceof ArrayBuffer) &&
+    !ArrayBuffer.isView(data.savedFileData)
+  ) {
+    throw new Error(
+      "Cannot spawn filePickerSave: saved file data is in the wrong type",
+    );
+  }
+}
+
+function checkQuickSave(data) {
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    typeof data.handle !== "string"
+  ) {
+    throw new Error("Cannot spawn filePickerSave: wrong data format");
+  }
+  if (
+    typeof data.data !== "string" &&
+    !(data.data instanceof ArrayBuffer) &&
+    !ArrayBuffer.isView(value)
+  ) {
+    throw new Error(
+      "Cannot spawn filePickerSave: saved file data is in the wrong type",
+    );
   }
 }

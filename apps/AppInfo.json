@@ -63,6 +63,7 @@
       "icon": "🖌️",
       "defaultHeight": 950,
       "defaultWidth": 1000,
+      "sandboxed": true,
       "dependencies": ["filePickerOpen", "filePickerSave", "quickSave"],
       "startMenu": {
         "list": "Desktop Apps"
@@ -77,6 +78,7 @@
       "icon": "📝",
       "defaultHeight": 700,
       "defaultWidth": 700,
+      "sandboxed": true,
       "dependencies": ["filePickerOpen", "filePickerSave", "quickSave"],
       "startMenu": {
         "list": "Desktop Apps"
@@ -110,6 +112,7 @@
       "id": "table",
       "title": "Sheets",
       "icon": "📏",
+      "sandboxed": true,
       "startMenu": {
         "list": "Desktop Apps"
       },
@@ -121,6 +124,7 @@
       "id": "image-viewer",
       "title": "Image Viewer",
       "icon": "🏞️",
+      "sandboxed": true,
       "dependencies": ["filePickerOpen"],
       "defaultHeight": 600,
       "defaultWidth": 900,
@@ -164,7 +168,7 @@
       "defaultHeight": 600,
       "defaultWidth": 800,
       "sandboxed": true,
-      "defaultBackground": "#27272c",
+      "defaultBackground": "windowActiveHeader",
       "startMenu": {
         "list": "Games"
       },
@@ -403,6 +407,7 @@
       "title": "Docx Reader (docx.js)",
       "icon": "📘",
       "dependencies": ["filePickerOpen"],
+      "sandboxed": true,
       "defaultHeight": 600,
       "defaultWidth": 900,
       "startMenu": {
@@ -415,6 +420,7 @@
       "title": "Xlsx Reader (xlsx.js)",
       "icon": "📊",
       "dependencies": ["filePickerOpen"],
+      "sandboxed": true,
       "defaultHeight": 600,
       "defaultWidth": 900,
       "startMenu": {
@@ -428,6 +434,7 @@
       "icon": "📑",
       "defaultHeight": 950,
       "defaultWidth": 1000,
+      "sandboxed": true,
       "dependencies": ["filePickerOpen"],
       "startMenu": {
         "list": "External Apps"

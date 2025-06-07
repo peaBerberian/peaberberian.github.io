@@ -131,7 +131,7 @@ onmessage = (e) => {
   if (e.data.type === "open-file") {
     document.body.innerHTML = "";
     const statusElt = document.createElement("p");
-		statusElt.style.color = "white";
+    statusElt.style.color = "white";
     statusElt.style.padding = "7px";
     statusElt.textContent = "Loading file...";
     document.body.appendChild(statusElt);

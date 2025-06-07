@@ -11,6 +11,8 @@ export function create(_args, env) {
   // If the URL is reachable or not depends on the server.
   // On Github-pages, it works!
   return {
-    element: createExternalIframe(urlWithoutFragment + "?" + String(Date.now())),
+    element: createExternalIframe(
+      urlWithoutFragment + "?" + String(Date.now()),
+    ),
   };
 }

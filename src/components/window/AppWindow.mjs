@@ -822,13 +822,13 @@ export default class AppWindow extends EventEmitter {
 function constructVisibleWindowScaffolding(title) {
   return strHtml`
   <div class="w-visible">
-		<div class="w-header">
-			<div class="w-title">${title}</div>
-			<div class="w-controls">
-				<div class="w-button w-minimize" aria-label="Minimize window" title="Minimize" tabindex="0"><span class="w-button-icon"></span></div>
-				<div class="w-button w-maximize" aria-label="Maximize window" title="Maximize" tabindex="0"><span class="w-button-icon"></span></div>
-				<div class="w-button w-close" aria-label="close window" title="Close" tabindex="0"><span class="w-button-icon"></span></div>
-			</div>
-		</div>
+    <div class="w-header">
+      <div class="w-title">${title}</div>
+      <div class="w-controls">
+        <div class="w-button w-minimize" aria-label="Minimize window" title="Minimize" tabindex="0"><span class="w-button-icon"></span></div>
+        <div class="w-button w-maximize" aria-label="Maximize window" title="Maximize" tabindex="0"><span class="w-button-icon"></span></div>
+        <div class="w-button w-close" aria-label="close window" title="Close" tabindex="0"><span class="w-button-icon"></span></div>
+      </div>
+    </div>
   </div>`;
 }

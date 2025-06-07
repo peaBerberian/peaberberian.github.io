@@ -80,8 +80,8 @@ export function createCheckboxOnRef({ ref, label }, abortSignal) {
   const checkboxElt = strHtml`<div class="w-small-opt">
 <span class="w-small-opt-desc">${label}</span>
 <label class="w-switch">
-	${inputEl}
-	<span class="w-switch-slider"></span>
+  ${inputEl}
+  <span class="w-switch-slider"></span>
 </label>
 </div>`;
   inputEl.onchange = function () {

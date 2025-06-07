@@ -29,8 +29,8 @@ export default function createDesktopIconsSection(
     filesystem.rmFile("/userconfig/desktop.config.json");
   };
   generalGroupElt.appendChild(strHtml`<div class="w-small-opt">
-	<span class="w-small-opt-desc">Reset to original desktop icons</span>
-	${resetButtonElt}
+  <span class="w-small-opt-desc">Reset to original desktop icons</span>
+  ${resetButtonElt}
 </div>`);
   section.appendChild(generalGroupElt);
   const colorGroupElt = strHtml`<div class="w-group"><h3>Colors</h3></div>`;

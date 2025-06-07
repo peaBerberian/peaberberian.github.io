@@ -6,7 +6,6 @@
 // high priority:
 //
 // medium priority:
-// - image viewer touch controls
 // - invader temp ugly at startup
 // - copy svg in passgen is broken on multiple devices, very mysterious that one
 // - drag and drop in explorer

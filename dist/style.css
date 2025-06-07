@@ -915,8 +915,8 @@ html {
     opacity: 1;
   }
   100% {
-    transform: scale(0);
-    opacity: 0.1;
+    transform: scale(0.4);
+    opacity: 0;
   }
 }
 

@@ -16,10 +16,10 @@ import * as path from "path";
 import { pathToFileURL, fileURLToPath } from "url";
 import esbuild from "esbuild";
 
-// NOTE: CSP can be added to the app sandbox at some point, as protection
+// NOTE: CSP can be added to the app sandbox at some point, as a protection
 // against XSS from poorly-developed apps.
-// But the issue with that is that dynamic script and, especially style, loading
-// can also be seen as a feature, as apps do not control the base HTML.
+// But the issue with that is that dynamic inlining of script and, especially
+// style, can also be seen as a feature, as apps do not control the base HTML.
 // A better solution could be found in the future?
 //
 // import crypto from "crypto";

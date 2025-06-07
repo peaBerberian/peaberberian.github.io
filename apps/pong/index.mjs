@@ -230,17 +230,18 @@ export function create(_args, env, abortSignal) {
       } else if (ball.dx > 0) {
         if (checkPaddleBallCollision(userPaddle, ball)) {
           // Mario Kart that thing
-          // NOTE: before the
           if (rightScore - leftScore > 3) {
             currEnemySpeed = 12;
           } else if (rightScore - leftScore >= 2) {
             currEnemySpeed = getRandomNumber(10, 12);
+          } else if (rightScore - leftScore < -3) {
+            currEnemySpeed = 4;
+          } else if (rightScore - leftScore <= -2) {
+            currEnemySpeed = getRandomNumber(4, 8);
           } else if (rightScore - leftScore <= -1) {
-            currEnemySpeed = getRandomNumber(9, 11);
-          } else if (rightScore - leftScore <= -3) {
-            currEnemySpeed = getRandomNumber(8, 10);
+            currEnemySpeed = getRandomNumber(8, 11);
           } else {
-            currEnemySpeed = 5;
+            currEnemySpeed = getRandomNumber(6, 10);
           }
         }
       }
@@ -316,7 +317,7 @@ export function create(_args, env, abortSignal) {
     }
 
     function resetBall() {
-      currEnemySpeed = 15;
+      currEnemySpeed = 8;
       ball.x = canvas.width / 2;
       ball.y = canvas.height / 2;
       ball.prevX = ball.x;

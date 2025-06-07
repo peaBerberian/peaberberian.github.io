@@ -385,6 +385,7 @@ async function writeAppSandboxHtml(watch, isSilent) {
     await Promise.all([readSndbxScript, readCss]).then(([js, css]) => {
       return new Promise((resolve, reject) => {
         const fileStr = `<!-- HTML file for "sandboxed" apps, which are apps completely isolated from the desktop code -->
+<!DOCTYPE html>
 <html>
 <head>
 <style>

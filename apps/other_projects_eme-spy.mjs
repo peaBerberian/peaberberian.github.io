@@ -23,7 +23,7 @@ export function create(_args, env) {
           overviewContainer.appendChild(overviewText);
           overviewText.innerHTML = `<p><a href="${GITHUB_LINK}" target="_blank">EMESpy</a> is a reverse-engineering tool I developed to easily see when a webpage calls "EME" web API.</p>
 <p>"EME" for "Encrypted Media Extensions" is a group of web API to allow the playback of encrypted media in a browser, without having to resort in an easily-breakable decryption step in JavaScript.</p>
-<p>Media encryption is often a requirement of content right-holders and as such almost all big streaming platforms (Netflix, Disney+, Canal+, Amazon Prime Video etc.) rely on those API to have the right to distribute those contents to their customes inside a web browser.</p>
+<p>Media encryption is often a requirement of content right-holders and as such almost all big streaming platforms (Netflix, Disney+, Canal+, Amazon Prime Video etc.) rely on those API to have the right to distribute those contents to their customers inside a web browser.</p>
 <p>In some contexts EME API even allow the communication with secure hardware enclaves inside the user's CPU (e.g. a <a href="https://en.wikipedia.org/wiki/Trusted_execution_environment" target="_blank">TEE</a>) or GPU so that both media decryption and decoding never leave the hardware (again, to ensure that the decrypted content is not easily accessible).<br>As a surprising anecdote, in that situation no software is able to "see" the decoded media, for example even screen recorders and screenshoting softwares will usually show a black screen where the media should have been.</p>`;
           return overviewContainer;
         },

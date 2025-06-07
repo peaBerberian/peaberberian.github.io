@@ -9,6 +9,7 @@ import createWindowSection from "./Window.mjs";
 import createApplicationsSection from "./Applications.mjs";
 import createDesktopIconsSection from "./DesktopIcons.mjs";
 import createStorageSection from "./Storage.mjs";
+import strHtml from "./str-html.mjs";
 
 /**
  * Generate content of the "System Settings" application.
@@ -37,7 +38,7 @@ export function create(_args, env, abortSignal) {
   }
 
   const { settings } = env;
-  const { constructSidebarElt, strHtml } = env.appUtils;
+  const { constructSidebarElt } = env.appUtils;
   const sidebarItems = [
     { icon: "🖼️", text: "Wallpaper", section: "wallpaper", active: true },
     { icon: "🎨", text: "Theming", section: "theme", active: false },

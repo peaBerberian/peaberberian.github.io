@@ -3,7 +3,7 @@
  * @returns {HTMLElement}
  */
 export function create(_args, env) {
-  const { createAppIframe } = env.appUtils;
+  const { createExternalIframe } = env.appUtils;
   const fragmentIdx = location.href.indexOf("#");
   const urlWithoutFragment =
     fragmentIdx > 0 ? location.href.substring(0, fragmentIdx) : location.href;
@@ -11,6 +11,6 @@ export function create(_args, env) {
   // If the URL is reachable or not depends on the server.
   // On Github-pages, it works!
   return {
-    element: createAppIframe(urlWithoutFragment + "?" + String(Date.now())),
+    element: createExternalIframe(urlWithoutFragment + "?" + String(Date.now())),
   };
 }

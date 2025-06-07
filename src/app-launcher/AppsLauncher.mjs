@@ -5,7 +5,7 @@ import AppWindow from "../components/window/AppWindow.mjs";
 import notificationEmitter from "../components/notification_emitter.mjs";
 import {
   getSpinnerApp,
-  createAppIframe,
+  createExternalIframe,
   createLinkedAbortController,
   getErrorApp,
   getMaxDesktopDimensions,
@@ -431,7 +431,7 @@ export default class AppsLauncher {
       if (method !== "create") {
         console.warn('Not calling "create" on an i-frame application.');
       }
-      const iframeContainer = createAppIframe(appData.website);
+      const iframeContainer = createExternalIframe(appData.website);
       const element = iframeContainer;
       const onActivate = iframeContainer.focus.bind(iframeContainer);
       return { element, onActivate };

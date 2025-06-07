@@ -1,8 +1,9 @@
 import { createNumericSliderOnRef } from "./utils.mjs";
+import strHtml from "./str-html.mjs";
 
 export default function createSystemSection(env, abortSignal) {
   const { settings, appUtils } = env;
-  const { createAppTitle, strHtml } = appUtils;
+  const { createAppTitle } = appUtils;
   const currentVersion = env.getVersion();
   const section = strHtml`<div>${createAppTitle("System", {})}</div>`;
   section.dataset.section = "system";
@@ -40,7 +41,6 @@ export default function createSystemSection(env, abortSignal) {
         }
       },
     },
-    appUtils,
     abortSignal,
   );
   fontSizeSlider.classList.add("w-small-opt");

@@ -1,5 +1,6 @@
-export function createColorPickerOnRef(ref, text, appUtils, abortSignal) {
-  const { strHtml, applyStyle } = appUtils;
+import strHtml from "./str-html.mjs";
+
+export function createColorPickerOnRef(ref, text, abortSignal) {
   const container = strHtml`<span />`;
   const textElt = text != null ? strHtml`<span>${text}</span>` : null;
   if (textElt) {
@@ -44,10 +45,8 @@ export function createColorPickerOnRef(ref, text, appUtils, abortSignal) {
 
 export function createNumericSliderOnRef(
   { label, ref, min, max, valueToText },
-  appUtils,
   abortSignal,
 ) {
-  const { strHtml } = appUtils;
   const wrapper = strHtml`<div class="w-slider-container">`;
   const sliderLineElt = strHtml`<div class="w-slider-with-value" />`;
   const labelElt = strHtml`<label>${label}</label>`;
@@ -75,8 +74,7 @@ export function createNumericSliderOnRef(
   return wrapper;
 }
 
-export function createCheckboxOnRef({ ref, label }, appUtils, abortSignal) {
-  const { strHtml } = appUtils;
+export function createCheckboxOnRef({ ref, label }, abortSignal) {
   const inputEl = strHtml`<input type="checkbox" checked="">`;
   inputEl.checked = ref.getValue();
   const checkboxElt = strHtml`<div class="w-small-opt">
@@ -100,10 +98,8 @@ export function createCheckboxOnRef({ ref, label }, appUtils, abortSignal) {
 
 export function createDropdownOnRef(
   { ref, options, toRef = (val) => val, fromRef = (val) => val, label },
-  appUtils,
   abortSignal,
 ) {
-  const { strHtml } = appUtils;
   const selectEl = strHtml`<select class="w-select">
 ${options.map((o) => strHtml`<option value="${o}">${o}</option>`)}
 </select>`;
@@ -122,4 +118,18 @@ ${selectEl}
     { clearSignal: abortSignal },
   );
   return wrapperEl;
+}
+
+/**
+ * Apply multiple style attributes on a given element.
+ * @param {HTMLElement} element - The `HTMLElement` on which the style should be
+ * aplied.
+ * @param {Object} style - The dictionnary where keys are style names (JSified,
+ * e.g. `backgroundColor` not `background-color`) and values are the
+ * corresponding syle values.
+ */
+export function applyStyle(element, style) {
+  for (const key of Object.keys(style)) {
+    element.style[key] = style[key];
+  }
 }

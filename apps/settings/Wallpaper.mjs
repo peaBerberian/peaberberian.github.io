@@ -1,3 +1,6 @@
+import strHtml from "./str-html.mjs";
+import { applyStyle } from "./utils.mjs";
+
 /** Wallpapers provided by default in settings. */
 export const WALLPAPERS = [
   // From Kalen Emsley (@kalenemsley from unsplash)
@@ -36,7 +39,7 @@ const DEFAULT_GRADIENTS = [
 
 export default function createWallpaperSection(env) {
   const { settings } = env;
-  const { createAppTitle, strHtml, applyStyle } = env.appUtils;
+  const { createAppTitle } = env.appUtils;
   const section = strHtml`<div>${createAppTitle("Wallpaper", {})}</div>`;
   section.dataset.section = "wallpaper";
 

@@ -4,12 +4,13 @@ import {
   createDropdownOnRef,
   createNumericSliderOnRef,
 } from "./utils.mjs";
+import strHtml from "./str-html.mjs";
 
 export default function createWindowSection(
   { appUtils, settings },
   abortSignal,
 ) {
-  const { createAppTitle, strHtml } = appUtils;
+  const { createAppTitle } = appUtils;
   const section = strHtml`<div>${createAppTitle("Window", {})}</div>`;
   section.dataset.section = "window";
 
@@ -21,7 +22,6 @@ export default function createWindowSection(
         options: ["Left", "Right", "Center"],
         label: "Title Position",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -32,7 +32,6 @@ export default function createWindowSection(
         options: ["Left", "Right"],
         label: "Button Position",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -43,7 +42,6 @@ export default function createWindowSection(
         options: ["Colorful", "Sober"],
         label: "Button Style",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -59,7 +57,6 @@ export default function createWindowSection(
         max: 50,
         valueToText: (val) => String(val) + "px",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -72,7 +69,6 @@ export default function createWindowSection(
         max: 25,
         valueToText: (val) => String(val),
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -85,7 +81,6 @@ export default function createWindowSection(
         max: 15,
         valueToText: (val) => String(val),
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -98,7 +93,6 @@ export default function createWindowSection(
         ref: settings.oobWindows,
         label: "Windows can partially be moved out of the screen",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -108,7 +102,6 @@ export default function createWindowSection(
         ref: settings.absoluteWindowPositioning,
         label: "Absolute Positioning (don't move windows on page resize)",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -118,7 +111,6 @@ export default function createWindowSection(
         ref: settings.absoluteWindowSize,
         label: "Absolute size (don't update window size on page resize)",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -128,7 +120,6 @@ export default function createWindowSection(
         ref: settings.dblClickHeaderFullScreen,
         label: "Double clicking on header toggles full-screen mode",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -141,7 +132,6 @@ export default function createWindowSection(
         label:
           "When moving a window to the top of the screen, put it on fullscreen",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -152,7 +142,6 @@ export default function createWindowSection(
         label:
           "When moving a window to a side of the screen, put it on half-screen mode (if there's enough horizontal space)",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -166,9 +155,7 @@ export default function createWindowSection(
     ["Inactive Header Background", settings.windowInactiveHeaderBgColor],
     ["Inactive Header Text", settings.windowIninactiveHeaderTextColor],
   ].forEach(([text, ref]) => {
-    colorGroupElt.appendChild(
-      createColorPickerOnRef(ref, text, appUtils, abortSignal),
-    );
+    colorGroupElt.appendChild(createColorPickerOnRef(ref, text, abortSignal));
   });
   section.appendChild(colorGroupElt);
   return section;

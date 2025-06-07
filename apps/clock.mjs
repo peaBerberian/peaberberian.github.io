@@ -8,7 +8,6 @@
 let clockId = 0;
 
 export function create(_args, env, abortSignal) {
-  const { applyStyle } = env.appUtils;
   const use12HourClockFormat = is12HourClockFormat();
   const wrapper = document.createElement("div");
   applyStyle(wrapper, {
@@ -251,5 +250,19 @@ function is12HourClockFormat() {
     );
   } catch (err) {
     return locale === "en-US";
+  }
+}
+
+/**
+ * Apply multiple style attributes on a given element.
+ * @param {HTMLElement} element - The `HTMLElement` on which the style should be
+ * aplied.
+ * @param {Object} style - The dictionnary where keys are style names (JSified,
+ * e.g. `backgroundColor` not `background-color`) and values are the
+ * corresponding syle values.
+ */
+function applyStyle(element, style) {
+  for (const key of Object.keys(style)) {
+    element.style[key] = style[key];
   }
 }

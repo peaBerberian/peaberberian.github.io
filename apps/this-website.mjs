@@ -1,7 +1,7 @@
 const GITHUB_LINK = "https://github.com/peaberberian/peaberberian.github.io";
 
 export function create(_args, env) {
-  const { strHtml, createAppTitle } = env.appUtils;
+  const { createAppTitle } = env.appUtils;
   return {
     sidebar: [
       { text: "Overview", centered: true, icon: "🧑‍🏫", render: getOverview },
@@ -39,87 +39,99 @@ export function create(_args, env) {
   };
 
   function getOverview() {
-    return strHtml`<div>
-${createAppTitle("About This Website", { github: GITHUB_LINK })}
+    const overviewContainer = document.createElement("div");
+    overviewContainer.appendChild(
+      createAppTitle("About This Website", { github: GITHUB_LINK }),
+    );
 
-<p>I initially envisionned a simple desktop environment where I could list my open-source projects to replace my previously minimal (some said bland) personal website.</p>
+    const overviewText = document.createElement("div");
+    overviewContainer.appendChild(overviewText);
+    overviewText.innerHTML = `<p>I initially envisionned a simple desktop environment where I could list my open-source projects to replace my previously minimal (some said bland) personal website.</p>
 
 <p>However, I so loved writing the fake OS parts that I ended up implementing many nice features (customization, a permission system for apps, a filesystem) and multiple applications (though all fairly minimal, I will admit!), in "vanilla" (meaning: depending on no framework/library) JavaScript/HTML/CSS.</p>
 
-<p>So there has been a change of plan: it's not a listing of other projects anymore, now it's its own thing as a JS desktop environment!</p>
-
-</div>`;
+<p>So there has been a change of plan: it's not a listing of other projects anymore, now it's its own thing as a JS desktop environment!</p>`;
+    return overviewContainer;
   }
 
   function getOptimal() {
-    return strHtml`<div>
-${createAppTitle("Making it efficient", {})}
-<p>I tried to make that website as efficient as possible:</p>
+    const optimContainer = document.createElement("div");
+    optimContainer.appendChild(createAppTitle("Making it efficient", {}));
 
-<p>
+    const optimText = document.createElement("div");
+    optimContainer.appendChild(optimText);
+    optimText.innerHTML = `<p>I tried to make that website as efficient as possible:</p>
 <ul>
-	<li>Almost all animations are done mostly in CSS. Those are generally much more efficient that doing the same animations with JavaScript code.</li>
-	<li>To avoid too many heavy repaints, I added specific checks ensuring that the content stood the same in some particular situations.<br>For example, on page resize I pre-check the dimensions of the new grid of desktop icons and check if their organization would change horizontally or vertically entirely with JS computations, before deciding to interact with the DOM.</li>
-	<li>I've been also very careful with the browser API with which I interacted again to avoid repaints: I rarely rely on web API which would need the browser to internally re-check element positions for example, preferring to ensure that the browser can optimize its rendering the best it can. I also grouped most DOM mutations together, generally inside <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame">requestAnimationFrame</a> callbacks.</li>
-	<li>When windows are moved or resized, I tried to make it apparent through CSS to the browser that it should have no impact on other elements beside z-positioning.</li>
-	<li>I've tried to also be frugal with memory usage, by only storing what's needed and being very careful with the potentiality of memory leaks (here the main culprits would be event listeners).</li>
-</ul>
-</p>`;
+  <li>Almost all animations are done mostly in CSS. Those are generally much more efficient that doing the same animations with JavaScript code.</li>
+  <li>To avoid too many heavy repaints, I added specific checks ensuring that the content stood the same in some particular situations.<br>For example, on page resize I pre-check the dimensions of the new grid of desktop icons and check if their organization would change horizontally or vertically entirely with JS computations, before deciding to interact with the DOM.</li>
+  <li>I've been also very careful with the browser API with which I interacted again to avoid repaints: I rarely rely on web API which would need the browser to internally re-check element positions for example, preferring to ensure that the browser can optimize its rendering the best it can. I also grouped most DOM mutations together, generally inside <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame">requestAnimationFrame</a> callbacks.</li>
+  <li>When windows are moved or resized, I tried to make it apparent through CSS to the browser that it should have no impact on other elements beside z-positioning.</li>
+  <li>I've tried to also be frugal with memory usage, by only storing what's needed and being very careful with the potentiality of memory leaks (here the main culprits would be event listeners).</li>
+</ul>`;
+    return optimContainer;
   }
 
   function getConfigurable() {
-    return strHtml`<div>
-${createAppTitle("Making it configurable", {})}
-<p>I spent some efforts trying to make the behavior of this desktop configurable (through the settings app).</p>
+    const configContainer = document.createElement("div");
+    configContainer.appendChild(createAppTitle("Making it configurable", {}));
+
+    const configText = document.createElement("div");
+    configContainer.appendChild(configText);
+    configText.innerHTML = `<p>I spent some efforts trying to make the behavior of this desktop configurable (through the settings app).</p>
 
 <p>When I check a new desktop environment, I usually love diving into configurations to see if the environment keep being functional even after heavy personalization, thus I also wanted to make a highly-configurable yet always-functional desktop.</p>
 
-<div class="separator" />
+<div class="separator"></div>
 
-<p>Amongst areas where configuration makes a lot of sense, one was how to react to a page resize with already opened windows:
+<p>Amongst areas where configuration makes a lot of sense, one was how to react to a page resize with already opened windows:</p>
 <ol>
-	<li>Should the windows' position and size update accordingly with the page's dimensions?<br>This could be expected if you consider regular website behavior.</li>
-	<li>Should the windows' position and size just stay as stable as possible even in those cases?<br>This seemed more practical to me when you just consider a desktop environment</li>
+  <li>Should the windows' position and size update accordingly with the page's dimensions?<br>This could be expected if you consider regular website behavior.</li>
+  <li>Should the windows' position and size just stay as stable as possible even in those cases?<br>This seemed more practical to me when you just consider a desktop environment</li>
 </ol>
 <br>
-I thought that both could make sense depending on the user, so I chose to propose both as two configuration toggles (one for positions, the other for dimensions). The first behavior is implemented under the hood through CSS percentage properties, the second as pixel properties - though it gets more complex when handling window moving and resizing.
-</p>
+<p>I thought that both could make sense depending on the user, so I chose to propose both as two configuration toggles (one for positions, the other for dimensions). The first behavior is implemented under the hood through CSS percentage properties, the second as pixel properties - though it gets more complex when handling window moving and resizing.</p>
 
-<div class="separator" />
+<div class="separator"></div>
 
-<p>Another area that was actually hard to implement, was what I internally called "OOB windows" (for "out-of-bounds"), which is the possibility of moving the windows partially out of the screen (only partially because I wanted the user to still always be able to reach windows).<br>Here also one of the harder thing to do with that feature is knowing what to do on page resize, especially as I wanted that:<ol>
+<p>Another area that was actually hard to implement, was what I internally called "OOB windows" (for "out-of-bounds"), which is the possibility of moving the windows partially out of the screen (only partially because I wanted the user to still always be able to reach windows).<br>Here also one of the harder thing to do with that feature is knowing what to do on page resize, especially as I wanted that:</p><ol>
 <li>Windows should never be totally out of the screen and we always should be able to reach enough of a window to move it or resize it.</li>
 <li>A window that was previously entirely contained in the screen should always ENTIRELY stay inside the screen.</li>
 <li>Window placements should always seem logical from the user's point of view, even if the window is initially partially out of the screen.</li>
 </ol>
 <br>
-I ended up on a simple rule in my logic reacting to page resizes: For windows entirely inside the screen, they always are re-rendered entirely inside the screen, and are moved in a predictable way if a resize meant they wouldn't. I also prefer updating position first and then dimensions if it doesn't fit the screen at all, as it seemed more useful to a user to keep the same dimensions than to keep the same positions.<br>
+<p>I ended up on a simple rule in my logic reacting to page resizes: For windows entirely inside the screen, they always are re-rendered entirely inside the screen, and are moved in a predictable way if a resize meant they wouldn't. I also prefer updating position first and then dimensions if it doesn't fit the screen at all, as it seemed more useful to a user to keep the same dimensions than to keep the same positions.<br>
 If a window is partially out of the screen, I consider that the area in which it can be repainted is the screen extended to the edge of that window (instead of just what's visible), I then added checks for security paddings ensuring that windows always stay reachable.</p>
 <p>This should lead to always predictable and useful behavior.</p>
 </div>`;
+    return configContainer;
   }
 
   function getEmojis() {
-    return strHtml`<div>
-${createAppTitle("So many emojis 😵‍💫", {})}
-<p>As you can see, I rely heavily on emojis for many picture-like aspects of this website (icons, sidebar categories, start button, theming).</p>
+    const emojiContainer = document.createElement("div");
+    emojiContainer.appendChild(createAppTitle("So many emojis 😵‍💫", {}));
 
-<p>This is because relying on those has some nice advantages:
+    const emojiText = document.createElement("div");
+    emojiContainer.appendChild(emojiText);
+    emojiText.innerHTML = `<p>As you can see, I rely heavily on emojis for many picture-like aspects of this website (icons, sidebar categories, start button, theming).</p>
+
+<p>This is because relying on those has some nice advantages:</p>
 <ul>
-	<li>They are embedded in one of your system's font, so there's no external image to load from the network and they are memory-efficient.</li>
-	<li>Because they are linked to your system, they also provide a more "native" look in the platform you use to visit that website.</li>
-	<li>I do not actually have to create or take images from somewhere, I'm just in effect outputing text, this frees me up from licensing issues!</li>
-	<li>Those have been designed and vetted by experts to express moods/ideas and to look good on the current device.</li>
+  <li>They are embedded in one of your system's font, so there's no external image to load from the network and they are memory-efficient.</li>
+  <li>Because they are linked to your system, they also provide a more "native" look in the platform you use to visit that website.</li>
+  <li>I do not actually have to create or take images from somewhere, I'm just in effect outputing text, this frees me up from licensing issues!</li>
+  <li>Those have been designed and vetted by experts to express moods/ideas and to look good on the current device.</li>
 </ul>
-</p>
-<p>It could be argued that some devices don't have any font with emojis, though those should generally not be devices from the target audience of that website. Yet if it turns out that a visitor still don't have them, the fallback font or replacement characters will make it clear that the current device is missing them.</p>
-</div>`;
+<p>It could be argued that some devices don't have any font with emojis, though those should generally not be devices from the target audience of that website. Yet if it turns out that a visitor still don't have them, the fallback font or replacement characters will make it clear that the current device is missing them.</p>`;
+    return emojiContainer;
   }
 
   function getAnecdotes() {
-    return strHtml`<div>
-${createAppTitle("Some anecdotes", {})}
-<p>While writing this, I encountered several difficulties that I found interesting.</p>
+    const anecdotesContainer = document.createElement("div");
+    anecdotesContainer.appendChild(createAppTitle("Some anecdotes", {}));
+
+    const anecdotesText = document.createElement("div");
+    anecdotesContainer.appendChild(anecdotesText);
+    anecdotesText.innerHTML = `<p>While writing this, I encountered several difficulties that I found interesting.</p>
 
 <h3>i-frame blocking</h3>
 
@@ -152,14 +164,13 @@ ${createAppTitle("Some anecdotes", {})}
 
 <p>The "paint" app has a "bucket" tool allowing to fill an area originally in one color in another color, similar to some other paint applications. I first thought that implementing it would be simple enough but I was completely wrong!</p>
 
-<p>My initial implementation just:
-	<ol>
-		<li>Checked the "color pixels" individually currently drawn (this is under the hood relying on a ${"<canvas>"} HTML element which has many JS api available to interact with it)</li>
-		<li>Identified the color under the cursor on click</li>
-		<li>Fill that pixel, and all neighbors with the same pixel color, of the target color</li>
-		<li>That's done!</li>
-	</ol>
-</p>
+<p>My initial implementation just:</p>
+<ol>
+  <li>Checked the "color pixels" individually currently drawn (this is under the hood relying on a "&ltcanvas&gt"} HTML element which has many JS api available to interact with it)</li>
+  <li>Identified the color under the cursor on click</li>
+  <li>Fill that pixel, and all neighbors with the same pixel color, of the target color</li>
+  <li>That's done!</li>
+</ol>
 <p>But doing that weirdly led to what appeared to be some remnants of the old color at the edges.<br>After thinking my code was wrong and trying to fix some stuff, I finally looked at what exact pixels where not filled: turned out that they had a weird "color pixel" that I had never drawn, WTF 😮...</p>
 
 <p>This is actually because in the paint app, we're very rarely "coloring" exact coordinates, like say: 15 pixels to the left and 50 to the bottom. To improve the rendering effect, I go beyond integer pixels (like: 1.42578 pixels to the left instead).<br>When doing that, most web browsers implementation actually perform sub-pixel tricks (like "inventing" some color) just so it can look better. Then asking for the corresponding pixel's color is going to return that new, not asked for, color.</p>
@@ -186,35 +197,34 @@ ${createAppTitle("Some anecdotes", {})}
 
 <p>To show off even more, I made the initial background of the "app" transparent with a CSS blur. That is admiteddly very easy to do in CSS but gives an impressive result, so it seemed to be a good thing to add.</p>
 
-<p>However after doing all that, issues started showing:<ol>
-<li>The self-animated SVG was perfect, until the window wasn't displayed on screen (e.g. the app was "minimized"). There it seems that some browsers "paused" the SVG and, even after restoring it, it took a lot of time to fix itself in place.<br>I guess this is a browser optimization? I re-switched to JS-based animation once I saw this.</li>
-<li>My initial JS-based animation rework was done quickly, and re-defined the coordinates of the hour, minute and second hands at each iteration.<br>However doing that lead to some very small variations of e.g. the hands' length (due to floating-point arithmetics or SVG approximations?) that became visible if you focused on it enough.<br>As I found that original implementation unsteady anyway I reworked the logic so it relies on a rotation transform again.</li>
-<li>On some browsers, the combination of the window's blurred transparency of the clock's shadow and of other elements behind it seemed to lead to weird temporary visual glitches.<br>I chose here to be wise and just give the app a "normal" background, the clock is not the main attraction of this desktop after all!</li>
-</ol>
-</p>
-
-</div>`;
+<p>However after doing all that, issues started showing:</p>
+<ol>
+  <li>The self-animated SVG was perfect, until the window wasn't displayed on screen (e.g. the app was "minimized"). There it seems that some browsers "paused" the SVG and, even after restoring it, it took a lot of time to fix itself in place.<br>I guess this is a browser optimization? I re-switched to JS-based animation once I saw this.</li>
+  <li>My initial JS-based animation rework was done quickly, and re-defined the coordinates of the hour, minute and second hands at each iteration.<br>However doing that lead to some very small variations of e.g. the hands' length (due to floating-point arithmetics or SVG approximations?) that became visible if you focused on it enough.<br>As I found that original implementation unsteady anyway I reworked the logic so it relies on a rotation transform again.</li>
+  <li>On some browsers, the combination of the window's blurred transparency of the clock's shadow and of other elements behind it seemed to lead to weird temporary visual glitches.<br>I chose here to be wise and just give the app a "normal" background, the clock is not the main attraction of this desktop after all!</li>
+</ol>`;
+    return anecdotesContainer;
   }
 
   function getResources() {
-    return strHtml`<div>
-${createAppTitle("External Resources", {})}
-<p>I had to find many images to write this project.<br>I chose to only include resources with a very permissive license: CC0 and public domain only.</p>
+    const resourcesContainer = document.createElement("div");
+    resourcesContainer.appendChild(createAppTitle("External Resources", {}));
 
-<p>Thus even if I'm not forced to, I want to thank <a href="https://unsplash.com" target="_blank">unsplash</a> for providing free-to-use pictures - that I used to get wallpapers, and especially thanks to the following unsplash contributors from which I sourced wallpaper images (because I liked those!):
-	<ul>
-		<li>Kalen Emsley (@kalenemsley on unsplash)</li>
-		<li>Jack B (@nervum on unsplash)</li>
-		<li>Irina Iriser (@iriser on unsplash)</li>
-		<li>Lucas Dalamarta (@lucasdalamartaphoto on unsplash)</li>
-		<li>Tim Schmidbauer (@timschmidbauer on unsplash)</li>
-		<li>Ashim D'Silva (@randomlies on unsplash)</li>
-		<li>Benjamin Voros (@vorosbenisop on unsplash)</li>
-	</ul>
-</p>
+    const resourcesText = document.createElement("div");
+    resourcesContainer.appendChild(resourcesText);
+    resourcesText.innerHTML = `<p>I had to find many images to write this project.<br>I chose to only include resources with a very permissive license: CC0 and public domain only.</p>
 
-<p>For icons, I mainly sourced it from  <a href="https://www.svgrepo.com/" target="_blank">svgrepo</a>, in particular its  <a href="https://www.svgrepo.com/collection/minimal-ui-icons/" target="_blank">Minimal UI Icon</a> collection. Thanks to the people involved in that set!</p>
-
-</div>`;
+<p>Thus even if I'm not forced to, I want to thank <a href="https://unsplash.com" target="_blank">unsplash</a> for providing free-to-use pictures - that I used to get wallpapers, and especially thanks to the following unsplash contributors from which I sourced wallpaper images (because I liked those!):</p>
+<ul>
+  <li>Kalen Emsley (@kalenemsley on unsplash)</li>
+  <li>Jack B (@nervum on unsplash)</li>
+  <li>Irina Iriser (@iriser on unsplash)</li>
+  <li>Lucas Dalamarta (@lucasdalamartaphoto on unsplash)</li>
+  <li>Tim Schmidbauer (@timschmidbauer on unsplash)</li>
+  <li>Ashim D'Silva (@randomlies on unsplash)</li>
+  <li>Benjamin Voros (@vorosbenisop on unsplash)</li>
+</ul>
+<p>For icons, I mainly sourced it from  <a href="https://www.svgrepo.com/" target="_blank">svgrepo</a>, in particular its  <a href="https://www.svgrepo.com/collection/minimal-ui-icons/" target="_blank">Minimal UI Icon</a> collection. Thanks to the people involved in that set!</p>`;
+    return resourcesContainer;
   }
 }

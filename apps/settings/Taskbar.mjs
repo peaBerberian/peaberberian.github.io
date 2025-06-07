@@ -4,13 +4,14 @@ import {
   createDropdownOnRef,
   createNumericSliderOnRef,
 } from "./utils.mjs";
+import strHtml from "./str-html.mjs";
 
 export default function createTaskbarSection(
   { settings, appUtils },
   taskbarDimensionLimits,
   abortSignal,
 ) {
-  const { createAppTitle, strHtml } = appUtils;
+  const { createAppTitle } = appUtils;
   const section = strHtml`<div>${createAppTitle("Taskbar", {})}</div>`;
   section.dataset.section = "taskbar";
 
@@ -23,7 +24,6 @@ export default function createTaskbarSection(
         options: ["bottom", "top", "left", "right"],
         label: "Location of the taskbar",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -33,7 +33,6 @@ export default function createTaskbarSection(
         ref: settings.taskbarDisplayTitle,
         label: "Show applications titles",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -50,7 +49,6 @@ export default function createTaskbarSection(
         max: 20,
         valueToText: (val) => String(val) + "px",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -65,7 +63,6 @@ export default function createTaskbarSection(
         ref: settings.enableStartMenuSublists,
         label: "Enable sub-categories in start menu",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -79,7 +76,6 @@ export default function createTaskbarSection(
         ref: settings.allowManualTaskbarResize,
         label: "Enable resizing the taskbar from its edge",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -89,7 +85,6 @@ export default function createTaskbarSection(
         ref: settings.allowManualTaskbarMove,
         label: "Enable moving the taskbar by selecting it",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -105,7 +100,6 @@ export default function createTaskbarSection(
         max: 100,
         valueToText: (val) => String(val) + "%",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -118,7 +112,6 @@ export default function createTaskbarSection(
         max: 100,
         valueToText: (val) => String(val) + "%",
       },
-      appUtils,
       abortSignal,
     ),
   );
@@ -134,9 +127,7 @@ export default function createTaskbarSection(
     ["Start Menu Selected Item", settings.startMenuActiveBgColor],
     ["Start Menu Icon Background", settings.startMenuIconBgColor],
   ].forEach(([text, ref]) => {
-    colorGroupElt.appendChild(
-      createColorPickerOnRef(ref, text, appUtils, abortSignal),
-    );
+    colorGroupElt.appendChild(createColorPickerOnRef(ref, text, abortSignal));
   });
   section.appendChild(colorGroupElt);
   return section;
@@ -161,7 +152,6 @@ export default function createTaskbarSection(
                 : taskbarDimensionLimits.maxVerticalSize,
               valueToText: (val) => String(val),
             },
-            appUtils,
             abortSignal,
           ),
         );

@@ -108,7 +108,7 @@ style.textContent = `
 document.head.appendChild(style);
 
 export function create(_args, env, abortSignal) {
-  const { applyStyle, constructAppHeaderLine } = env.appUtils;
+  const { constructAppHeaderLine } = env.appUtils;
 
   const spreadsheet = new Spreadsheet(49, 13);
   const containerElt = document.createElement("div");
@@ -497,5 +497,19 @@ async function saveFile(content) {
     return handle;
   } catch (err) {
     console.error(err);
+  }
+}
+
+/**
+ * Apply multiple style attributes on a given element.
+ * @param {HTMLElement} element - The `HTMLElement` on which the style should be
+ * aplied.
+ * @param {Object} style - The dictionnary where keys are style names (JSified,
+ * e.g. `backgroundColor` not `background-color`) and values are the
+ * corresponding syle values.
+ */
+function applyStyle(element, style) {
+  for (const key of Object.keys(style)) {
+    element.style[key] = style[key];
   }
 }

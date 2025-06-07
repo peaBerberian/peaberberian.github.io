@@ -115,7 +115,11 @@ p {
 
 .w-content ul,
 ol {
-  padding-left: 20px; /* Increase or decrease this value as needed */
+  padding-left: 20px;
+}
+
+.w-content li {
+	line-height: 2.2em;
 }
 
 .w-content h2 {

@@ -5,7 +5,6 @@ const PADDLE_HEIGHT = 80;
 const BALL_RADIUS = 10;
 
 export function create(_args, env, abortSignal) {
-  const { applyStyle } = env.appUtils;
   const containerElt = document.createElement("div");
   applyStyle(containerElt, {
     backgroundColor: env.STYLE.windowActiveHeader,
@@ -359,4 +358,18 @@ function checkPaddleBallCollision(paddle, ball) {
 
 function getRandomNumber(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/**
+ * Apply multiple style attributes on a given element.
+ * @param {HTMLElement} element - The `HTMLElement` on which the style should be
+ * aplied.
+ * @param {Object} style - The dictionnary where keys are style names (JSified,
+ * e.g. `backgroundColor` not `background-color`) and values are the
+ * corresponding syle values.
+ */
+function applyStyle(element, style) {
+  for (const key of Object.keys(style)) {
+    element.style[key] = style[key];
+  }
 }

@@ -17,6 +17,8 @@ export function create(_args, env, abortSignal) {
     overflow: "hidden",
   });
 
+  let frameId;
+
   // Redo the canvas on resize, after some delay
 
   let debounceTimer = null;
@@ -29,7 +31,7 @@ export function create(_args, env, abortSignal) {
         debounceTimer = setTimeout(() => {
           debounceTimer = null;
           containerElt.innerHTML = "";
-          containerElt.appendChild(contructCanvas(entry.contentRect));
+          resizeAndRestartCanvas(entry.contentRect);
         }, 50);
       }
     }
@@ -45,9 +47,7 @@ export function create(_args, env, abortSignal) {
   let isTopPressed = false;
   let isDownPressed = false;
 
-  containerElt.appendChild(
-    contructCanvas(containerElt.getBoundingClientRect()),
-  );
+  resizeAndRestartCanvas(containerElt.getBoundingClientRect());
   containerElt.addEventListener("mousemove", onMouseMove, { passive: false });
   containerElt.addEventListener("touchmove", onTouchMove, { passive: false });
 
@@ -68,6 +68,16 @@ export function create(_args, env, abortSignal) {
       isDownPressed = false;
     },
   };
+
+  function resizeAndRestartCanvas(rect) {
+    containerElt.innerHTML = "";
+    if (rect.width > 0 && rect.height > 0) {
+      containerElt.appendChild(contructCanvas(rect));
+    } else if (frameId !== undefined) {
+      window.cancelAnimationFrame(frameId);
+      frameId = undefined;
+    }
+  }
 
   /**
    * @param {KeyboardEvent} e
@@ -124,12 +134,17 @@ export function create(_args, env, abortSignal) {
    * @param {DOMRect} containerRect
    */
   function contructCanvas(containerRect) {
+    if (frameId !== undefined) {
+      window.cancelAnimationFrame(frameId);
+      frameId = undefined;
+    }
     canvas = document.createElement("canvas");
     canvas.width = containerRect.width;
     canvas.height = containerRect.height;
     applyStyle(canvas, {
       height: "100%",
       width: "100%",
+      backgroundColor: env.STYLE.windowActiveHeader,
     });
     const ctx = canvas.getContext("2d");
 
@@ -162,6 +177,7 @@ export function create(_args, env, abortSignal) {
     // This may be totally nonsensical, I'm not too used to that type of dev.
     let currEnemySpeed = 8;
 
+    // Draw the initial frame before returning the canvas to prevent black flash
     drawTheObjects(false, false);
 
     canvas.addEventListener("click", () => {
@@ -184,7 +200,7 @@ export function create(_args, env, abortSignal) {
         drawTheObjects(false, false);
         ctx.font = "32px monospace";
         ctx.fillText("Click to start a game", 10, 50);
-        window.requestAnimationFrame(tick);
+        frameId = window.requestAnimationFrame(tick);
         return;
       }
 
@@ -252,7 +268,7 @@ export function create(_args, env, abortSignal) {
         resetBall();
       }
 
-      requestAnimationFrame(tick);
+      frameId = requestAnimationFrame(tick);
     }
 
     function drawTheObjects(withScore, withLine) {

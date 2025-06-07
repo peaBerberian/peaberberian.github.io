@@ -160,7 +160,7 @@ export const SETTINGS = {
   aboutMeStart: createRefForState(null, "about-me-start", true),
 
   /** Persist any setting here in `localStorage` only if `true`. */
-  persistSettings: createRefForState(null, true, (persistSettings) => {
+  persistSettings: createRefForState(null, null, true, (persistSettings) => {
     if (persistSettings) {
       setCurrentSettingsInStorage();
     } else {

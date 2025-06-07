@@ -100,8 +100,8 @@ export default class Taskbar {
    * Update the title and icon of a specific window in the taskbar.
    * @param {string} windowHandle - The `windowHandle` (@see `addWindow`) of the
    * window whose title should be updated.
-   * @param {string} icon - The icon, as a single character (generally an
-   * emoji).
+   * @param {string|null} icon - The icon, as a single character (generally an
+   * emoji). `null` if it shouldn't be changed
    * @param {string} title - The title of the application.
    */
   updateTitle(windowHandle, icon, title) {
@@ -111,7 +111,7 @@ export default class Taskbar {
     }
 
     const iconElt = itemElt.getElementsByClassName("taskbar-item-icon");
-    if (iconElt.length) {
+    if (icon !== null && iconElt.length) {
       iconElt[0].textContent = icon;
     }
     const titleElt = itemElt.getElementsByClassName("taskbar-item-title");

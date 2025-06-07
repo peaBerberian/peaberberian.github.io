@@ -3,6 +3,12 @@ const GITHUB_LINK = "https://github.com/peaberberian/isobmff-inspector";
 
 export function create(_args, env) {
   const { createAppTitle } = env.appUtils;
+
+  // Indicate more clearly that this app only talks about another project
+  env.updateTitle(
+    null /* keep same icon */,
+    "Other Projects: isobmff-inspector.rs",
+  );
   return {
     sidebar: [
       {

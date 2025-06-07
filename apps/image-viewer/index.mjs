@@ -501,7 +501,7 @@ export function create(args, env, parentAbortSignal) {
       const imageNameElt = document.createElement("div");
       const filename = loadedImages[currentImageIndex]?.filename ?? "Untitled";
       imageNameElt.textContent = filename;
-      env.updateTitle("🏞️", filename + " - Image Viewer");
+      env.updateTitle(null /* keep same icon */, filename + " - Image Viewer");
       statusBarElt.appendChild(imageCounterElt);
       statusBarElt.appendChild(imageNameElt);
     }

@@ -70,16 +70,23 @@ const appEnv = {
   appUtils: getAppUtils(),
   getImageRootPath: () => IMAGE_ROOT_PATH,
   getVersion: () => __VERSION__,
-  updateTitle: (icon, title) =>
-    parent.postMessage({
-      type: "_pwd_update-title",
-      data: { icon, title },
-    }),
+  updateTitle: (icon, title) => {
+    parent.postMessage(
+      {
+        type: "__pwd__update-title",
+        data: { icon: icon ?? undefined, title },
+      },
+      desktopOrigin ?? "*",
+    );
+  },
   closeApp: () =>
-    parent.postMessage({
-      type: "_pwd_close-app",
-      data: null,
-    }),
+    parent.postMessage(
+      {
+        type: "__pwd__close-app",
+        data: null,
+      },
+      desktopOrigin ?? "*",
+    ),
   STYLE,
 };
 

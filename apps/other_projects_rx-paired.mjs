@@ -5,6 +5,9 @@ const IMAGE_WIDTH = 1000;
 
 export function create(_args, env) {
   const { createAppTitle } = env.appUtils;
+
+  // Indicate more clearly that this app only talks about another project
+  env.updateTitle(null /* keep same icon */, "Other Projects: RxPaired");
   return {
     sidebar: [
       { text: "Overview", render: getOverview },

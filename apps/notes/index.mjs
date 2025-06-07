@@ -450,10 +450,13 @@ export function create(args, env) {
   function updateFilename(name) {
     if (name == null) {
       currentFilename = null;
-      env.updateTitle("📝", "Notes");
+      env.updateTitle(null /* keep same icon */, "Notes");
     } else {
       currentFilename = name;
-      env.updateTitle("📝", String(name) + " - " + "Notes");
+      env.updateTitle(
+        null /* keep same icon */,
+        String(name) + " - " + "Notes",
+      );
     }
   }
 

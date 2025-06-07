@@ -4,6 +4,9 @@ const GITHUB_LINK = "https://github.com/peaberberian/keyboard9";
 
 export function create(_app, env) {
   const { createAppTitle } = env.appUtils;
+
+  // Indicate more clearly that this app only talks about another project
+  env.updateTitle(null /* keep same icon */, "Other Projects: keyboard9");
   return {
     sidebar: [
       {

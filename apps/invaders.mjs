@@ -224,7 +224,7 @@ export function create(_args, env) {
       bulletSize: Math.max(20, 0.008 * gameState.gameWidth),
       playerBulletSize: Math.max(7, 0.008 * gameState.gameWidth),
       hudSize: Math.max(12, 0.025 * gameState.gameWidth),
-      shieldSize: Math.max(30, 0.06 * gameState.gameWidth),
+      shieldSize: Math.max(50, 0.06 * gameState.gameWidth),
     };
     gameState.player.width = config.playerSize;
     gameState.player.height = config.playerSize;
@@ -393,11 +393,10 @@ export function create(_args, env) {
     for (let i = 0; i < numShields; i++) {
       const baseX = startX + i * (shieldSize * 4);
       const pattern = [
-        [1, 1, 1, 1, 1, 1],
-        [1, 1, 1, 1, 1, 1],
-        [1, 1, 1, 1, 1, 1],
-        [1, 1, 0, 0, 1, 1],
-        [1, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1],
+        [1, 1, 0, 1, 1],
+        [1, 0, 0, 0, 1],
       ];
 
       const blockSize = shieldSize / 6;

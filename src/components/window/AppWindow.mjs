@@ -5,7 +5,6 @@ import {
 } from "../../utils.mjs";
 import * as CONSTANTS from "../../constants.mjs";
 import { SETTINGS } from "../../settings.mjs";
-import strHtml from "../../str-html.mjs";
 import {
   enterFullFullScreen,
   exitAllFullScreens,
@@ -820,15 +819,15 @@ export default class AppWindow extends EventEmitter {
 }
 
 function constructVisibleWindowScaffolding(title) {
-  return strHtml`
-  <div class="w-visible">
-    <div class="w-header">
-      <div class="w-title">${title}</div>
-      <div class="w-controls">
-        <div class="w-button w-minimize" aria-label="Minimize window" title="Minimize" tabindex="0"><span class="w-button-icon"></span></div>
-        <div class="w-button w-maximize" aria-label="Maximize window" title="Maximize" tabindex="0"><span class="w-button-icon"></span></div>
-        <div class="w-button w-close" aria-label="close window" title="Close" tabindex="0"><span class="w-button-icon"></span></div>
-      </div>
-    </div>
-  </div>`;
+  const visibleElt = document.createElement("div");
+  visibleElt.className = "w-visible";
+  visibleElt.innerHTML = `<div class="w-header">
+  <div class="w-title">${title}</div>
+  <div class="w-controls">
+    <div class="w-button w-minimize" aria-label="Minimize window" title="Minimize" tabindex="0"><span class="w-button-icon"></span></div>
+    <div class="w-button w-maximize" aria-label="Maximize window" title="Maximize" tabindex="0"><span class="w-button-icon"></span></div>
+    <div class="w-button w-close" aria-label="close window" title="Close" tabindex="0"><span class="w-button-icon"></span></div>
+  </div>
+</div>`;
+  return visibleElt;
 }

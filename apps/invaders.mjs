@@ -313,13 +313,13 @@ export function create(_args, env) {
         rows = 3;
         cols = 8;
         break;
-      case 2:
-        rows = 3;
-        cols = 9;
-        break;
+      // case 2:
+      //   rows = 3;
+      //   cols = 9;
+      //   break;
       default:
         rows = 4;
-        cols = 9;
+        cols = 8;
         break;
     }
     const enemySize = config.enemySize || 25;
@@ -562,7 +562,7 @@ export function create(_args, env) {
 
     if (
       Math.random() <
-      (0.001 + Math.max(gameState.level - 3, 0) * 0.001) *
+      (0.001 + Math.max(gameState.level - 2, 0) * 0.001) *
         gameState.enemies.length
     ) {
       const shooter =

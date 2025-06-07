@@ -6,6 +6,13 @@ import {
 import fs from "../filesystem/filesystem.mjs";
 import { SETTINGS } from "../settings.mjs";
 
+const PREDEFINED_SUBLISTS = {
+  Games: "🎮",
+  ["My Other Projects"]: "👨‍💻",
+  ["External Apps"]: "📡",
+  ["Misc"]: "⏰",
+};
+
 /**
  * Description of a single application that will be displayed in the start menu.
  * @typedef {Object} StartMenuAppObject
@@ -283,26 +290,7 @@ function refreshStartMenu(
       } else {
         const listIconElt = document.createElement("div");
         listIconElt.className = "start-icon";
-
-        // TODO: Either find some way to centrally configure or enforce sublist
-        // at build-time?
-        switch (appObj.name) {
-          case "Games":
-            listIconElt.textContent = "🎮";
-            break;
-          case "My Other Projects":
-            listIconElt.textContent = "👨‍💻";
-            break;
-          case "External Apps":
-            listIconElt.textContent = "📡";
-            break;
-          case "Misc":
-            listIconElt.textContent = "⏰";
-            break;
-          default:
-            listIconElt.textContent = "🗃️";
-            break;
-        }
+        listIconElt.textContent = PREDEFINED_SUBLISTS[appObj.name] ?? "🗃️";
 
         const listTitleElt = document.createElement("div");
         listTitleElt.style.display = "flex";

@@ -113,8 +113,7 @@ export function createExternalIframe(url, backgroundColor) {
     height: "100%",
     width: "100%",
     border: "0",
-    // TODO: find out what's adding that thing instead of hacking around!
-    marginBottom: "-5px",
+    display: "block",
   });
   iframe.src = url;
   iframe.className = "loading";

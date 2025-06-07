@@ -162,8 +162,6 @@ window.addEventListener(
 
       case "__pwd__run-app":
         originalStopImmediatePropagation.call(e);
-        // TODO: Also have id communicated just in case desktop initialize
-        // multiple times?
         startApp(e.data.data);
         break;
 

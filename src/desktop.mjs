@@ -7,8 +7,10 @@
 //
 // medium priority:
 // - image viewer touch controls
+// - invader temp ugly at startup
 // - copy svg in passgen is broken on multiple devices, very mysterious that one
 // - drag and drop in explorer
+// - list view in explorer
 // - confirmation alert when closing window with unsaved file.
 // - pdf.js external relying on Mozilla CDN. (Useful as default app for pdf)
 //

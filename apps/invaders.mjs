@@ -221,7 +221,7 @@ export function create(_args, env) {
       fireRate: 200,
       playerSize: Math.max(20, 0.04 * gameState.gameWidth),
       enemySize: Math.max(16, 0.035 * gameState.gameWidth),
-      bulletSize: Math.max(14, 0.008 * gameState.gameWidth),
+      bulletSize: Math.max(20, 0.008 * gameState.gameWidth),
       playerBulletSize: Math.max(7, 0.008 * gameState.gameWidth),
       hudSize: Math.max(12, 0.025 * gameState.gameWidth),
       shieldSize: Math.max(30, 0.06 * gameState.gameWidth),

@@ -60,7 +60,6 @@ export default function startBundleWebServer({
 } = {}) {
   return Promise.all([
     build({
-      appBaseUrl: "https://peaberberian.github.io",
       watch: !!watch,
       minify: !!minify,
       silent: !verbose,

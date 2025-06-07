@@ -1,3 +1,5 @@
+// TODO: rewritten as canvas for better perfs
+
 const LEFT_KEYS = ["a", "arrowleft"];
 const RIGHT_KEYS = ["d", "arrowright"];
 
@@ -90,6 +92,12 @@ export function create(_args, env) {
     boomSvg = span.childNodes[0];
   }
 
+  const enemyImages = {
+    ufo: createImageFromSVG(UFO_SVG),
+    alien1: createImageFromSVG(ALIEN1_SVG),
+    alien2: createImageFromSVG(ALIEN2_SVG),
+  };
+
   let gameState;
   let animationId;
   let currentlyPressedKeys = {};
@@ -112,6 +120,14 @@ export function create(_args, env) {
   gameArea.appendChild(hud);
 
   const playerElt = document.createElement("div");
+  applyStyle(playerSvg, {
+    position: "absolute",
+    top: 0,
+    color: env.STYLE.windowActiveHeaderText,
+    // color: "#ffffff",
+    width: config.playerSize + "px",
+    height: config.playerSize + "px",
+  });
   playerElt.appendChild(playerSvg);
   applyStyle(playerElt, {
     position: "absolute",
@@ -203,7 +219,9 @@ export function create(_args, env) {
       gameHeight: 0,
       level: 1,
     };
-    recheckGameStartupSize();
+    if (gameWrapper.offsetWidth > 0 && gameWrapper.offsetHeight > 0) {
+      recheckGameStartupSize();
+    }
   }
 
   function recheckGameStartupSize() {
@@ -226,18 +244,7 @@ export function create(_args, env) {
       hudSize: Math.max(12, 0.025 * gameState.gameWidth),
       shieldSize: Math.max(50, 0.06 * gameState.gameWidth),
     };
-    gameState.player.width = config.playerSize;
-    gameState.player.height = config.playerSize;
-    gameState.player.x = (gameState.gameWidth - gameState.player.width) / 2;
-    gameState.player.y = gameState.gameHeight - gameState.player.height - 20;
-    setupEnemies();
-    setupShields();
-
     applyStyle(playerSvg, {
-      position: "absolute",
-      top: 0,
-      color: env.STYLE.windowActiveHeaderText,
-      // color: "#ffffff",
       width: config.playerSize + "px",
       height: config.playerSize + "px",
     });
@@ -249,6 +256,12 @@ export function create(_args, env) {
       height: config.playerSize * 2 + "px",
       transform: `translate(-${config.playerSize / 2}px, -${config.playerSize / 2}px)`,
     });
+    gameState.player.width = config.playerSize;
+    gameState.player.height = config.playerSize;
+    gameState.player.x = (gameState.gameWidth - gameState.player.width) / 2;
+    gameState.player.y = gameState.gameHeight - gameState.player.height - 20;
+    setupEnemies();
+    setupShields();
   }
 
   function clearEnemies() {
@@ -293,40 +306,27 @@ export function create(_args, env) {
 
   function setupEnemies() {
     clearEnemies();
-    const rows = 4;
-    const cols = 9;
+    let rows;
+    let cols;
+    switch (gameState.level) {
+      case 1:
+        rows = 3;
+        cols = 8;
+        break;
+      case 2:
+        rows = 3;
+        cols = 9;
+        break;
+      default:
+        rows = 4;
+        cols = 9;
+        break;
+    }
     const enemySize = config.enemySize || 25;
     const spacing = enemySize * 1.4;
     const totalWidth = cols * spacing;
     const startX = (gameState.gameWidth - totalWidth) / 2;
     const startY = gameState.gameHeight * 0.1;
-
-    const ufoSvgUrl = URL.createObjectURL(
-      new Blob([UFO_SVG], { type: "image/svg+xml" }),
-    );
-    const ufoImg = new Image();
-    ufoImg.src = ufoSvgUrl;
-    ufoImg.onload = () => {
-      URL.revokeObjectURL(ufoSvgUrl);
-    };
-
-    const alien1SvgUrl = URL.createObjectURL(
-      new Blob([ALIEN1_SVG], { type: "image/svg+xml" }),
-    );
-    const alien1Img = new Image();
-    alien1Img.src = alien1SvgUrl;
-    alien1Img.onload = () => {
-      URL.revokeObjectURL(alien1SvgUrl);
-    };
-
-    const alien2SvgUrl = URL.createObjectURL(
-      new Blob([ALIEN2_SVG], { type: "image/svg+xml" }),
-    );
-    const alien2Img = new Image();
-    alien2Img.src = alien2SvgUrl;
-    alien2Img.onload = () => {
-      URL.revokeObjectURL(alien2SvgUrl);
-    };
 
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
@@ -341,12 +341,12 @@ export function create(_args, env) {
         const enemyElt = document.createElement("div");
         enemyElt.dataset.type = "enemy";
         let img;
-        if (row < 2) {
-          img = alien1Img.cloneNode();
-        } else if (row < 3) {
-          img = alien2Img.cloneNode();
+        if (row === rows - 1) {
+          img = enemyImages.ufo.cloneNode();
+        } else if (row === rows - 2) {
+          img = enemyImages.alien2.cloneNode();
         } else {
-          img = ufoImg.cloneNode();
+          img = enemyImages.alien1.cloneNode();
         }
         applyStyle(img, {
           height: enemySize + "px",
@@ -529,7 +529,7 @@ export function create(_args, env) {
       clearEnemyBullets();
       clearBullets();
       setupEnemies();
-      config.enemyBaseSpeed += 0.5;
+      config.enemyBaseSpeed += 0.3;
       config.enemySuppSpeed = 0;
       return;
     }
@@ -560,7 +560,11 @@ export function create(_args, env) {
       });
     }
 
-    if (Math.random() < 0.001 * gameState.enemies.length) {
+    if (
+      Math.random() <
+      (0.001 + Math.max(gameState.level - 3, 0) * 0.001) *
+        gameState.enemies.length
+    ) {
       const shooter =
         gameState.enemies[Math.floor(Math.random() * gameState.enemies.length)];
       const bulletSize = config.bulletSize;
@@ -706,15 +710,11 @@ export function create(_args, env) {
     applyStyle(playerElt, {
       left: gameState.player.x + "px",
       top: gameState.player.y + "px",
-      fontSize: config.playerSize + "px",
     });
     gameState.enemies.forEach((enemy) => {
       applyStyle(enemy.element, {
-        position: "absolute",
         left: enemy.x + "px",
         top: enemy.y + "px",
-        fontSize: config.enemySize + "px",
-        userSelect: "none",
       });
     });
     gameState.shields.forEach((shield) => {
@@ -726,7 +726,6 @@ export function create(_args, env) {
       //   shield.element.textContent = "🟥"; // Very damaged - red
       // }
       applyStyle(shield.element, {
-        position: "absolute",
         left: shield.x + "px",
         top: shield.y + "px",
       });
@@ -904,6 +903,15 @@ export function create(_args, env) {
       gameState.started = true;
     }
   }
+}
+
+function createImageFromSVG(svgString) {
+  const url = URL.createObjectURL(
+    new Blob([svgString], { type: "image/svg+xml" }),
+  );
+  const img = new Image();
+  img.src = url;
+  return img;
 }
 
 /**

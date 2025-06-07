@@ -177,21 +177,25 @@ function closeStartMenu(startMenuElt) {
   }
   currentStartState = "closing";
   startMenuElt.classList.remove("active");
-  switch (SETTINGS.taskbarLocation.getValue()) {
-    case "bottom":
-      startMenuElt.style.animation =
-        "closeStartAnim " +
+  const sublists = startMenuElt.getElementsByClassName("s-list");
+  const animation =
+    SETTINGS.taskbarLocation.getValue() === "bottom"
+      ? "closeStartAnim " +
+        String(CLOSE_MENU_OPEN_ANIM_TIMER / 1000) +
+        "s ease-out"
+      : "closeStartFromTopAnim " +
         String(CLOSE_MENU_OPEN_ANIM_TIMER / 1000) +
         "s ease-out";
-      break;
-    default:
-      startMenuElt.style.animation =
-        "closeStartFromTopAnim " +
-        String(CLOSE_MENU_OPEN_ANIM_TIMER / 1000) +
-        "s ease-out";
-      break;
-  }
+
+  startMenuElt.style.animation = animation;
   startMenuElt.onanimationend = () => {
+    const mainItems = startMenuElt.getElementsByClassName("start-menu-items");
+    for (const mainItem of mainItems) {
+      mainItem.style.display = "block";
+    }
+    for (const list of sublists) {
+      list.classList.remove("active");
+    }
     if (currentStartState !== "closing") {
       return;
     }
@@ -216,14 +220,13 @@ function closeStartMenu(startMenuElt) {
  * @param {Object} params
  * @param {number} params.clientHeight - Total available height in pixels.
  * @param {number} params.clientWidth - Total available width in pixels.
- * @param {boolean} params.disableLists - If `true`, "sub-lists" should be
- * disabled.
+ * @param {boolean} params.dependentSubLists
  */
 function refreshStartMenu(
   startMenuElt,
   apps,
   openApp,
-  { clientHeight, clientWidth, disableLists },
+  { clientHeight, clientWidth, dependentSubLists },
 ) {
   startMenuElt.innerHTML = "";
 
@@ -238,33 +241,32 @@ function refreshStartMenu(
   startMenuItemsElt.className = "start-menu-items";
   startMenuItemsElt.style.overflow = "auto";
 
-  // TODO: constants?
-  const doLists =
-    !disableLists &&
-    SETTINGS.enableStartMenuSublists.getValue() &&
-    clientWidth >= 10 + 250 + 200;
-
   const doesTaskbarInfluencesMaxHeight = ["top", "bottom"].includes(
     SETTINGS.taskbarLocation.getValue(),
   );
 
+  const separatedSublists =
+    !dependentSubLists &&
+    clientWidth -
+      (doesTaskbarInfluencesMaxHeight ? 0 : SETTINGS.taskbarSize.getValue()) >=
+      10 /* start menu left */ +
+        250 /* start menu width */ +
+        200; /* s-list width */
+
   const itemsWrapperElt = document.createElement("div");
   itemsWrapperElt.appendChild(startMenuItemsElt);
   itemsWrapperElt.style.overflow = "auto";
-  if (SETTINGS.taskbarLocation.getValue() === "top") {
-    startMenuElt.appendChild(itemsWrapperElt);
+  if (SETTINGS.taskbarLocation.getValue() !== "top") {
     startMenuElt.appendChild(startMenuHeaderElt);
-  } else {
-    startMenuElt.appendChild(startMenuHeaderElt);
-    startMenuElt.appendChild(itemsWrapperElt);
   }
+  startMenuElt.appendChild(itemsWrapperElt);
 
   for (let currentIdx = 0; currentIdx < apps.length; currentIdx++) {
     const appObj = apps[currentIdx];
     if (appObj.type === "application") {
       startMenuItemsElt.appendChild(constructAppItem(appObj));
     } else if (appObj.type === "sublist") {
-      if (!doLists) {
+      if (!SETTINGS.enableStartMenuSublists.getValue()) {
         for (const subAppObj of appObj.list) {
           startMenuItemsElt.appendChild(constructAppItem(subAppObj));
         }
@@ -307,40 +309,11 @@ function refreshStartMenu(
 
         const list = document.createElement("div");
         list.className = "s-list";
-        if (SETTINGS.taskbarLocation.getValue() === "bottom") {
-          list.style.bottom =
-            String((apps.length - 1 - currentIdx) * START_ITEM_HEIGHT) + "px";
-          // String(START_ITEM_HEIGHT + currentIdx * START_ITEM_HEIGHT) + "px";
-        } else {
-          // There might be the start menu header first
-          const offset =
-            SETTINGS.taskbarLocation.getValue() === "top"
-              ? 0
-              : START_ITEM_HEIGHT;
-          list.style.top =
-            String(offset + currentIdx * START_ITEM_HEIGHT) + "px";
-          // String(START_ITEM_HEIGHT + currentIdx * START_ITEM_HEIGHT) + "px";
-        }
 
-        startItemListElt.onmouseenter = () => {
-          list.classList.add("active");
-        };
-        list.onmouseleave = (e) => {
-          if (!list.contains(e.relatedTarget)) {
-            list.classList.remove("active");
-          }
-        };
-        startItemListElt.onmouseleave = (e) => {
-          if (!list.contains(e.relatedTarget)) {
-            list.classList.remove("active");
-          }
-        };
         let baseYOffset = 0;
 
         const listItemsWrapper = document.createElement("div");
         listItemsWrapper.className = "s-list-wrapper";
-        listItemsWrapper.style.maxHeight =
-          String(clientHeight - baseYOffset) + "px";
 
         list.appendChild(listItemsWrapper);
         startMenuElt.appendChild(list);
@@ -349,52 +322,88 @@ function refreshStartMenu(
           listItemsWrapper.appendChild(constructAppItem(subAppObj));
         }
 
-        // TODO: I didn't succeed to make sublist accessible sadly
-        // startItemListElt.addEventListener("keydown", (e) => {
-        //   if (
-        //     e.key === "Enter" ||
-        //     e.key === " " ||
-        //     e.key ===
-        //       (SETTINGS.taskbarLocation.getValue() === "right"
-        //         ? "ArrowLeft"
-        //         : "ArrowRight")
-        //   ) {
-        //     listItemsWrapper.children[0].children[0].focus({ preventScroll: true });
-        //   }
-        // });
-        const listHeight = Math.min(
-          baseYOffset + START_ITEM_HEIGHT * appObj.list.length,
-          clientHeight,
-        );
-        if (SETTINGS.taskbarLocation.getValue() === "bottom") {
-          const totalTop =
-            (doesTaskbarInfluencesMaxHeight
-              ? SETTINGS.taskbarSize.getValue()
-              : 0) +
-            (apps.length - 1 - currentIdx) * START_ITEM_HEIGHT +
-            listHeight;
-          if (clientHeight < totalTop) {
-            listItemsWrapper.style.marginBottom =
-              "-" + String(totalTop - clientHeight) + "px";
+        if (separatedSublists) {
+          listItemsWrapper.style.maxHeight =
+            String(clientHeight - baseYOffset) + "px";
+          if (SETTINGS.taskbarLocation.getValue() === "bottom") {
+            list.style.bottom =
+              String((apps.length - 1 - currentIdx) * START_ITEM_HEIGHT) + "px";
+          } else {
+            // There might be the start menu header first
+            const offset =
+              SETTINGS.taskbarLocation.getValue() === "top"
+                ? 0
+                : START_ITEM_HEIGHT;
+            list.style.top =
+              String(offset + currentIdx * START_ITEM_HEIGHT) + "px";
+          }
+          startItemListElt.onmouseenter = () => {
+            list.classList.add("active");
+          };
+          list.onmouseleave = (e) => {
+            if (!list.contains(e.relatedTarget)) {
+              list.classList.remove("active");
+            }
+          };
+          startItemListElt.onmouseleave = (e) => {
+            if (!list.contains(e.relatedTarget)) {
+              list.classList.remove("active");
+            }
+          };
+
+          const listHeight = Math.min(
+            baseYOffset + START_ITEM_HEIGHT * appObj.list.length,
+            clientHeight,
+          );
+          if (SETTINGS.taskbarLocation.getValue() === "bottom") {
+            const totalTop =
+              (doesTaskbarInfluencesMaxHeight
+                ? SETTINGS.taskbarSize.getValue()
+                : 0) +
+              (apps.length - 1 - currentIdx) * START_ITEM_HEIGHT +
+              listHeight;
+            if (clientHeight < totalTop) {
+              listItemsWrapper.style.marginBottom =
+                "-" + String(totalTop - clientHeight) + "px";
+            }
+          } else {
+            const totalBottom =
+              (doesTaskbarInfluencesMaxHeight
+                ? SETTINGS.taskbarSize.getValue()
+                : 0) +
+              (apps.length - 1 - currentIdx) * START_ITEM_HEIGHT +
+              listHeight;
+            if (clientHeight < totalBottom) {
+              listItemsWrapper.style.marginTop =
+                "-" + String(totalBottom - clientHeight) + "px";
+            }
           }
         } else {
-          const totalBottom =
-            (doesTaskbarInfluencesMaxHeight
-              ? SETTINGS.taskbarSize.getValue()
-              : 0) +
-            (apps.length - 1 - currentIdx) * START_ITEM_HEIGHT +
-            listHeight;
-          if (clientHeight < totalBottom) {
-            listItemsWrapper.style.marginTop =
-              "-" + String(totalBottom - clientHeight) + "px";
-          }
+          listItemsWrapper.style.width = "100%";
+          list.classList.add("dependent");
+          const backToMenuElt = document.createElement("div");
+          backToMenuElt.className = "start-item start-item-back";
+          backToMenuElt.tabIndex = "0";
+          backToMenuElt.style.height = String(START_ITEM_HEIGHT) + "px";
+          backToMenuElt.textContent = "Back to menu";
+          listItemsWrapper.prepend(backToMenuElt);
+
+          backToMenuElt.onclick = () => {
+            startMenuItemsElt.style.display = "block";
+            list.classList.remove("active");
+          };
+
+          startItemListElt.onclick = () => {
+            startMenuItemsElt.style.display = "none";
+            list.classList.add("active");
+          };
         }
       }
     }
   }
 
   if (
-    doLists &&
+    separatedSublists &&
     (doesTaskbarInfluencesMaxHeight ? SETTINGS.taskbarSize.getValue() : 0) +
       apps.length * START_ITEM_HEIGHT >
       clientHeight
@@ -402,8 +411,11 @@ function refreshStartMenu(
     return refreshStartMenu(startMenuElt, apps, openApp, {
       clientHeight,
       clientWidth,
-      disableLists: true,
+      dependentSubLists: true,
     });
+  }
+  if (SETTINGS.taskbarLocation.getValue() === "top") {
+    startMenuElt.appendChild(startMenuHeaderElt);
   }
 
   function constructAppItem(appObj) {

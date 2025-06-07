@@ -327,6 +327,10 @@ html {
   /* make place for s-list arrows on the left. */
   padding: 10px 15px 10px 25px;
 }
+.right-taskbar .start-item-back {
+	padding-left: 35px;
+}
+
 
 #start-menu .start-item:focus {
   outline: none;
@@ -817,6 +821,19 @@ html {
   color: var(--start-menu-text);
 }
 
+.start-item-back::before {
+  content: "◀";
+  position: absolute;
+  left: 20px;
+  font-size: 10px;
+  color: var(--start-menu-text);
+}
+
+.start-item-back {
+	padding-left: 35px;
+	font-weight: bold;
+}
+
 .s-list {
   position: absolute;
   left: 100%;
@@ -826,6 +843,19 @@ html {
   box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2);
   display: none;
   z-index: 1001;
+}
+
+.s-list.dependent {
+  position: relative;
+  left: 0;
+  bottom: 0px;
+  width: 100%;
+  border-radius: 0 5px 5px 0;
+  box-shadow: none;
+  display: none;
+  z-index: 1001;
+	max-height: 100%;
+	overflow: auto;
 }
 
 .top-taskbar #start-menu .s-list {
@@ -844,13 +874,27 @@ html {
   left: auto;
   right: 100%;
 }
+.right-taskbar #start-menu .s-list.dependent {
+  position: relative;
+  right: 0;
+  width: 100%;
+  border-radius: 0 5px 5px 0;
+  box-shadow: none;
+  display: none;
+  z-index: 1001;
+	max-height: 100%;
+	overflow: auto;
+}
+.right-taskbar #start-menu .s-list.dependent.active {
+	display: block;
+}
 
 .s-list-wrapper {
   overflow: auto;
   background-color: var(--start-menu-bg);
 }
 
-#start-menu.active .s-list.active {
+.s-list.active {
   display: block;
   animation: openStartListAnim 0.2s ease-out;
 }

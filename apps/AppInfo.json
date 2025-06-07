@@ -26,7 +26,12 @@
         "after": 100
       },
       "onlyOne": true,
-      "dependencies": ["CONSTANTS", "settings", "filesystem", "notificationEmitter"],
+      "dependencies": [
+        "CONSTANTS",
+        "settings",
+        "filesystem",
+        "notificationEmitter"
+      ],
       "startMenu": {
         "display": true
       },

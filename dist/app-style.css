@@ -137,6 +137,9 @@ ol {
 
 .w-content li {
   line-height: 2.2em;
+  font-size: 1.1em;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .w-content h2 {

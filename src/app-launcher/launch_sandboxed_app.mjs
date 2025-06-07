@@ -1,5 +1,6 @@
 import { APP_STYLE } from "../constants.mjs";
 import { APP_STYLE_SETTINGS, SETTINGS } from "../settings.mjs";
+import notificationEmitter from "../components/notification_emitter.mjs";
 import {
   addAbortableEventListener,
   applyStyle,
@@ -384,10 +385,12 @@ function processEventsFromIframe(iframe, cbs, resolve, reject, abortSignal) {
         );
         break;
 
-      case "__pwd__notification":
-        // TODO:
-        cbs.notify(e.data.data);
+      case "__pwd__notification": {
+        const data = e.data.data;
+        checkNotificationMessageData(data);
+        notificationEmitter[data.type](data.title, data.message, data.duration);
         break;
+      }
 
       case "__pwd__loaded":
         resolve();
@@ -513,5 +516,21 @@ function checkQuickSave(data) {
     throw new Error(
       "Cannot spawn filePickerSave: saved file data is in the wrong type",
     );
+  }
+}
+
+function checkNotificationMessageData(data) {
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    !["success", "error", "warning", "info"].includes(data.type)(
+      typeof data.baseDirectory !== "string" &&
+        data.baseDirectory !== undefined,
+    ) ||
+    typeof data.title !== "string" ||
+    typeof data.message !== "string" ||
+    (typeof data.duration !== "number" && data.duration !== undefined)
+  ) {
+    throw new Error("Cannot add notification: wrong data format");
   }
 }

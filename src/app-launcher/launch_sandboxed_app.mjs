@@ -38,29 +38,46 @@ if (typeof __APP_BASE_URL__ === "string") {
   }
 }
 
-export function launchSandboxedApp(scriptUrl, appArgs, env, abortSignal) {
-  let isInitiallyActivated = true;
+/**
+ * Launch an application from its external script's URL inside a "sandboxed"
+ * iframe, which will preferably be (depending on capacity in the current
+ * environment) in another domain.
+ * @param {Object} appData
+ * @param {string} [appData.defaultBackground] - If set, this is the property
+ * of `APP_STYLE` that correspond to the color that should be set while the
+ * application is loading.
+ * @param {string} appData.lazyLoad - URL to the script implementing this
+ * application. It will be loaded in an iframe.
+ * @param {Array.<Object>} appArgs - The arguments that should be communicated
+ * to the application when launching it.
+ * @param {Object} env - The `env` object providing some desktop context and
+ * API to applications.
+ * @param {AbortSignal} abortSignal - `AbortSignal` which triggers when the
+ * application is closed.
+ * @returns {Object} - Application object.
+ */
+export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
+  let isActivated = true;
+  const backgroundColor = appData.defaultBackground
+    ? (APP_STYLE[appData.defaultBackground]?.cssProp ??
+      APP_STYLE.bgColor.cssProp)
+    : APP_STYLE.bgColor.cssProp;
   const wrapperElt = document.createElement("div");
   applyStyle(wrapperElt, {
     position: "relative",
     height: "100%",
     width: "100%",
   });
-  const spinnerElt = getSpinnerApp();
+  const spinnerElt = getSpinnerApp(backgroundColor);
   wrapperElt.appendChild(spinnerElt.element);
 
   const iframe = document.createElement("iframe");
 
   iframe.tabIndex = "0";
-
-  // TODO: this blocks apps from using stuff like WebWorkers, fetching their
-  // own resources etc.
-  // iframe.sandbox = "allow-scripts";
   iframe.style.height = "100%";
   iframe.style.width = "100%";
 
-  // TODO: loadingBackgroundColor appInfo?
-  iframe.style.backgroundColor = env.STYLE.bgColor;
+  iframe.style.backgroundColor = backgroundColor;
   iframe.style.border = "0";
   iframe.style.padding = "0";
   iframe.style.margin = "0";
@@ -80,6 +97,15 @@ export function launchSandboxedApp(scriptUrl, appArgs, env, abortSignal) {
         iframe.style.display = "block";
         spinnerElt.onClose();
         wrapperElt.removeChild(spinnerElt.element);
+        if (isActivated) {
+          iframe.contentWindow?.postMessage(
+            {
+              type: "__pwd__activate",
+              data: null,
+            },
+            "*",
+          );
+        }
       },
       (err) => {
         iframe.remove();
@@ -93,14 +119,14 @@ export function launchSandboxedApp(scriptUrl, appArgs, env, abortSignal) {
       {
         type: "__pwd__run-app",
         data: {
-          scriptUrl,
+          scriptUrl: appData.lazyLoad,
           args: appArgs,
-          activate: isInitiallyActivated,
         },
       },
       "*",
     );
   });
+  redirectKeyDownEvents();
 
   // NOTE: removing the iframe should be unneeded on close and it just creates
   // a weird visual effect where the iframe disappear before the window close
@@ -112,8 +138,8 @@ export function launchSandboxedApp(scriptUrl, appArgs, env, abortSignal) {
   return {
     element: wrapperElt,
     onActivate: () => {
+      isActivated = true;
       if (!iframe.contentWindow) {
-        isInitiallyActivated = true;
         return;
       }
       if (!iframe.contains(document.activeElement)) {
@@ -129,8 +155,8 @@ export function launchSandboxedApp(scriptUrl, appArgs, env, abortSignal) {
     },
 
     onDeactivate: () => {
+      isActivated = false;
       if (!iframe.contentWindow) {
-        isInitiallyActivated = false;
         return;
       }
       if (iframe.contains(document.activeElement)) {
@@ -158,6 +184,34 @@ export function launchSandboxedApp(scriptUrl, appArgs, env, abortSignal) {
       );
     },
   };
+
+  function redirectKeyDownEvents() {
+    ["keydown", "keyup"].forEach((eventName) => {
+      addAbortableEventListener(
+        document,
+        eventName,
+        abortSignal,
+        function (event) {
+          if (!isActivated || !iframe.contentWindow) {
+            return;
+          }
+          iframe.contentWindow.postMessage(
+            {
+              type: "__pwd__" + eventName,
+              key: event.key,
+              code: event.code,
+              keyCode: event.keyCode,
+              ctrlKey: event.ctrlKey,
+              shiftKey: event.shiftKey,
+              altKey: event.altKey,
+              metaKey: event.metaKey,
+            },
+            "*",
+          );
+        },
+      );
+    });
+  }
 }
 
 function handleForwardedEvent(iframe, eventData) {

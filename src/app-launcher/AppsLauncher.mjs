@@ -98,7 +98,7 @@ export default class AppsLauncher {
    * Open the given application, and optionally open a window for it.
    * @param {string} appPath - FileSystem path to the application to run (e.g.
    * `/apps/about.run`).
-   * @param {Array.<string>} appArgs - The application's arguments.
+   * @param {Array.<Object>} appArgs - The application's arguments.
    * @param {Object} options - Various options to configure how that new
    * application will behave.
    * @param {boolean} [options.fullscreen] - If set to `true`, the application's
@@ -158,13 +158,21 @@ export default class AppsLauncher {
     /** `AbortController` linked to the life of this application. */
     const applicationAbortCtrl = new AbortController();
 
+    const defaultBackground = app.data.defaultBackground
+      ? (APP_STYLE[app.data.defaultBackground]?.cssProp ??
+        APP_STYLE.bgColor.cssProp)
+      : APP_STYLE.bgColor.cssProp;
+
     /**
      * Object defining metadata on the application currently visible and
      * interactive in the window.
      * We begin by placing the spinner app in it, just in case the application
      * takes time to load.
      */
-    const appStack = new WindowedApplicationStack(getSpinnerApp(), true);
+    const appStack = new WindowedApplicationStack(
+      getSpinnerApp(defaultBackground),
+      true,
+    );
 
     /** Window containing the application. */
     const appWindow = new AppWindow(app, appStack.element, options);
@@ -416,7 +424,7 @@ export default class AppsLauncher {
    * file-picker may provide other entry points for opening and saving files).
    * @param {Object} appData - The `data` property from an executable, which
    * describes how to actually launch the application.
-   * @param {Array.<string>} appArgs - The arguments that should be communicated
+   * @param {Array.<Object>} appArgs - The arguments that should be communicated
    * to the application when launching it.
    * @param {Object} env - The `env` object providing some desktop context and
    * API to applications.
@@ -431,13 +439,20 @@ export default class AppsLauncher {
       if (method !== "create") {
         console.warn('Not calling "create" on an i-frame application.');
       }
-      const iframeContainer = createExternalIframe(appData.website);
+      const backgroundColor = appData.defaultBackground
+        ? (APP_STYLE[appData.defaultBackground]?.cssProp ??
+          APP_STYLE.bgColor.cssProp)
+        : APP_STYLE.bgColor.cssProp;
+      const iframeContainer = createExternalIframe(
+        appData.website,
+        backgroundColor,
+      );
       const element = iframeContainer;
       const onActivate = iframeContainer.focus.bind(iframeContainer);
       return { element, onActivate };
     } else if (appData.lazyLoad) {
       if (appData.sandboxed && method === "create") {
-        return launchSandboxedApp(appData.lazyLoad, appArgs, env, abortSignal);
+        return launchSandboxedApp(appData, appArgs, env, abortSignal);
       }
       return await this._launchAppFromScript(
         appData.lazyLoad,
@@ -458,7 +473,7 @@ export default class AppsLauncher {
    * @param {string} method - Either "create" for the default app launch, or the
    * method name of the various other features they may provide (e.g. a
    * file-picker may provide other entry points for opening and saving files).
-   * @param {Array.<string>} appArgs - The arguments that should be communicated
+   * @param {Array.<Object>} appArgs - The arguments that should be communicated
    * to the application when launching it.
    * @param {Object} env - The `env` object providing some desktop context and
    * API to applications.

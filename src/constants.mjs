@@ -4,6 +4,7 @@
  */
 export const __VERSION__ = "0.1.0";
 
+/** URL where the current code repository can be seen. */
 export const PROJECT_REPO =
   "https://github.com/peaBerberian/peaberberian.github.io";
 

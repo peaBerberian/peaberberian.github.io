@@ -57,82 +57,11 @@ export function create(_args, env, abortSignal) {
     enableButton,
     disableButton,
   } = constructAppHeaderLine([
-    {
-      name: "upload",
-      onClick: () => {
-        blockUi();
-        // Trick to open the file picker
-        const fileInputElt = document.createElement("input");
-        fileInputElt.type = "file";
-        fileInputElt.accept = "image/*";
-        fileInputElt.multiple = false;
-        fileInputElt.click();
-        fileInputElt.addEventListener("error", () => {
-          unblockUi();
-          showMessage(restOfAppElt, "❌ Failed to open your file-picker", 5000);
-        });
-        fileInputElt.addEventListener("cancel", () => {
-          unblockUi();
-        });
-        fileInputElt.addEventListener("change", (e) => {
-          const files = e.target.files;
-          if (!files[0]) {
-            unblockUi();
-            return;
-          }
-          createImgFromFileUpload(files[0])
-            .then((img) => {
-              onNewImageLoaded({
-                img,
-                name: files[0].name,
-                type: files[0].type,
-              });
-              unblockUi();
-            })
-            .catch((e) => {
-              unblockUi();
-              showMessage(restOfAppElt, "❌ " + e.toString(), 5000);
-            });
-        });
-      },
-    },
-    {
-      name: "open",
-      onClick: () => {
-        blockUi();
-        env
-          .filePickerOpen({
-            title: "Open an image from files stored on this Web Desktop",
-            allowMultipleSelections: false,
-          })
-          .then(
-            (fileData) => {
-              if (!fileData || !fileData[0]) {
-                unblockUi();
-                return;
-              }
-              createImgFromFileOpen(fileData[0])
-                .then(({ img, mimeType }) => {
-                  onNewImageLoaded({
-                    img,
-                    handle: fileData[0].handle,
-                    name: fileData[0].filename,
-                    type: mimeType,
-                  });
-                  unblockUi();
-                })
-                .catch((e) => {
-                  unblockUi();
-                  showMessage(restOfAppElt, "❌ " + e.toString(), 5000);
-                });
-            },
-            (err) => {
-              unblockUi();
-              showMessage(restOfAppElt, "❌ " + err.toString(), 10000);
-            },
-          );
-      },
-    },
+    { name: "upload", onClick: onUploadClick },
+    // To still work as expected just in case the app is "installed" without the
+    // `filePickerOpen` dependency enabled, just remove the button when it's not
+    // possible.
+    ...(env.filePickerOpen ? [{ name: "open", onClick: onOpenClick }] : []),
     { name: "separator" },
     { name: "undo", onClick: undo },
     { name: "redo", onClick: redo },
@@ -149,11 +78,8 @@ export function create(_args, env, abortSignal) {
     },
     { name: "separator" },
     { name: "download", onClick: downloadImage },
-    {
-      name: "quick-save",
-      onClick: quickSave,
-    },
-    { name: "save", onClick: saveFile },
+    ...(env.quickSave ? [{ name: "quick-save", onClick: quickSave }] : []),
+    ...(env.filePickerSave ? [{ name: "save", onClick: saveFile }] : []),
   ]);
   disableButton("undo");
   disableButton("redo");
@@ -461,7 +387,7 @@ export function create(_args, env, abortSignal) {
           e.preventDefault();
           if (currentFile?.handle) {
             quickSave();
-          } else {
+          } else if (env.filePickerSave) {
             saveFile();
           }
         }
@@ -1128,6 +1054,78 @@ export function create(_args, env, abortSignal) {
     spinnerContainerElt.style.display = "none";
     wrapperElt.style.opacity = 1;
     wrapperElt.removeAttribute("inert");
+  }
+
+  function onUploadClick() {
+    blockUi();
+    // Trick to open the file picker
+    const fileInputElt = document.createElement("input");
+    fileInputElt.type = "file";
+    fileInputElt.accept = "image/*";
+    fileInputElt.multiple = false;
+    fileInputElt.click();
+    fileInputElt.addEventListener("error", () => {
+      unblockUi();
+      showMessage(restOfAppElt, "❌ Failed to open your file-picker", 5000);
+    });
+    fileInputElt.addEventListener("cancel", () => {
+      unblockUi();
+    });
+    fileInputElt.addEventListener("change", (e) => {
+      const files = e.target.files;
+      if (!files[0]) {
+        unblockUi();
+        return;
+      }
+      createImgFromFileUpload(files[0])
+        .then((img) => {
+          onNewImageLoaded({
+            img,
+            name: files[0].name,
+            type: files[0].type,
+          });
+          unblockUi();
+        })
+        .catch((e) => {
+          unblockUi();
+          showMessage(restOfAppElt, "❌ " + e.toString(), 5000);
+        });
+    });
+  }
+
+  function onOpenClick() {
+    blockUi();
+    env
+      .filePickerOpen({
+        title: "Open an image from files stored on this Web Desktop",
+        allowMultipleSelections: false,
+      })
+      .then(
+        (fileData) => {
+          if (!fileData || !fileData[0]) {
+            unblockUi();
+            return;
+          }
+          createImgFromFileOpen(fileData[0])
+            .then(({ img, mimeType }) => {
+              onNewImageLoaded({
+                img,
+                handle: fileData[0].handle,
+                name: fileData[0].filename,
+                type: mimeType,
+              });
+              unblockUi();
+            })
+            .catch((e) => {
+              unblockUi();
+              showMessage(restOfAppElt, "❌ " + e.toString(), 5000);
+            });
+        },
+        (err) => {
+          unblockUi();
+          showMessage(restOfAppElt, "❌ " + err.toString(), 10000);
+        },
+      );
   }
 }
 

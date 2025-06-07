@@ -37,21 +37,6 @@ applyStyle(appWrapperElt, {
 });
 document.body.appendChild(appWrapperElt);
 
-const spinnerContainerElt = document.createElement("div");
-applyStyle(spinnerContainerElt, {
-  display: "flex",
-  position: "absolute",
-  height: "100%",
-  width: "100%",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: "10000000",
-});
-const spinnerElt = document.createElement("div");
-spinnerElt.className = "spinner";
-spinnerContainerElt.appendChild(spinnerElt);
-appWrapperElt.appendChild(spinnerContainerElt);
-
 const applicationEnvironment = {
   appUtils: getAppUtils(),
   getImageRootPath: () => IMAGE_ROOT_PATH,
@@ -122,7 +107,13 @@ onmessage = (e) => {
         abortCtrlr.signal,
       )
         .then((appInfo) => {
-          spinnerContainerElt.remove();
+          parent.postMessage(
+            {
+              type: "__pwd__loaded",
+              value: null,
+            },
+            "*",
+          );
           appWrapperElt.appendChild(appInfo.element);
           onActivate = appInfo.onActivate;
           onDeactivate = appInfo.onDeactivate;
@@ -136,7 +127,7 @@ onmessage = (e) => {
         .catch((err) => {
           parent.postMessage(
             {
-              type: "error",
+              type: "__pwd__error",
               value: {
                 time: "run",
                 name: err.name,

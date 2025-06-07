@@ -732,12 +732,14 @@ export default class AppsLauncher {
         this._taskbarManager.updateTitle(appWindow, newIcon, newTitle);
       },
       closeApp: () => appWindow.close(),
-      // TODO: remove need for that one
-      CONSTANTS,
       STYLE: constructAppStyleObject(),
     };
 
     if (Array.isArray(dependencies)) {
+      if (dependencies.includes("CONSTANTS")) {
+        // TODO: remove need for that one
+        env.CONSTANTS = CONSTANTS;
+      }
       if (dependencies.includes("settings")) {
         env.settings = SETTINGS;
       }

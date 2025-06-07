@@ -111,7 +111,6 @@ export function create(args, env) {
   containerElt.appendChild(headerElt);
   const iframe = document.createElement("iframe");
   iframe.tabIndex = "0";
-  iframe.sandbox = "allow-scripts";
   iframe.style.height = "100%";
   iframe.style.width = "100%";
   iframe.style.backgroundColor = "gray";
@@ -195,7 +194,7 @@ function forwardEvent(eventType, originalEvent) {
       identifier: touch.identifier
     }));
   }
-  parent.postMessage(eventData, "*");
+  parent.postMessage(eventData, ${JSON.stringify(window.location.origin)});
 }
 </script>
 </body></html>`;
@@ -207,7 +206,7 @@ function forwardEvent(eventType, originalEvent) {
           type: "open-file",
           data: iframeInfo.pendingFile,
         },
-        "*",
+        window.location.origin,
       );
       iframeInfo.pendingFile = null;
     }
@@ -242,7 +241,7 @@ function forwardEvent(eventType, originalEvent) {
           type: "open-file",
           data,
         },
-        "*",
+        window.location.origin,
       );
     }
   }

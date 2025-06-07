@@ -111,7 +111,6 @@ export function create(args, env) {
   containerElt.appendChild(headerElt);
   const iframe = document.createElement("iframe");
   iframe.tabIndex = "0";
-  iframe.sandbox = "allow-scripts";
   iframe.style.height = "100%";
   iframe.style.width = "100%";
   iframe.style.backgroundColor = "gray";
@@ -128,6 +127,7 @@ export function create(args, env) {
 import * as docxPreview from "https://cdn.jsdelivr.net/npm/docx-preview@0.3.5/+esm";
 
 onmessage = (e) => {
+
   if (e.data.type === "open-file") {
     document.body.innerHTML = "";
     const statusElt = document.createElement("p");
@@ -183,7 +183,7 @@ function forwardEvent(eventType, originalEvent) {
       identifier: touch.identifier
     }));
   }
-  parent.postMessage(eventData, "*");
+  parent.postMessage(eventData, ${JSON.stringify(window.location.origin)});
 }
 </script>
 </body>`;
@@ -195,7 +195,7 @@ function forwardEvent(eventType, originalEvent) {
           type: "open-file",
           data: iframeInfo.pendingFile,
         },
-        "*",
+        window.location.origin,
       );
       iframeInfo.pendingFile = null;
     }
@@ -230,7 +230,7 @@ function forwardEvent(eventType, originalEvent) {
           type: "open-file",
           data,
         },
-        "*",
+        window.location.origin,
       );
     }
   }

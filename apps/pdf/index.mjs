@@ -227,7 +227,7 @@ function forwardEvent(eventType, originalEvent) {
       identifier: touch.identifier
     }));
   }
-  parent.postMessage(eventData, "*");
+  parent.postMessage(eventData, ${JSON.stringify(window.location.origin)});
 }
 </script>
 </body>`;
@@ -239,7 +239,7 @@ function forwardEvent(eventType, originalEvent) {
           type: "open-file",
           data: iframeInfo.pendingFile,
         },
-        "*",
+        window.location.origin,
       );
       iframeInfo.pendingFile = null;
     }
@@ -271,7 +271,7 @@ function forwardEvent(eventType, originalEvent) {
           type: "open-file",
           data,
         },
-        "*",
+        window.location.origin,
       );
     }
   }

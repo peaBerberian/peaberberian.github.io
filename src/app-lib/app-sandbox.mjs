@@ -37,6 +37,13 @@ applyStyle(appWrapperElt, {
 });
 document.body.appendChild(appWrapperElt);
 
+/**
+ * Origin indicated by the desktop when asking to run an app.
+ * All subsequent messages should all come from this origin and all messages
+ * should be sent to it.
+ */
+let desktopOrigin;
+
 const applicationEnvironment = {
   appUtils: getAppUtils(),
   getImageRootPath: () => IMAGE_ROOT_PATH,
@@ -62,6 +69,9 @@ let onClose;
 const abortCtrlr = new AbortController();
 
 onmessage = (e) => {
+  if (desktopOrigin && e.origin !== desktopOrigin) {
+    return;
+  }
   switch (e.data.type) {
     case "__pwd__sidebar-format-update": {
       if (e.data.data === "top") {
@@ -100,6 +110,7 @@ onmessage = (e) => {
       } else {
         appWrapperElt.classList.remove("active");
       }
+      desktopOrigin = e.data.data.desktopOrigin;
       launchAppFromScript(
         e.data.data.scriptUrl,
         e.data.data.args,
@@ -112,7 +123,7 @@ onmessage = (e) => {
               type: "__pwd__loaded",
               value: null,
             },
-            "*",
+            desktopOrigin ?? "*",
           );
           appWrapperElt.appendChild(appInfo.element);
           onActivate = appInfo.onActivate;
@@ -129,7 +140,7 @@ onmessage = (e) => {
                 message: err.message,
               },
             },
-            "*",
+            desktopOrigin ?? "*",
           );
         });
       break;
@@ -273,5 +284,5 @@ function forwardEvent(eventType, originalEvent) {
       identifier: touch.identifier,
     }));
   }
-  parent.postMessage(eventData, "*");
+  parent.postMessage(eventData, desktopOrigin ?? "*");
 }

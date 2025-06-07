@@ -281,7 +281,7 @@ export default class AppsLauncher {
     }
 
     const env = this._constructEnvObject(
-      app.dependencies,
+      app.data.dependencies,
       appStack,
       appWindow,
       applicationAbortCtrl.signal,
@@ -556,7 +556,7 @@ export default class AppsLauncher {
 
         const env = {
           ...this._constructEnvObject(
-            filePickerApp.dependencies,
+            filePickerApp.data.dependencies,
             appStack,
             appWindow,
             fileOpenerAbortCtrl.signal,
@@ -614,7 +614,7 @@ export default class AppsLauncher {
         };
         const env = {
           ...this._constructEnvObject(
-            filePickerApp.dependencies,
+            filePickerApp.data.dependencies,
             appStack,
             appWindow,
             fileSaverAbortCtrl.signal,

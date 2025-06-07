@@ -195,24 +195,28 @@ export function create(args, env, parentAbortSignal) {
   // Handle interactions on image container
 
   // Zoom with wheel
-  appContentAreaElt.addEventListener("wheel", (e) => {
-    const imageInfo = loadedImages[currentImageIndex];
-    if (!imageInfo) {
-      return;
-    }
-    const imgElt = imageInfo.imgElt;
-    const imgState = imageTransformMap.get(imgElt);
-    if (!imgState) {
-      return;
-    }
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    imgState.scale = Math.max(
-      MIN_ZOOM,
-      Math.min(MAX_ZOOM, imgState.scale + delta),
-    );
-    updateImageTransform(imgElt);
-  });
+  appContentAreaElt.addEventListener(
+    "wheel",
+    (e) => {
+      const imageInfo = loadedImages[currentImageIndex];
+      if (!imageInfo) {
+        return;
+      }
+      const imgElt = imageInfo.imgElt;
+      const imgState = imageTransformMap.get(imgElt);
+      if (!imgState) {
+        return;
+      }
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      imgState.scale = Math.max(
+        MIN_ZOOM,
+        Math.min(MAX_ZOOM, imgState.scale + delta),
+      );
+      updateImageTransform(imgElt);
+    },
+    { passive: false },
+  );
 
   // Double click to reset
   appContentAreaElt.addEventListener("dblclick", () => {

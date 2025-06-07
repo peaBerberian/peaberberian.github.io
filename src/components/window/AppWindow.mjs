@@ -73,7 +73,7 @@ export default class AppWindow extends EventEmitter {
      * maximum width currently available.
      * @type {number|Function}
      */
-    this.defaultHeight = appObj.defaultHeight ?? DEFAULT_WINDOW_HEIGHT;
+    this.defaultHeight = appObj.data.defaultHeight ?? DEFAULT_WINDOW_HEIGHT;
     /**
      * The default width the window should have, in pixels.
      * Can be defined as a function for when the application wants to define
@@ -81,7 +81,7 @@ export default class AppWindow extends EventEmitter {
      * maximum width currently available.
      * @type {number|Function}
      */
-    this.defaultWidth = appObj.defaultWidth ?? DEFAULT_WINDOW_WIDTH;
+    this.defaultWidth = appObj.data.defaultWidth ?? DEFAULT_WINDOW_WIDTH;
     /**
      * Will allow to free resources linked to that window.
      * @private

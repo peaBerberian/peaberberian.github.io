@@ -354,13 +354,17 @@ export function create(_args, env, abortSignal) {
   );
 
   // Prevent the canvas from scrolling around on touch
-  canvasContainerElt.addEventListener("touchmove", (e) => {
-    if (e.touches.length === 1) {
-      if (currentTool !== "Cursor (no tool)") {
-        e.preventDefault();
+  canvasContainerElt.addEventListener(
+    "touchmove",
+    (e) => {
+      if (e.touches.length === 1) {
+        if (currentTool !== "Cursor (no tool)") {
+          e.preventDefault();
+        }
       }
-    }
-  });
+    },
+    { passive: false },
+  );
   // Safari just selects all over the place like some maniac without this
   wrapperElt.onselectstart = (e) => {
     e.preventDefault();

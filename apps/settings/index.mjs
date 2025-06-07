@@ -1,6 +1,3 @@
-// TODO: It's one of the earliest app and thus went through many iterations,
-// it may now be clean-up time :p
-
 import createTaskbarSection from "./Taskbar.mjs";
 import createWallpaperSection from "./Wallpaper.mjs";
 import createSystemSection from "./System.mjs";

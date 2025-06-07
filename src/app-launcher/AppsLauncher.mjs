@@ -53,7 +53,7 @@ export default class AppsLauncher {
     this._desktopElt = desktopElt;
     /**
      * Metadata on all currently created windows.
-     * @type {Array.<AppWindow>}
+     * @type {Array.<{appWindow: AppWindow, appId: string}>}
      * @private
      */
     this._windows = [];
@@ -85,11 +85,11 @@ export default class AppsLauncher {
     this._desktopElt.addEventListener("click", (e) => {
       if (e.target === this._desktopElt) {
         // deactivate all windows
-        this._windows.forEach((wdow) => {
-          if (mousedownTarget && wdow.element.contains(mousedownTarget)) {
+        this._windows.forEach(({ appWindow }) => {
+          if (mousedownTarget && appWindow.element.contains(mousedownTarget)) {
             return;
           }
-          wdow.deActivate();
+          appWindow.deActivate();
         });
       }
       mousedownTarget = null;
@@ -176,14 +176,15 @@ export default class AppsLauncher {
     );
 
     /** Window containing the application. */
-    const appWindow = new AppWindow(app, appStack.getElement(), options);
+    const appWindow = new AppWindow(appStack.getElement(), {
+      ...options,
+      defaultHeight: app.data.defaultHeight,
+      defaultWidth: app.data.defaultWidth,
+      defaultIcon: app.icon,
+      defaultTitle: app.title,
+    });
 
-    // TODO: here instead?
-    // The `AppWindow` doesn't really need to know about the app metadata
-    // appWindow.updateTitle(app.icon, app.title);
-    // this._windows.push({ appId: app.id, appWindow });
-
-    this._windows.push(appWindow);
+    this._windows.push({ appId: app.id, appWindow });
 
     // Move a little perfectly-overlapping windows
     this._checkRelativeWindowPlacement(appWindow);
@@ -199,7 +200,9 @@ export default class AppsLauncher {
 
     appWindow.addEventListener("closing", () => {
       applicationAbortCtrl.abort();
-      const windowIndex = this._windows.indexOf(appWindow);
+      const windowIndex = this._windows.findIndex(
+        (elt) => elt.appWindow === appWindow,
+      );
       if (windowIndex !== -1) {
         // Remove from array and activate next window
         this._windows.splice(windowIndex, 1);
@@ -241,12 +244,14 @@ export default class AppsLauncher {
 
       // Deactivate all other windows
       for (const w of this._windows) {
-        if (w !== appWindow) {
-          w.deActivate();
+        if (w.appWindow !== appWindow) {
+          w.appWindow.deActivate();
         }
         windowEltsWithZIndex.push({
-          element: w.element,
-          zIndex: parseInt(w.element.style.zIndex, 10) || BASE_WINDOW_Z_INDEX,
+          element: w.appWindow.element,
+          zIndex:
+            parseInt(w.appWindow.element.style.zIndex, 10) ||
+            BASE_WINDOW_Z_INDEX,
         });
       }
 
@@ -405,11 +410,11 @@ export default class AppsLauncher {
 
     let currentWindowWithMaxZIndex;
     let maxZindex = -Infinity;
-    for (const w of this._windows) {
-      if (!w.isMinimizedOrMinimizing()) {
-        const wZindex = parseInt(w.element.style.zIndex, 10);
+    for (const { appWindow } of this._windows) {
+      if (!appWindow.isMinimizedOrMinimizing()) {
+        const wZindex = parseInt(appWindow.element.style.zIndex, 10);
         if (!isNaN(wZindex) && wZindex >= maxZindex) {
-          currentWindowWithMaxZIndex = w;
+          currentWindowWithMaxZIndex = appWindow;
           maxZindex = wZindex;
         }
       }
@@ -675,7 +680,7 @@ export default class AppsLauncher {
 
     // Do not overlap previously-create window on the top left position
     for (let windowIdx = 0; windowIdx < this._windows.length; windowIdx++) {
-      const appWindow = this._windows[windowIdx];
+      const { appWindow } = this._windows[windowIdx];
       if (appWindow === newAppWindow) {
         continue;
       }
@@ -764,7 +769,7 @@ export default class AppsLauncher {
       if (dependencies.includes("open")) {
         env.open = (path) => {
           if (Array.isArray(path)) {
-            // TODO: multiple open in same app
+            // TODO: multiple open in same app should be possible? E.g. image-viewer
             path.forEach((p) => this.open(p));
           } else {
             this.open(path);

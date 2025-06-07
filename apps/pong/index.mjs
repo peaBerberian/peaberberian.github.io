@@ -90,8 +90,6 @@ export function create(_args, env, abortSignal) {
    * @param {KeyboardEvent} e
    */
   function onKeyUp(e) {
-    // TODO: It might be more usable/fun by re-checking each frame is the key is
-    // maintained and move accordingly as an accessible alternative to the mouse
     switch (e.key) {
       case "ArrowUp":
         isTopPressed = false;
@@ -174,11 +172,11 @@ export function create(_args, env, abortSignal) {
 
     function tick() {
       if (isTopPressed) {
-        userPaddle.y = Math.max(0, userPaddle.y - 7);
+        userPaddle.y = Math.max(0, userPaddle.y - 5);
       } else if (isDownPressed) {
         userPaddle.y = Math.min(
           canvas.height - PADDLE_HEIGHT,
-          userPaddle.y + 7,
+          userPaddle.y + 5,
         );
       }
 
@@ -260,6 +258,29 @@ export function create(_args, env, abortSignal) {
     function drawTheObjects(withScore, withLine) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      if (withLine) {
+        // NOTE: This one is also not "bordered" with black.
+        // As this is not required for the game, I did not care much
+        ctx.setLineDash([10, 5]);
+        ctx.beginPath();
+        ctx.moveTo(canvas.width / 2, 0);
+        ctx.lineTo(canvas.width / 2, canvas.height);
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      if (withScore) {
+        // And now the score
+        ctx.font = "32px monospace";
+        // NOTE: This text is not "bordered" with black meaning it won't be
+        // visible if the background is white.
+        // Maybe TODO?
+        ctx.fillText(leftScore, canvas.width / 4, 50);
+        ctx.fillText(rightScore, (3 * canvas.width) / 4, 50);
+      }
+
       // Ball
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -291,29 +312,6 @@ export function create(_args, env, abortSignal) {
       ctx.strokeRect(enemyPaddle.x, enemyPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
       ctx.fillRect(userPaddle.x, userPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
       ctx.strokeRect(userPaddle.x, userPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
-
-      if (withScore) {
-        // And now the score
-        ctx.font = "32px monospace";
-        // NOTE: This text is not "bordered" with black meaning it won't be
-        // visible if the background is white.
-        // Maybe TODO?
-        ctx.fillText(leftScore, canvas.width / 4, 50);
-        ctx.fillText(rightScore, (3 * canvas.width) / 4, 50);
-      }
-
-      if (withLine) {
-        // NOTE: This one is also not "bordered" with black.
-        // As this is not required for the game, I did not care much
-        ctx.setLineDash([10, 5]);
-        ctx.beginPath();
-        ctx.moveTo(canvas.width / 2, 0);
-        ctx.lineTo(canvas.width / 2, canvas.height);
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
     }
 
     function resetBall() {

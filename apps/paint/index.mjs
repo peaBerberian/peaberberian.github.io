@@ -479,9 +479,7 @@ export function create(_args, env, abortSignal) {
           ctx.lineTo(currentX, currentY);
           ctx.stroke();
 
-          // TODO: actually check that:
-          // 1.  Something has been erased
-          // 2.  Something has been erased
+          // TODO: actually check that something has been erased
           if (isInCanvas && hasSomethingDrawnOnCanvas) {
             hasUpdatesToSave = true;
           }

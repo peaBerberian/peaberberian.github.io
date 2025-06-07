@@ -92,7 +92,6 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
 
   wrapperElt.appendChild(iframe);
 
-  // TODO: when it loads multiple times
   iframe.addEventListener("load", () => {
     sendSettingsToIframe(iframe, abortSignal);
     processEventsFromIframe(

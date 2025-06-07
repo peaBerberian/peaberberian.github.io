@@ -214,7 +214,8 @@ export function create(_args, env) {
       started: false,
       gameOver: false,
       lastShot: 0,
-      enemyDirection: 1,
+      alienDirection: 1,
+      ufoDirection: 1,
       gameWidth: 0,
       gameHeight: 0,
       level: 1,
@@ -330,9 +331,12 @@ export function create(_args, env) {
 
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
+        const isUfo = row === rows - 1;
         const enemy = {
           row,
           col,
+          isUfo,
+          speed: config.enemyBaseSpeed * (isUfo ? 2 : 1),
           x: startX + col * spacing,
           y: startY + row * spacing,
           width: enemySize,
@@ -341,7 +345,7 @@ export function create(_args, env) {
         const enemyElt = document.createElement("div");
         enemyElt.dataset.type = "enemy";
         let img;
-        if (row === rows - 1) {
+        if (isUfo) {
           img = enemyImages.ufo.cloneNode();
         } else if (row === rows - 2) {
           img = enemyImages.alien2.cloneNode();
@@ -534,29 +538,54 @@ export function create(_args, env) {
       return;
     }
 
-    let shouldDrop = false;
+    let shouldDropAlien = false;
+    let shouldDropUfo = false;
 
     for (let enemy of gameState.enemies) {
+      const dir = enemy.isUfo
+        ? gameState.ufoDirection
+        : gameState.alienDirection;
       if (
-        (enemy.x <= 0 && gameState.enemyDirection === -1) ||
-        (enemy.x >= gameState.gameWidth - enemy.width &&
-          gameState.enemyDirection === 1)
+        (enemy.x <= 0 && dir === -1) ||
+        (enemy.x >= gameState.gameWidth - enemy.width && dir === 1)
       ) {
-        shouldDrop = true;
-        break;
+        if (enemy.isUfo) {
+          shouldDropUfo = true;
+        } else {
+          shouldDropAlien = true;
+        }
       }
     }
 
-    if (shouldDrop) {
-      gameState.enemyDirection *= -1;
+    if (shouldDropAlien) {
+      gameState.alienDirection *= -1;
       gameState.enemies.forEach((enemy) => {
-        enemy.y += config.enemyDropDistance;
+        if (!enemy.isUfo) {
+          enemy.y += config.enemyDropDistance;
+        }
       });
     } else {
       gameState.enemies.forEach((enemy) => {
-        enemy.x +=
-          (config.enemyBaseSpeed + config.enemySuppSpeed) *
-          gameState.enemyDirection;
+        if (!enemy.isUfo) {
+          enemy.x +=
+            (enemy.speed + config.enemySuppSpeed) * gameState.alienDirection;
+        }
+      });
+    }
+
+    if (shouldDropUfo) {
+      gameState.ufoDirection *= -1;
+      gameState.enemies.forEach((enemy) => {
+        if (enemy.isUfo) {
+          enemy.y += config.enemyDropDistance;
+        }
+      });
+    } else {
+      gameState.enemies.forEach((enemy) => {
+        if (enemy.isUfo) {
+          enemy.x +=
+            (enemy.speed + config.enemySuppSpeed) * gameState.ufoDirection;
+        }
       });
     }
 

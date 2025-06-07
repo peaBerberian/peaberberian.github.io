@@ -112,13 +112,15 @@ export default async function run(options) {
     };
   }
 
+  let currentAbortCtrl = new AbortController();
+
   if (!options.watch) {
-    await reBuild();
+    await reBuild(currentAbortCtrl.signal);
     return;
   }
 
   return new Promise((_resolve, reject) => {
-    let lastBuildContexts = reBuild().catch(reject);
+    let currentBuildProm = reBuild(currentAbortCtrl.signal).catch(reject);
 
     if (!options.watch) {
       return;
@@ -140,12 +142,10 @@ export default async function run(options) {
         return;
       }
       console.info(`"${appInfoFile}" updated. Restarting all builds...`);
-      const contexts = await lastBuildContexts;
-      contexts.forEach((context) => {
-        context.cancel();
-        context.dispose();
-      });
-      lastBuildContexts = reBuild().catch(reject);
+      currentAbortCtrl.abort();
+      currentAbortCtrl = new AbortController();
+      await currentBuildProm;
+      currentBuildProm = reBuild(currentAbortCtrl.signal).catch(reject);
 
       // Because of those same weird filesystem stuff, it's just safer to
       // re-watch the file here.
@@ -154,7 +154,7 @@ export default async function run(options) {
     }
   });
 
-  async function reBuild() {
+  async function reBuild(abortSignal) {
     // We'll create `GENERATED_APP_PATH` here:
     const lazyLoadedApps = writeGeneratedAppFile(APPS_SRC_DIR);
 
@@ -211,8 +211,19 @@ export default async function run(options) {
         }
         return produceBundle(bundle.input, bundle.outputFile, options);
       }),
-    ).then(() => {
-      return writeAppSandboxHtml(options.watch, options.silent);
+    ).then(async (contexts) => {
+      const cancelAll = () => {
+        contexts.forEach((context) => {
+          context.cancel();
+          context.dispose();
+        });
+      };
+      if (abortSignal.aborted) {
+        cancelAll();
+        return;
+      }
+      abortSignal.addEventListener("abort", cancelAll);
+      await writeAppSandboxHtml(options.watch, options.silent, abortSignal);
     });
   }
 }
@@ -245,6 +256,7 @@ async function produceBundle(inputFile, outfile, options) {
   const relativeOutfile = path.relative(PROJECT_ROOT_DIRECTORY, outfile);
 
   return new Promise(async (resolve, reject) => {
+    let context;
     const esbuildStepsPlugin = {
       name: "bundler-steps",
       setup(build) {
@@ -267,7 +279,7 @@ async function produceBundle(inputFile, outfile, options) {
           if (relativeOutfile !== undefined && !isSilent) {
             logSuccess(`Bundling of "${relativeOutfile}" succeeded.`);
           }
-          resolve();
+          resolve(context);
         });
       },
     };
@@ -276,7 +288,7 @@ async function produceBundle(inputFile, outfile, options) {
 
     // Create a context for incremental builds
     try {
-      const context = await esbuild[meth]({
+      context = await esbuild[meth]({
         banner: banner
           ? {
               js: banner,
@@ -296,8 +308,6 @@ async function produceBundle(inputFile, outfile, options) {
       });
       if (watch) {
         context.watch();
-        console.warn(context);
-        return context;
       }
     } catch (err) {
       if (!isSilent) {
@@ -314,10 +324,12 @@ async function produceBundle(inputFile, outfile, options) {
  * @param {boolean} [watch] - If `true`, the files involved will be watched and
  * the code re-built each time one of them changes.
  * @param {boolean} [silent] - If `true`, we won't output logs.
+ * @param {AbortSignal} abortSignal - Only relevant if `watch` is true: stop
+ * watching and re-building on file change when it emits.
  * @returns {Promise} - Promise resolving when the sandbox has been generated (the
  * first one if watching). Reject if the first build failed.
  */
-async function writeAppSandboxHtml(watch, isSilent) {
+async function writeAppSandboxHtml(watch, isSilent, abortSignal) {
   let prom = null;
   let alreadyWaitingToBuild = false;
   const relativeOutfile = path.relative(PROJECT_ROOT_DIRECTORY, SANDBOX_HTML);
@@ -326,7 +338,7 @@ async function writeAppSandboxHtml(watch, isSilent) {
     logWarning(`Bundling of "${relativeOutfile}" started.`);
   }
 
-  if (watch) {
+  if (watch && !abortSignal.aborted) {
     [APP_STYLE, OUTPUT_APP_LIB_SCRIPT].forEach((filePath) => {
       let watcher = fs.watch(filePath, onFileChange);
       async function onFileChange(eventName) {
@@ -353,6 +365,9 @@ async function writeAppSandboxHtml(watch, isSilent) {
         prom = _writeSandbox();
         watcher.close();
       }
+      abortSignal.addEventListener("abort", () => {
+        watcher.close();
+      });
     });
   }
 

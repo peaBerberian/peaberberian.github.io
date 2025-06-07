@@ -169,7 +169,7 @@
       "defaultHeight": 600,
       "defaultWidth": 800,
       "sandboxed": true,
-      "defaultBackground": "#27272c",
+      "defaultBackground": "windowActiveHeader",
       "startMenu": {
         "list": "Games"
       },

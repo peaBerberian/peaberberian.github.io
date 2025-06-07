@@ -121,8 +121,6 @@ export function createExternalIframe(url, backgroundColor) {
   iframe.height = "100%";
   iframe.width = "100%";
   iframe.border = 0;
-  iframe.allow =
-    "clipboard-read; clipboard-write; autoplay; encrypted-media; fullscreen; picture-in-picture";
 
   iframe.onload = function () {
     container.style.backgroundColor = "#ffffff";

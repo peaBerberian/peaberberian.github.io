@@ -258,6 +258,198 @@ export function create(args, env, parentAbortSignal) {
     resetTransforms(imageInfo.imgElt);
   });
 
+  // Touch interactions
+  let touchState = {
+    swipeStartX: 0,
+    swipeStartY: 0,
+    swipeStartTime: 0,
+    isSwipeGesture: false,
+    lastTouchDistance: 0,
+    lastTouchCenterX: 0,
+    lastTouchCenterY: 0,
+    isPinching: false,
+    isPanning: false,
+    panStartX: 0,
+    panStartY: 0,
+    panInitialImgX: 0,
+    panInitialImgY: 0,
+    initialPinchScale: 1,
+    initialPinchX: 0,
+    initialPinchY: 0,
+  };
+
+  appContentAreaElt.addEventListener(
+    "touchstart",
+    (e) => {
+      const imageInfo = loadedImages[currentImageIndex];
+      if (!imageInfo) {
+        return;
+      }
+
+      if (e.touches.length === 1) {
+        // Single touch - could be swipe or pan
+        const touch = e.touches[0];
+        touchState.swipeStartX = touch.clientX;
+        touchState.swipeStartY = touch.clientY;
+        touchState.swipeStartTime = Date.now();
+        touchState.isSwipeGesture = true;
+        touchState.isPinching = false;
+        touchState.isPanning = false;
+
+        // Prepare for potential panning
+        touchState.panStartX = touch.clientX;
+        touchState.panStartY = touch.clientY;
+        const imgPosition = getCurrentImagePosition();
+        if (imgPosition) {
+          touchState.panInitialImgX = imgPosition.x;
+          touchState.panInitialImgY = imgPosition.y;
+        }
+      } else if (e.touches.length === 2) {
+        // Two touches - pinch to zoom
+        e.preventDefault();
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+
+        const distance = Math.sqrt(
+          Math.pow(touch2.clientX - touch1.clientX, 2) +
+            Math.pow(touch2.clientY - touch1.clientY, 2),
+        );
+
+        const centerX = (touch1.clientX + touch2.clientX) / 2;
+        const centerY = (touch1.clientY + touch2.clientY) / 2;
+
+        touchState.lastTouchDistance = distance;
+        touchState.lastTouchCenterX = centerX;
+        touchState.lastTouchCenterY = centerY;
+        touchState.isPinching = true;
+        touchState.isSwipeGesture = false;
+        touchState.isPanning = false;
+
+        const imgState = imageTransformMap.get(imageInfo.imgElt);
+        if (imgState) {
+          touchState.initialPinchScale = imgState.scale;
+          touchState.initialPinchX = imgState.translateX;
+          touchState.initialPinchY = imgState.translateY;
+        }
+      }
+    },
+    { passive: false },
+  );
+
+  appContentAreaElt.addEventListener(
+    "touchmove",
+    (e) => {
+      const imageInfo = loadedImages[currentImageIndex];
+      if (!imageInfo) {
+        return;
+      }
+
+      if (e.touches.length === 2 && touchState.isPinching) {
+        e.preventDefault();
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+
+        const distance = Math.sqrt(
+          Math.pow(touch2.clientX - touch1.clientX, 2) +
+            Math.pow(touch2.clientY - touch1.clientY, 2),
+        );
+
+        const scale = distance / touchState.lastTouchDistance;
+        const imgState = imageTransformMap.get(imageInfo.imgElt);
+
+        if (imgState) {
+          const newScale = Math.max(
+            MIN_ZOOM,
+            Math.min(MAX_ZOOM, touchState.initialPinchScale * scale),
+          );
+          imgState.scale = newScale;
+          updateImageTransform(imageInfo.imgElt);
+        }
+      } else if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - touchState.swipeStartX;
+        const deltaY = touch.clientY - touchState.swipeStartY;
+        const absX = Math.abs(deltaX);
+        const absY = Math.abs(deltaY);
+
+        const imgState = imageTransformMap.get(imageInfo.imgElt);
+        const isZoomed = imgState && imgState.scale > 1.1;
+
+        // Determine gesture type based on movement and zoom level
+        if (!touchState.isPanning && touchState.isSwipeGesture) {
+          if (isZoomed && absY > 10) {
+            // If zoomed and vertical movement, switch to panning
+            touchState.isSwipeGesture = false;
+            touchState.isPanning = true;
+          } else if (!isZoomed && absX > 20 && absX > absY) {
+            // If not zoomed and horizontal movement, keep as swipe
+            // Do nothing, let it continue as swipe
+          } else if (absX > 10 || absY > 10) {
+            // Some movement detected, decide based on zoom and direction
+            if (isZoomed || absY > absX) {
+              touchState.isSwipeGesture = false;
+              touchState.isPanning = true;
+            }
+          }
+        }
+
+        if (touchState.isPanning) {
+          e.preventDefault();
+          setCurrentImagePosition(
+            touchState.panInitialImgX + touch.clientX - touchState.panStartX,
+            touchState.panInitialImgY + touch.clientY - touchState.panStartY,
+          );
+        } else if (touchState.isSwipeGesture && absY > absX && absY > 30) {
+          // If movement is too vertical for swipe, disable it
+          touchState.isSwipeGesture = false;
+        }
+      }
+    },
+    { passive: false },
+  );
+
+  appContentAreaElt.addEventListener(
+    "touchend",
+    (e) => {
+      const imageInfo = loadedImages[currentImageIndex];
+      if (!imageInfo) {
+        return;
+      }
+
+      if (touchState.isSwipeGesture && e.changedTouches.length === 1) {
+        const touch = e.changedTouches[0];
+        const deltaX = touch.clientX - touchState.swipeStartX;
+        const deltaY = touch.clientY - touchState.swipeStartY;
+        const deltaTime = Date.now() - touchState.swipeStartTime;
+
+        // Check if it's a valid swipe (horizontal movement, reasonable speed)
+        const minSwipeDistance = 50;
+        const maxSwipeTime = 500;
+        const absX = Math.abs(deltaX);
+        const absY = Math.abs(deltaY);
+
+        if (
+          absX > minSwipeDistance &&
+          absX > absY &&
+          deltaTime < maxSwipeTime
+        ) {
+          if (deltaX > 0) {
+            // Swipe right - previous image
+            showPreviousImage();
+          } else {
+            // Swipe left - next image
+            showNextImage();
+          }
+        }
+      }
+
+      touchState.isPinching = false;
+      touchState.isSwipeGesture = false;
+      touchState.isPanning = false;
+    },
+    { passive: false },
+  );
+
   updateDisplayedImage();
 
   {
@@ -761,6 +953,8 @@ function handleImageDragging(
   let isDraggingImag = false;
 
   imageElement.style.cursor = "grab";
+
+  // Mouse events only - touch events are handled by main touch handlers
   const onMouseDown = (e) => {
     if (e.button !== 0) {
       // not left click
@@ -796,14 +990,18 @@ function handleImageDragging(
   };
 
   const onSelectStart = (e) => e.preventDefault();
+
+  // Add mouse event listeners
   imageElement.addEventListener("mousedown", onMouseDown);
 
   // Safari just selects all over the place like some maniac without this
   imageElement.addEventListener("selectstart", onSelectStart);
   document.addEventListener("mousemove", onMouseMove);
   document.addEventListener("mouseup", onMouseUp);
+
   abortSignal.addEventListener("abort", () => {
     imageElement.removeEventListener("mousedown", onMouseDown);
+    imageElement.removeEventListener("selectstart", onSelectStart);
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
   });

@@ -1,0 +1,7 @@
+/** This is the code for the app identified as "other_projects_keyboard9". */
+var a="https://peaberberian.github.io/keyboard9/examples/configurable_keyboard.html",i="https://github.com/peaberberian/keyboard9";function d(r,t){let{createAppTitle:n}=t.appUtils;return t.updateTitle(null,"Other Projects: keyboard9"),{sidebar:[{text:"Overview",icon:"\u{1F9D1}\u200D\u{1F3EB}",centered:!0,render:()=>{let e=document.createElement("div");e.appendChild(n("keyboard9",{github:i,demo:a}));let o=document.createElement("div");return e.appendChild(o),o.innerHTML=`<p>keyboard9 is a visual keyboard intended for devices without a keyboard (e.g. with a remote or a joypad).</p>
+
+  <p>I often work on devices without a keyboard such as TV, HDMI dongles or game consoles.<br>
+  When you need to be inputing text (e.g. to enter your wifi password), applications deployed to those devices often present to you a visual keyboard which I find to be non-optimal: you need many inputs to choose a letter, often relying on direction keys which isn't the "natural" way of interacting with this keyboard concept.</p>
+
+  <p>So as a fun attempt I tried to define my own efficient keyboard interface.<br>It is inspired from the "MultiTap"/"ABC" mode we had on phones before most of them had a tactile interfaces - but also bringing multiple improvements by exploiting the fact that we can update the face of the "keys" displayed on screen.<br>Today, I'm using that dependency in debugging tool only, when I have to debug on devices without an actual keyboard.</p>`,e}}]}}export{d as create};

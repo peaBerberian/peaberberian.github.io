@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Paul Berberian's web desktop." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- i-frames should not do tracking -->
+    <meta
+      http-equiv="Permissions-Policy"
+      content="storage=(), storage-access=(), browsing-topics=(), interest-cohort=()"
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🙋🏻‍♂️</text></svg>"
+    />
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./app-style.css" />
+    <title>Paul's Web Desktop</title>
+  </head>
+  <body class="color-w-buttons">
+    <div id="desktop">
+      <div id="snap-zone"></div>
+    </div>
+    <div id="taskbar">
+      <span id="taskbar-first">
+        <div id="start-button" tabindex="0"><div id="start-pic"></div></div>
+        <div class="taskbar-items"></div>
+      </span>
+      <span id="taskbar-last"></span>
+    </div>
+    <div id="context-menu-wrapper"></div>
+    <div id="start-menu"></div>
+    <script src="./desktop.js" type="text/javascript"></script>
+    <!-- Preloading the about app as we know we're going to open it directly anyway -->
+    <script src="./lazy/about.js" type="module"></script>
+  </body>
+</html>

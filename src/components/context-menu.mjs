@@ -150,6 +150,13 @@ export default function setUpContextMenu({
     }
   });
 
+  addAbortableEventListener(document, "keydown", abortSignal, (e) => {
+    if (e.key === "Escape") {
+      if (contextMenuElt.classList.contains("show")) {
+        closeContextMenu();
+      }
+    }
+  });
   addAbortableEventListener(document, "mousedown", abortSignal, (e) => {
     if (!contextMenuWrapper.contains(e.target)) {
       closeContextMenu();

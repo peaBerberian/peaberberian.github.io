@@ -53,7 +53,7 @@ export default function createWindowSection(
       {
         ref: settings.windowHeaderHeight,
         label: "Header's Height",
-        min: 25,
+        min: 30,
         max: 50,
         valueToText: (val) => String(val) + "px",
       },

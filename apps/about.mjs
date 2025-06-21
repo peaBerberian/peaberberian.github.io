@@ -120,30 +120,34 @@ export function create(_args, env) {
     general: {
       title: "Welcome 👋🏻",
       description: `<div>
-  <p>Hi, my name is Paul Berberian, I'm 34¹ I'm a software engineer and tech lead at Canal+ Group living in Montpellier, France. I lead several projects linked to media streaming, including the open-source <a href="https://github.com/canalplus/rx-player" target="_blank">RxPlayer</a> media player.</p>
+  <p>Hi, I'm Paul Berberian, a software engineer and tech lead at Canal+ Group in Montpellier, France.<br>I lead media streaming projects, including the open-source <a href="https://github.com/canalplus/rx-player" target="_blank">RxPlayer</a> that powers Canal+ and other streaming platforms worldwide.</p>
 
-  <p>You're here in my personal website which implements a (functional) desktop environment. Everything you see here has been done especially for this desktop without any external dependency.</p>
+  <p>You're on my personal website which implements a desktop environment. Everything you see here was built specifically for this desktop without any external dependency.</p>
 
-  <p><b>Also note that everything you do here, even files you save or load on this site, never leaves your computer. This website does not track nor collect your data.</b> The only contacts with a server are to download the resources allowing to render the various applications (code, images...).</p>
+  <p><b>Also note that everything you do here, even files you save or load on this site, never leaves your computer. This website doesn't track nor collect your data.</b></p>
 
-  <p>To contact me, you can send an e-mail to: <a href="mailto:paul.berberian@proton.me">paul.berberian@proton.me</a>.</p>
-
-  <p class="asterisk"><span class="note">1</a>. As long as we\'re still in 2025, that is.</span></p>
+  <p>To contact me, send an e-mail to: <a href="mailto:paul.berberian@proton.me">paul.berberian@proton.me</a>.</p>
 
 <div class="quickLinks"><b>External links: </b>${formatQuickLinks(quickLinks, env)}</div></div>`,
     },
     current: {
       title: "What I work on",
       description: `<span>
-  <p>I'm mostly working on media web-applications using TypeScript, JavaScript, Zig and Rust (thanks to WebAssembly).<br>Right now the main project I lead is the RxPlayer, at Canal+ Group.<\p><p>The RxPlayer is a library allowing various front-end applications - among which Canal+' flagship products - to play live and VoD contents with adaptive streaming, multiple tracks and DRMs. It targets both the web and embedded platforms (set-top boxes, SmartTVs, ChromeCast, game consoles etc.).</p>
+<p>I primarily work on media web applications using TypeScript, JavaScript, and Rust (via WebAssembly).<br>My main project is the RxPlayer at Canal+ Group, an adaptive streaming library handling live and VoD contents with DRM support for millions of simultaneous users across web browsers, set-top boxes, smart TVs, and gaming consoles.</p>
 
-  <p>I also lead several other projects: some allowing media playback under more locked vendor-specific media APIs, but also debugging and reverse engineering tools helping front-end developpers to maintain those applications.<br>A part of the projects I maintain at Canal+ are <a href="https://github.com/canalplus/" target="_blank">open-source</a>¹.<br>I also maintain many <a href="https://github.com/peaberberian/" target="_blank">personal projects</a>.</p>
+<p>Beyond the RxPlayer, I lead various media playback projects and develop debugging tools for front-end developers. A few of these are <a href="https://github.com/orgs/canalplus/repositories" target="_blank">open-source</a>¹, and I maintain many <a href="https://github.com/peaberberian/" target="_blank">personal projects</a> as well.</p>
 
-  <p class="asterisk"><span class="note">1</a>. Most projects at Canal+ are closed-source, including some that I lead. The few maintained open-sourced ones (that are under the <i>"canalplus"</i> organization on GitHub) all gravitate around the RxPlayer library and are all under my lead.</span></p>
+<div class="separator"></div>
 
-  <div class=\"separator\"></div>
+<p>Previously, I developed set-top box applications with unique constraints: software updates, storage management, offline browsing, TV remote navigation, and multi-device support in environments quite different from typical web applications.</p>
 
-  <p>Previously, I worked on set-top boxes, to create large front-end applications with important stability constraints and many features not usually found in web platforms.<br/>Among them: updates, storage management, browsing in offline contexts, records scheduling, TV remote-based navigation, multi-devices support, media player integration and TV channel scanning.</p>
+<div class="separator"></div>
+
+<p>I consider myself proficient with the web platform, having led projects ranging from React-based UIs to specialized libraries that leverage advanced and domain-specific web APIs.</p>
+
+<p class="asterisk"><span class="note">1. Most projects at Canal+ are closed-source, including some that I lead. The few open-source ones are all under my lead.</span></p>
+
+
 </span>`,
     },
     experiences: {

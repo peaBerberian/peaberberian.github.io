@@ -109,6 +109,30 @@ export function create(_args, env) {
     return count;
   }
 
+  function getNumberOfFlagsAroundCell(row, col) {
+    let count = 0;
+
+    for (
+      let r = Math.max(0, row - 1);
+      r <= Math.min(NUMBER_OF_ROWS - 1, row + 1);
+      r++
+    ) {
+      for (
+        let c = Math.max(0, col - 1);
+        c <= Math.min(NUMBER_OF_COLS - 1, col + 1);
+        c++
+      ) {
+        if (r === row && c === col) continue;
+
+        if (getCellElementAt(r, c).dataset.flagged === "true") {
+          count++;
+        }
+      }
+    }
+
+    return count;
+  }
+
   function getCellElementAt(row, col) {
     // For now, just do this.
     return containerElt.querySelector(`[data-row="${row}"][data-col="${col}"]`);
@@ -178,6 +202,47 @@ export function create(_args, env) {
     }
   }
 
+  function middleClickReveal(cell) {
+    if (hasGameOvered || cell.dataset.revealed !== "true") {
+      return;
+    }
+
+    const row = parseInt(cell.dataset.row);
+    const col = parseInt(cell.dataset.col);
+    const neighborCount = parseInt(cell.dataset.neighbors);
+    const flagsAround = getNumberOfFlagsAroundCell(row, col);
+
+    // Only reveal if the number of flags matches the number on the cell
+    if (flagsAround !== neighborCount) {
+      return;
+    }
+
+    // Reveal all non-flagged neighbors
+    for (
+      let r = Math.max(0, row - 1);
+      r <= Math.min(NUMBER_OF_ROWS - 1, row + 1);
+      r++
+    ) {
+      for (
+        let c = Math.max(0, col - 1);
+        c <= Math.min(NUMBER_OF_COLS - 1, col + 1);
+        c++
+      ) {
+        if (r === row && c === col) continue;
+
+        const neighbor = getCellElementAt(r, c);
+        if (
+          neighbor.dataset.revealed === "false" &&
+          neighbor.dataset.flagged === "false"
+        ) {
+          revealCell(neighbor);
+        }
+      }
+    }
+
+    checkGameStatus();
+  }
+
   function checkGameStatus() {
     const totalCells = NUMBER_OF_ROWS * NUMBER_OF_COLS;
     const safeCells = totalCells - NUMBER_OF_BOMBS;
@@ -214,8 +279,7 @@ export function create(_args, env) {
     // NOTE: It's actually not really "right click" but more about the "context"
     // button (e.g. long press on android etc.).
     // I don't know how to word it right so for now I call it "right click".
-    statusElt.textContent =
-      "Left click to reveal a cell, right click to place a flag";
+    statusElt.textContent = "Left click to reveal, right click to flag";
     resetBtn.textContent = "Generate new grid";
 
     board.innerHTML = "";
@@ -266,6 +330,20 @@ export function create(_args, env) {
         cell.addEventListener("contextmenu", (e) => {
           e.preventDefault();
           toggleFlagOnCell(cell);
+        });
+        cell.addEventListener("mousedown", (e) => {
+          // Middle click
+          if (e.button === 1) {
+            e.preventDefault();
+            middleClickReveal(cell);
+          }
+        });
+
+        // Prevent middle click from opening new tabs/scrolling
+        cell.addEventListener("auxclick", (e) => {
+          if (e.button === 1) {
+            e.preventDefault();
+          }
         });
 
         board.appendChild(cell);

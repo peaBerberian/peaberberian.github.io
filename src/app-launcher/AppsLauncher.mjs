@@ -151,8 +151,8 @@ export default class AppsLauncher {
       // exists. If so, activate it.
       const createdWindowForApp = this._getNextWindowForApp(app.id);
       if (createdWindowForApp !== null) {
-        createdWindowForApp.deminimize();
-        createdWindowForApp.activate();
+        createdWindowForApp.appWindow.deminimize();
+        createdWindowForApp.appWindow.activate();
         return false;
       }
     }

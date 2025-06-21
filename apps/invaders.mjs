@@ -125,8 +125,8 @@ export function create(_args, env) {
     top: 0,
     color: env.STYLE.windowActiveHeaderText,
     // color: "#ffffff",
-    width: config.playerSize + "px",
-    height: config.playerSize + "px",
+    width: (config.playerSize ?? 0) + "px",
+    height: (config.playerSize ?? 0) + "px",
   });
   playerElt.appendChild(playerSvg);
   applyStyle(playerElt, {
@@ -143,12 +143,10 @@ export function create(_args, env) {
     position: "absolute",
     top: "50%",
     left: "50%",
+    display: "none",
     transform: "translate(-50%, -50%)",
     backgroundColor: env.STYLE.windowActiveHeader,
     color: env.STYLE.windowActiveHeaderText,
-    // border: "1px solid " + env.STYLE.windowActiveHeaderText,
-    // backgroundColor: "#27272c",
-    // color: "#fff",
     border: "1px solid #fff",
     fontSize: "24px",
     textAlign: "center",
@@ -782,6 +780,11 @@ export function create(_args, env) {
       playerElt.appendChild(playerSvg);
     }
 
+    if (gameState.gameWidth === 0 || gameState.gameHeight === 0) {
+      hud.style.display = "none";
+    } else if (hud.style.display === "none") {
+      hud.style.display = "block";
+    }
     hud.textContent = `SCORE: ${gameState.score} | LIVES: ${gameState.player.lives} | LEVEL: ${gameState.level}`;
     hud.style.fontSize = config.hudSize + "px";
 
@@ -799,7 +802,11 @@ export function create(_args, env) {
       gameOverScreen.innerHTML = `GAME OVER<br>FINAL SCORE: ${gameState.score}<br><span style="font-size: ${config.hudSize}px;">Press R or Click to restart</span>`;
     } else {
       if (!gameState.started) {
-        startScreen.style.display = "block";
+        if (gameState.gameWidth === 0 || gameState.gameHeight === 0) {
+          startScreen.style.display = "none";
+        } else {
+          startScreen.style.display = "block";
+        }
         startScreen.style.fontSize = config.hudSize * 1.5 + "px";
         startScreen.innerHTML = `Invaders!<br><span style="font-size: ${config.hudSize}px;">Press Space or Click to Start</span>`;
       } else {

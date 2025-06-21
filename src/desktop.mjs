@@ -4,7 +4,6 @@
 // This is not really a roadmap, just writing stuff I see to not forget them.
 //
 // high priority:
-// - invaders: temp ugly at startup
 //
 // medium priority:
 // - copy svg in passgen is broken on multiple devices, very mysterious that one

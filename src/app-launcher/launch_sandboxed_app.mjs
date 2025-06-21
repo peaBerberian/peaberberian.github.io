@@ -119,7 +119,7 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
           spinnerElt.onClose();
           wrapperElt.removeChild(spinnerElt.element);
         } catch (err) {}
-        wrapperElt.appendChild(getErrorApp(err));
+        wrapperElt.appendChild(getErrorApp(err).element);
       },
       abortSignal,
     );

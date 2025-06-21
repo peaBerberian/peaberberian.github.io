@@ -310,7 +310,7 @@ export default class AppsLauncher {
         appStack.replaceAll(appObj, appWindow.isActivated());
       },
       (err) => {
-        appStack.replaceAll(getErrorApp(err), appWindow.isActivated());
+        appStack.replaceAll(getErrorApp(err).element, appWindow.isActivated());
       },
     );
 

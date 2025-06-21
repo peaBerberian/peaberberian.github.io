@@ -168,6 +168,18 @@
       }
     },
     {
+      "id": "memory",
+      "title": "Memory",
+      "icon": "🦜",
+      "defaultHeight": 600,
+      "defaultWidth": 800,
+      "sandboxed": true,
+      "defaultBackground": "windowActiveHeader",
+      "startMenu": {
+        "list": "Games"
+      }
+    },
+    {
       "id": "invaders",
       "title": "Invaders",
       "icon": "👾",

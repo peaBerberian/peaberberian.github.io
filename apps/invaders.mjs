@@ -143,7 +143,6 @@ export function create(_args, env) {
     position: "absolute",
     top: "50%",
     left: "50%",
-    display: "none",
     transform: "translate(-50%, -50%)",
     backgroundColor: env.STYLE.windowActiveHeader,
     color: env.STYLE.windowActiveHeaderText,

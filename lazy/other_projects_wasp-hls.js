@@ -1,0 +1,12 @@
+/** This is the code for the app identified as "other_projects_wasp-hls". */
+var a="https://peaberberian.github.io/wasp-hls/",s="https://peaberberian.github.io/wasp-hls/doc/Getting_Started/Welcome.html",i="https://github.com/peaBerberian/wasp-hls";function h(l,t){let{createAppTitle:n,createExternalIframe:r}=t.appUtils;return t.updateTitle(null,"Other Projects: WASP-HLS"),{sidebar:[{text:"Overview",icon:"\u{1F9D1}\u200D\u{1F3EB}",centered:!0,render:()=>{let e=document.createElement("div");e.appendChild(n("WASP-HLS",{github:i,doc:s,demo:a}));let o=document.createElement("div");return e.appendChild(o),o.innerHTML=`<p><a href="${i}" target="_blank">WASP-HLS</a> is a personal project where I did some R&D on the side to see how a very efficient web media player could look like:</p>
+<ul>
+  <li>Its main logic runs in a WebWorker, which enables multiple threads (so that the UI and the player may not block each other during heavy operations).</li>
+  <li>The core code is compiled to WebAssembly (written initially in Rust), for more control over memory usage and performance - than when relying on JavaScript.</li>
+  <li>I wrote it from scratch, profiting from a decade of experience I have on this subject</li>
+</ul>
+<p>Also, unlike the RxPlayer, WASP-HLS plays only HLS contents (generally "simpler" to implement than DASH). It is today functional for most HLS contents, live or VoD. For a end user, HLS and DASH more or less look the same yet internally they are very different!</p>
+
+<p>I'm pretty happy with this project, I've experimented a lot with WebAssembly, different potential architectures that could be a good fit with Rust and even with how a media player API I create from scratch could look like (admittedly different in many ways than the one of the RxPlayer - though it also has a nice API).</p>
+
+<p>I sometimes come back to it but not as much, yet it is still very functional. At some point, I wanted to also <a href="https://github.com/peaBerberian/wasp-hls/pull/5">port to Rust the optional transmuxing code</a> (converting some specific containers here to an mp4-like one to improve browser compatibility) - yet the task was enormous and I never really finished it, nor could see if the gain of porting that code would be sensible (I guessed it would, it's a relatively heavy operation).<br>Though transmuxing is less and less needed so I'm not too unhappy that it has not been done yet.</p>`,e}},{text:"Demo",icon:"\u{1F4FA}",noPadding:!0,render:()=>r(a)}]}}export{h as create};

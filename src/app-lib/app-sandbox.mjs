@@ -138,6 +138,16 @@ window.addEventListener(
         break;
       }
 
+      case "__pwd__toolbar-format-update": {
+        originalStopImmediatePropagation.call(e);
+        if (format === "icon") {
+          document.body.classList.add("no-tool-title");
+        } else {
+          document.body.classList.remove("no-tool-title");
+        }
+        break;
+      }
+
       case "__pwd__update-style": {
         originalStopImmediatePropagation.call(e);
         e.data.data.vars.forEach((v) => {

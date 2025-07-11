@@ -299,6 +299,19 @@ function sendSettingsToIframe(iframe, abortSignal) {
     },
     { clearSignal: abortSignal, emitCurrentValue: true },
   );
+  SETTINGS.toolbarFormat.onUpdate(
+    (format) => {
+      iframe.contentWindow.postMessage(
+        {
+          type: "__pwd__toolbar-format-update",
+
+          data: format,
+        },
+        appDomain,
+      );
+    },
+    { clearSignal: abortSignal, emitCurrentValue: true },
+  );
   SETTINGS.showIframeBlockerHelp.onUpdate(
     (shouldShow) => {
       iframe.contentWindow.postMessage(

@@ -3,6 +3,8 @@
 const PADDLE_WIDTH = 10;
 const PADDLE_HEIGHT = 80;
 const BALL_RADIUS = 10;
+const TARGET_FPS = 60;
+const FRAME_DURATION = 1000 / TARGET_FPS; // ~16.67ms
 
 export function create(_args, env, abortSignal) {
   const containerElt = document.createElement("div");
@@ -18,6 +20,7 @@ export function create(_args, env, abortSignal) {
   });
 
   let frameId;
+  let lastFrameTime = 0;
 
   // Redo the canvas on resize, after some delay
 
@@ -122,6 +125,9 @@ export function create(_args, env, abortSignal) {
     }
   }
   function onMouseMove(e) {
+    if (!canvas) {
+      return;
+    }
     const canvasRect = canvas.getBoundingClientRect();
     const relativeY = e.clientY - canvasRect.top;
     userPaddle.y = Math.max(
@@ -183,10 +189,24 @@ export function create(_args, env, abortSignal) {
     canvas.addEventListener("click", () => {
       hasStarted = true;
     });
-    tick();
+
+    const now = performance.now();
+    lastFrameTime = now;
+    tick(now);
     return canvas;
 
-    function tick() {
+    function tick(currentTime) {
+      const deltaTime = currentTime - lastFrameTime;
+
+      if (deltaTime + 0.1 >= FRAME_DURATION) {
+        updateGame();
+
+        lastFrameTime = currentTime - (deltaTime % FRAME_DURATION);
+      }
+      frameId = window.requestAnimationFrame(tick);
+    }
+
+    function updateGame() {
       if (isTopPressed) {
         userPaddle.y = Math.max(0, userPaddle.y - 5);
       } else if (isDownPressed) {
@@ -200,7 +220,6 @@ export function create(_args, env, abortSignal) {
         drawTheObjects(false, false);
         ctx.font = "32px monospace";
         ctx.fillText("Click to start a game", 10, 50);
-        frameId = window.requestAnimationFrame(tick);
         return;
       }
 
@@ -267,8 +286,6 @@ export function create(_args, env, abortSignal) {
         rightScore++;
         resetBall();
       }
-
-      frameId = requestAnimationFrame(tick);
     }
 
     function drawTheObjects(withScore, withLine) {

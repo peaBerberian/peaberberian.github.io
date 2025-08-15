@@ -140,7 +140,7 @@ window.addEventListener(
 
       case "__pwd__toolbar-format-update": {
         originalStopImmediatePropagation.call(e);
-        if (format === "icon") {
+        if (e.data.data === "icon") {
           document.body.classList.add("no-tool-title");
         } else {
           document.body.classList.remove("no-tool-title");

@@ -1,5 +1,7 @@
 // TODO: rewritten as canvas for better perfs
 
+const TARGET_FPS = 60;
+const FRAME_DURATION = 1000 / TARGET_FPS; // ~16.67ms
 const LEFT_KEYS = ["a", "arrowleft"];
 const RIGHT_KEYS = ["d", "arrowright"];
 
@@ -99,6 +101,7 @@ export function create(_args, env) {
   };
 
   let gameState;
+  let lastFrameTime;
   let animationId;
   let currentlyPressedKeys = {};
   let playerMouseX = null;
@@ -182,7 +185,9 @@ export function create(_args, env) {
     'GAME OVER<br><span style="font-size: 16px;">Press R or Click to restart</span>';
   gameArea.appendChild(gameOverScreen);
 
-  tick();
+  const now = performance.now();
+  lastFrameTime = now;
+  tick(now);
   return {
     element: gameWrapper,
     onActivate,
@@ -815,7 +820,18 @@ export function create(_args, env) {
     }
   }
 
-  function tick() {
+  function tick(currentTime) {
+    const deltaTime = currentTime - lastFrameTime;
+
+    if (deltaTime + 0.1 >= FRAME_DURATION) {
+      updateGame();
+
+      lastFrameTime = currentTime - (deltaTime % FRAME_DURATION);
+    }
+    animationId = window.requestAnimationFrame(tick);
+  }
+
+  function updateGame() {
     if (!gameState.started) {
       if (
         gameState.gameWidth !== gameWrapper.offsetWidth ||
@@ -836,7 +852,6 @@ export function create(_args, env) {
     }
 
     render();
-    animationId = requestAnimationFrame(tick);
   }
 
   function restartGame() {
@@ -852,7 +867,9 @@ export function create(_args, env) {
     gameWrapper.addEventListener("mouseup", onMouseUp);
     gameWrapper.addEventListener("click", onClick);
     cancelAnimationFrame(animationId);
-    tick();
+    const now = performance.now();
+    lastFrameTime = now;
+    tick(now);
   }
 
   function onDeactivate() {

@@ -316,6 +316,15 @@
       }
     },
     {
+      "id": "other_projects_paul-envs",
+      "title": "paul-envs",
+      "icon": "🏘️",
+      "sandboxed": true,
+      "startMenu": {
+        "list": "My Other Projects"
+      }
+    },
+    {
       "id": "other_projects_keyboard9",
       "title": "keyboard9",
       "icon": "⌨️",

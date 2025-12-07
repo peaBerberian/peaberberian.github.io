@@ -32,10 +32,14 @@ if [ -n "$(git status --porcelain doc)" ]; then
   exit 1
 fi
 
+tmpDistDir=$(mktemp -d)
+
+cp -rv dist/* "$tmpDistDir"
+
 # update gh-pages
 git checkout gh-pages
 git pull origin gh-pages
-cp -rv dist/* .
+cp -rv "$tmpDistDir"/* .
 
 if [ -n "$(git status --porcelain)" ]; then
   echo "-- Current Status on gh-pages: --"

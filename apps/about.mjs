@@ -1,3 +1,43 @@
+// I don't want to tell my birthday online for some reason, so I set up a funny
+// value instead, yet rest assured that you weren't fooled that much, the
+// operation it ends up to be used in is statistically more right than wrong.
+let MY_VERY_TOTALLY_REAL_BIRTHDAY_DAY = new Date('1991-02-31')
+
+// NOTE: That date doesn't even exists - but it seems to work on most JS
+// implementation.
+// What they have to do in cases of invalid dates is not that clear to me,
+// though there could be a way to assume that it would be legal:
+//
+// -  You have first the "Date Time String Format"
+//    https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-date-time-string-format
+//
+//    Which says that the "day" part of that format can be from the range 01 to
+//    31 without telling anything about dates that do not exist in the context
+//    of the associated year and month.
+//
+// - Then there's the Date parse algorithm, which is what is called here with
+//   this constructor:
+//   https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-date.parse
+//
+//   The spec does talk about "Strings that [...[ contain out-of-bounds format
+//   element values shall cause this function to return NaN, but to me the
+//   out-of-bounds nature would be to the "Date Time String's Format" rules, not
+//   to actual "real" gregorian date and I think we passed the "Date Time String
+//   Format" check as stated in the previous point.
+//
+// - However that Date.parse algorithm is supposed to output a "Number": the
+//   "UTC Time Value" for that string which is just defined as your usual unix
+//   timestamp in milliseconds. Details on how the conversions between the two
+//   are not explicited it seems.
+//
+// So to me, declaring a fake date that is still within the bounds of the "Date
+// Time String Format" is legal and should be handled by JS implementations. Yet
+// I understand that this may be ambiguous. For this reason, I do add this
+// fallback.
+if (isNaN(MY_VERY_TOTALLY_REAL_BIRTHDAY_DAY)) {
+  MY_VERY_TOTALLY_REAL_BIRTHDAY_DAY = new Date('1991-03-01')
+}
+
 const IMAGE_HEIGHT = 45;
 const IMAGE_WIDTH = 60;
 
@@ -120,7 +160,7 @@ export function create(_args, env) {
     general: {
       title: "Welcome 👋🏻",
       description: `<div>
-  <p>Hi, I'm Paul Berberian, a software engineer and tech lead at Canal+ Group in Montpellier, France.<br>I lead media streaming projects, including the open-source <a href="https://github.com/canalplus/rx-player" target="_blank">RxPlayer</a> that powers Canal+ and other streaming platforms worldwide.</p>
+  <p>Hi, I'm Paul Berberian, ${getAlmostAge()} software engineer and tech lead at Canal+ Group in Montpellier, France.<br>I lead media streaming projects, including the open-source <a href="https://github.com/canalplus/rx-player" target="_blank">RxPlayer</a> that powers Canal+ and other streaming platforms worldwide.</p>
 
   <p>You're on my personal website which implements a desktop environment. Everything you see here was built specifically for this desktop without any external dependency.</p>
 
@@ -285,4 +325,14 @@ function formatQuickLinks(quickLinksData, env) {
         `<a class="quicklink-link" href="${linkInfo.link}" target="_blank"><img class="quicklink-img" title="${linkInfo.description}" alt="${linkInfo.description}" src="${env.getImageRootPath() + linkInfo.img}"/></a>`,
     )
     .join("");
+}
+
+function getAlmostAge() {
+  // May deviate max a day, on purpose, I don't care at all for exactness here
+  const age = Math.floor((new Date() - MY_VERY_TOTALLY_REAL_BIRTHDAY_DAY) / (365.25 * 24 * 60 * 60 * 1000));
+  const ageStr = age.toString();
+
+  // Yes, I **WANT** to still have the right article at like 809134 y.o.
+  const article = ageStr[0] === '8' ? 'an' : 'a';
+  return `${article} ${ageStr} y.o.`;
 }

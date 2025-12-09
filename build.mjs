@@ -876,6 +876,10 @@ export default [`;
       }
       uglyHandWrittenJsObject += `    },
 `;
+      const relativePath = path.relative(PROJECT_ROOT_DIRECTORY, filePath);
+      if (relativePath.startsWith(".") || relativePath.startsWith("/")) {
+        throw new Error("Invalid path: should be inside the project root directory");
+      }
       const outputFile = path.join(OUTPUT_LAZY_LOADED_APPS, `${app.id}.js`);
       bundlesToMake.push({
         outputFile,
@@ -885,7 +889,11 @@ export default [`;
          * export statements should be kept.
          */
         format: "esm",
-        banner: `/** This is the code for the app identified as "${app.id}". */`,
+        banner: `/**
+ * This is the code for the app identified as "${app.id}".
+ * Its code can be found here:
+ * https://github.com/peaBerberian/peaberberian.github.io/tree/master/${relativePath}
+ */`,
       });
 
       // The preload.after idea is to preload the app only after a low

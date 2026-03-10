@@ -611,7 +611,7 @@ html {
 .w-button {
   width: var(--window-button-size);
   height: var(--window-button-size);
-	max-height: calc(var(--window-header-height) - 10px);
+  max-height: calc(var(--window-header-height) - 10px);
   max-width: calc(var(--window-header-height) - 10px);
   margin-left: 5px;
   border-radius: 50%;

@@ -85,7 +85,6 @@ The following properties can be set for each application:
   its display (or not) in the start menu.
 
   Can contain the following properties, all optional:
-
   - `"list"` (`string`, optional): If set, the application may be added to
     a "sub-list" in the start menu of that name, instead of displaying directly
     in it.
@@ -104,7 +103,6 @@ The following properties can be set for each application:
   its display (or not) as a desktop icon.
 
   Can contain the following properties, all optional:
-
   - `"group"` (`string`, optional): If set, the application will not be added
     direcly as a desktop icon but part of an "app-group" with that name instead.
 
@@ -142,7 +140,6 @@ The following properties can be set for each application:
   This is close to a permission system.
 
   For now the following dependencies are handled:
-
   - `"settings"`: Read and write access to the Desktop's core settings.
     Very few applications will need that.
 
@@ -182,7 +179,6 @@ The following properties can be set for each application:
   application that declare it in the `apps` array will be considered.
 
   For now only the following values are supported:
-
   - `"filePickerOpen"`: The application alternatively allows to spawn a
     file-picker application to provide file opening capabilities to other
     applications (those with the `"filePickerOpen"` dependency).
@@ -220,7 +216,6 @@ depending on the application's needs:
 2.  Environment `{Object}`: The data provided from the desktop environment.
 
     Contains the following properties:
-
     - `appUtils` (`Object`): the standard desktop libraries (look at
       `../src/app-launcher/app-utils` for more information on what utils there
       is)
@@ -262,7 +257,6 @@ The object may have the following properties:
 
   The `sidebar` property is an array of object, each representing a sidebar
   section. Each object can contain the following properties:
-
   - `text` (`string`): This is mandatory and is the text for the corresponding
     sidebar section.
 

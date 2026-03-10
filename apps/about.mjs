@@ -1,7 +1,7 @@
 // I don't want to tell my birthday online for some reason, so I set up a funny
 // value instead, yet rest assured that you weren't fooled that much, the
 // operation it ends up to be used in is statistically more right than wrong.
-let MY_VERY_TOTALLY_REAL_BIRTHDAY_DAY = new Date('1991-02-31')
+let MY_VERY_TOTALLY_REAL_BIRTHDAY_DAY = new Date("1991-02-31");
 
 // NOTE: That date doesn't even exists - but it seems to work on most JS
 // implementation.
@@ -35,7 +35,7 @@ let MY_VERY_TOTALLY_REAL_BIRTHDAY_DAY = new Date('1991-02-31')
 // I understand that this may be ambiguous. For this reason, I do add this
 // fallback.
 if (isNaN(MY_VERY_TOTALLY_REAL_BIRTHDAY_DAY)) {
-  MY_VERY_TOTALLY_REAL_BIRTHDAY_DAY = new Date('1991-03-01')
+  MY_VERY_TOTALLY_REAL_BIRTHDAY_DAY = new Date("1991-03-01");
 }
 
 const IMAGE_HEIGHT = 45;
@@ -329,10 +329,13 @@ function formatQuickLinks(quickLinksData, env) {
 
 function getAlmostAge() {
   // May deviate max a day, on purpose, I don't care at all for exactness here
-  const age = Math.floor((new Date() - MY_VERY_TOTALLY_REAL_BIRTHDAY_DAY) / (365.25 * 24 * 60 * 60 * 1000));
+  const age = Math.floor(
+    (new Date() - MY_VERY_TOTALLY_REAL_BIRTHDAY_DAY) /
+      (365.25 * 24 * 60 * 60 * 1000),
+  );
   const ageStr = age.toString();
 
   // Yes, I **WANT** to still have the right article at like 809134 y.o.
-  const article = ageStr[0] === '8' ? 'an' : 'a';
+  const article = ageStr[0] === "8" ? "an" : "a";
   return `${article} ${ageStr} y.o.`;
 }

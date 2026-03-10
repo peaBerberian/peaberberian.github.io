@@ -25,14 +25,14 @@ function Q(n) {
     g = new Uint8Array((r / 4) * 3),
     m;
   for (let u = 0, P = 0; u < r; u += 4, P += 3)
-    (m =
+    ((m =
       (R(t.charCodeAt(u)) << 18) |
       (R(t.charCodeAt(u + 1)) << 12) |
       (R(t.charCodeAt(u + 2)) << 6) |
       R(t.charCodeAt(u + 3))),
       (g[P] = m >> 16),
       (g[P + 1] = (m >> 8) & 255),
-      (g[P + 2] = m & 255);
+      (g[P + 2] = m & 255));
   return g.subarray(0, g.length - o);
 }
 var T = M(
@@ -52,7 +52,7 @@ function M(n, e) {
     l = new Blob([t.buffer], { type: e }),
     o = URL.createObjectURL(l),
     r = new Image();
-  return (r.src = o), r;
+  return ((r.src = o), r);
 }
 var q = [13, 32, 38],
   $ = [37],
@@ -100,7 +100,7 @@ var W = !1,
   s = [],
   c = [];
 function ie() {
-  (W = !0),
+  ((W = !0),
     (D = void 0),
     (C = void 0),
     (p = !0),
@@ -112,10 +112,10 @@ function ie() {
     (c.length = 0),
     j(800, 1),
     Z(0),
-    window.requestAnimationFrame(J);
+    window.requestAnimationFrame(J));
 }
 var se = new Promise((n) => {
-  document.readyState === "complete" || document.readyState, n();
+  (document.readyState === "complete" || document.readyState, n());
 });
 Promise.all([X(T), X(b), X(a), se]).then(() => {
   if (I.signal.aborted) return;
@@ -129,19 +129,19 @@ Promise.all([X(T), X(b), X(a), se]).then(() => {
         e.stopImmediatePropagation(),
         O());
   };
-  K(0),
+  (K(0),
     F(),
     z(),
     document.addEventListener("keydown", n),
     h.addEventListener("click", O),
     I.signal.addEventListener("abort", () => {
-      document.removeEventListener("keydown", n),
-        h.removeEventListener("click", O);
+      (document.removeEventListener("keydown", n),
+        h.removeEventListener("click", O));
     }),
     (i.font = "24px monospace"),
     (i.fillStyle = "#000000"),
     i.fillText('Jump ("space", "up", or "enter") to start', 10, 80),
-    i.fillText('Press "left" to exit', 10, 120);
+    i.fillText('Press "left" to exit', 10, 120));
 });
 function J(n) {
   if (I.signal.aborted) return;
@@ -156,28 +156,32 @@ function J(n) {
       A >= _ && ((L = !1), (A = _));
       let m = (_ - A) / _,
         u = Math.ceil(oe * m);
-      u < G && (u = G),
+      (u < G && (u = G),
         L
           ? ((A += u), (A = Math.min(A, _)))
           : A - u <= 0
             ? ((L = !0), (A = null), (E = r), (p = !p))
             : (A -= u),
-        (U += B);
+        (U += B));
     }
     E !== null && ((E -= t), E <= 0 && ((p = !p), (E += r)));
     let g = Math.min(o / k, 1) * (ne - V) + V;
     if ((Ae(g), ce(g), ae())) {
-      H(o), le(), (W = !1);
+      (H(o), le(), (W = !1));
       return;
     }
   }
-  H(n - D), window.requestAnimationFrame(J);
+  (H(n - D), window.requestAnimationFrame(J));
 }
 function H(n) {
-  re(), K(n), F(), fe(), ue(), z();
+  (re(), K(n), F(), fe(), ue(), z());
 }
 function F() {
-  i.beginPath(), i.moveTo(0, N), i.lineTo(d, N), (i.lineWidth = 2), i.stroke();
+  (i.beginPath(),
+    i.moveTo(0, N),
+    i.lineTo(d, N),
+    (i.lineWidth = 2),
+    i.stroke());
 }
 function re() {
   i.clearRect(0, 0, d, S);
@@ -202,17 +206,17 @@ function ae() {
   return !1;
 }
 function K(n) {
-  (i.font = "18px monospace"),
-    i.fillText("Score: " + String(Math.floor(n / 200)), 10, 30);
+  ((i.font = "18px monospace"),
+    i.fillText("Score: " + String(Math.floor(n / 200)), 10, 30));
 }
 function le() {
-  (i.font = "35px monospace"),
+  ((i.font = "35px monospace"),
     (i.fillStyle = "#990000"),
     i.fillText("GAME OVER", 10, 80),
     (i.font = "24px monospace"),
     (i.fillStyle = "#000000"),
     i.fillText("jump to restart", 10, 120),
-    i.fillText('Press "left" to exit', 10, 160);
+    i.fillText('Press "left" to exit', 10, 160));
 }
 function Y() {
   let n = ee,
@@ -228,7 +232,7 @@ function Ae(n) {
   for (let t = 0; t < s.length; t++) {
     let o = s[t] - n;
     if (o < -a.naturalWidth) {
-      s.splice(t, 1), t--;
+      (s.splice(t, 1), t--);
       continue;
     }
     s[t] = o;
@@ -258,12 +262,12 @@ function fe() {
   for (let n = 0; n < c.length; n++) {
     let { x: e, y: t, longueur: l } = c[n];
     if (e >= d) return;
-    i.beginPath(), i.moveTo(e, t), i.lineTo(e + l, t), i.stroke();
+    (i.beginPath(), i.moveTo(e, t), i.lineTo(e + l, t), i.stroke());
   }
 }
 function X(n) {
   return new Promise((e, t) => {
-    n.addEventListener("load", e), n.addEventListener("error", t);
+    (n.addEventListener("load", e), n.addEventListener("error", t));
   });
 }
 function j(n, e) {
@@ -272,7 +276,7 @@ function j(n, e) {
   for (let l = 1; l <= 3; l++) {
     let o = t + a.naturalWidth + 590,
       r = Math.random();
-    e >= 3 && r < 0.3
+    (e >= 3 && r < 0.3
       ? (e >= 5 &&
           r < 0.1 &&
           (s.push(o),
@@ -294,7 +298,7 @@ function j(n, e) {
           ? (e >= 2 && (s.push(o), (o += a.naturalWidth + 1)), s.push(o))
           : (o += 250 * r),
       s.push(o),
-      (t = o);
+      (t = o));
   }
   s.sort((l, o) => l - o);
 }

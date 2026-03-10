@@ -67,7 +67,6 @@ can be discovered through `readDir`, but they should be always there:
   That object will contain a `list` key containing an Array of JSON objects,
   each representing an application to display on the desktop, in the given
   order they should be ordered, with the following keys:
-
   - `run` (`string`): The path to the application "executable" (e.g.
     `/apps/paint.run`).
 
@@ -99,7 +98,6 @@ can be discovered through `readDir`, but they should be always there:
   They are all in the given order they should be ordered.
 
   Application objects have the following keys:
-
   - `type` (`string`): Set to `"application"`.
 
   - `run` (`string`): The path to the application (e.g. `/apps/about.run`).
@@ -113,7 +111,6 @@ can be discovered through `readDir`, but they should be always there:
   - `icon` (`string|undefined`): The icon to show for the application.
 
   Sublists have the following properties:
-
   - `type` (`string`): Set to `"sublist"`.
 
   - `name` (`string`): The name to display for this sublist.

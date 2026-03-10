@@ -878,7 +878,9 @@ export default [`;
 `;
       const relativePath = path.relative(PROJECT_ROOT_DIRECTORY, filePath);
       if (relativePath.startsWith(".") || relativePath.startsWith("/")) {
-        throw new Error("Invalid path: should be inside the project root directory");
+        throw new Error(
+          "Invalid path: should be inside the project root directory",
+        );
       }
       const outputFile = path.join(OUTPUT_LAZY_LOADED_APPS, `${app.id}.js`);
       bundlesToMake.push({

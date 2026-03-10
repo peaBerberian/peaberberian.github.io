@@ -62,7 +62,6 @@ here that I find interesting:
 - As we're on the web platform, we do not have much control over memory and
   performance. At first I thought this would become ugly very quick but until
   now it seems to hold up pretty well with the following strategies:
-
   1. I tried to be very careful to avoid repaints at unwanted times, by
      choosing well the DOM API that I call, and by being careful in how I'm
      updating the DOM.

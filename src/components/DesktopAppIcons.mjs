@@ -14,6 +14,7 @@ import {
   PROJECT_REPO,
 } from "../constants.mjs";
 import {
+  addAbortableDesktopClickListener,
   addAbortableEventListener,
   applyStyle,
   blockElementsFromTakingPointerEvents,
@@ -328,10 +329,7 @@ export default async function DesktopAppIcons(
           iconElt.classList.remove("selected");
         }
       };
-      document.addEventListener("click", onDocumentClick);
-      abortSignal.addEventListener("abort", () => {
-        document.removeEventListener("click", onDocumentClick);
-      });
+      addAbortableDesktopClickListener(abortSignal, onDocumentClick);
       iconEltToAppMap.set(iconElt, app);
       iconWrapperElt.appendChild(iconElt);
       currentRow++;

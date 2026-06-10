@@ -537,62 +537,24 @@ async function launchAppFromScript(scriptUrl, appArgs, env, abortSignal) {
   return { element, onActivate, onDeactivate, onClose };
 }
 
-[
-  "mousedown",
-  "mouseup",
-  "click",
-  "touchstart",
-  "touchend",
-  "focus",
-  "focusin",
-  "blur",
-].forEach((eventType) => {
+["mousedown", "touchstart"].forEach((eventType) => {
   document.addEventListener(
     eventType,
-    function (e) {
-      forwardEvent(eventType, e);
-    },
-    true,
-  );
-});
-[].forEach((eventType) => {
-  document.addEventListener(
-    eventType,
-    function (e) {
-      forwardEvent(eventType, e);
+    () => {
+      signalWindowInteractionStart();
     },
     true,
   );
 });
 
-// Forward mouse and touch events to parent
-function forwardEvent(eventType, originalEvent) {
-  const eventData = {
-    type: "__pwd__forwarded-event",
-    eventType: eventType,
-    clientX: originalEvent.clientX,
-    clientY: originalEvent.clientY,
-    pageX: originalEvent.pageX,
-    pageY: originalEvent.pageY,
-    button: originalEvent.button,
-    buttons: originalEvent.buttons,
-    ctrlKey: originalEvent.ctrlKey,
-    shiftKey: originalEvent.shiftKey,
-    altKey: originalEvent.altKey,
-    metaKey: originalEvent.metaKey,
-    timestamp: Date.now(),
-  };
-
-  if (originalEvent.touches) {
-    eventData.touches = Array.from(originalEvent.touches).map((touch) => ({
-      clientX: touch.clientX,
-      clientY: touch.clientY,
-      pageX: touch.pageX,
-      pageY: touch.pageY,
-      identifier: touch.identifier,
-    }));
-  }
-  parent.postMessage(eventData, desktopOrigin ?? "*");
+function signalWindowInteractionStart() {
+  parent.postMessage(
+    {
+      type: "__pwd__window-interaction-start",
+      timestamp: Date.now(),
+    },
+    desktopOrigin ?? "*",
+  );
 }
 
 /**

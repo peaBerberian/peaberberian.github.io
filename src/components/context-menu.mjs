@@ -1,5 +1,9 @@
 import { BUTTONS_BY_NAME } from "../constants.mjs";
-import { addAbortableEventListener, applyStyle } from "../utils.mjs";
+import {
+  addAbortableDesktopClickListener,
+  addAbortableEventListener,
+  applyStyle,
+} from "../utils.mjs";
 
 const contextMenuWrapper = document.getElementById("context-menu-wrapper");
 
@@ -162,7 +166,7 @@ export default function setUpContextMenu({
       closeContextMenu();
     }
   });
-  addAbortableEventListener(document, "click", abortSignal, closeContextMenu);
+  addAbortableDesktopClickListener(abortSignal, closeContextMenu);
   addAbortableEventListener(window, "resize", abortSignal, closeContextMenu);
   function closeContextMenu() {
     contextMenuElt.classList.remove("show");

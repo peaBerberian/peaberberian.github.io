@@ -4,6 +4,7 @@ import filesystem, { getName } from "../filesystem/filesystem.mjs";
 import AppWindow from "../components/window/AppWindow.mjs";
 import notificationEmitter from "../components/notification_emitter.mjs";
 import {
+  dispatchSandboxWindowInteractionStart,
   getSpinnerApp,
   createExternalIframe,
   createLinkedAbortController,
@@ -52,6 +53,18 @@ export default class AppsLauncher {
      */
     this._desktopElt = desktopElt;
     /**
+     * DOM target on which the last desktop-visible mouse interaction started.
+     * @type {EventTarget|null}
+     * @private
+     */
+    this._mousedownTarget = null;
+    /**
+     * Window in which the last sandbox-reported interaction started.
+     * @type {AppWindow|null}
+     * @private
+     */
+    this._sandboxInteractionWindow = null;
+    /**
      * Metadata on all currently created windows.
      * @type {Array.<{appWindow: AppWindow, appId: string}>}
      * @private
@@ -77,23 +90,41 @@ export default class AppsLauncher {
     // With a key exception: If a click began inside a window do not deactivaate
     // that window (this also seems expected, especially when there are drag and
     // drop, selection zones, etc.).
-    let mousedownTarget = null;
     this._desktopElt.addEventListener("mousedown", (e) => {
-      mousedownTarget = e.target;
+      this._mousedownTarget = e.target;
+      this._sandboxInteractionWindow = null;
     });
 
     this._desktopElt.addEventListener("click", (e) => {
       if (e.target === this._desktopElt) {
         // deactivate all windows
         this._windows.forEach(({ appWindow }) => {
-          if (mousedownTarget && appWindow.element.contains(mousedownTarget)) {
+          if (
+            (this._mousedownTarget &&
+              appWindow.element.contains(this._mousedownTarget)) ||
+            this._sandboxInteractionWindow === appWindow
+          ) {
             return;
           }
           appWindow.deActivate();
         });
       }
-      mousedownTarget = null;
+      this._mousedownTarget = null;
+      this._sandboxInteractionWindow = null;
     });
+  }
+
+  /**
+   * Register that the current pointer interaction began inside a sandboxed app.
+   * This lets desktop click handling preserve the window's activation state.
+   * @param {AppWindow} appWindow
+   * @private
+   */
+  _onSandboxWindowInteractionStart(appWindow) {
+    this._mousedownTarget = null;
+    this._sandboxInteractionWindow = appWindow;
+    dispatchSandboxWindowInteractionStart({ appWindow });
+    appWindow.activate();
   }
 
   /**
@@ -298,6 +329,7 @@ export default class AppsLauncher {
       app.data,
       appArgs,
       env,
+      appWindow,
       applicationAbortCtrl.signal,
     ).then(
       (appObj) => {
@@ -437,13 +469,21 @@ export default class AppsLauncher {
    * to the application when launching it.
    * @param {Object} env - The `env` object providing some desktop context and
    * API to applications.
+   * @param {AppWindow} appWindow - Window containing that application.
    * @param {AbortSignal} abortSignal - `AbortSignal` which triggers when the
    * application is closed.
    * @returns {Promise.<Object>} - Promise which resolves when and if it
    * succeded to launch the application, with the payload obtained from
    * launching it.
    */
-  async _launchAppFromAppData(method, appData, appArgs, env, abortSignal) {
+  async _launchAppFromAppData(
+    method,
+    appData,
+    appArgs,
+    env,
+    appWindow,
+    abortSignal,
+  ) {
     if (appData.website) {
       if (method !== "create") {
         console.warn('Not calling "create" on an i-frame application.');
@@ -460,7 +500,10 @@ export default class AppsLauncher {
       return { element, onActivate };
     } else if (appData.lazyLoad) {
       if (appData.sandboxed && method === "create") {
-        return launchSandboxedApp(appData, appArgs, env, abortSignal);
+        return launchSandboxedApp(appData, appArgs, env, abortSignal, {
+          onWindowInteractionStart: () =>
+            this._onSandboxWindowInteractionStart(appWindow),
+        });
       }
       return await this._launchAppFromScript(
         appData.lazyLoad,

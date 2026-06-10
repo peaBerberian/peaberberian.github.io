@@ -62,9 +62,18 @@ if (typeof __APP_BASE_URL__ === "string") {
  * API to applications.
  * @param {AbortSignal} abortSignal - `AbortSignal` which triggers when the
  * application is closed.
+ * @param {Object} [callbacks]
+ * @param {Function} [callbacks.onWindowInteractionStart] - Called when the
+ * sandbox reports that the user started interacting with the current window.
  * @returns {Object} - Application object.
  */
-export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
+export function launchSandboxedApp(
+  appData,
+  appArgs,
+  env,
+  abortSignal,
+  callbacks = {},
+) {
   let isIframeLoaded = false;
   let isActivated = true;
   const backgroundColor = parseAppDefaultBackground(appData.defaultBackground);
@@ -97,6 +106,7 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
     processEventsFromIframe(
       iframe,
       env,
+      callbacks,
       () => {
         iframe.style.display = "block";
         spinnerElt.onClose();
@@ -228,37 +238,6 @@ export function launchSandboxedApp(appData, appArgs, env, abortSignal) {
   }
 }
 
-function handleForwardedEvent(iframe, eventData) {
-  if (eventData.eventType.startsWith("touch")) {
-    iframe.dispatchEvent(
-      new TouchEvent(eventData.eventType, {
-        bubbles: true,
-        cancelable: true,
-        touches: eventData.touches || [],
-        ctrlKey: eventData.ctrlKey,
-        shiftKey: eventData.shiftKey,
-        altKey: eventData.altKey,
-        metaKey: eventData.metaKey,
-      }),
-    );
-  } else {
-    iframe.dispatchEvent(
-      new MouseEvent(eventData.eventType, {
-        bubbles: true,
-        cancelable: true,
-        clientX: eventData.clientX,
-        clientY: eventData.clientY,
-        button: eventData.button,
-        buttons: eventData.buttons,
-        ctrlKey: eventData.ctrlKey,
-        shiftKey: eventData.shiftKey,
-        altKey: eventData.altKey,
-        metaKey: eventData.metaKey,
-      }),
-    );
-  }
-}
-
 function sendSettingsToIframe(iframe, abortSignal) {
   if (abortSignal.aborted) {
     return;
@@ -326,7 +305,14 @@ function sendSettingsToIframe(iframe, abortSignal) {
   );
 }
 
-function processEventsFromIframe(iframe, cbs, resolve, reject, abortSignal) {
+function processEventsFromIframe(
+  iframe,
+  cbs,
+  callbacks,
+  resolve,
+  reject,
+  abortSignal,
+) {
   if (abortSignal.aborted) {
     return;
   }
@@ -335,9 +321,8 @@ function processEventsFromIframe(iframe, cbs, resolve, reject, abortSignal) {
       return;
     }
     switch (e.data.type) {
-      case "__pwd__forwarded-event":
-        // TODO: check correctness of forwarded event?
-        handleForwardedEvent(iframe, e.data);
+      case "__pwd__window-interaction-start":
+        callbacks.onWindowInteractionStart?.();
         break;
 
       case "__pwd__update-title":

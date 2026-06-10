@@ -1,5 +1,8 @@
 import { APP_STYLE } from "./constants.mjs";
 
+const SANDBOX_WINDOW_INTERACTION_START_EVENT =
+  "__pwd__sandbox-window-interaction-start";
+
 /**
  * Function adding an event listener also accepting an `AbortSignal` for
  * automatic removal of that event listener.
@@ -50,6 +53,33 @@ export function applyStyle(element, style) {
   for (const key of Object.keys(style)) {
     element.style[key] = style[key];
   }
+}
+
+/**
+ * Register a callback for interactions that should behave like a desktop
+ * click, including equivalent interactions coming from sandboxed apps.
+ * @param {AbortSignal} abortSignal
+ * @param {Function} callback
+ */
+export function addAbortableDesktopClickListener(abortSignal, callback) {
+  addAbortableEventListener(document, "click", abortSignal, callback);
+  addAbortableEventListener(
+    document,
+    SANDBOX_WINDOW_INTERACTION_START_EVENT,
+    abortSignal,
+    callback,
+  );
+}
+
+/**
+ * Notify desktop components that an interaction started inside a sandboxed
+ * application and should be treated like an outside desktop click.
+ * @param {Object} detail
+ */
+export function dispatchSandboxWindowInteractionStart(detail) {
+  document.dispatchEvent(
+    new CustomEvent(SANDBOX_WINDOW_INTERACTION_START_EVENT, { detail }),
+  );
 }
 
 /**

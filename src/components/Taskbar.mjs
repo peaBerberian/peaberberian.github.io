@@ -355,6 +355,7 @@ function handleTaskbarMove(taskbarElt, abortSignal) {
   const stopDragging = () => {
     isDragging = false;
     taskbarElt.style.cursor = "";
+    unblockElementsFromTakingPointerEvents();
   };
 
   // Reset some state on abort, just to be sure we're not left in an unwanted state
@@ -435,6 +436,7 @@ function handleTaskbarMove(taskbarElt, abortSignal) {
     }
     isDragging = true;
     taskbarElt.style.cursor = "move";
+    blockElementsFromTakingPointerEvents();
     containerWidth = document.documentElement.clientWidth;
     containerHeight = document.documentElement.clientHeight;
   }

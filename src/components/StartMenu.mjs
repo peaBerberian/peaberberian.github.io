@@ -5,6 +5,7 @@ import {
 } from "../constants.mjs";
 import fs from "../filesystem/filesystem.mjs";
 import { SETTINGS } from "../settings.mjs";
+import { addAbortableDesktopClickListener } from "../utils.mjs";
 
 const PREDEFINED_SUBLISTS = {
   Games: "🎮",
@@ -111,7 +112,7 @@ export default async function StartMenu(openApp, abortSignal) {
     });
   };
 
-  document.addEventListener("click", onDocumentClick);
+  addAbortableDesktopClickListener(abortSignal, onDocumentClick);
   document.addEventListener("keydown", onKeyDown);
   startButtonElt.addEventListener("click", onStartButtonClick);
   startButtonElt.addEventListener("keydown", (e) => {
@@ -135,7 +136,6 @@ export default async function StartMenu(openApp, abortSignal) {
   if (abortSignal) {
     abortSignal.addEventListener("abort", () => {
       startMenuElt.removeEventListener("mousedown", onMouseDown);
-      document.removeEventListener("click", onDocumentClick);
       document.removeEventListener("keydown", onKeyDown);
       startButtonElt.removeEventListener("click", onStartButtonClick);
       window.removeEventListener("resize", scheduleRefresh);

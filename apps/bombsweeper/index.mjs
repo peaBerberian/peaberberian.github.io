@@ -305,18 +305,19 @@ export function create(_args, env) {
       return;
     }
 
-    cell.dataset.revealed = "true";
-    cell.style.cursor = "auto";
-    nbCellsRevealed++;
-
     const row = parseInt(cell.dataset.row);
     const col = parseInt(cell.dataset.col);
+
+    cell.dataset.revealed = "true";
+    cell.style.cursor = "auto";
 
     if (cell.dataset.bomb === "true") {
       cell.textContent = EXPLODED_BOMB_CELL_VALUE;
       endGame(false);
       return;
     }
+
+    nbCellsRevealed++;
 
     const neighborCount = parseInt(cell.dataset.neighbors);
     cell.textContent = NUMBER_VALUES[neighborCount];
@@ -385,6 +386,10 @@ export function create(_args, env) {
   }
 
   function checkGameStatus() {
+    if (hasGameOvered) {
+      return;
+    }
+
     const totalCells = gameConfig.rows * gameConfig.cols;
     const safeCells = totalCells - gameConfig.bombs;
 

@@ -680,7 +680,7 @@ export default [`;
           if (Array.isArray(app.dependencies)) {
             for (const dep of app.dependencies) {
               if (
-                ["CONSTANTS", "settings", "fileSystems", "open"].includes(dep) ||
+                ["CONSTANTS", "settings", "filesystem", "open"].includes(dep) ||
                 ["busCall", "busHandle"].includes(dep)
               ) {
                 throw new Error(
@@ -756,6 +756,7 @@ export default [`;
                 "filePickerOpen",
                 "filePickerSave",
                 "quickSave",
+                "appStorage",
                 "open",
                 "busCall",
                 "busHandle",

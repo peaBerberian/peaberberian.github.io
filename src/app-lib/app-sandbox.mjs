@@ -234,6 +234,9 @@ window.addEventListener(
           if (e.data.data.name !== undefined) {
             error.name = e.data.data.name;
           }
+          if (e.data.data.code !== undefined) {
+            error.code = e.data.data.code;
+          }
           requestObj.reject(error);
         }
         break;
@@ -272,6 +275,9 @@ window.addEventListener(
           if (e.data.data.name !== undefined) {
             error.name = e.data.data.name;
           }
+          if (e.data.data.code !== undefined) {
+            error.code = e.data.data.code;
+          }
           requestObj.reject(error);
         }
         break;
@@ -296,6 +302,39 @@ window.addEventListener(
           const error = new Error(e.data.data.message);
           if (e.data.data.name !== undefined) {
             error.name = e.data.data.name;
+          }
+          if (e.data.data.code !== undefined) {
+            error.code = e.data.data.code;
+          }
+          requestObj.reject(error);
+        }
+        break;
+      }
+
+      case "__pwd__appStorageRead":
+      case "__pwd__appStorageWrite":
+      case "__pwd__appStorageRm": {
+        originalStopImmediatePropagation.call(e);
+        const requestId = e.data.requestId;
+        const requestObj = pendingRequests.get(requestId);
+        pendingRequests.delete(requestId);
+        if (!requestObj) {
+          console.warn("Received response for an unknown appStorage operation");
+          return;
+        }
+        if (requestObj.type !== e.data.type) {
+          console.error("appStorage response for the wrong operation.");
+          return;
+        }
+        if (e.data.success) {
+          requestObj.resolve(e.data.data);
+        } else {
+          const error = new Error(e.data.data.message);
+          if (e.data.data.name !== undefined) {
+            error.name = e.data.data.name;
+          }
+          if (e.data.data.code !== undefined) {
+            error.code = e.data.data.code;
           }
           requestObj.reject(error);
         }
@@ -436,6 +475,20 @@ function startApp(data) {
       }
     : null;
 
+  appEnv.appStorage = data.dependencies.includes("appStorage")
+    ? {
+        readFile: (path, format) =>
+          requestDesktopOperation("__pwd__appStorageRead", { path, format }),
+        writeFile: (path, content) =>
+          requestDesktopOperation("__pwd__appStorageWrite", {
+            path,
+            content,
+          }),
+        rmFile: (path) =>
+          requestDesktopOperation("__pwd__appStorageRm", { path }),
+      }
+    : null;
+
   launchAppFromScript(data.scriptUrl, data.args, appEnv, appAbortCtrl.signal)
     .then((appInfo) => {
       if (appAbortCtrl.signal.aborted) {
@@ -469,6 +522,31 @@ function startApp(data) {
         desktopOrigin ?? "*",
       );
     });
+}
+
+function requestDesktopOperation(type, data) {
+  return new Promise((resolve, reject) => {
+    const requestId = generateNewId();
+    try {
+      parent.postMessage(
+        {
+          type,
+          requestId,
+          data,
+        },
+        desktopOrigin ?? "*",
+      );
+    } catch (err) {
+      reject(err);
+      return;
+    }
+    pendingRequests.set(requestId, {
+      requestId,
+      type,
+      resolve,
+      reject,
+    });
+  });
 }
 
 /**

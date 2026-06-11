@@ -381,6 +381,100 @@ function processEventsFromIframe(
         );
         break;
 
+      case "__pwd__appStorageRead":
+        if (typeof e.data.requestId !== "string") {
+          throw new Error("No requestId for an appStorage read");
+        }
+        if (
+          !validateAsyncRequest(
+            () => checkAppStorageReadMessageData(e.data.data),
+            e.data.type,
+            e.data.requestId,
+          )
+        ) {
+          break;
+        }
+        if (!cbs.appStorage) {
+          handleAsyncResponse(
+            Promise.reject(
+              new Error("Application does not have appStorage permission."),
+            ),
+            e.data.type,
+            e.data.requestId,
+          );
+          break;
+        }
+        handleAsyncResponse(
+          Promise.resolve().then(() =>
+            cbs.appStorage.readFile(e.data.data.path, e.data.data.format),
+          ),
+          e.data.type,
+          e.data.requestId,
+        );
+        break;
+
+      case "__pwd__appStorageWrite":
+        if (typeof e.data.requestId !== "string") {
+          throw new Error("No requestId for an appStorage write");
+        }
+        if (
+          !validateAsyncRequest(
+            () => checkAppStorageWriteMessageData(e.data.data),
+            e.data.type,
+            e.data.requestId,
+          )
+        ) {
+          break;
+        }
+        if (!cbs.appStorage) {
+          handleAsyncResponse(
+            Promise.reject(
+              new Error("Application does not have appStorage permission."),
+            ),
+            e.data.type,
+            e.data.requestId,
+          );
+          break;
+        }
+        handleAsyncResponse(
+          Promise.resolve().then(() =>
+            cbs.appStorage.writeFile(e.data.data.path, e.data.data.content),
+          ),
+          e.data.type,
+          e.data.requestId,
+        );
+        break;
+
+      case "__pwd__appStorageRm":
+        if (typeof e.data.requestId !== "string") {
+          throw new Error("No requestId for an appStorage rm");
+        }
+        if (
+          !validateAsyncRequest(
+            () => checkAppStorageRmMessageData(e.data.data),
+            e.data.type,
+            e.data.requestId,
+          )
+        ) {
+          break;
+        }
+        if (!cbs.appStorage) {
+          handleAsyncResponse(
+            Promise.reject(
+              new Error("Application does not have appStorage permission."),
+            ),
+            e.data.type,
+            e.data.requestId,
+          );
+          break;
+        }
+        handleAsyncResponse(
+          Promise.resolve().then(() => cbs.appStorage.rmFile(e.data.data.path)),
+          e.data.type,
+          e.data.requestId,
+        );
+        break;
+
       case "__pwd__notification": {
         const data = e.data.data;
         checkNotificationMessageData(data);
@@ -426,12 +520,23 @@ function processEventsFromIframe(
             success: false,
             data: {
               name: err.name,
+              code: err.code,
               message: err.message,
             },
           },
           appDomain,
         );
       });
+  }
+
+  function validateAsyncRequest(validate, type, requestId) {
+    try {
+      validate();
+      return true;
+    } catch (err) {
+      handleAsyncResponse(Promise.reject(err), type, requestId);
+      return false;
+    }
   }
 }
 
@@ -512,6 +617,45 @@ function checkQuickSaveMessageData(data) {
     throw new Error(
       "Cannot spawn filePickerSave: saved file data is in the wrong type",
     );
+  }
+}
+
+function checkAppStorageReadMessageData(data) {
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    typeof data.path !== "string" ||
+    (typeof data.format !== "string" && data.format !== undefined)
+  ) {
+    throw new Error("Cannot read appStorage: wrong data format");
+  }
+}
+
+function checkAppStorageWriteMessageData(data) {
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    typeof data.path !== "string"
+  ) {
+    throw new Error("Cannot write appStorage: wrong data format");
+  }
+  if (
+    typeof data.content !== "string" &&
+    !(data.content instanceof ArrayBuffer) &&
+    !ArrayBuffer.isView(data.content) &&
+    (typeof data.content !== "object" || data.content === null)
+  ) {
+    throw new Error("Cannot write appStorage: wrong content format");
+  }
+}
+
+function checkAppStorageRmMessageData(data) {
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    typeof data.path !== "string"
+  ) {
+    throw new Error("Cannot remove appStorage file: wrong data format");
   }
 }
 

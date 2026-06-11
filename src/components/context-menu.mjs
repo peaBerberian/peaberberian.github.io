@@ -117,10 +117,14 @@ export default function setUpContextMenu({
       }
     }
 
+    let horizontalTransformOrigin = "left";
+    let verticalTransformOrigin = "top";
+
     if (e.pageX + 3 + contextMenuElt.offsetWidth > document.body.clientWidth) {
       if (e.pageX - 3 - contextMenuElt.offsetWidth >= 0) {
         contextMenuElt.style.left =
           e.pageX - 3 - contextMenuElt.offsetWidth + "px";
+        horizontalTransformOrigin = "right";
       } else {
         contextMenuElt.style.left = "0px";
       }
@@ -135,12 +139,15 @@ export default function setUpContextMenu({
       if (e.pageY - 3 - contextMenuElt.offsetHeight >= 0) {
         contextMenuElt.style.top =
           e.pageY - 3 - contextMenuElt.offsetHeight + "px";
+        verticalTransformOrigin = "bottom";
       } else {
         contextMenuElt.style.top = "0px";
       }
     } else {
       contextMenuElt.style.top = e.pageY + 3 + "px";
     }
+    contextMenuElt.style.transformOrigin =
+      `${verticalTransformOrigin} ${horizontalTransformOrigin}`;
     requestAnimationFrame(() => {
       contextMenuElt.classList.add("show");
     });
@@ -173,6 +180,7 @@ export default function setUpContextMenu({
     contextMenuElt.remove();
     contextMenuElt.style.left = "";
     contextMenuElt.style.top = "";
+    contextMenuElt.style.transformOrigin = "";
     contextMenuWrapper.innerHTML = "";
     contextMenuWrapper.display = "none";
   }

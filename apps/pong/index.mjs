@@ -1,3 +1,5 @@
+import { createAudioEngine } from "./audio.mjs";
+
 // TODO: configurable?
 
 const PADDLE_WIDTH = 10;
@@ -45,6 +47,7 @@ export function create(_args, env, abortSignal) {
   });
 
   let canvas;
+  const audio = createAudioEngine();
   let hasStarted = false;
   let userPaddle;
   let isTopPressed = false;
@@ -94,6 +97,10 @@ export function create(_args, env, abortSignal) {
         isDownPressed = true;
         break;
       case " ":
+        if (!hasStarted) {
+          audio.ensureAudio();
+          audio.playSound("start");
+        }
         hasStarted = true;
         break;
     }
@@ -187,6 +194,10 @@ export function create(_args, env, abortSignal) {
     drawTheObjects(false, false);
 
     canvas.addEventListener("click", () => {
+      if (!hasStarted) {
+        audio.ensureAudio();
+        audio.playSound("start");
+      }
       hasStarted = true;
     });
 
@@ -256,12 +267,16 @@ export function create(_args, env, abortSignal) {
       // Top/bottom walls collision
       if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
         ball.dy = -ball.dy;
+        audio.playSound("wall");
       }
 
       if (ball.dx < 0) {
-        checkPaddleBallCollision(enemyPaddle, ball);
+        if (checkPaddleBallCollision(enemyPaddle, ball)) {
+          audio.playSound("paddle");
+        }
       } else if (ball.dx > 0) {
         if (checkPaddleBallCollision(userPaddle, ball)) {
+          audio.playSound("paddle");
           // Mario Kart that thing
           if (rightScore - leftScore > 3) {
             currEnemySpeed = 12;
@@ -280,10 +295,12 @@ export function create(_args, env, abortSignal) {
       }
       if (ball.x + ball.radius > canvas.width) {
         leftScore++;
+        audio.playSound("score");
         resetBall();
       } else if (ball.x - ball.radius < 0) {
         ball.dx = 5;
         rightScore++;
+        audio.playSound("score");
         resetBall();
       }
     }

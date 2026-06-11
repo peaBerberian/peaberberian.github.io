@@ -619,6 +619,7 @@ export default class AppsLauncher {
           filePickerApp.data,
           [config],
           env,
+          appWindow,
           fileOpenerAbortCtrl.signal,
         );
         filePickerElt = appObj.element;
@@ -677,6 +678,7 @@ export default class AppsLauncher {
           filePickerApp.data,
           [config],
           env,
+          appWindow,
           fileSaverAbortCtrl.signal,
         );
         filePickerElt = appObj.element;

@@ -4,10 +4,15 @@ const BOMB_CELL_VALUE = "💣";
 const EXPLODED_BOMB_CELL_VALUE = "💥";
 const NUMBER_VALUES = ["⬜", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣"];
 
-// TODO: configurable
-const NUMBER_OF_ROWS = 10;
-const NUMBER_OF_COLS = 10;
-const NUMBER_OF_BOMBS = 15;
+const DIFFICULTY_PRESETS = [
+  { id: "easy", title: "Easy", rows: 8, cols: 8, bombs: 10 },
+  { id: "normal", title: "Normal", rows: 10, cols: 10, bombs: 15 },
+  { id: "hard", title: "Hard", rows: 16, cols: 16, bombs: 40 },
+];
+
+const DEFAULT_CONFIG = DIFFICULTY_PRESETS[1];
+const MIN_BOARD_LENGTH = 4;
+const MAX_BOARD_LENGTH = 30;
 
 export function create(_args, env) {
   const containerElt = document.createElement("div");
@@ -28,6 +33,11 @@ export function create(_args, env) {
   let hasClickedInCurrGame = true;
   let nbFlagsPlaced = 0;
   let nbCellsRevealed = 0;
+  let gameConfig = {
+    rows: DEFAULT_CONFIG.rows,
+    cols: DEFAULT_CONFIG.cols,
+    bombs: DEFAULT_CONFIG.bombs,
+  };
 
   const titleElt = document.createElement("h1");
   titleElt.textContent = "💣 BombSweeper!";
@@ -49,12 +59,118 @@ export function create(_args, env) {
   applyStyle(infoBombValueElt, {
     fontWeight: "bold",
   });
-  infoBombValueElt.textContent = NUMBER_OF_BOMBS;
+  infoBombValueElt.textContent = gameConfig.bombs;
 
   infoBombElt.appendChild(infoBombTitleElt);
   infoBombElt.appendChild(infoBombValueElt);
   infoContainerElt.appendChild(infoBombElt);
   containerElt.appendChild(infoContainerElt);
+
+  const controlsElt = document.createElement("form");
+  applyStyle(controlsElt, {
+    position: "absolute",
+    top: "calc(100% + 8px)",
+    left: "50%",
+    transform: "translateX(-50%)",
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "12px",
+    width: "min(340px, calc(100vw - 40px))",
+    padding: "14px",
+    backgroundColor: env.STYLE.barBg,
+    color: env.STYLE.textColor,
+    border: "2px solid " + env.STYLE.lineColor,
+    boxShadow: "0 6px 18px rgba(0,0,0,0.25)",
+    zIndex: "1",
+    boxSizing: "border-box",
+    visibility: "hidden",
+  });
+  controlsElt.addEventListener("submit", (e) => {
+    e.preventDefault();
+  });
+
+  const settingsTitle = document.createElement("div");
+  settingsTitle.textContent = "Board settings";
+  applyStyle(settingsTitle, {
+    width: "100%",
+    textAlign: "center",
+    fontWeight: "bold",
+    color: env.STYLE.primaryColor,
+  });
+  controlsElt.appendChild(settingsTitle);
+
+  const boardSummaryElt = document.createElement("div");
+  applyStyle(boardSummaryElt, {
+    width: "100%",
+    textAlign: "center",
+    padding: "6px 8px",
+    border: "1px solid " + env.STYLE.lineColor,
+    boxSizing: "border-box",
+  });
+  controlsElt.appendChild(boardSummaryElt);
+
+  const presetSelect = document.createElement("select");
+  applyStyle(presetSelect, {
+    minHeight: "28px",
+    backgroundColor: env.STYLE.barBg,
+    color: env.STYLE.textColor,
+    border: "2px solid " + env.STYLE.lineColor,
+  });
+  const customPresetOption = document.createElement("option");
+  customPresetOption.value = "custom";
+  customPresetOption.textContent = "Custom";
+  presetSelect.appendChild(customPresetOption);
+  DIFFICULTY_PRESETS.forEach((preset) => {
+    const option = document.createElement("option");
+    option.value = preset.id;
+    option.textContent = preset.title;
+    presetSelect.appendChild(option);
+  });
+  presetSelect.value = DEFAULT_CONFIG.id;
+  presetSelect.addEventListener("change", () => {
+    const preset = DIFFICULTY_PRESETS.find(
+      (preset) => preset.id === presetSelect.value,
+    );
+    if (preset !== undefined) {
+      setGameConfig(preset);
+    }
+  });
+  controlsElt.appendChild(createLabeledControl("Preset", presetSelect));
+
+  const rowsInput = createNumberInput(
+    gameConfig.rows,
+    MIN_BOARD_LENGTH,
+    MAX_BOARD_LENGTH,
+  );
+  styleFormControl(rowsInput);
+  controlsElt.appendChild(createLabeledControl("Rows", rowsInput));
+
+  const colsInput = createNumberInput(
+    gameConfig.cols,
+    MIN_BOARD_LENGTH,
+    MAX_BOARD_LENGTH,
+  );
+  styleFormControl(colsInput);
+  controlsElt.appendChild(createLabeledControl("Cols", colsInput));
+
+  const bombsInput = createNumberInput(
+    gameConfig.bombs,
+    1,
+    getMaxBombs(gameConfig),
+  );
+  styleFormControl(bombsInput);
+  controlsElt.appendChild(createLabeledControl("Bombs", bombsInput));
+
+  rowsInput.addEventListener("input", syncCustomInputLimits);
+  colsInput.addEventListener("input", syncCustomInputLimits);
+  rowsInput.addEventListener("change", setCustomConfigFromInputs);
+  colsInput.addEventListener("change", setCustomConfigFromInputs);
+  bombsInput.addEventListener("change", setCustomConfigFromInputs);
+  bombsInput.addEventListener("input", () => {
+    presetSelect.value = "custom";
+  });
 
   const statusElt = document.createElement("div");
   applyStyle(statusElt, {
@@ -66,13 +182,37 @@ export function create(_args, env) {
   resetBtn.textContent = "Reset!";
   resetBtn.className = "btn";
   resetBtn.onclick = initializeGame;
-  containerElt.appendChild(resetBtn);
+
+  const actionsElt = document.createElement("div");
+  applyStyle(actionsElt, {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    position: "relative",
+  });
+  actionsElt.appendChild(resetBtn);
+
+  const settingsWrapperElt = document.createElement("div");
+  applyStyle(settingsWrapperElt, {
+    position: "relative",
+  });
+
+  const settingsBtn = document.createElement("button");
+  settingsBtn.type = "button";
+  settingsBtn.className = "btn";
+  settingsBtn.textContent = "Settings";
+  settingsBtn.addEventListener("click", () => {
+    setSettingsPanelOpen(controlsElt.style.visibility !== "visible");
+  });
+  settingsWrapperElt.appendChild(settingsBtn);
+  settingsWrapperElt.appendChild(controlsElt);
+  actionsElt.appendChild(settingsWrapperElt);
+  containerElt.appendChild(actionsElt);
 
   const board = document.createElement("div");
   applyStyle(board, {
     display: "inline-grid",
-    gridTemplateColumns: `repeat(${NUMBER_OF_COLS}, 36px)`,
-    gridTemplateRows: `repeat(${NUMBER_OF_ROWS}, 36px)`,
     gap: "2px",
     margin: "0 auto",
     border: "6px solid " + env.STYLE.lineColor,
@@ -81,6 +221,7 @@ export function create(_args, env) {
   });
   containerElt.appendChild(board);
 
+  syncConfigControls();
   initializeGame();
 
   return { element: containerElt };
@@ -90,12 +231,12 @@ export function create(_args, env) {
 
     for (
       let r = Math.max(0, row - 1);
-      r <= Math.min(NUMBER_OF_ROWS - 1, row + 1);
+      r <= Math.min(gameConfig.rows - 1, row + 1);
       r++
     ) {
       for (
         let c = Math.max(0, col - 1);
-        c <= Math.min(NUMBER_OF_COLS - 1, col + 1);
+        c <= Math.min(gameConfig.cols - 1, col + 1);
         c++
       ) {
         if (r === row && c === col) continue;
@@ -114,12 +255,12 @@ export function create(_args, env) {
 
     for (
       let r = Math.max(0, row - 1);
-      r <= Math.min(NUMBER_OF_ROWS - 1, row + 1);
+      r <= Math.min(gameConfig.rows - 1, row + 1);
       r++
     ) {
       for (
         let c = Math.max(0, col - 1);
-        c <= Math.min(NUMBER_OF_COLS - 1, col + 1);
+        c <= Math.min(gameConfig.cols - 1, col + 1);
         c++
       ) {
         if (r === row && c === col) continue;
@@ -147,7 +288,7 @@ export function create(_args, env) {
       cell.dataset.flagged = "false";
       cell.textContent = HIDDEN_CELL_VALUE;
       nbFlagsPlaced--;
-    } else if (nbFlagsPlaced >= NUMBER_OF_BOMBS) {
+    } else if (nbFlagsPlaced >= gameConfig.bombs) {
       return;
     } else {
       cell.dataset.flagged = "true";
@@ -155,7 +296,7 @@ export function create(_args, env) {
       nbFlagsPlaced++;
     }
 
-    infoBombValueElt.textContent = NUMBER_OF_BOMBS - nbFlagsPlaced;
+    infoBombValueElt.textContent = gameConfig.bombs - nbFlagsPlaced;
     checkGameStatus();
   }
 
@@ -183,12 +324,12 @@ export function create(_args, env) {
     if (neighborCount === 0) {
       for (
         let r = Math.max(0, row - 1);
-        r <= Math.min(NUMBER_OF_ROWS - 1, row + 1);
+        r <= Math.min(gameConfig.rows - 1, row + 1);
         r++
       ) {
         for (
           let c = Math.max(0, col - 1);
-          c <= Math.min(NUMBER_OF_COLS - 1, col + 1);
+          c <= Math.min(gameConfig.cols - 1, col + 1);
           c++
         ) {
           if (r === row && c === col) continue;
@@ -220,12 +361,12 @@ export function create(_args, env) {
     // Reveal all non-flagged neighbors
     for (
       let r = Math.max(0, row - 1);
-      r <= Math.min(NUMBER_OF_ROWS - 1, row + 1);
+      r <= Math.min(gameConfig.rows - 1, row + 1);
       r++
     ) {
       for (
         let c = Math.max(0, col - 1);
-        c <= Math.min(NUMBER_OF_COLS - 1, col + 1);
+        c <= Math.min(gameConfig.cols - 1, col + 1);
         c++
       ) {
         if (r === row && c === col) continue;
@@ -244,8 +385,8 @@ export function create(_args, env) {
   }
 
   function checkGameStatus() {
-    const totalCells = NUMBER_OF_ROWS * NUMBER_OF_COLS;
-    const safeCells = totalCells - NUMBER_OF_BOMBS;
+    const totalCells = gameConfig.rows * gameConfig.cols;
+    const safeCells = totalCells - gameConfig.bombs;
 
     if (nbCellsRevealed === safeCells) {
       endGame(true);
@@ -275,7 +416,7 @@ export function create(_args, env) {
     nbFlagsPlaced = 0;
     nbCellsRevealed = 0;
 
-    infoBombValueElt.textContent = NUMBER_OF_BOMBS;
+    infoBombValueElt.textContent = gameConfig.bombs;
     // NOTE: It's actually not really "right click" but more about the "context"
     // button (e.g. long press on android etc.).
     // I don't know how to word it right so for now I call it "right click".
@@ -283,9 +424,13 @@ export function create(_args, env) {
     resetBtn.textContent = "Generate new grid";
 
     board.innerHTML = "";
+    applyStyle(board, {
+      gridTemplateColumns: `repeat(${gameConfig.cols}, 36px)`,
+      gridTemplateRows: `repeat(${gameConfig.rows}, 36px)`,
+    });
 
-    for (let row = 0; row < NUMBER_OF_ROWS; row++) {
-      for (let col = 0; col < NUMBER_OF_COLS; col++) {
+    for (let row = 0; row < gameConfig.rows; row++) {
+      for (let col = 0; col < gameConfig.cols; col++) {
         const cell = document.createElement("div");
         // NOTE: `dataset` is convenient but I'm not sure about its
         // discoverability.
@@ -354,9 +499,9 @@ export function create(_args, env) {
   function initializeBombsPlacement(firstRow, firstCol) {
     let bombsPlaced = 0;
 
-    while (bombsPlaced < NUMBER_OF_BOMBS) {
-      const row = Math.floor(Math.random() * NUMBER_OF_ROWS);
-      const col = Math.floor(Math.random() * NUMBER_OF_COLS);
+    while (bombsPlaced < gameConfig.bombs) {
+      const row = Math.floor(Math.random() * gameConfig.rows);
+      const col = Math.floor(Math.random() * gameConfig.cols);
 
       if (
         (row === firstRow && col === firstCol) ||
@@ -369,8 +514,8 @@ export function create(_args, env) {
       bombsPlaced++;
     }
 
-    for (let row = 0; row < NUMBER_OF_ROWS; row++) {
-      for (let col = 0; col < NUMBER_OF_COLS; col++) {
+    for (let row = 0; row < gameConfig.rows; row++) {
+      for (let col = 0; col < gameConfig.cols; col++) {
         const cell = getCellElementAt(row, col);
         if (cell.dataset.bomb !== "true") {
           const count = getNumberOfBombsAroundCell(row, col);
@@ -379,6 +524,124 @@ export function create(_args, env) {
       }
     }
   }
+
+  function setGameConfig(config) {
+    gameConfig = normalizeGameConfig(config);
+    syncConfigControls();
+    initializeGame();
+  }
+
+  function setCustomConfigFromInputs() {
+    setGameConfig({
+      rows: parseInt(rowsInput.value, 10),
+      cols: parseInt(colsInput.value, 10),
+      bombs: parseInt(bombsInput.value, 10),
+    });
+  }
+
+  function setSettingsPanelOpen(isOpen) {
+    applyStyle(controlsElt, {
+      visibility: isOpen ? "visible" : "hidden",
+    });
+    settingsBtn.setAttribute("aria-expanded", String(isOpen));
+  }
+
+  function styleFormControl(control) {
+    applyStyle(control, {
+      backgroundColor: env.STYLE.barBg,
+      color: env.STYLE.textColor,
+      border: "2px solid " + env.STYLE.lineColor,
+      boxSizing: "border-box",
+      padding: "3px 5px",
+      textAlign: "center",
+    });
+  }
+
+  function syncConfigControls() {
+    rowsInput.value = gameConfig.rows;
+    colsInput.value = gameConfig.cols;
+    syncCustomInputLimits();
+    bombsInput.value = gameConfig.bombs;
+
+    const matchingPreset = DIFFICULTY_PRESETS.find(
+      (preset) =>
+        preset.rows === gameConfig.rows &&
+        preset.cols === gameConfig.cols &&
+        preset.bombs === gameConfig.bombs,
+    );
+    presetSelect.value =
+      matchingPreset === undefined ? "custom" : matchingPreset.id;
+    boardSummaryElt.textContent =
+      `${gameConfig.rows} x ${gameConfig.cols} grid, ${gameConfig.bombs} bombs`;
+  }
+
+  function syncCustomInputLimits() {
+    const rows = clampInteger(
+      parseInt(rowsInput.value, 10),
+      MIN_BOARD_LENGTH,
+      MAX_BOARD_LENGTH,
+    );
+    const cols = clampInteger(
+      parseInt(colsInput.value, 10),
+      MIN_BOARD_LENGTH,
+      MAX_BOARD_LENGTH,
+    );
+    const maxBombs = getMaxBombs({ rows, cols });
+    bombsInput.max = maxBombs;
+    if (parseInt(bombsInput.value, 10) > maxBombs) {
+      bombsInput.value = maxBombs;
+    }
+    presetSelect.value = "custom";
+  }
+}
+
+function createLabeledControl(labelText, control) {
+  const label = document.createElement("label");
+  applyStyle(label, {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "2px",
+    fontSize: "12px",
+    fontWeight: "bold",
+  });
+
+  const labelTitle = document.createElement("span");
+  labelTitle.textContent = labelText;
+  label.appendChild(labelTitle);
+  label.appendChild(control);
+  return label;
+}
+
+function createNumberInput(value, min, max) {
+  const input = document.createElement("input");
+  input.type = "number";
+  input.min = min;
+  input.max = max;
+  input.value = value;
+  applyStyle(input, {
+    width: "58px",
+    minHeight: "24px",
+  });
+  return input;
+}
+
+function normalizeGameConfig(config) {
+  const rows = clampInteger(config.rows, MIN_BOARD_LENGTH, MAX_BOARD_LENGTH);
+  const cols = clampInteger(config.cols, MIN_BOARD_LENGTH, MAX_BOARD_LENGTH);
+  const bombs = clampInteger(config.bombs, 1, getMaxBombs({ rows, cols }));
+  return { rows, cols, bombs };
+}
+
+function getMaxBombs(config) {
+  return config.rows * config.cols - 1;
+}
+
+function clampInteger(value, min, max) {
+  if (!Number.isFinite(value)) {
+    return min;
+  }
+  return Math.max(min, Math.min(Math.floor(value), max));
 }
 
 /**

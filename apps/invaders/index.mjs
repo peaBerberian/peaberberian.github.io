@@ -778,11 +778,9 @@ export function create(_args, env, abortSignal) {
 
   function trySpawnPowerup(x, y) {
     const now = performance.now();
-    const maxPowerupsPerWave =
-      gameState.level <= 2 ? 3 : gameState.level <= 5 ? 2 : 1;
+    const maxPowerupsPerWave = 3;
     const minSpawnDelay = 1500;
-    const spawnChance =
-      gameState.level <= 2 ? 0.08 : gameState.level <= 5 ? 0.055 : 0.04;
+    const spawnChance = 0.08;
     if (
       gameState.powerups.length > 0 ||
       gameState.powerupsSpawnedThisWave >= maxPowerupsPerWave ||
@@ -865,7 +863,6 @@ export function create(_args, env, abortSignal) {
     const now = performance.now();
     if (
       gameState.bonusShip ||
-      gameState.level < 2 ||
       gameState.waveReadyAt > now ||
       now < gameState.nextBonusShipTs
     ) {
@@ -1140,6 +1137,7 @@ export function create(_args, env, abortSignal) {
 
   function updateEnemies() {
     if (gameState.enemies.length === 0 && gameState.divers.length === 0) {
+      gameState.score += 500 * gameState.level;
       gameState.level++;
       clearEnemyBullets();
       clearBullets();

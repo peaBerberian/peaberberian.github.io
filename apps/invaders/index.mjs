@@ -12,6 +12,7 @@ const ALIEN_CHARS = ["👾", "🛸", "👽"];
 const ALIEN_PROJECTILE_CHAR = "🐄";
 const BONUS_SHIP_CHAR = "🛰️";
 const BOSS_CHAR = "🛸";
+const HIGH_SCORE_FILE = "high-score.json";
 
 // const UFO_SVG = `<svg height="800px" width="800px" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512.001 512.001" xml:space="preserve"><path style="fill:#FF4D30;" d="M136.662,416.962c23.923,41.064,68.391,68.68,119.338,68.68c50.946,0,95.415-27.616,119.338-68.68  H136.662z"/><path style="opacity:0.1;fill:#231F20;enable-background:new    ;" d="M155.029,416.962h-18.366  c23.923,41.064,68.391,68.68,119.338,68.68c3.086,0,6.147-0.106,9.183-0.306C218.109,482.242,177.502,455.538,155.029,416.962z"/><path style="fill:#3A5D74;" d="M33.661,366.715v30.119c0,11.74,9.519,21.259,21.26,21.259h402.159  c11.741,0,21.26-9.519,21.26-21.259v-30.119H33.661"/><path style="opacity:0.1;fill:#231F20;enable-background:new    ;" d="M52.027,396.834v-30.119H33.661v30.119  c0,11.74,9.519,21.259,21.26,21.259h18.366C61.546,418.092,52.027,408.573,52.027,396.834z"/><path style="fill:#CAE9F7;" d="M256,147.32c-4.681,0-8.477-3.794-8.477-8.477V76.03c0-4.681,3.795-8.477,8.477-8.477  s8.477,3.795,8.477,8.477v62.813C264.477,143.524,260.681,147.32,256,147.32z"/><path style="fill:#90C8EC;" d="M105.744,264.112h300.512c-12.958-71.24-75.278-125.269-150.256-125.269  C181.021,138.843,118.701,192.872,105.744,264.112z"/><path style="fill:#3A5D74;" d="M333.362,264.112v-31.061c0-11.742-9.519-21.261-21.26-21.261H199.9  c-11.744,0-21.261,9.519-21.261,21.261v31.061H333.362z"/><circle style="fill:#FF4D30;" cx="256" cy="57.068" r="30.709"/><g><path style="opacity:0.1;fill:#231F20;enable-background:new    ;" d="M265.183,139.123c-3.039-0.18-6.099-0.28-9.183-0.28   c-74.979,0-137.299,54.029-150.256,125.269h18.366C136.536,195.802,194.346,143.327,265.183,139.123z"/><path style="opacity:0.1;fill:#231F20;enable-background:new    ;" d="M218.267,211.79H199.9c-11.744,0-21.261,9.519-21.261,21.261   v31.061h18.366v-31.061C197.007,221.309,206.524,211.79,218.267,211.79z"/><path style="opacity:0.1;fill:#231F20;enable-background:new    ;" d="M243.655,57.068c0-13.76,9.054-25.404,21.528-29.308   c-2.9-0.909-5.985-1.398-9.183-1.398c-16.958,0-30.711,13.748-30.711,30.706c0,16.963,13.753,30.709,30.711,30.709   c3.199,0,6.283-0.491,9.183-1.398C252.71,82.476,243.655,70.831,243.655,57.068z"/></g><path style="fill:#578CAD;" d="M382.844,368.975h107.897c11.741,0,21.26-9.519,21.26-21.259v-17.598  c0-37.704-30.564-68.267-68.267-68.267H68.266C30.564,261.852,0,292.415,0,330.118v17.598c0,11.74,9.519,21.259,21.259,21.259  H382.844"/><path style="opacity:0.1;fill:#231F20;enable-background:new    ;" d="M18.366,347.716v-17.598  c0-37.704,30.564-68.267,68.266-68.267H68.266C30.564,261.852,0,292.415,0,330.118v17.598c0,11.74,9.519,21.259,21.259,21.259  h18.366C27.885,368.975,18.366,359.456,18.366,347.716z"/><path style="fill:#FF9737;" d="M449.107,323.889H62.892c-4.681,0-8.477-3.794-8.477-8.477c0-4.683,3.795-8.477,8.477-8.477h386.215  c4.683,0,8.477,3.794,8.477,8.477C457.584,320.094,453.789,323.889,449.107,323.889z"/></svg>`;
 // const ALIEN1_SVG = `<svg height="800px" width="800px" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 48 48" xml:space="preserve"><g><path style="fill:#40C7A9;" d="M24,2.5C12.127,2.5,0,17.75,0,30.937c0,1.37,1.027,2.563,2.397,2.563h2.665   c0.072-0.379,0.158-0.76,0.277-1.145c0.416-1.346,1.461-2.47,2.837-2.775c1.041-0.231,2.236-0.031,3.057,1.534   c0.389,0.74,0.452,1.61,0.211,2.386h25.113c-0.241-0.776-0.178-1.646,0.211-2.386c0.822-1.565,2.017-1.765,3.057-1.534   c1.376,0.306,2.421,1.429,2.837,2.775c0.119,0.384,0.204,0.765,0.277,1.145h2.797C47.06,33.5,48,32.375,48,31.049   C48,18.667,35.909,2.5,24,2.5z"/><path style="fill:#C1F4E8;" d="M14.229,30.5c-0.095-0.267-0.209-0.528-0.341-0.78c-1.073-2.046-2.902-3.22-5.019-3.22   c-0.44,0-0.893,0.051-1.346,0.151c-1.918,0.426-3.557,1.727-4.509,3.513C3.482,18.471,14.399,5.5,24,5.5   c9.853,0,20.387,14.161,20.975,24.645c-0.953-1.776-2.587-3.069-4.5-3.494C40.022,26.551,39.57,26.5,39.13,26.5   c-2.116,0-3.945,1.174-5.019,3.221c-0.133,0.251-0.246,0.512-0.341,0.779H14.229z"/><path style="fill:#d16544;" d="M9,45.5c0,0-5.798-6.231-3.662-13.145c0.416-1.347,1.461-2.47,2.837-2.775   c1.041-0.231,2.236-0.031,3.057,1.534c0.615,1.172,0.419,2.669-0.517,3.605C8.676,36.759,9,40.5,9,45.5z"/><path style="fill:#d16544;" d="M21,33.5c-2.844,1.781-3,10-3,10c-4.313-4.25-3-10-3-10H21z"/><path style="fill:#d16544;" d="M39,45.5c0,0,5.798-6.231,3.662-13.145c-0.416-1.347-1.461-2.47-2.837-2.775   c-1.041-0.231-2.236-0.031-3.057,1.534c-0.615,1.172-0.419,2.669,0.517,3.605C39.324,36.759,39,40.5,39,45.5z"/><path style="fill:#d16544;" d="M27,33.5c2.844,1.781,3,10,3,10c4.313-4.25,3-10,3-10H27z"/><ellipse style="fill:#E64C3C;" cx="24" cy="12" rx="5" ry="5.5"/><ellipse style="fill:#E64C3C;" cx="31" cy="24" rx="5" ry="5.5"/><ellipse style="fill:#E64C3C;" cx="17" cy="24" rx="5" ry="5.5"/><path style="fill:#C03A2B;" d="M28.993,11.845C28.994,11.897,29,11.948,29,12c0,3.038-2.239,5.5-5,5.5s-5-2.462-5-5.5   c0-0.052,0.006-0.103,0.007-0.155C16.592,13.28,15,15.724,15,18.5c0,0.151,0.016,0.298,0.025,0.447   C15.631,18.66,16.298,18.5,17,18.5c2.761,0,5,2.462,5,5.5c0,0.782-0.151,1.525-0.419,2.199C22.352,26.39,23.161,26.5,24,26.5   s1.648-0.11,2.419-0.301C26.151,25.525,26,24.782,26,24c0-3.038,2.239-5.5,5-5.5c0.702,0,1.369,0.16,1.975,0.447   C32.984,18.798,33,18.651,33,18.5C33,15.724,31.408,13.28,28.993,11.845z"/></g></svg>`;
@@ -155,6 +156,8 @@ export function create(_args, env, abortSignal) {
   let mousePressed = false;
   let highScore = 0;
   const audio = createAudioEngine();
+
+  const highScoreLoadedProm = loadHighScore();
 
   let config = {};
   resetGameState();
@@ -1451,7 +1454,7 @@ export function create(_args, env, abortSignal) {
     gameState.gameOver = true;
     gameState.gameOverAt = performance.now();
     mousePressed = false;
-    highScore = Math.max(highScore, gameState.score);
+    updateHighScoreFromGameOver(gameState.score);
     audio.playSound("gameover");
   }
 
@@ -1729,6 +1732,42 @@ export function create(_args, env, abortSignal) {
       gameState.started = true;
     } else if (!gameState.started) {
       gameState.started = true;
+    }
+  }
+
+  async function loadHighScore() {
+    if (!env.appStorage) {
+      return;
+    }
+    try {
+      const savedData = await env.appStorage.readFile(HIGH_SCORE_FILE, "object");
+      if (
+        typeof savedData === "object" &&
+        savedData !== null &&
+        Number.isInteger(savedData.highScore) &&
+        savedData.highScore >= 0
+      ) {
+        highScore = savedData.highScore;
+      }
+    } catch (err) {
+      if (err?.code !== "NoEntryError") {
+        console.warn("Cannot load Invaders high score:", err);
+      }
+    }
+  }
+
+  async function updateHighScoreFromGameOver(score) {
+    await highScoreLoadedProm;
+    if (score > highScore) {
+      highScore = score;
+    if (!env.appStorage) {
+      return;
+    }
+    try {
+      await env.appStorage.writeFile(HIGH_SCORE_FILE, { highScore: score });
+    } catch (err) {
+      console.warn("Cannot save Invaders high score:", err);
+    }
     }
   }
 }

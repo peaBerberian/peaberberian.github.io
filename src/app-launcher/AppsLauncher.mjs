@@ -18,6 +18,7 @@ import { constructAppWithSidebar } from "../app-lib/sidebar.mjs";
 import WindowedApplicationStack from "./windowed_application_stack.mjs";
 import { launchSandboxedApp } from "./launch_sandboxed_app.mjs";
 import PathTokenCreator from "./path_token_creator.mjs";
+import { createAppStorage } from "./app_storage.mjs";
 
 const { BASE_WINDOW_Z_INDEX, IMAGE_ROOT_PATH, __VERSION__ } = CONSTANTS;
 
@@ -317,6 +318,7 @@ export default class AppsLauncher {
     }
 
     const env = this._constructEnvObject(
+      app.id,
       app.data.dependencies,
       appStack,
       appWindow,
@@ -607,6 +609,7 @@ export default class AppsLauncher {
 
         const env = {
           ...this._constructEnvObject(
+            filePickerApp.id,
             filePickerApp.data.dependencies,
             appStack,
             appWindow,
@@ -666,6 +669,7 @@ export default class AppsLauncher {
         };
         const env = {
           ...this._constructEnvObject(
+            filePickerApp.id,
             filePickerApp.data.dependencies,
             appStack,
             appWindow,
@@ -762,13 +766,14 @@ export default class AppsLauncher {
   /**
    * Construct `env` object that is given to application as their link to the
    * desktop element.
+   * @param {string} appId - Identifier of the application being launched.
    * @param {Array.<string>} dependencies - The application's listed
    * dependencies.
    * @param {WindowedApplicationStack} appStack
    * @param {AppWindow} appWindow
    * @param {AbortSignal} abortSignal
    */
-  _constructEnvObject(dependencies, appStack, appWindow, abortSignal) {
+  _constructEnvObject(appId, dependencies, appStack, appWindow, abortSignal) {
     /**
      * Construct `env` object that is given to application as their link to the
      * desktop element.
@@ -810,6 +815,9 @@ export default class AppsLauncher {
           }
           return filesystem.writeFile(filePath, content);
         };
+      }
+      if (dependencies.includes("appStorage")) {
+        env.appStorage = createAppStorage(appId);
       }
       if (dependencies.includes("open")) {
         env.open = (path) => {

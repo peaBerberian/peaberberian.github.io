@@ -680,7 +680,7 @@ export default [`;
           if (Array.isArray(app.dependencies)) {
             for (const dep of app.dependencies) {
               if (
-                ["CONSTANTS", "settings", "fileSystems", "open"].includes(dep)
+                ["CONSTANTS", "settings", "filesystem", "open"].includes(dep)
               ) {
                 throw new Error(
                   `Error in app "${app.id}". Invalid "sandboxed" property: incompatible with asked dependencies.`,
@@ -755,6 +755,7 @@ export default [`;
                 "filePickerOpen",
                 "filePickerSave",
                 "quickSave",
+                "appStorage",
                 "open",
               ].includes(dep)
             ) {

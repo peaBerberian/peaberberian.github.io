@@ -37,6 +37,8 @@ const POWERUP_TYPES = {
   },
   SHIELD: { emoji: "🛡️", label: "SHIELD", duration: 10000 },
   JAMMER: { emoji: "📡", label: "COW JAMMER", duration: 5000 },
+  EXPLOSIVE: { emoji: "💥", label: "EXPLOSIVE SHOTS", duration: 6000 },
+  REBUILDSHIELDS: { emoji: "🧱", label: "SHIELDS REBUILT", duration: 0 },
   EXTRALIFE: { emoji: "❤️", label: "+1 LIFE", duration: 0 }, // instant
 };
 
@@ -323,13 +325,13 @@ export function create(_args, env, abortSignal) {
         RAPIDFIRE: 0,
         SHIELD: 0,
         JAMMER: 0,
+        EXPLOSIVE: 0,
       },
       combo: 0,
       lastKillTs: -Infinity,
       comboTimeout: null,
       waveReadyAt: 0,
       lastPowerupSpawnTs: -Infinity,
-      powerupsSpawnedThisWave: 0,
       lastEnemyShotTs: -Infinity,
       nextBonusShipTs: performance.now() + 10000 + Math.random() * 8000,
     };
@@ -358,7 +360,7 @@ export function create(_args, env, abortSignal) {
       hudSize: Math.max(12, 0.025 * gameState.gameWidth),
       shieldSize: Math.max(50, 0.06 * gameState.gameWidth),
       powerupSize: Math.max(24, 0.04 * gameState.gameWidth),
-      powerupSpeed: 0.0052 * gameState.gameHeight,
+      powerupSpeed: 0.0085 * gameState.gameHeight,
       comboWindow: 900, // ms between kills to maintain combo
       diveSpeed: 0.0065 * gameState.gameHeight,
     };
@@ -631,36 +633,74 @@ export function create(_args, env, abortSignal) {
       for (let row = 0; row < pattern.length; row++) {
         for (let col = 0; col < pattern[row].length; col++) {
           if (pattern[row][col] === 1) {
-            const shield = {
-              row,
-              col,
-              x: baseX + col * blockSize,
-              y: shieldY + row * blockSize,
-              width: blockSize,
-              height: blockSize,
-              // health: 3,
-            };
-            const shieldElt = document.createElement("div");
-            shieldElt.dataset.type = "shield";
-            // shieldElt.textContent = "🛡️";
-            // shieldElt.textContent = "⬜";
-            // shieldElt.textContent = "◻️";
-            applyStyle(shieldElt, {
-              position: "absolute",
-              left: shield.x + "px",
-              top: shield.y + "px",
-              height: shield.height + "px",
-              width: shield.width + "px",
-              // background: env.STYLE.windowActiveHeaderText,
-              opacity: "0.7",
-              background: env.STYLE.windowActiveHeaderText,
-              // background: `radial-gradient(${env.STYLE.windowActiveHeaderText}, ${env.STYLE.windowActiveHeader} 80%)`,
-              // fontSize: shield.width + "px",
-              userSelect: "none",
-            });
-            gameArea.appendChild(shieldElt);
-            shield.element = shieldElt;
-            gameState.shields.push(shield);
+            addShieldBlock(i, row, col, baseX, shieldY, blockSize);
+          }
+        }
+      }
+    }
+  }
+
+  function addShieldBlock(shieldIndex, row, col, baseX, shieldY, blockSize) {
+    const shield = {
+      shieldIndex,
+      row,
+      col,
+      x: baseX + col * blockSize,
+      y: shieldY + row * blockSize,
+      width: blockSize,
+      height: blockSize,
+      // health: 3,
+    };
+    const shieldElt = document.createElement("div");
+    shieldElt.dataset.type = "shield";
+    // shieldElt.textContent = "🛡️";
+    // shieldElt.textContent = "⬜";
+    // shieldElt.textContent = "◻️";
+    applyStyle(shieldElt, {
+      position: "absolute",
+      left: shield.x + "px",
+      top: shield.y + "px",
+      height: shield.height + "px",
+      width: shield.width + "px",
+      // background: env.STYLE.windowActiveHeaderText,
+      opacity: "0.7",
+      background: env.STYLE.windowActiveHeaderText,
+      // background: `radial-gradient(${env.STYLE.windowActiveHeaderText}, ${env.STYLE.windowActiveHeader} 80%)`,
+      // fontSize: shield.width + "px",
+      userSelect: "none",
+    });
+    gameArea.appendChild(shieldElt);
+    shield.element = shieldElt;
+    gameState.shields.push(shield);
+  }
+
+  function rebuildShields() {
+    const numShields = 4;
+    const shieldSize = config.shieldSize || 40;
+    const totalWidth = numShields * shieldSize * 2;
+    const startX = (gameState.gameWidth - totalWidth) / 4;
+    const shieldY = gameState.gameHeight * 0.75;
+    const pattern = [
+      [1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1],
+      [1, 1, 0, 1, 1],
+      [1, 0, 0, 0, 1],
+    ];
+    const blockSize = shieldSize / 6;
+    const existing = new Set(
+      gameState.shields.map((shield) => {
+        const shieldIndex = shield.shieldIndex ?? 0;
+        return `${shieldIndex}:${shield.row}:${shield.col}`;
+      }),
+    );
+
+    for (let i = 0; i < numShields; i++) {
+      const baseX = startX + i * (shieldSize * 4);
+      for (let row = 0; row < pattern.length; row++) {
+        for (let col = 0; col < pattern[row].length; col++) {
+          const key = `${i}:${row}:${col}`;
+          if (pattern[row][col] === 1 && !existing.has(key)) {
+            addShieldBlock(i, row, col, baseX, shieldY, blockSize);
           }
         }
       }
@@ -679,6 +719,7 @@ export function create(_args, env, abortSignal) {
 
     if (now - gameState.lastShot > effectiveFireRate) {
       const spread = gameState.activePowerups.SPREAD > now;
+      const explosive = gameState.activePowerups.EXPLOSIVE > now;
       const angles = spread ? [-18, 0, 18] : [0];
       for (const angleDeg of angles) {
         const angleRad = (angleDeg * Math.PI) / 180;
@@ -693,6 +734,7 @@ export function create(_args, env, abortSignal) {
           height: playerBulletSize,
           vx: Math.sin(angleRad) * config.bulletSpeed,
           vy: -Math.cos(angleRad) * config.bulletSpeed,
+          explosive,
         };
         const bulletElt = document.createElement("div");
         bulletElt.dataset.type = "bullet";
@@ -708,6 +750,9 @@ export function create(_args, env, abortSignal) {
           // animation: "spin 1s infinite linear",
           borderRadius: config.playerBulletSize + "px",
           backgroundColor: env.STYLE.windowActiveHeaderText,
+          boxShadow: explosive
+            ? `0 0 ${config.playerBulletSize}px ${env.STYLE.windowActiveHeaderText}`
+            : "none",
           userSelect: "none",
         });
         gameArea.appendChild(bulletElt);
@@ -778,19 +823,21 @@ export function create(_args, env, abortSignal) {
 
   function trySpawnPowerup(x, y) {
     const now = performance.now();
-    const maxPowerupsPerWave = 3;
-    const minSpawnDelay = 1500;
-    const spawnChance = 0.08;
+    const maxActivePowerups = 3;
+    const minSpawnDelay = 650;
+    const spawnChance = 0.16;
     if (
-      gameState.powerups.length > 0 ||
-      gameState.powerupsSpawnedThisWave >= maxPowerupsPerWave ||
+      gameState.powerups.length >= maxActivePowerups ||
       now - gameState.lastPowerupSpawnTs < minSpawnDelay ||
       Math.random() > spawnChance
     ) {
       return;
     }
     const keys = Object.keys(POWERUP_TYPES).filter(
-      (type) => type !== "EXTRALIFE" || gameState.player.lives < 3,
+      (type) =>
+        (type !== "EXTRALIFE" || gameState.player.lives < 3) &&
+        (type !== "REBUILDSHIELDS" ||
+          gameState.shields.length < maxShieldBlocks()),
     );
     const type = keys[Math.floor(Math.random() * keys.length)];
     const def = POWERUP_TYPES[type];
@@ -826,7 +873,6 @@ export function create(_args, env, abortSignal) {
     gameArea.appendChild(elt);
     powerup.element = elt;
     gameState.powerups.push(powerup);
-    gameState.powerupsSpawnedThisWave++;
     gameState.lastPowerupSpawnTs = now;
   }
 
@@ -920,12 +966,18 @@ export function create(_args, env, abortSignal) {
 
     if (type === "EXTRALIFE") {
       gameState.player.lives = Math.min(gameState.player.lives + 1, 5);
+    } else if (type === "REBUILDSHIELDS") {
+      rebuildShields();
     } else {
       gameState.activePowerups[type] = now + def.duration;
       if (type === "JAMMER") {
         clearEnemyBullets();
       }
     }
+  }
+
+  function maxShieldBlocks() {
+    return 64;
   }
 
   function showPowerupLabel(label) {
@@ -988,7 +1040,7 @@ export function create(_args, env, abortSignal) {
     if (gameState.enemies.length === 0) return;
     // Scale chance with level
     const chance =
-      (0.0003 + (gameState.level - 1) * 0.0002) * gameState.enemies.length;
+      (0.00035 + (gameState.level - 1) * 0.00024) * gameState.enemies.length;
     if (Math.random() > chance) return;
 
     const candidates = gameState.enemies.filter((enemy) => !enemy.isBoss);
@@ -1151,7 +1203,6 @@ export function create(_args, env, abortSignal) {
       config.enemyBaseSpeed *= 1.1;
       config.enemySuppSpeed = 0;
       config.enemyBulletSpeed *= 1.03;
-      gameState.powerupsSpawnedThisWave = 0;
       gameState.lastPowerupSpawnTs = -Infinity;
       gameState.lastEnemyShotTs = -Infinity;
       return;
@@ -1216,8 +1267,8 @@ export function create(_args, env, abortSignal) {
     // Enemy shooting — rate scales with level
     const canShoot = gameState.activePowerups.JAMMER <= now;
     const shootChance = Math.min(
-      0.085,
-      (0.0008 + Math.max(gameState.level - 2, 0) * 0.001) *
+      0.105,
+      (0.0009 + Math.max(gameState.level - 2, 0) * 0.00115) *
         gameState.enemies.reduce((sum, enemy) => sum + enemy.shotWeight, 0),
     );
     if (canShoot && gameState.enemies.length > 0 && Math.random() < shootChance) {
@@ -1230,7 +1281,7 @@ export function create(_args, env, abortSignal) {
           shooter.lastShotTs = now;
         }
       } else {
-        const regularCooldown = Math.max(320, 700 - gameState.level * 45);
+        const regularCooldown = Math.max(280, 700 - gameState.level * 50);
         if (now - gameState.lastEnemyShotTs > regularCooldown) {
           spawnEnemyBullet(shooter);
           gameState.lastEnemyShotTs = now;
@@ -1352,6 +1403,9 @@ export function create(_args, env, abortSignal) {
             const mult = registerKill();
             gameState.score += (enemy.isBoss ? 80 : 10) * mult;
           }
+          if (bullet.explosive) {
+            detonateBullet(bullet, enemy);
+          }
           audio.playSound("hit");
           hit = true;
           break;
@@ -1374,6 +1428,9 @@ export function create(_args, env, abortSignal) {
             gameState.divers.splice(j, 1);
             const mult = registerKill();
             gameState.score += 20 * mult; // bonus for diver
+            if (bullet.explosive) {
+              detonateBullet(bullet, diver);
+            }
             audio.playSound("hit");
             hit = true;
             break;
@@ -1462,6 +1519,67 @@ export function create(_args, env, abortSignal) {
       a.y < b.y + b.height &&
       a.y + a.height > b.y
     );
+  }
+
+  function detonateBullet(bullet, ignoredTarget) {
+    const radius = config.enemySize * 2.25;
+    const cx = bullet.x + bullet.width / 2;
+    const cy = bullet.y + bullet.height / 2;
+    spawnParticles(cx, cy, env.STYLE.windowActiveHeaderText);
+
+    for (let j = gameState.enemies.length - 1; j >= 0; j--) {
+      const enemy = gameState.enemies[j];
+      if (enemy === ignoredTarget || !circleHitsRect(cx, cy, radius, enemy)) {
+        continue;
+      }
+      spawnParticles(
+        enemy.x + enemy.width / 2,
+        enemy.y + enemy.height / 2,
+        env.STYLE.windowActiveHeaderText,
+      );
+      enemy.health--;
+      if (enemy.health > 0) {
+        updateBossHealth(enemy);
+        enemy.element.style.opacity = String(
+          0.55 + 0.45 * (enemy.health / enemy.maxHealth),
+        );
+        gameState.score += 2;
+      } else {
+        trySpawnPowerup(
+          enemy.x + enemy.width / 2 - config.powerupSize / 2,
+          enemy.y,
+        );
+        enemy.element.remove();
+        gameState.enemies.splice(j, 1);
+        config.enemySuppSpeed += 0.00015 * gameState.gameWidth;
+        const mult = registerKill();
+        gameState.score += (enemy.isBoss ? 80 : 10) * mult;
+      }
+    }
+
+    for (let j = gameState.divers.length - 1; j >= 0; j--) {
+      const diver = gameState.divers[j];
+      if (diver === ignoredTarget || !circleHitsRect(cx, cy, radius, diver)) {
+        continue;
+      }
+      spawnParticles(
+        diver.x + diver.width / 2,
+        diver.y + diver.height / 2,
+        env.STYLE.windowActiveHeaderText,
+      );
+      diver.element.remove();
+      gameState.divers.splice(j, 1);
+      const mult = registerKill();
+      gameState.score += 20 * mult;
+    }
+  }
+
+  function circleHitsRect(cx, cy, radius, rect) {
+    const nearestX = Math.max(rect.x, Math.min(cx, rect.x + rect.width));
+    const nearestY = Math.max(rect.y, Math.min(cy, rect.y + rect.height));
+    const dx = cx - nearestX;
+    const dy = cy - nearestY;
+    return dx * dx + dy * dy <= radius * radius;
   }
 
   function render() {

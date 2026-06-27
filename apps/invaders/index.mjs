@@ -176,7 +176,7 @@ export function create(_args, env, abortSignal) {
   const powerupHud = document.createElement("div");
   applyStyle(powerupHud, {
     position: "absolute",
-    top: "10px",
+    top: "44px",
     right: "10px",
     color: env.STYLE.windowActiveHeaderText,
     fontSize: "12px",
@@ -184,7 +184,9 @@ export function create(_args, env, abortSignal) {
     textAlign: "right",
     display: "flex",
     flexDirection: "column",
+    alignItems: "flex-end",
     gap: "4px",
+    pointerEvents: "none",
   });
   gameArea.appendChild(powerupHud);
 
@@ -1657,6 +1659,7 @@ export function create(_args, env, abortSignal) {
 
     // Active power-up strip
     powerupHud.innerHTML = "";
+    powerupHud.style.top = 10 + config.hudSize * 1.7 + "px";
     const nowTs = performance.now();
     for (const [type, expiry] of Object.entries(gameState.activePowerups)) {
       if (expiry > nowTs) {
@@ -1665,8 +1668,14 @@ export function create(_args, env, abortSignal) {
         const bar = document.createElement("div");
         applyStyle(bar, {
           color: env.STYLE.windowActiveHeaderText,
-          fontSize: config.hudSize + "px",
+          fontSize: Math.max(11, config.hudSize * 0.85) + "px",
           fontWeight: "bold",
+          backgroundColor: "rgba(0, 0, 0, 0.32)",
+          border: `1px solid ${env.STYLE.windowActiveHeaderText}`,
+          borderRadius: "6px",
+          padding: "3px 7px",
+          opacity: "0.88",
+          whiteSpace: "nowrap",
         });
         bar.textContent = `${def.emoji} ${def.label} ${remaining}s`;
         powerupHud.appendChild(bar);

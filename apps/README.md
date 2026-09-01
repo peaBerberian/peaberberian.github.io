@@ -172,6 +172,11 @@ The following properties can be set for each application:
     open `"filePickerSave"` when the path to save at should not have change
     (still without the application knowing where).
 
+  - `"appStorage"`: Gives the application read/write access to its own
+    persistent application data directory only. Paths are relative to that
+    per-app directory and are validated by the desktop before any filesystem
+    operation is performed.
+
 - `"provider"` (`Array.<string>`, optional): The supplementary features the
   application can provide.
 

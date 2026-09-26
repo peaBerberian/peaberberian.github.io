@@ -57,12 +57,12 @@ const selectedProjects = [
     path: "/apps/other_projects_eme-spy.run",
   },
   {
-    id: "mse-spy",
-    image: "mse-spy.svg",
-    title: "MSESpy",
+    id: "paul-envs",
+    image: "paul-envs.svg",
+    title: "paul-envs",
     description:
-      "A similar tool focused on the browser APIs used to buffer media.",
-    path: "/apps/other_projects_mse-spy.run",
+      "A Go CLI for managing isolated, per-project development environments through Docker or Podman.",
+    path: "/apps/other_projects_paul-envs.run",
   },
 ];
 

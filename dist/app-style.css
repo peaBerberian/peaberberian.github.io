@@ -232,6 +232,12 @@ ol {
   font-size: 24px;
   line-height: 1;
 }
+.about-project-icon img {
+  display: block;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
 .about-project-text {
   display: flex;
   flex-direction: column;

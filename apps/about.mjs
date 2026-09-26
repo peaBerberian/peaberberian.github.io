@@ -59,14 +59,14 @@ const quickLinks = [
 const selectedProjects = [
   {
     id: "rx-player",
-    icon: "⏯️",
+    image: "rx-player-play.svg",
     title: "RxPlayer",
     description: "The open-source media player I lead at Canal+ Group.",
     path: "/apps/other_projects_rx-player.run",
   },
   {
     id: "wasp-hls",
-    icon: "🐝",
+    image: "wasp-hls.svg",
     title: "WASP-HLS",
     description:
       "A media player written mainly in Rust, running through WebAssembly and Web Workers.",
@@ -82,7 +82,7 @@ const selectedProjects = [
   },
   {
     id: "isobmff-inspector",
-    icon: "📹",
+    image: "isobmff-inspector.svg",
     title: "isobmff-inspector",
     description:
       "The parser behind an interactive tool to inspect MP4-like media files.",
@@ -90,7 +90,7 @@ const selectedProjects = [
   },
   {
     id: "eme-spy",
-    icon: "🕵️",
+    image: "eme-spy.svg",
     title: "EMESpy",
     description:
       "A tool to understand how web players use browser APIs for media DRMs.",
@@ -98,7 +98,7 @@ const selectedProjects = [
   },
   {
     id: "mse-spy",
-    icon: "👓",
+    image: "mse-spy.svg",
     title: "MSESpy",
     description:
       "A similar tool focused on the browser APIs used to buffer media.",
@@ -250,7 +250,7 @@ export function create(_args, env) {
       title: "Selected projects",
       description: `<div>
 <p class="about-project-intro">Here are a few projects representative of what I work on. Each one can be opened as an application on this desktop.</p>
-${formatSelectedProjects(selectedProjects)}
+${formatSelectedProjects(selectedProjects, env)}
 </div>`,
     },
     experiences: {
@@ -410,14 +410,17 @@ function formatQuickLinks(quickLinksData, env) {
     .join("");
 }
 
-function formatSelectedProjects(projects) {
+function formatSelectedProjects(projects, env) {
   return `<div class="about-project-list">${projects
-    .map(
-      (project) => `<button class="about-project-link" type="button" data-project-id="${project.id}">
-  <span class="about-project-icon" aria-hidden="true">${project.icon}</span>
+    .map((project) => {
+      const icon = project.image
+        ? `<img src="${env.getImageRootPath() + project.image}" alt="" />`
+        : project.icon;
+      return `<button class="about-project-link" type="button" data-project-id="${project.id}">
+  <span class="about-project-icon" aria-hidden="true">${icon}</span>
   <span class="about-project-text"><b>${project.title}</b><span>${project.description}</span></span>
-</button>`,
-    )
+</button>`;
+    })
     .join("")}</div>`;
 }
 

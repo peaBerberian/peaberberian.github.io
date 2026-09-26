@@ -101,8 +101,8 @@ function createFullscreenButton(abortSignal) {
   function updateFullScreenText() {
     const fullscreenText =
       document.fullscreenElement === null
-        ? "Go fullscreen!"
-        : "Exit fullcreen mode";
+        ? "Enter fullscreen"
+        : "Exit fullscreen";
     fullscreenButton.value = fullscreenText;
   }
   updateFullScreenText();

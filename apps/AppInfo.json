@@ -6,9 +6,9 @@
       "title": "About Me",
       "icon": "🙋🏻‍♂️",
       "defaultHeight": 650,
-      "defaultWidth": 855,
+      "defaultWidth": 900,
       "onlyOne": false,
-      "dependencies": [],
+      "dependencies": ["open"],
       "startMenu": {
         "display": true
       },
@@ -26,12 +26,7 @@
         "after": 100
       },
       "onlyOne": true,
-      "dependencies": [
-        "CONSTANTS",
-        "settings",
-        "filesystem",
-        "notificationEmitter"
-      ],
+      "dependencies": ["CONSTANTS", "settings", "filesystem", "notificationEmitter"],
       "startMenu": {
         "display": true
       },
@@ -140,16 +135,7 @@
       "desktop": {
         "display": true
       },
-      "defaultForExtensions": [
-        "webp",
-        "jpg",
-        "avif",
-        "heif",
-        "jpeg",
-        "png",
-        "gif",
-        "svg"
-      ]
+      "defaultForExtensions": ["webp", "jpg", "avif", "heif", "jpeg", "png", "gif", "svg"]
     },
     {
       "id": "calculator",

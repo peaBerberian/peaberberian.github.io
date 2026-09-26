@@ -31,7 +31,8 @@ export default class WindowedApplicationStack {
     this.wrapper = document.createElement("div");
     applyStyle(this.wrapper, {
       position: "relative",
-      height: "100%",
+      flex: "1",
+      minHeight: "0",
       width: "100%",
     });
 

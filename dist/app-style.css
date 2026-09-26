@@ -64,6 +64,7 @@ p {
 .w-content {
   padding: 20px;
   flex-grow: 1;
+  min-height: 0;
   overflow-y: auto;
   background-color: var(--window-content-bg);
   color: var(--window-text-color);
@@ -250,6 +251,9 @@ ol {
 }
 .about-project-text span {
   line-height: 1.4;
+}
+.about-fullscreen-action {
+  margin-bottom: 0;
 }
 .btn.about-fullscreen-button {
   padding: 5px 9px;
@@ -439,6 +443,10 @@ ol {
 
 .w-group {
   margin-bottom: 30px;
+}
+
+.w-content > [data-section] > .w-group:last-child {
+  margin-bottom: 0;
 }
 
 .w-shadow-color-input {

@@ -202,8 +202,6 @@ export function create(_args, env) {
 
 <p>More generally, I have worked on the web platform for many years, from React-based interfaces to specialized libraries using less common and more domain-specific web APIs.</p>
 
-<br>
-
 </span>`,
     },
     projects: {
@@ -356,7 +354,7 @@ function getSchools(schools, env) {
 
   function getSchool(schoolObj) {
     return `<p>${schoolObj.firstLine}</p>
-<p>${schoolObj.shortDescription}</p>
+${schoolObj.shortDescription ? `<p>${schoolObj.shortDescription}</p>` : ""}
 `;
   }
 }

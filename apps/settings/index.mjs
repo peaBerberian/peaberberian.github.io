@@ -73,8 +73,7 @@ export function create(_args, env, abortSignal) {
     content: contentElt,
     sidebar: sidebarElt,
   } = constructAppWithSidebar(sidebarItems, onSidebarSelectionChange);
-  contentElt.appendChild(createWallpaperSection(env, abortSignal));
-  contentElt.scrollTo(0, 0);
+  onSidebarSelectionChange("wallpaper");
 
   let lastSidebarElemnt = sidebarElt;
   settings.startMenuPic.onUpdate(
@@ -91,6 +90,16 @@ export function create(_args, env, abortSignal) {
       clearSignal: abortSignal,
     },
   );
+  env.busHandle("showSection", (section) => {
+    if (!sidebarItems.some((item) => item.section === section)) {
+      throw new Error(`Unknown Settings section: ${section}`);
+    }
+    onSidebarSelectionChange(section);
+    containerElt.removeChild(lastSidebarElemnt);
+    lastSidebarElemnt = constructSidebarElt(sidebarItems, onSidebarSelectionChange);
+    containerElt.insertBefore(lastSidebarElemnt, contentElt);
+    env.requestFocus();
+  });
   return {
     element: containerElt,
     onActivate() {

@@ -62,6 +62,7 @@ export default class AppWindow extends EventEmitter {
    * application in that window.
    * Can be updated at any time through the `updateTitle` method.
    * If not set the window won't show an icon for now.
+   * @param {Function} options.onSettings - Opens a specific Settings section.
    * @param {string} [options.defaultTitle] - Default "title" for the
    * application in that window.
    * Can be updated at any time through the `updateTitle` method.
@@ -69,6 +70,7 @@ export default class AppWindow extends EventEmitter {
    */
   constructor(initialContent, options = {}) {
     super();
+    this._onSettings = options.onSettings;
     const {
       skipAnim,
       centered,
@@ -693,6 +695,13 @@ export default class AppWindow extends EventEmitter {
           name: "deactivate",
           title: "Make window inactive",
           onClick: () => this.deActivate(),
+        },
+        { name: "separator" },
+        {
+          name: "settings",
+          title: "Window settings",
+          svg: CONSTANTS.settingsSvg,
+          onClick: () => this._onSettings("window"),
         },
       ],
     });

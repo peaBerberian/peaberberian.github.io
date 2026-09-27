@@ -172,6 +172,12 @@ The following properties can be set for each application:
     open `"filePickerSave"` when the path to save at should not have change
     (still without the application knowing where).
 
+  - `"requestFocus"`: Allows the app to request that its window be restored and focused.
+
+  - `"busCall"`: Allows calls to other apps through the [desktop bus](#desktop-bus).
+
+  - `"busHandle"`: Allows registering handlers on the [desktop bus](#desktop-bus).
+
 - `"provider"` (`Array.<string>`, optional): The supplementary features the
   application can provide.
 
@@ -198,6 +204,53 @@ only be updated if apps of a previous version of the file are changed or
 removed.
 The intent is to make it more easily detectable when a user already created e.g.
 shortcuts to now deleted applications.
+
+### Desktop bus
+
+The desktop implement an IPC-like system called `bus`, which allows applications to
+exchange messages between one another.
+
+Native apps can declare these independent bus dependencies:
+
+- `"busHandle"` supplies `env.busHandle(method, handler)` under the app's own `id`.
+  Multiple instances can register; closing an instance removes its handlers.
+- `"busCall"` supplies `env.busCall(appId, method, ...args)`. It returns one
+  `Promise.allSettled` result per registered instance, in registration order.
+  Without receivers it returns `[]`; missing methods are per-instance errors.
+  Arguments and results are in-page JavaScript values.
+
+The bus neither discovers nor starts applications. With the `"open"` dependency,
+await `env.open(executable)` before calling a newly opened receiver:
+
+```js
+await env.open(receiverExecutable);
+const results = await env.busCall(receiverExecutable.id, "showSection", "window");
+```
+
+`env.open` returns a promise which waits for application initialization and
+content installation, including an existing single-instance app still loading.
+Opening errors reject that promise. Arrays return `Promise.all` for their opens.
+A handler with `"requestFocus"` can use `env.requestFocus()` to request that its
+window be restored and focused; this dependency also works for sandboxed apps.
+
+Bus transport for sandboxed apps is not implemented yet (not technical impossibility,
+but postponed because the need does not exist yet); the build rejects that dependencies
+for sandboxed apps.
+
+Errors have `name: "BusError"` and a stable `code`:
+
+| Code                | Meaning                                                         |
+| ------------------- | --------------------------------------------------------------- |
+| `InvalidArguments`  | Invalid target, method or handler.                             |
+| `CallerClosed`      | The calling app closed before dispatch.                         |
+| `DuplicateHandler`  | This instance already registered that method.                   |
+| `ReceiverClosed`    | Registration or dispatch attempted after receiver closure.      |
+| `UnknownMethod`     | A receiving instance has no such method.                        |
+| `HandlerFailed`     | Handler threw or rejected; `cause` holds the original error.    |
+
+Call validation and caller-closure errors reject the call promise.
+Dispatch errors appear in each instance's rejected result. Dispatch already in
+progress is not cancelled by window closure.
 
 ## The `create` function
 

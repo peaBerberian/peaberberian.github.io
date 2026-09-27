@@ -3,6 +3,7 @@ import {
   TASKBAR_MAX_HORIZONTAL_SIZE,
   TASKBAR_MIN_VERTICAL_SIZE,
   TASKBAR_MAX_VERTICAL_SIZE,
+  settingsSvg,
 } from "../constants.mjs";
 import { SETTINGS } from "../settings.mjs";
 import {
@@ -21,6 +22,8 @@ export default class Taskbar {
    * @param {Object} [opts={}]
    * @param {Array.<HTMLElement>} [opts.applets] - HTMLElements which will be
    * inserted to the right of the taskbar
+   * @param {Function} opts.onSettings - Opens the settings window at the given
+   * section.
    */
   constructor(opts = {}) {
     this._abortController = new AbortController();
@@ -37,7 +40,7 @@ export default class Taskbar {
     handleTaskbarMove(taskbarElt, this._abortController.signal);
     this._eltPerHandle = new WeakMap();
     this._appCallbacksPerElt = new WeakMap();
-    this._setupContextMenu();
+    this._setupContextMenu(opts.onSettings);
   }
 
   /**
@@ -184,7 +187,7 @@ export default class Taskbar {
     taskbarLastElt.innerHTML = "";
   }
 
-  _setupContextMenu() {
+  _setupContextMenu(onSettings) {
     const taskbarElt = document.getElementById("taskbar");
     setUpContextMenu({
       element: taskbarElt,
@@ -230,6 +233,13 @@ export default class Taskbar {
               cbs?.closeWindow();
             }
           },
+        },
+        { name: "separator" },
+        {
+          name: "settings",
+          title: "Taskbar settings",
+          svg: settingsSvg,
+          onClick: () => onSettings("taskbar"),
         },
       ],
     });

@@ -42,6 +42,7 @@ const USER_DESKTOP_CONFIG = "/userconfig/desktop.config.json";
  *   - `args` (`Args`): The optional arguments for that application.
  * @param {Function} onOpen - Callback that will be called when/if an app is
  * launched through its icon, with the corresponding application path.
+ * @param {Function} onSettings - Opens a specific Settings section.
  * @param {AbortSignal} [parentAbortSignal] - AbortSignal allowing to free
  * all resources taken by this component.
  * @returns {HTMLElement} - The list of icons displayed. It is assumed to fill
@@ -51,13 +52,14 @@ const USER_DESKTOP_CONFIG = "/userconfig/desktop.config.json";
 export default async function DesktopAppIcons(
   containerElt,
   onOpen,
+  onSettings,
   parentAbortSignal,
 ) {
   const iconWrapperElt = document.createElement("div");
   let lastAppListMemory;
   let currentAbortController = createLinkedAbortController(parentAbortSignal);
 
-  addContainerContextMenu(containerElt, onOpen, parentAbortSignal);
+  addContainerContextMenu(containerElt, onOpen, onSettings, parentAbortSignal);
   fs.watch(
     USER_DESKTOP_CONFIG,
     async () => {
@@ -525,7 +527,7 @@ export default async function DesktopAppIcons(
           },
         },
         { name: "separator" },
-        ...getBasicContextMenuActions(),
+        ...getBasicContextMenuActions(onOpen, onSettings),
       ],
     });
   }
@@ -770,16 +772,21 @@ function addMovingAroundListeners(
   }
 }
 
-function addContainerContextMenu(containerElt, onOpen, abortSignal) {
+function addContainerContextMenu(
+  containerElt,
+  onOpen,
+  onSettings,
+  abortSignal,
+) {
   setUpContextMenu({
     element: containerElt,
     filter: (e) => e.target === containerElt,
     abortSignal,
-    actions: getBasicContextMenuActions(onOpen),
+    actions: getBasicContextMenuActions(onOpen, onSettings),
   });
 }
 
-function getBasicContextMenuActions(onOpen) {
+function getBasicContextMenuActions(onOpen, onSettings) {
   return [
     {
       name: "reset",
@@ -823,11 +830,11 @@ function getBasicContextMenuActions(onOpen) {
     },
     { name: "separator" },
     {
-      name: "settings",
-      title: "Open settings",
+      name: "icon-settings",
+      title: "Desktop icon settings",
       svg: settingsSvg,
       onClick: () => {
-        onOpen("/apps/settings.run", []);
+        onSettings("icons");
       },
     },
     {

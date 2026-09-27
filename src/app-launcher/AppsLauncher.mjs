@@ -17,6 +17,7 @@ import { getAppUtils } from "../app-lib/app-utils.mjs";
 import { constructAppWithSidebar } from "../app-lib/sidebar.mjs";
 import WindowedApplicationStack from "./windowed_application_stack.mjs";
 import { launchSandboxedApp } from "./launch_sandboxed_app.mjs";
+import Bus from "./bus.mjs";
 import PathTokenCreator from "./path_token_creator.mjs";
 
 const { BASE_WINDOW_Z_INDEX, IMAGE_ROOT_PATH, __VERSION__ } = CONSTANTS;
@@ -44,8 +45,10 @@ export default class AppsLauncher {
    * @param {Object} taskbarManager - Abstraction allowing to show the current
    * opened application windows. The `AppsLauncher` will add and remove tasks to
    * that `TaskbarManager` for the corresponding windows.
+   * @param {Object} [windowOptions={}] - Desktop-provided AppWindow options.
    */
-  constructor(desktopElt, taskbarManager) {
+  constructor(desktopElt, taskbarManager, windowOptions = {}) {
+    this._windowOptions = windowOptions;
     /**
      * `HTMLElement` where new windows may be added and removed from.
      * @type {HTMLElement}
@@ -66,10 +69,12 @@ export default class AppsLauncher {
     this._sandboxInteractionWindow = null;
     /**
      * Metadata on all currently created windows.
-     * @type {Array.<{appWindow: AppWindow, appId: string}>}
+     * Each ready promise resolves after initialization and content installation.
+     * @type {Array.<{appWindow: AppWindow, appId: string, ready: Promise<void>}>}
      * @private
      */
     this._windows = [];
+    this.bus = new Bus();
 
     /**
      * Allows to add and remove tasks to the taskbar.
@@ -140,8 +145,9 @@ export default class AppsLauncher {
    * open animation for the optional new window linked to that application.
    * @param {boolean} [options.centered] - If set to `true`, the application
    * window will be centered relative to the desktop in which it can be moved.
-   * @returns {Promise.<boolean>} - `true` if a window has been created, `false`
-   * if not.
+   * @param {boolean} [options.background] - Start without activating the window.
+   * @returns {Promise.<boolean>} - Resolves after initialization and content installation:
+   * `true` for a new window, `false` for an existing instance. Rejects on failure.
    */
   async openApp(appPath, appArgs, options = {}) {
     // we're given a path, from which we can get the app's executable format:
@@ -182,8 +188,11 @@ export default class AppsLauncher {
       // exists. If so, activate it.
       const createdWindowForApp = this._getNextWindowForApp(app.id);
       if (createdWindowForApp !== null) {
-        createdWindowForApp.appWindow.deminimize();
-        createdWindowForApp.appWindow.activate();
+        if (!options.background) {
+          createdWindowForApp.appWindow.deminimize();
+          createdWindowForApp.appWindow.activate();
+        }
+        await createdWindowForApp.ready;
         return false;
       }
     }
@@ -208,6 +217,7 @@ export default class AppsLauncher {
 
     /** Window containing the application. */
     const appWindow = new AppWindow(appStack.getElement(), {
+      ...this._windowOptions,
       ...options,
       defaultHeight: app.data.defaultHeight,
       defaultWidth: app.data.defaultWidth,
@@ -215,7 +225,24 @@ export default class AppsLauncher {
       defaultTitle: app.title,
     });
 
-    this._windows.push({ appId: app.id, appWindow });
+    let resolveReady;
+    let rejectReady;
+    const windowInfo = {
+      appId: app.id,
+      appWindow,
+      ready: new Promise((resolve, reject) => {
+        resolveReady = resolve;
+        rejectReady = reject;
+      }),
+    };
+    applicationAbortCtrl.signal.addEventListener(
+      "abort",
+      () => {
+        rejectReady(applicationAbortCtrl.signal.reason);
+      },
+      { once: true },
+    );
+    this._windows.push(windowInfo);
 
     // Move a little perfectly-overlapping windows
     this._checkRelativeWindowPlacement(appWindow);
@@ -309,44 +336,62 @@ export default class AppsLauncher {
       appStack.onDeactivate();
     });
 
-    appWindow.activate();
-    this._taskbarManager.setActiveWindow(appWindow);
+    if (!options.background) {
+      appWindow.activate();
+      this._taskbarManager.setActiveWindow(appWindow);
+    }
 
     if (options.fullscreen) {
       appWindow.setFullscreen();
     }
 
     const env = this._constructEnvObject(
-      app.data.dependencies,
+      { appId: app.id, dependencies: app.data.dependencies },
       appStack,
       appWindow,
       applicationAbortCtrl.signal,
     );
 
     // Actually launch the application
-    this._launchAppFromAppData(
+    const appReady = this._launchAppFromAppData(
       "create",
       app.data,
       appArgs,
       env,
       appWindow,
       applicationAbortCtrl.signal,
-    ).then(
-      (appObj) => {
+    );
+    appReady
+      .then(async (appObj) => {
         if (applicationAbortCtrl.signal.aborted) {
           appStack.onClose();
-          return;
+          throw new DOMException(
+            "Application closed during initialization.",
+            "AbortError",
+          );
         }
-        // /!\ Note that we replace here, the element communicated to the
-        // `AppWindow` is stale now. Hopefully, it shouldn't care.
+        // Install the wrapper before waiting for sandbox iframe initialization.
         appStack.replaceAll(appObj, appWindow.isActivated());
-      },
-      (err) => {
-        appStack.replaceAll(getErrorApp(err).element, appWindow.isActivated());
-      },
-    );
+        await appObj.ready;
+        if (applicationAbortCtrl.signal.aborted) {
+          throw new DOMException(
+            "Application closed during initialization.",
+            "AbortError",
+          );
+        }
+      })
+      .catch((err) => {
+        const wasClosed = applicationAbortCtrl.signal.aborted;
+        applicationAbortCtrl.abort(err);
+        if (!wasClosed) {
+          appStack.replaceAll(getErrorApp(err), appWindow.isActivated());
+        }
+        throw err;
+      })
+      .then(resolveReady, rejectReady);
 
     this._desktopElt.appendChild(appWindow.element);
+    await windowInfo.ready;
     return true;
   }
 
@@ -607,7 +652,10 @@ export default class AppsLauncher {
 
         const env = {
           ...this._constructEnvObject(
-            filePickerApp.data.dependencies,
+            {
+              appId: filePickerApp.id,
+              dependencies: filePickerApp.data.dependencies,
+            },
             appStack,
             appWindow,
             fileOpenerAbortCtrl.signal,
@@ -666,7 +714,10 @@ export default class AppsLauncher {
         };
         const env = {
           ...this._constructEnvObject(
-            filePickerApp.data.dependencies,
+            {
+              appId: filePickerApp.id,
+              dependencies: filePickerApp.data.dependencies,
+            },
             appStack,
             appWindow,
             fileSaverAbortCtrl.signal,
@@ -762,13 +813,19 @@ export default class AppsLauncher {
   /**
    * Construct `env` object that is given to application as their link to the
    * desktop element.
-   * @param {Array.<string>} dependencies - The application's listed
-   * dependencies.
+   * @param {Object} appContext - Application identity and declared permissions.
+   * @param {string} appContext.appId - Identity supplied by the launcher.
+   * @param {Array.<string>} [appContext.dependencies] - Requested APIs.
    * @param {WindowedApplicationStack} appStack
    * @param {AppWindow} appWindow
    * @param {AbortSignal} abortSignal
    */
-  _constructEnvObject(dependencies, appStack, appWindow, abortSignal) {
+  _constructEnvObject(
+    { appId, dependencies },
+    appStack,
+    appWindow,
+    abortSignal,
+  ) {
     /**
      * Construct `env` object that is given to application as their link to the
      * desktop element.
@@ -789,6 +846,14 @@ export default class AppsLauncher {
     };
 
     if (Array.isArray(dependencies)) {
+      Object.assign(env, this.bus.getAPIsFor(appId, dependencies, abortSignal));
+      if (dependencies.includes("requestFocus")) {
+        env.requestFocus = () => {
+          if (abortSignal.aborted) return;
+          appWindow.deminimize();
+          appWindow.activate();
+        };
+      }
       if (dependencies.includes("CONSTANTS")) {
         // TODO: remove need for that one
         env.CONSTANTS = CONSTANTS;
@@ -815,9 +880,9 @@ export default class AppsLauncher {
         env.open = (path) => {
           if (Array.isArray(path)) {
             // TODO: multiple open in same app should be possible? E.g. image-viewer
-            path.forEach((p) => this.open(p));
+            return Promise.all(path.map((p) => this.open(p)));
           } else {
-            this.open(path);
+            return this.open(path);
           }
         };
       }

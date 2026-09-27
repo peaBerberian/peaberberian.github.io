@@ -680,7 +680,8 @@ export default [`;
           if (Array.isArray(app.dependencies)) {
             for (const dep of app.dependencies) {
               if (
-                ["CONSTANTS", "settings", "fileSystems", "open"].includes(dep)
+                ["CONSTANTS", "settings", "fileSystems", "open"].includes(dep) ||
+                ["busCall", "busHandle"].includes(dep)
               ) {
                 throw new Error(
                   `Error in app "${app.id}". Invalid "sandboxed" property: incompatible with asked dependencies.`,
@@ -756,6 +757,9 @@ export default [`;
                 "filePickerSave",
                 "quickSave",
                 "open",
+                "busCall",
+                "busHandle",
+                "requestFocus",
               ].includes(dep)
             ) {
               throw new Error(

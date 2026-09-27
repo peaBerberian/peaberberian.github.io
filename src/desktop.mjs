@@ -53,6 +53,8 @@ import DesktopAppIcons from "./components/DesktopAppIcons.mjs";
 import StartMenu from "./components/StartMenu.mjs";
 import Taskbar from "./components/Taskbar.mjs";
 import AppsLauncher from "./app-launcher/AppsLauncher.mjs";
+import builtInApps from "./__generated_apps.mjs";
+import notificationEmitter from "./components/notification_emitter.mjs";
 import initializeClockApplet from "./clock_applet.mjs";
 import { SETTINGS } from "./settings.mjs";
 import { PROJECT_REPO } from "./constants.mjs";
@@ -77,7 +79,7 @@ async function start() {
   /** Clock shown as a taskbar "applet". */
   const clockElt = initializeClockApplet();
   clockElt.onclick = function () {
-    appsLauncher.openApp("/apps/clock.run", [], {
+    openPath("/apps/clock.run", [], {
       centered: true,
     });
   };
@@ -89,10 +91,15 @@ async function start() {
     }
   };
 
-  const taskbarManager = new Taskbar({ applets: [clockElt] });
-  const appsLauncher = new AppsLauncher(desktopElt, taskbarManager);
+  const taskbarManager = new Taskbar({
+    applets: [clockElt],
+    onSettings: showSettings,
+  });
+  const appsLauncher = new AppsLauncher(desktopElt, taskbarManager, {
+    onSettings: showSettings,
+  });
 
-  DesktopAppIcons(desktopElt, openPath);
+  DesktopAppIcons(desktopElt, openPath, showSettings, undefined);
   StartMenu(openPath);
 
   // Open default app or asked one
@@ -105,25 +112,53 @@ async function start() {
   }
   if (!wantedApp) {
     if (SETTINGS.aboutMeStart.getValue()) {
-      appsLauncher.openApp("/apps/about.run", [], {
+      openPath("/apps/about.run", [], {
         skipAnim: true,
         centered: true,
       });
     }
   } else if (wantedApp !== SPECIAL_NO_APP_STRING) {
-    appsLauncher.openApp(`/apps/${wantedApp}.run`, [], {
+    openPath(`/apps/${wantedApp}.run`, [], {
       skipAnim: true,
       centered: true,
     });
   }
 
-  function openPath(appPath, appArgs) {
-    if (appArgs && appArgs.length > 0) {
-      appsLauncher.openApp(appPath, appArgs);
-    } else {
-      // If there's no argument, just use the more compatible open:
-      // It also works for non-executables
-      appsLauncher.open(appPath);
+  async function showSettings(section) {
+    try {
+      const settingsApp = builtInApps.find((app) => app.id === "settings");
+      await appsLauncher.openApp(settingsApp, [], { background: true });
+      const results = await appsLauncher.bus.call(
+        "settings",
+        "showSection",
+        section,
+      );
+      for (const result of results) {
+        if (result.status === "rejected") {
+          throw result.reason;
+        }
+      }
+    } catch (error) {
+      if (error.name === "AbortError") {
+        return;
+      }
+      notificationEmitter.error("Settings", error.toString());
+    }
+  }
+
+  async function openPath(appPath, appArgs, options) {
+    try {
+      if (options || (appArgs && appArgs.length > 0)) {
+        await appsLauncher.openApp(appPath, appArgs ?? [], options);
+      } else {
+        // With no arguments or window options, also support non-executable files.
+        await appsLauncher.open(appPath);
+      }
+    } catch (error) {
+      // Launch failures already have an error window or filesystem notification.
+      if (error.name !== "AbortError") {
+        console.error("Failed to open application", error);
+      }
     }
   }
 }

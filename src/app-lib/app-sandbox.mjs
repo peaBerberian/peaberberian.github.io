@@ -336,6 +336,10 @@ function startApp(data) {
 
   data.dependencies = data.dependencies ?? [];
 
+  appEnv.requestFocus = data.dependencies.includes("requestFocus")
+    ? () => parent.postMessage({ type: "__pwd__request-focus" }, desktopOrigin ?? "*")
+    : undefined;
+
   if (data.dependencies.includes("notificationEmitter")) {
     appEnv.notificationEmitter = ["success", "error", "warning", "info"].reduce(
       (acc, typ) => {

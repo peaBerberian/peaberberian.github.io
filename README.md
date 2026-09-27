@@ -66,9 +66,9 @@ here that I find interesting:
      choosing well the DOM API that I call, and by being careful in how I'm
      updating the DOM.
 
-  2. When large rendering updates occur (e.g. during a window resize), I ensure
-     that it needs to be re-rendered in JS before doing the updates (all in the
-     same scheduled animation frame when possible).
+  2. When large rendering updates occur (e.g. during the browser's windows
+     resize), I ensure that it needs to be re-rendered in JS before doing
+     the updates (all in the same scheduled animation frame when possible).
 
   3. Complex animations are all done in CSS only.
 
@@ -85,14 +85,16 @@ here that I find interesting:
      efficiently is what dragged me to this rabbit hole of implementing a desktop.
 
 - I implemented a common UI design for most base applications, which all respect
-  JKJthe current theme chosen in the settings by relying on CSS variables.
+  the current theme chosen in the settings by relying on CSS variables.
 
-- The icons in the desktop, the start menu, the taskbar and application windows
-  (but not the application launcher relying on it) are all "components" with a
-  simple enough API that could theoretically be implemented differently (e.g. a
-  "dock" instead of a taskbar).
+- The icons in the desktop, the start menu, the taskbar, notification system and
+  application windows (but not the application launcher relying on it) are all
+  "components" with a simple enough API that could theoretically be implemented
+  differently (e.g. a "dock" instead of a taskbar).
 
   I didn't give too much time yet on how this could be replaced though.
+
+- An IPC-like `bus` allows app-to-app (or desktop-to-app) communication.
 
 ### Note on keyboard shortcuts
 

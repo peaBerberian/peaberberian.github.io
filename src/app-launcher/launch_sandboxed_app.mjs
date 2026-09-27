@@ -76,6 +76,18 @@ export function launchSandboxedApp(
 ) {
   let isIframeLoaded = false;
   let isActivated = true;
+  let resolveReady;
+  let rejectReady;
+  // The wrapper must be installed before the iframe can initialize.
+  const ready = new Promise((resolve, reject) => {
+    resolveReady = resolve;
+    rejectReady = reject;
+  });
+  // Closing before the wrapper is installed can precede the launcher's await.
+  ready.catch(() => {});
+  abortSignal.addEventListener("abort", () => {
+    rejectReady(new DOMException("Application closed during initialization.", "AbortError"));
+  }, { once: true });
   const backgroundColor = parseAppDefaultBackground(appData.defaultBackground);
   const wrapperElt = document.createElement("div");
   applyStyle(wrapperElt, {
@@ -108,6 +120,7 @@ export function launchSandboxedApp(
       env,
       callbacks,
       () => {
+        resolveReady();
         iframe.style.display = "block";
         spinnerElt.onClose();
         try {
@@ -124,6 +137,7 @@ export function launchSandboxedApp(
         }
       },
       (err) => {
+        rejectReady(err);
         try {
           iframe.remove();
           spinnerElt.onClose();
@@ -158,6 +172,7 @@ export function launchSandboxedApp(
 
   return {
     element: wrapperElt,
+    ready,
     onActivate: () => {
       isActivated = true;
       if (!isIframeLoaded) {
@@ -183,7 +198,7 @@ export function launchSandboxedApp(
       if (iframe.contains(document.activeElement)) {
         document.activeElement.blur();
       }
-      iframe.contentWindow.postMessage(
+      iframe.contentWindow?.postMessage(
         {
           type: "__pwd__deactivate",
           data: null,
@@ -328,6 +343,11 @@ function processEventsFromIframe(
       case "__pwd__update-title":
         checkUpdateTitleMessageData(e.data.data);
         cbs.updateTitle(e.data.data.icon ?? null, e.data.data.title);
+        break;
+
+      case "__pwd__request-focus":
+        // The parent capability is authoritative, including for forged messages.
+        cbs.requestFocus?.();
         break;
 
       case "__pwd__close-app":

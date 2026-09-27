@@ -206,19 +206,15 @@ ol {
   width: 100%;
   padding: 14px;
   border: 1px solid var(--window-line-color);
-  border-radius: 6px;
+  border-radius: 3px;
   background-color: var(--window-content-bg);
   color: var(--window-text-color);
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease;
 }
 .about-project-link:hover,
 .about-project-link:focus {
-  border-color: var(--app-primary-color);
   background-color: var(--app-primary-bg);
 }
 .about-project-icon {

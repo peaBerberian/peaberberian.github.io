@@ -249,15 +249,21 @@ ol {
   line-height: 1.4;
 }
 .about-fullscreen-action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 0;
 }
-.btn.about-fullscreen-button {
+.btn.about-fullscreen-button,
+.btn.about-settings-button {
   padding: 5px 9px;
   box-shadow: none;
   font-size: 0.9em;
 }
 .btn.about-fullscreen-button:hover,
-.btn.about-fullscreen-button:active {
+.btn.about-fullscreen-button:active,
+.btn.about-settings-button:hover,
+.btn.about-settings-button:active {
   transform: none;
   box-shadow: none;
   border-color: var(--app-primary-color);

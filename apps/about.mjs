@@ -292,6 +292,14 @@ ${formatSelectedProjects(selectedProjects, env)}
         fullscreenAction.className = "about-fullscreen-action";
         const fullscreenButton = createFullscreenButton(abortSignal);
         fullscreenButton.classList.add("about-fullscreen-button");
+        const settingsButton = document.createElement("button");
+        settingsButton.type = "button";
+        settingsButton.className = "btn about-settings-button";
+        settingsButton.textContent = "Customize this desktop";
+        settingsButton.addEventListener("click", () => {
+          env.open("/apps/settings.run");
+        });
+        fullscreenAction.appendChild(settingsButton);
         fullscreenAction.appendChild(fullscreenButton);
         descElt.appendChild(fullscreenAction);
       }

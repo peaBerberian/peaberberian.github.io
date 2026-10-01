@@ -55,7 +55,11 @@ export default class WindowOverview {
       (event) => this._blockNonPrimaryClick(event),
       true,
     );
-    document.addEventListener("keydown", (event) => this._onKeyDown(event), true);
+    document.addEventListener(
+      "keydown",
+      (event) => this._onKeyDown(event),
+      true,
+    );
     window.addEventListener("resize", () => {
       if (this.isOpen()) {
         this.hide({ animate: false });
@@ -76,7 +80,9 @@ export default class WindowOverview {
       return true;
     }
 
-    const appWindows = this._getWindows().filter((window) => !window.isClosed());
+    const appWindows = this._getWindows().filter(
+      (window) => !window.isClosed(),
+    );
     if (appWindows.length === 0) {
       return false;
     }
@@ -93,13 +99,17 @@ export default class WindowOverview {
     const desktopRect = this._desktopElt.getBoundingClientRect();
     this._entries = appWindows.map((appWindow) => {
       const element = appWindow.element;
+      // TODO: That's a very bad way to detect if a window is visible. Also why do we care?
       const visibleElement = element.getElementsByClassName("w-visible")[0];
+      // TODO: That's a very bad way to obtain the title and the icon don't do that
       const title =
         element.getElementsByClassName("w-title-title")[0]?.textContent ||
         "Untitled window";
       const icon =
         element.getElementsByClassName("w-title-icon")[0]?.textContent || "";
       const minimized = appWindow.isMinimizedOrMinimizing();
+
+      // TODO: This is a huge undocumented object. This is just bad
       const saved = {
         transform: element.style.transform,
         transformOrigin: element.style.transformOrigin,
@@ -123,24 +133,21 @@ export default class WindowOverview {
       element.style.transition = "none";
       element.tabIndex = 0;
       element.setAttribute("role", "button");
-      element.setAttribute(
-        "aria-label",
-        `Open ${title}${minimized ? ", minimized" : ""}`,
-      );
+      element.setAttribute("aria-label", `Open ${title}`);
       if (visibleElement) {
         visibleElement.inert = true;
       }
       if (minimized) {
+        // TODO: What does this mean here?
         element.style.opacity = "0";
       }
 
       const label = document.createElement("div");
       label.className = "window-overview-label";
-      label.textContent = `${icon ? icon + " " : ""}${title}${
-        minimized ? " · minimized" : ""
-      }`;
+      label.textContent = `${icon ? icon + " " : ""}${title}`;
       this._desktopElt.appendChild(label);
 
+      // TODO: There might be too much stuff to keep track of here
       return {
         appWindow,
         element,
@@ -153,6 +160,7 @@ export default class WindowOverview {
     });
     this._applyOverviewStacking();
 
+    // TODO: no idea what that comment means
     // The overview class makes minimized windows measurable again.
     this._desktopElt.getBoundingClientRect();
     const windowRects = this._entries.map((entry) =>
@@ -169,6 +177,7 @@ export default class WindowOverview {
       const target = layout[index];
       const translateX = desktopRect.left + target.left - rect.left;
       const translateY = desktopRect.top + target.top - rect.top;
+      // TODO: The fuck? We're now even adding more random properties into it? How am I suppose to maintain this?
       entry.targetTransform = `translate(${translateX}px, ${translateY}px) scale(${target.scale})`;
       entry.targetCenter = {
         x: target.left + target.width / 2,
@@ -192,6 +201,7 @@ export default class WindowOverview {
           `opacity ${OVERVIEW_ANIMATION_DURATION}ms ease`;
         entry.element.style.transform = entry.targetTransform;
         entry.element.style.opacity = "1";
+        // TODO: What is this for?
         entry.label.classList.add("visible");
       }
 
@@ -261,6 +271,7 @@ export default class WindowOverview {
         entry.element.style.transition = "none";
       }
       entry.element.style.transform = entry.saved.transform;
+      // TODO why minimized has an influence here?
       entry.element.style.opacity = entry.minimized ? "0" : entry.saved.opacity;
     }
 
@@ -357,7 +368,9 @@ export default class WindowOverview {
     if (windowElement) {
       event.preventDefault();
       event.stopPropagation();
-      const entry = this._entries.find(({ element }) => element === windowElement);
+      const entry = this._entries.find(
+        ({ element }) => element === windowElement,
+      );
       if (entry) {
         this._select(entry);
       }
@@ -419,6 +432,7 @@ export default class WindowOverview {
     if (wasMinimized) {
       entry.appWindow.deminimize({ animate: false });
       entry.minimized = false;
+      // TODO: Not sure to follow what the next two are for now that it is deminimized
       entry.saved.transformOrigin = entry.element.style.transformOrigin;
       entry.element.style.transformOrigin = "top left";
     }

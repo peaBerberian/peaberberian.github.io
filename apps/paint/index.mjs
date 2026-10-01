@@ -180,9 +180,9 @@ export function create(_args, env, abortSignal) {
   function activateTool(elt, name) {
     for (const tool of toolElements) {
       if (tool === elt) {
-        tool.children[0].setAttribute("fill", env.STYLE.primaryColor);
+        tool.children[0].style.color = env.STYLE.primaryColor;
       } else {
-        tool.children[0].setAttribute("fill", env.STYLE.textColor);
+        tool.children[0].style.color = env.STYLE.textColor;
       }
     }
     currentTool = name;
@@ -201,36 +201,20 @@ export function create(_args, env, abortSignal) {
     },
   );
 
-  for (const [toolSvg, toolName, config] of [
-    [brushSvg, "Brush", { heightScale: 1, enableSizeSelection: true }],
-    [lineSvg, "Line", { heightScale: 1, enableSizeSelection: true }],
-    [
-      squareSvg,
-      "Rectangle Outline",
-      { heightScale: 0.8, enableSizeSelection: true },
-    ],
-    [
-      circleSvg,
-      "Circle Outline",
-      { heightScale: 0.8, enableSizeSelection: true },
-    ],
-    [
-      filledSquareSvg,
-      "Rectangle",
-      { heightScale: 0.6, enableSizeSelection: false },
-    ],
-    [filledCircleSvg, "Circle", { heightScale: 1, enableSizeSelection: false }],
-    [bucketSvg, "Bucket", { heightScale: 1, enableSizeSelection: false }],
-    [eraserSvg, "Eraser", { heightScale: 1, enableSizeSelection: true }],
-    [
-      cursorSvg,
-      "Cursor (no tool)",
-      { heightScale: 1, enableSizeSelection: false },
-    ],
+  for (const [toolSvg, toolName, enableSizeSelection] of [
+    [brushSvg, "Brush", true],
+    [lineSvg, "Line", true],
+    [squareSvg, "Rectangle Outline", true],
+    [circleSvg, "Circle Outline", true],
+    [filledSquareSvg, "Rectangle", false],
+    [filledCircleSvg, "Circle", false],
+    [bucketSvg, "Bucket", false],
+    [eraserSvg, "Eraser", true],
+    [cursorSvg, "Cursor (no tool)", false],
   ]) {
-    const toolElt = createToolElt(toolSvg, toolName, config.heightScale, () => {
+    const toolElt = createToolElt(toolSvg, toolName, () => {
       activateTool(toolElt, toolName);
-      if (config.enableSizeSelection) {
+      if (enableSizeSelection) {
         sizeSelectorElt.style.display = "block";
       } else {
         sizeSelectorElt.style.display = "none";
@@ -976,12 +960,12 @@ export function create(_args, env, abortSignal) {
     return sizeSelectorElt;
   }
 
-  function createToolElt(toolSvg, title, heightScale, onClick) {
+  function createToolElt(toolSvg, title, onClick) {
     const toolSvgElt = getSvg(toolSvg);
     applyStyle(toolSvgElt, {
       width: "2rem",
-      height: `${heightScale * 2}rem`,
-      minHeight: `${heightScale * 2}rem`,
+      height: "2rem",
+      minHeight: "2rem",
       margin: "10px",
       overflow: "visible",
     });

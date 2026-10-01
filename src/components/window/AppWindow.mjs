@@ -214,10 +214,23 @@ export default class AppWindow extends EventEmitter {
     this.trigger("minimizing");
   }
 
-  deminimize() {
-    if (this.isMinimizedOrMinimizing()) {
-      this._performWindowTransition("deminimize");
+  /**
+   * Restore a minimized window.
+   * @param {Object} [options]
+   * @param {boolean} [options.animate=true]
+   */
+  deminimize({ animate = true } = {}) {
+    if (!this.isMinimizedOrMinimizing()) {
+      return;
     }
+    if (animate) {
+      this._performWindowTransition("deminimize");
+      return;
+    }
+
+    this._cancelCurrentTransition();
+    this.element.classList.remove("minimized");
+    this.trigger("deminimized");
   }
 
   /**
@@ -457,6 +470,19 @@ export default class AppWindow extends EventEmitter {
         return true;
     }
     return true;
+  }
+
+  /**
+   * Abort any running open/minimize/deminimize/exit-fullscreen transition and
+   * return to the idle state, skipping the usual end-of-transition side effects
+   * (e.g. the "minimized" class and event that a finishing minimize would apply).
+   * @private
+   */
+  _cancelCurrentTransition() {
+    this.element.onanimationend = null;
+    this.element.style.animation = "";
+    this.element.style.transition = "";
+    this.element.dataset.state = "";
   }
 
   _setPositionAndSize({ isInitialization, centerOnDesktop }) {

@@ -224,7 +224,11 @@ await `env.open(executable)` before calling a newly opened receiver:
 
 ```js
 await env.open(receiverExecutable);
-const results = await env.busCall(receiverExecutable.id, "showSection", "window");
+const results = await env.busCall(
+  receiverExecutable.id,
+  "showSection",
+  "window",
+);
 ```
 
 `env.open` returns a promise which waits for application initialization and
@@ -239,14 +243,14 @@ for sandboxed apps.
 
 Errors have `name: "BusError"` and a stable `code`:
 
-| Code                | Meaning                                                         |
-| ------------------- | --------------------------------------------------------------- |
-| `InvalidArguments`  | Invalid target, method or handler.                             |
-| `CallerClosed`      | The calling app closed before dispatch.                         |
-| `DuplicateHandler`  | This instance already registered that method.                   |
-| `ReceiverClosed`    | Registration or dispatch attempted after receiver closure.      |
-| `UnknownMethod`     | A receiving instance has no such method.                        |
-| `HandlerFailed`     | Handler threw or rejected; `cause` holds the original error.    |
+| Code               | Meaning                                                      |
+| ------------------ | ------------------------------------------------------------ |
+| `InvalidArguments` | Invalid target, method or handler.                           |
+| `CallerClosed`     | The calling app closed before dispatch.                      |
+| `DuplicateHandler` | This instance already registered that method.                |
+| `ReceiverClosed`   | Registration or dispatch attempted after receiver closure.   |
+| `UnknownMethod`    | A receiving instance has no such method.                     |
+| `HandlerFailed`    | Handler threw or rejected; `cause` holds the original error. |
 
 Call validation and caller-closure errors reject the call promise.
 Dispatch errors appear in each instance's rejected result. Dispatch already in
@@ -270,7 +274,7 @@ depending on the application's needs:
 
     Contains the following properties:
     - `appUtils` (`Object`): the standard desktop libraries (look at
-      `../src/app-launcher/app-utils` for more information on what utils there
+      `../src/app-lib/app-utils.mjs` for more information on what utils there
       is)
 
     - The `getImageRootPath` function, which returns the base URL where static

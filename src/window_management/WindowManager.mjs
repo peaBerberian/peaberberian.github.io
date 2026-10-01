@@ -2,6 +2,7 @@ import * as CONSTANTS from "../constants.mjs";
 import { SETTINGS } from "../settings.mjs";
 import filesystem, { getName } from "../filesystem/filesystem.mjs";
 import AppWindow from "../components/window/AppWindow.mjs";
+import WindowOverview from "../components/window/WindowOverview.mjs";
 import notificationEmitter from "../components/notification_emitter.mjs";
 import {
   dispatchSandboxWindowInteractionStart,
@@ -23,7 +24,7 @@ import PathTokenCreator from "./path_token_creator.mjs";
 const { BASE_WINDOW_Z_INDEX, IMAGE_ROOT_PATH, __VERSION__ } = CONSTANTS;
 
 /**
- * Class simplifying the task of Launching applications:
+ * Class simplifying the task of managing application windows:
  *
  * - set-up windows
  *
@@ -32,18 +33,20 @@ const { BASE_WINDOW_Z_INDEX, IMAGE_ROOT_PATH, __VERSION__ } = CONSTANTS;
  * - communicates with the taskbar to tell when an application is activated /
  *   deactivated, and how to close it.
  *
- * - Provide then the right arguments.and dependencies to application.
+ * - Provide then the right arguments and dependencies to application.
  *
- * A single AppsLauncher should be created per desktop.
- * @class AppsLauncher
+ * - Provide tools allowing to constructing a "view" of all opened apps.
+ *
+ * A single WindowManager should be created per desktop.
+ * @class WindowManager
  */
-export default class AppsLauncher {
+export default class WindowManager {
   /**
-   * Creates a new `AppsLauncher` for the desktop.
+   * Creates a new `WindowManager` for the desktop.
    * @param {HTMLElement} dekstopElt - `HTMLElement` where new windows may be
    * added and removed from.
    * @param {Object} taskbarManager - Abstraction allowing to show the current
-   * opened application windows. The `AppsLauncher` will add and remove tasks to
+   * opened application windows. The `WindowManager` will add and remove tasks to
    * that `TaskbarManager` for the corresponding windows.
    * @param {Object} [windowOptions={}] - Desktop-provided AppWindow options.
    */
@@ -74,6 +77,9 @@ export default class AppsLauncher {
      * @private
      */
     this._windows = [];
+    this._windowOverview = new WindowOverview(this._desktopElt, () =>
+      this._windows.map(({ appWindow }) => appWindow),
+    );
     this.bus = new Bus();
 
     /**
@@ -120,19 +126,6 @@ export default class AppsLauncher {
   }
 
   /**
-   * Register that the current pointer interaction began inside a sandboxed app.
-   * This lets desktop click handling preserve the window's activation state.
-   * @param {AppWindow} appWindow
-   * @private
-   */
-  _onSandboxWindowInteractionStart(appWindow) {
-    this._mousedownTarget = null;
-    this._sandboxInteractionWindow = appWindow;
-    dispatchSandboxWindowInteractionStart({ appWindow });
-    appWindow.activate();
-  }
-
-  /**
    * Open the given application, and optionally open a window for it.
    * @param {string} appPath - FileSystem path to the application to run (e.g.
    * `/apps/about.run`).
@@ -150,6 +143,8 @@ export default class AppsLauncher {
    * `true` for a new window, `false` for an existing instance. Rejects on failure.
    */
   async openApp(appPath, appArgs, options = {}) {
+    this._windowOverview.hide({ animate: false });
+
     // we're given a path, from which we can get the app's executable format:
     // an object with all its metadata, including the script to import to run it.
     let app;
@@ -250,13 +245,26 @@ export default class AppsLauncher {
     this._taskbarManager.addWindow(appWindow, app, {
       isWindowActivated: () => appWindow.isActivated(),
       isWindowMinimized: () => appWindow.isMinimizedOrMinimizing(),
-      minimizeWindow: () => appWindow.minimize(),
-      restoreWindow: () => appWindow.deminimize(),
-      activateWindow: () => appWindow.activate(),
-      closeWindow: () => appWindow.close(),
+      minimizeWindow: () => {
+        this._windowOverview.hide({ animate: false });
+        appWindow.minimize();
+      },
+      restoreWindow: () => {
+        this._windowOverview.hide({ animate: false });
+        appWindow.deminimize();
+      },
+      activateWindow: () => {
+        this._windowOverview.hide({ animate: false });
+        appWindow.activate();
+      },
+      closeWindow: () => {
+        this._windowOverview.hide({ animate: false });
+        appWindow.close();
+      },
     });
 
     appWindow.addEventListener("closing", () => {
+      this._windowOverview.hide({ animate: false });
       applicationAbortCtrl.abort();
       const windowIndex = this._windows.findIndex(
         (elt) => elt.appWindow === appWindow,
@@ -500,6 +508,14 @@ export default class AppsLauncher {
     if (currentWindowWithMaxZIndex) {
       currentWindowWithMaxZIndex.activate();
     }
+  }
+
+  /**
+   * Toggle the selectable overview of all open windows.
+   * @returns {boolean} `true` if the overview was opened.
+   */
+  toggleWindowOverview() {
+    return this._windowOverview.toggle();
   }
 
   /**
@@ -943,5 +959,18 @@ export default class AppsLauncher {
       }
     }
     return env;
+  }
+
+  /**
+   * Register that the current pointer interaction began inside a sandboxed app.
+   * This lets desktop click handling preserve the window's activation state.
+   * @param {AppWindow} appWindow
+   * @private
+   */
+  _onSandboxWindowInteractionStart(appWindow) {
+    this._mousedownTarget = null;
+    this._sandboxInteractionWindow = appWindow;
+    dispatchSandboxWindowInteractionStart({ appWindow });
+    appWindow.activate();
   }
 }

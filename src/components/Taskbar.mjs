@@ -24,6 +24,7 @@ export default class Taskbar {
    * inserted to the right of the taskbar
    * @param {Function} opts.onSettings - Opens the settings window at the given
    * section.
+   * @param {Function} [opts.onShowWindows] - Toggles the window overview.
    */
   constructor(opts = {}) {
     this._abortController = new AbortController();
@@ -36,6 +37,11 @@ export default class Taskbar {
     }
     this._taskbarItemsElt =
       taskbarElt.getElementsByClassName("taskbar-items")[0];
+    this._windowOverviewButton = this._createWindowOverviewButton(
+      opts.onShowWindows,
+    );
+    this._taskbarItemsElt.before(this._windowOverviewButton);
+    this._updateWindowOverviewButton();
     addResizeHandle(taskbarElt, this._abortController.signal);
     handleTaskbarMove(taskbarElt, this._abortController.signal);
     this._eltPerHandle = new WeakMap();
@@ -97,6 +103,7 @@ export default class Taskbar {
     itemElt.appendChild(titleElt);
     this._eltPerHandle.set(windowHandle, itemElt);
     this._taskbarItemsElt.appendChild(itemElt);
+    this._updateWindowOverviewButton();
   }
 
   /**
@@ -174,6 +181,7 @@ export default class Taskbar {
     const itemElt = this._eltPerHandle.get(windowHandle);
     if (itemElt) {
       itemElt.remove();
+      this._updateWindowOverviewButton();
     }
   }
 
@@ -183,8 +191,42 @@ export default class Taskbar {
   dispose() {
     this._abortController.abort();
     this._taskbarItemsElt.innerHTML = "";
+    this._windowOverviewButton.remove();
     const taskbarLastElt = document.getElementById("taskbar-last");
     taskbarLastElt.innerHTML = "";
+  }
+
+  _createWindowOverviewButton(onShowWindows) {
+    const button = document.createElement("button");
+    button.id = "window-overview-button";
+    button.type = "button";
+    button.innerHTML = `<svg aria-hidden="true" viewBox="0 0 24 24">
+      <rect x="3" y="4" width="8" height="7" rx="1"></rect>
+      <rect x="13" y="4" width="8" height="7" rx="1"></rect>
+      <rect x="3" y="13" width="8" height="7" rx="1"></rect>
+      <rect x="13" y="13" width="8" height="7" rx="1"></rect>
+    </svg>`;
+    button.addEventListener("click", () => onShowWindows?.());
+    button.addEventListener("auxclick", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    button.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    return button;
+  }
+
+  _updateWindowOverviewButton() {
+    const windowCount = this._taskbarItemsElt.children.length;
+    this._windowOverviewButton.disabled = windowCount === 0;
+    this._windowOverviewButton.title =
+      windowCount === 0 ? "No open window" : "Show all windows";
+    this._windowOverviewButton.setAttribute(
+      "aria-label",
+      this._windowOverviewButton.title,
+    );
   }
 
   _setupContextMenu(onSettings) {

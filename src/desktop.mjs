@@ -52,7 +52,7 @@
 import DesktopAppIcons from "./components/DesktopAppIcons.mjs";
 import StartMenu from "./components/StartMenu.mjs";
 import Taskbar from "./components/Taskbar.mjs";
-import AppsLauncher from "./app-launcher/AppsLauncher.mjs";
+import WindowManager from "./window_management/WindowManager.mjs";
 import builtInApps from "./__generated_apps.mjs";
 import notificationEmitter from "./components/notification_emitter.mjs";
 import initializeClockApplet from "./clock_applet.mjs";
@@ -91,11 +91,13 @@ async function start() {
     }
   };
 
+  let windowManager;
   const taskbarManager = new Taskbar({
     applets: [clockElt],
     onSettings: showSettings,
+    onShowWindows: () => windowManager?.toggleWindowOverview(),
   });
-  const appsLauncher = new AppsLauncher(desktopElt, taskbarManager, {
+  windowManager = new WindowManager(desktopElt, taskbarManager, {
     onSettings: showSettings,
   });
 
@@ -127,8 +129,8 @@ async function start() {
   async function showSettings(section) {
     try {
       const settingsApp = builtInApps.find((app) => app.id === "settings");
-      await appsLauncher.openApp(settingsApp, [], { background: true });
-      const results = await appsLauncher.bus.call(
+      await windowManager.openApp(settingsApp, [], { background: true });
+      const results = await windowManager.bus.call(
         "settings",
         "showSection",
         section,
@@ -149,10 +151,10 @@ async function start() {
   async function openPath(appPath, appArgs, options) {
     try {
       if (options || (appArgs && appArgs.length > 0)) {
-        await appsLauncher.openApp(appPath, appArgs ?? [], options);
+        await windowManager.openApp(appPath, appArgs ?? [], options);
       } else {
         // With no arguments or window options, also support non-executable files.
-        await appsLauncher.open(appPath);
+        await windowManager.open(appPath);
       }
     } catch (error) {
       // Launch failures already have an error window or filesystem notification.

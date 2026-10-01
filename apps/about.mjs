@@ -4,7 +4,7 @@ const IMAGE_WIDTH = 60;
 const quickLinks = [
   {
     link: "https://github.com/peaBerberian",
-    label: "GitHub",
+    label: "GitHub profile",
     description: "Link to my GitHub account",
     img: "github.png",
   },

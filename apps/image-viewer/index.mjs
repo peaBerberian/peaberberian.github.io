@@ -102,13 +102,11 @@ export function create(args, env, parentAbortSignal) {
     { name: "separator" },
     {
       name: "previous",
-      height: "1.4rem",
       title: "Previous image",
       onClick: showPreviousImage,
     },
     {
       name: "next",
-      height: "1.4rem",
       title: "Next image",
       onClick: showNextImage,
     },

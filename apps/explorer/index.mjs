@@ -165,7 +165,6 @@ function createExplorer(explorerType, args, env, abortSignal) {
       : []),
     {
       name: "previous",
-      height: "1em",
       title: "Parent Directory",
       onClick: () => navigateToParent(),
     },
@@ -197,7 +196,6 @@ function createExplorer(explorerType, args, env, abortSignal) {
     },
     {
       name: "clear",
-      height: "1em",
       title: "Delete item(s)",
       onClick: () => deleteItems(selectedItems),
     },

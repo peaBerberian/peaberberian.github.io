@@ -115,7 +115,6 @@ p {
 
 .w-tool-title {
   font-size: 0.9em;
-  padding: 0 2px;
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
@@ -124,6 +123,10 @@ p {
   max-width: 6em;
   width: min-content;
   overflow: hidden;
+}
+
+.w-tool-icon:not(:empty) + .w-tool-title:not(:empty) {
+  margin-left: 0.4rem;
 }
 
 .no-tool-title .w-tool-title {

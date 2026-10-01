@@ -23,6 +23,7 @@ export function create(_args, env, abortSignal) {
 
   let frameId;
   let lastFrameTime = 0;
+  let canvasGeneration = 0;
 
   // Redo the canvas on resize, after some delay
 
@@ -44,6 +45,15 @@ export function create(_args, env, abortSignal) {
   resizeObserver.observe(containerElt);
   abortSignal.addEventListener("abort", () => {
     resizeObserver.unobserve(containerElt);
+    canvasGeneration++;
+    if (frameId !== undefined) {
+      window.cancelAnimationFrame(frameId);
+      frameId = undefined;
+    }
+    if (debounceTimer !== null) {
+      clearTimeout(debounceTimer);
+      debounceTimer = null;
+    }
   });
 
   let canvas;
@@ -76,12 +86,16 @@ export function create(_args, env, abortSignal) {
   };
 
   function resizeAndRestartCanvas(rect) {
-    containerElt.innerHTML = "";
-    if (rect.width > 0 && rect.height > 0) {
-      containerElt.appendChild(contructCanvas(rect));
-    } else if (frameId !== undefined) {
+    const generation = ++canvasGeneration;
+    if (frameId !== undefined) {
       window.cancelAnimationFrame(frameId);
       frameId = undefined;
+    }
+    containerElt.innerHTML = "";
+    if (rect.width > 0 && rect.height > 0) {
+      containerElt.appendChild(contructCanvas(rect, generation));
+    } else {
+      canvas = undefined;
     }
   }
 
@@ -146,11 +160,7 @@ export function create(_args, env, abortSignal) {
   /**
    * @param {DOMRect} containerRect
    */
-  function contructCanvas(containerRect) {
-    if (frameId !== undefined) {
-      window.cancelAnimationFrame(frameId);
-      frameId = undefined;
-    }
+  function contructCanvas(containerRect, generation) {
     canvas = document.createElement("canvas");
     canvas.width = containerRect.width;
     canvas.height = containerRect.height;
@@ -207,6 +217,9 @@ export function create(_args, env, abortSignal) {
     return canvas;
 
     function tick(currentTime) {
+      if (generation !== canvasGeneration) {
+        return;
+      }
       const deltaTime = currentTime - lastFrameTime;
 
       if (deltaTime + 0.1 >= FRAME_DURATION) {

@@ -2,7 +2,6 @@ import * as CONSTANTS from "../constants.mjs";
 import { SETTINGS } from "../settings.mjs";
 import filesystem, { getName } from "../filesystem/filesystem.mjs";
 import AppWindow from "../components/window/AppWindow.mjs";
-import WindowOverview from "../components/window/WindowOverview.mjs";
 import notificationEmitter from "../components/notification_emitter.mjs";
 import {
   dispatchSandboxWindowInteractionStart,
@@ -20,6 +19,7 @@ import WindowedApplicationStack from "./windowed_application_stack.mjs";
 import { launchSandboxedApp } from "./launch_sandboxed_app.mjs";
 import Bus from "./bus.mjs";
 import PathTokenCreator from "./path_token_creator.mjs";
+import WindowOverview from "./WindowOverview.mjs";
 
 const { BASE_WINDOW_Z_INDEX, IMAGE_ROOT_PATH, __VERSION__ } = CONSTANTS;
 

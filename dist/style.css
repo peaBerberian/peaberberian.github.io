@@ -285,6 +285,13 @@ html {
   opacity: 0.8;
 }
 
+.left-taskbar #window-overview-button,
+.right-taskbar #window-overview-button {
+  width: var(--taskbar-size);
+  height: auto;
+  padding: 10px 0;
+}
+
 #window-overview-button:hover,
 #window-overview-button:focus-visible {
   outline: none;

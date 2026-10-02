@@ -249,7 +249,6 @@ html {
   min-width: var(--taskbar-size);
   min-height: var(--taskbar-size);
   padding: calc(var(--taskbar-size) * 0.24);
-  margin-left: 10px;
   border: 0;
   border-radius: 5px;
   color: var(--taskbar-text);
@@ -258,6 +257,16 @@ html {
   transition:
     background-color 0.2s,
     opacity 0.2s;
+}
+
+.left-taskbar #taskbar-first,
+.right-taskbar #taskbar-first {
+  margin-top: 10px;
+}
+
+.top-taskbar #taskbar-first,
+.bottom-taskbar #taskbar-first {
+  margin-left: 10px;
 }
 
 #window-overview-button svg {
@@ -436,19 +445,15 @@ html {
   transition: none !important;
 }
 
-#desktop.window-overview-active.window-overview-opened
-  .window-overview-window {
+#desktop.window-overview-active.window-overview-opened .window-overview-window {
   transition:
-    transform var(--window-overview-duration)
-      cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform var(--window-overview-duration) cubic-bezier(0.2, 0.8, 0.2, 1),
     opacity var(--window-overview-duration) ease !important;
 }
 
-#desktop.window-overview-active.window-overview-closing
-  .window-overview-window {
+#desktop.window-overview-active.window-overview-closing .window-overview-window {
   transition:
-    transform var(--window-overview-duration)
-      cubic-bezier(0.4, 0, 0.2, 1),
+    transform var(--window-overview-duration) cubic-bezier(0.4, 0, 0.2, 1),
     opacity var(--window-overview-duration) ease !important;
 }
 

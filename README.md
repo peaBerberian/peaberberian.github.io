@@ -88,9 +88,8 @@ here that I find interesting:
   the current theme chosen in the settings by relying on CSS variables.
 
 - The icons in the desktop, the start menu, the taskbar, notification system and
-  application windows (but not the application launcher relying on it) are all
-  "components" with a simple enough API that could theoretically be implemented
-  differently (e.g. a "dock" instead of a taskbar).
+  context menu are all "components" with a simple enough API that could
+  theoretically be implemented differently (e.g. a "dock" instead of a taskbar).
 
   I didn't give too much time yet on how this could be replaced though.
 

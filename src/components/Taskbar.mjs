@@ -200,12 +200,13 @@ export default class Taskbar {
     const button = document.createElement("button");
     button.id = "window-overview-button";
     button.type = "button";
-    button.innerHTML = `<svg aria-hidden="true" viewBox="0 0 24 24">
-      <rect x="3" y="4" width="8" height="7" rx="1"></rect>
-      <rect x="13" y="4" width="8" height="7" rx="1"></rect>
-      <rect x="3" y="13" width="8" height="7" rx="1"></rect>
-      <rect x="13" y="13" width="8" height="7" rx="1"></rect>
-    </svg>`;
+    button.innerHTML = `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+     stroke-width="1.5" stroke-linejoin="round">
+  <rect x="1.75" y="3.5" width="8" height="6.25" rx="1.5" fill="currentColor"/>
+  <rect x="14.25" y="3.5" width="8" height="6.25" rx="1.5"/>
+  <rect x="1.75" y="14.25" width="8" height="6.25" rx="1.5"/>
+  <rect x="14.25" y="14.25" width="8" height="6.25" rx="1.5"/>
+</svg>`;
     button.addEventListener("click", () => onShowWindows?.());
     button.addEventListener("auxclick", (event) => {
       event.preventDefault();
@@ -219,6 +220,8 @@ export default class Taskbar {
   }
 
   _updateWindowOverviewButton() {
+    // TODO: This "taskbar window count equal open windows" assumption might not be always true.
+    // It is for now though
     const windowCount = this._taskbarItemsElt.children.length;
     this._windowOverviewButton.disabled = windowCount === 0;
     this._windowOverviewButton.title =

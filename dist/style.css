@@ -249,6 +249,7 @@ html {
   min-width: var(--taskbar-size);
   min-height: var(--taskbar-size);
   padding: calc(var(--taskbar-size) * 0.24);
+  margin-left: 10px;
   border: 0;
   border-radius: 5px;
   color: var(--taskbar-text);
@@ -435,8 +436,9 @@ html {
   pointer-events: none;
 }
 
-#desktop.window-overview-active .window-overview-window:hover .w-visible,
-#desktop.window-overview-active .window-overview-window:focus .w-visible {
+#desktop.window-overview-active:not(.window-overview-closing)
+  .window-overview-window:focus
+  .w-visible {
   outline: 3px solid var(--app-primary-color);
   outline-offset: 3px;
   box-shadow: 0 12px 42px rgba(0, 0, 0, 0.55);
@@ -450,7 +452,7 @@ html {
   border-radius: 6px;
   opacity: 0;
   color: var(--window-active-header-text);
-  background: color-mix(in srgb, var(--window-active-header) 70%, transparent);
+  background: color-mix(in srgb, var(--window-active-header) 50%, transparent);
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;

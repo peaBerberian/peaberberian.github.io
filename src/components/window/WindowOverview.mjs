@@ -7,6 +7,31 @@ const OVERVIEW_LABEL_HEIGHT = 34;
 const OVERVIEW_WINDOW_Z_INDEX = 610;
 
 /**
+ * @typedef {Object} OverviewEntry
+ * @property {Object} appWindow
+ * @property {HTMLElement} element
+ * @property {boolean} wasMinimized
+ * @property {WindowPresentation} presentation - Values restored on exit.
+ * @property {Function} resumeInteraction
+ * @property {HTMLElement} label
+ * @property {{transform: string, center: {x: number, y: number}}|null} target
+ */
+
+/**
+ * @typedef {Object} WindowPresentation
+ * @property {string} transform
+ * @property {string} transformOrigin
+ * @property {string} transition
+ * @property {string} opacity
+ * @property {string} zIndex
+ * @property {string} overviewZIndex
+ * @property {string} overviewZIndexPriority
+ * @property {string|null} tabIndex
+ * @property {string|null} role
+ * @property {string|null} ariaLabel
+ */
+
+/**
  * Arranges application windows into a temporary, selectable overview.
  */
 export default class WindowOverview {
@@ -25,6 +50,14 @@ export default class WindowOverview {
     this._finishHide = null;
     this._reopenAfterHide = false;
 
+    desktopElt.addEventListener("pointerover", (event) => {
+      if (this._state === "opening" || this._state === "opened") {
+        const windowElement = event.target.closest?.(
+          ".window-overview-window",
+        );
+        windowElement?.focus({ preventScroll: true });
+      }
+    });
     desktopElt.addEventListener(
       "mousedown",
       (event) => this._blockWindowInteraction(event),
@@ -88,6 +121,7 @@ export default class WindowOverview {
     }
 
     this._state = "opening";
+    this._desktopElt.classList.remove("window-overview-closing");
     this._desktopElt.classList.add("window-overview-active");
 
     const backdrop = document.createElement("div");
@@ -99,34 +133,10 @@ export default class WindowOverview {
     const desktopRect = this._desktopElt.getBoundingClientRect();
     this._entries = appWindows.map((appWindow) => {
       const element = appWindow.element;
-      // TODO: That's a very bad way to detect if a window is visible. Also why do we care?
-      const visibleElement = element.getElementsByClassName("w-visible")[0];
-      // TODO: That's a very bad way to obtain the title and the icon don't do that
-      const title =
-        element.getElementsByClassName("w-title-title")[0]?.textContent ||
-        "Untitled window";
-      const icon =
-        element.getElementsByClassName("w-title-icon")[0]?.textContent || "";
-      const minimized = appWindow.isMinimizedOrMinimizing();
-
-      // TODO: This is a huge undocumented object. This is just bad
-      const saved = {
-        transform: element.style.transform,
-        transformOrigin: element.style.transformOrigin,
-        transition: element.style.transition,
-        opacity: element.style.opacity,
-        zIndex: element.style.zIndex,
-        overviewZIndex: element.style.getPropertyValue(
-          "--window-overview-z-index",
-        ),
-        overviewZIndexPriority: element.style.getPropertyPriority(
-          "--window-overview-z-index",
-        ),
-        tabIndex: element.getAttribute("tabindex"),
-        role: element.getAttribute("role"),
-        ariaLabel: element.getAttribute("aria-label"),
-        visibleInert: visibleElement?.inert ?? false,
-      };
+      const title = appWindow.getTitle() || "Untitled window";
+      const icon = appWindow.getIcon();
+      const wasMinimized = appWindow.isMinimizedOrMinimizing();
+      const presentation = captureWindowPresentation(element);
 
       element.classList.add("window-overview-window");
       element.style.transformOrigin = "top left";
@@ -134,11 +144,10 @@ export default class WindowOverview {
       element.tabIndex = 0;
       element.setAttribute("role", "button");
       element.setAttribute("aria-label", `Open ${title}`);
-      if (visibleElement) {
-        visibleElement.inert = true;
-      }
-      if (minimized) {
-        // TODO: What does this mean here?
+      const resumeInteraction = appWindow.suspendInteraction();
+      if (wasMinimized) {
+        // A minimized window becomes displayable for the overview. Fade it in
+        // instead of letting it appear at full opacity before its first frame.
         element.style.opacity = "0";
       }
 
@@ -147,22 +156,19 @@ export default class WindowOverview {
       label.textContent = `${icon ? icon + " " : ""}${title}`;
       this._desktopElt.appendChild(label);
 
-      // TODO: There might be too much stuff to keep track of here
+      /** @type {OverviewEntry} */
       return {
         appWindow,
         element,
-        visibleElement,
-        title,
-        minimized,
-        saved,
+        wasMinimized,
+        presentation,
+        resumeInteraction,
         label,
+        target: null,
       };
     });
     this._applyOverviewStacking();
 
-    // TODO: no idea what that comment means
-    // The overview class makes minimized windows measurable again.
-    this._desktopElt.getBoundingClientRect();
     const windowRects = this._entries.map((entry) =>
       entry.element.getBoundingClientRect(),
     );
@@ -177,13 +183,14 @@ export default class WindowOverview {
       const target = layout[index];
       const translateX = desktopRect.left + target.left - rect.left;
       const translateY = desktopRect.top + target.top - rect.top;
-      // TODO: The fuck? We're now even adding more random properties into it? How am I suppose to maintain this?
-      entry.targetTransform = `translate(${translateX}px, ${translateY}px) scale(${target.scale})`;
-      entry.targetCenter = {
-        x: target.left + target.width / 2,
-        y: target.top + target.height / 2,
+      entry.target = {
+        transform: `translate(${translateX}px, ${translateY}px) scale(${target.scale})`,
+        center: {
+          x: target.left + target.width / 2,
+          y: target.top + target.height / 2,
+        },
       };
-      entry.label.style.left = `${entry.targetCenter.x}px`;
+      entry.label.style.left = `${entry.target.center.x}px`;
       entry.label.style.top = `${target.top + target.height + 7}px`;
       entry.label.style.maxWidth = `${target.width}px`;
     });
@@ -199,9 +206,10 @@ export default class WindowOverview {
         entry.element.style.transition =
           `transform ${OVERVIEW_ANIMATION_DURATION}ms cubic-bezier(0.2, 0.8, 0.2, 1), ` +
           `opacity ${OVERVIEW_ANIMATION_DURATION}ms ease`;
-        entry.element.style.transform = entry.targetTransform;
+        entry.element.style.transform = entry.target.transform;
         entry.element.style.opacity = "1";
-        // TODO: What is this for?
+        // Labels fade in with their previews instead of flashing at the final
+        // position before the window movement begins.
         entry.label.classList.add("visible");
       }
 
@@ -250,6 +258,7 @@ export default class WindowOverview {
 
     this._state = "closing";
     this._reopenAfterHide = false;
+    this._desktopElt.classList.add("window-overview-closing");
     if (animate) {
       this._backdrop?.classList.add("closing");
     }
@@ -270,9 +279,12 @@ export default class WindowOverview {
       } else {
         entry.element.style.transition = "none";
       }
-      entry.element.style.transform = entry.saved.transform;
-      // TODO why minimized has an influence here?
-      entry.element.style.opacity = entry.minimized ? "0" : entry.saved.opacity;
+      entry.element.style.transform = entry.presentation.transform;
+      // Windows that remain minimized fade away before `display: none` takes
+      // effect again. A selected minimized window changes this flag on restore.
+      entry.element.style.opacity = entry.wasMinimized
+        ? "0"
+        : entry.presentation.opacity;
     }
 
     let resolveHide;
@@ -297,7 +309,10 @@ export default class WindowOverview {
       this._entries = [];
       this._backdrop?.remove();
       this._backdrop = null;
-      this._desktopElt.classList.remove("window-overview-active");
+      this._desktopElt.classList.remove(
+        "window-overview-active",
+        "window-overview-closing",
+      );
       this._state = "closed";
       this._hidePromise = null;
       const reopen = this._reopenAfterHide;
@@ -336,7 +351,7 @@ export default class WindowOverview {
       .map((entry, index) => ({
         entry,
         index,
-        zIndex: parseInt(entry.saved.zIndex, 10) || 0,
+        zIndex: parseInt(entry.presentation.zIndex, 10) || 0,
       }))
       .sort((a, b) => a.zIndex - b.zIndex || a.index - b.index)
       .forEach(({ entry }, index) => {
@@ -428,20 +443,15 @@ export default class WindowOverview {
     if (this._state === "closing") {
       return;
     }
-    const wasMinimized = entry.appWindow.isMinimizedOrMinimizing();
-    if (wasMinimized) {
-      entry.appWindow.deminimize({ animate: false });
-      entry.minimized = false;
-      // TODO: Not sure to follow what the next two are for now that it is deminimized
-      entry.saved.transformOrigin = entry.element.style.transformOrigin;
-      entry.element.style.transformOrigin = "top left";
+    if (entry.wasMinimized) {
+      prepareMinimizedEntryForSelection(entry);
     }
     entry.appWindow.activate();
 
     // Activation establishes the final stack before the return animation.
     // Keep the overview layer visually stable until its backdrop is removed.
     this._entries.forEach((currentEntry) => {
-      currentEntry.saved.zIndex = currentEntry.element.style.zIndex;
+      currentEntry.presentation.zIndex = currentEntry.element.style.zIndex;
     });
     this._applyOverviewStacking();
 
@@ -450,29 +460,29 @@ export default class WindowOverview {
 }
 
 function findDirectionalEntry(entries, currentEntry, key) {
-  if (!currentEntry?.targetCenter) {
+  if (!currentEntry?.target) {
     return null;
   }
 
   const horizontal = key === "ArrowLeft" || key === "ArrowRight";
   const direction = key === "ArrowLeft" || key === "ArrowUp" ? -1 : 1;
-  const current = currentEntry.targetCenter;
+  const current = currentEntry.target.center;
   let bestEntry = null;
   let bestScore = Infinity;
 
   for (const entry of entries) {
-    if (entry === currentEntry || !entry.targetCenter) {
+    if (entry === currentEntry || !entry.target) {
       continue;
     }
     const primaryDelta = horizontal
-      ? entry.targetCenter.x - current.x
-      : entry.targetCenter.y - current.y;
+      ? entry.target.center.x - current.x
+      : entry.target.center.y - current.y;
     if (Math.sign(primaryDelta) !== direction) {
       continue;
     }
     const secondaryDelta = horizontal
-      ? entry.targetCenter.y - current.y
-      : entry.targetCenter.x - current.x;
+      ? entry.target.center.y - current.y
+      : entry.target.center.x - current.x;
     const score = Math.abs(primaryDelta) + Math.abs(secondaryDelta) * 2;
     if (score < bestScore) {
       bestScore = score;
@@ -483,25 +493,52 @@ function findDirectionalEntry(entries, currentEntry, key) {
 }
 
 function restoreEntry(entry) {
-  const { element, visibleElement, saved } = entry;
+  const { element, presentation, resumeInteraction } = entry;
   element.classList.remove("window-overview-window");
-  element.style.transform = saved.transform;
-  element.style.transformOrigin = saved.transformOrigin;
-  element.style.transition = saved.transition;
-  element.style.opacity = saved.opacity;
-  element.style.zIndex = saved.zIndex;
+  element.style.transform = presentation.transform;
+  element.style.transformOrigin = presentation.transformOrigin;
+  element.style.transition = presentation.transition;
+  element.style.opacity = presentation.opacity;
+  element.style.zIndex = presentation.zIndex;
   element.style.setProperty(
     "--window-overview-z-index",
-    saved.overviewZIndex,
-    saved.overviewZIndexPriority,
+    presentation.overviewZIndex,
+    presentation.overviewZIndexPriority,
   );
-  restoreAttribute(element, "tabindex", saved.tabIndex);
-  restoreAttribute(element, "role", saved.role);
-  restoreAttribute(element, "aria-label", saved.ariaLabel);
-  if (visibleElement) {
-    visibleElement.inert = saved.visibleInert;
-  }
+  restoreAttribute(element, "tabindex", presentation.tabIndex);
+  restoreAttribute(element, "role", presentation.role);
+  restoreAttribute(element, "aria-label", presentation.ariaLabel);
+  resumeInteraction();
   entry.label.remove();
+}
+
+function captureWindowPresentation(element) {
+  return {
+    transform: element.style.transform,
+    transformOrigin: element.style.transformOrigin,
+    transition: element.style.transition,
+    opacity: element.style.opacity,
+    zIndex: element.style.zIndex,
+    overviewZIndex: element.style.getPropertyValue(
+      "--window-overview-z-index",
+    ),
+    overviewZIndexPriority: element.style.getPropertyPriority(
+      "--window-overview-z-index",
+    ),
+    tabIndex: element.getAttribute("tabindex"),
+    role: element.getAttribute("role"),
+    ariaLabel: element.getAttribute("aria-label"),
+  };
+}
+
+function prepareMinimizedEntryForSelection(entry) {
+  entry.appWindow.deminimize({ animate: false });
+  entry.wasMinimized = false;
+
+  // Deminimizing resets the taskbar-oriented origin. Preserve that final
+  // value, but keep top-left geometry until the overview transform finishes.
+  entry.presentation.transformOrigin = entry.element.style.transformOrigin;
+  entry.element.style.transformOrigin = "top left";
 }
 
 function restoreAttribute(element, name, value) {

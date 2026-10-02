@@ -79,6 +79,8 @@ export default class AppWindow extends EventEmitter {
       defaultIcon,
       defaultTitle,
     } = options;
+    this._icon = defaultIcon ?? "";
+    this._title = defaultTitle ?? "";
 
     /**
      * The default height the window should have, in pixels.
@@ -108,9 +110,12 @@ export default class AppWindow extends EventEmitter {
      * @type {HTMLElement}
      */
     const appContainer = constructVisibleWindowScaffolding(
-      defaultIcon ?? "",
-      defaultTitle ?? "",
+      this._icon,
+      this._title,
     );
+    this._visibleElement = appContainer;
+    this._interactionSuspensionCount = 0;
+    this._contentInertBeforeInteractionSuspension = null;
     appContainer.appendChild(initialContent);
     this.element = document.createElement("div");
     this.element.appendChild(appContainer);
@@ -174,15 +179,53 @@ export default class AppWindow extends EventEmitter {
 
   updateTitle(newIcon, newTitle) {
     if (newIcon !== null) {
+      this._icon = newIcon;
       const iconElt = this.element.getElementsByClassName("w-title-icon")[0];
       if (iconElt) {
         iconElt.textContent = newIcon;
       }
     }
+    this._title = newTitle;
     const titleElt = this.element.getElementsByClassName("w-title-title")[0];
     if (titleElt) {
       titleElt.textContent = newTitle;
     }
+  }
+
+  getTitle() {
+    return this._title;
+  }
+
+  getIcon() {
+    return this._icon;
+  }
+
+  /**
+   * Temporarily prevent interaction with this window's application content.
+   * Suspensions may overlap; the returned function releases this suspension.
+   * @returns {Function}
+   */
+  suspendInteraction() {
+    if (this._interactionSuspensionCount === 0) {
+      this._contentInertBeforeInteractionSuspension =
+        this._visibleElement.inert;
+      this._visibleElement.inert = true;
+    }
+    this._interactionSuspensionCount++;
+
+    let released = false;
+    return () => {
+      if (released) {
+        return;
+      }
+      released = true;
+      this._interactionSuspensionCount--;
+      if (this._interactionSuspensionCount === 0) {
+        this._visibleElement.inert =
+          this._contentInertBeforeInteractionSuspension;
+        this._contentInertBeforeInteractionSuspension = null;
+      }
+    };
   }
 
   /**
@@ -824,6 +867,11 @@ export default class AppWindow extends EventEmitter {
     });
 
     addAbortableEventListener(document, "focusin", abortSignal, (evt) => {
+      if (this._interactionSuspensionCount > 0) {
+        return;
+      }
+      // TODO: Move focus-to-activate policy into WindowManager so AppWindow
+      // does not own desktop-level activation policy.
       if (contextMenuWrapperElt.contains(evt.target)) {
         // Very ugly exception for context menus
         return;

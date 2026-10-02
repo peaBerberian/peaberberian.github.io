@@ -114,6 +114,15 @@ export default class AppWindow extends EventEmitter {
       this._title,
     );
     this._visibleElement = appContainer;
+    /**
+     * Number of suspendInteraction() calls whose release function has not
+     * been called yet. While greater than zero, application content is inert
+     * and window activation, dragging, and resizing ignore pointer input.
+     * A counter lets overlapping suspensions be released independently:
+     * interaction resumes only after the last suspension is released.
+     * @private
+     * @type {number}
+     */
     this._interactionSuspensionCount = 0;
     this._contentInertBeforeInteractionSuspension = null;
     appContainer.appendChild(initialContent);
@@ -201,8 +210,10 @@ export default class AppWindow extends EventEmitter {
   }
 
   /**
-   * Temporarily prevent interaction with this window's application content.
-   * Suspensions may overlap; the returned function releases this suspension.
+   * Temporarily prevent interaction with application content and suspend
+   * mouse activation, dragging, and resizing of the window.
+   * Suspensions may overlap; the returned function releases this suspension
+   * at most once, even if it is called repeatedly.
    * @returns {Function}
    */
   suspendInteraction() {
@@ -776,13 +787,16 @@ export default class AppWindow extends EventEmitter {
     });
 
     addAbortableEventListener(windowElt, "mousedown", abortSignal, () => {
-      this.activate();
+      if (this._interactionSuspensionCount === 0) {
+        this.activate();
+      }
     });
 
     handleResizeAndMove(
       windowElt,
       { minHeight: WINDOW_MIN_HEIGHT, minWidth: WINDOW_MIN_WIDTH },
       {
+        isInteractionSuspended: () => this._interactionSuspensionCount > 0,
         activateWindow: () => this.activate(),
         getOobDistances: () => this._oobDistances,
         updateOobDistances: (update) =>
@@ -811,7 +825,9 @@ export default class AppWindow extends EventEmitter {
       }
     });
     addAbortableEventListener(windowElt, "mousedown", abortSignal, () => {
-      this.activate();
+      if (this._interactionSuspensionCount === 0) {
+        this.activate();
+      }
     });
     if (minimizeBtn) {
       addAbortableEventListener(minimizeBtn, "click", abortSignal, () => {

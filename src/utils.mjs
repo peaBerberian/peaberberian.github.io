@@ -10,6 +10,7 @@ const SANDBOX_WINDOW_INTERACTION_START_EVENT =
  * @param {string} event
  * @param {AbortSignal} abortSignal
  * @param {Function} callback
+ * @param {boolean|AddEventListenerOptions} [options]
  */
 export function addAbortableEventListener(
   target,
@@ -20,7 +21,8 @@ export function addAbortableEventListener(
 ) {
   target.addEventListener(event, callback, options);
   abortSignal?.addEventListener("abort", () => {
-    target.removeEventListener(event, callback);
+    // Removal reads only the capture flag from options; it must match registration.
+    target.removeEventListener(event, callback, options);
   });
 }
 

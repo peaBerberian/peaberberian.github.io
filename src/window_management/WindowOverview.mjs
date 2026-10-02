@@ -54,21 +54,6 @@ export default class WindowOverview {
       }
     });
     desktopElt.addEventListener(
-      "mousedown",
-      (event) => this._blockWindowInteraction(event),
-      true,
-    );
-    desktopElt.addEventListener(
-      "mouseup",
-      (event) => this._blockWindowInteraction(event),
-      true,
-    );
-    desktopElt.addEventListener(
-      "touchstart",
-      (event) => this._blockWindowInteraction(event),
-      { capture: true, passive: true },
-    );
-    desktopElt.addEventListener(
       "click",
       (event) => this._onDesktopClick(event),
       true,
@@ -78,14 +63,27 @@ export default class WindowOverview {
       (event) => this._onAuxClick(event),
       true,
     );
-    this._contextMenu = setUpContextMenu({
-      element: desktopElt,
-      capture: true,
+    desktopElt.addEventListener(
+      "keydown",
+      (event) => this._onKeyDown(event),
+    );
+    window.addEventListener("resize", () => {
+      if (this.isOpen()) {
+        this.hide({ animate: false });
+      }
+    });
+  }
+
+  _setUpContextMenu() {
+    this._contextMenuAbortCtrl = new AbortController();
+    setUpContextMenu({
+      element: this._desktopElt,
+      abortSignal: this._contextMenuAbortCtrl.signal,
       filter: (event) => {
         if (!this.isOpen()) {
           return false;
         }
-        this._blockNonPrimaryClick(event);
+        event.preventDefault();
         const element = event.target.closest?.(".window-overview-window");
         this._contextEntry = this._entries.find((entry) => entry.element === element);
         return this._state !== "closing" &&
@@ -138,16 +136,6 @@ export default class WindowOverview {
         },
       ],
     });
-    document.addEventListener(
-      "keydown",
-      (event) => this._onKeyDown(event),
-      true,
-    );
-    window.addEventListener("resize", () => {
-      if (this.isOpen()) {
-        this.hide({ animate: false });
-      }
-    });
   }
 
   isOpen() {
@@ -171,6 +159,7 @@ export default class WindowOverview {
     }
 
     this._state = "opening";
+    this._setUpContextMenu();
     this._desktopElt.classList.remove("window-overview-closing");
     this._desktopElt.classList.add("window-overview-active");
 
@@ -297,15 +286,19 @@ export default class WindowOverview {
       return;
     }
     const [entry] = this._entries.splice(index, 1);
-    if (entry === this._contextEntry) {
-      this._contextMenu.close();
+    const removedContextEntry = entry === this._contextEntry;
+    const hadFocus = entry.element.contains(document.activeElement);
+    if (removedContextEntry) {
+      this._contextMenuAbortCtrl.abort();
       this._contextEntry = null;
     }
-    const hadFocus = entry.element.contains(document.activeElement);
     restoreEntry(entry);
     if (this._entries.length === 0) {
       this.hide({ animate: false });
       return;
+    }
+    if (removedContextEntry) {
+      this._setUpContextMenu();
     }
     this._applyOverviewStacking();
     this._layoutEntries();
@@ -327,7 +320,7 @@ export default class WindowOverview {
     if (!this.isOpen()) {
       return;
     }
-    this._blockNonPrimaryClick(event);
+    event.preventDefault();
     if (event.button !== 1 || this._state === "closing") {
       return;
     }
@@ -359,7 +352,7 @@ export default class WindowOverview {
    * @returns {Promise<void>}
    */
   hide({ animate = true } = {}) {
-    this._contextMenu.close();
+    this._contextMenuAbortCtrl?.abort();
     this._contextEntry = null;
     if (this._state === "closed") {
       return Promise.resolve();
@@ -447,20 +440,6 @@ export default class WindowOverview {
     return hidePromise;
   }
 
-  _blockWindowInteraction(event) {
-    if (!this.isOpen()) {
-      return;
-    }
-    if ("button" in event && event.button !== 0) {
-      this._blockNonPrimaryClick(event);
-      return;
-    }
-    const windowElement = event.target.closest?.(".window-overview-window");
-    if (windowElement) {
-      event.stopPropagation();
-    }
-  }
-
   _applyOverviewStacking() {
     this._entries
       .map((entry, index) => ({
@@ -477,27 +456,18 @@ export default class WindowOverview {
       });
   }
 
-  _blockNonPrimaryClick(event) {
-    if (!this.isOpen()) {
-      return;
-    }
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
   _onDesktopClick(event) {
     if (!this.isOpen()) {
       return;
     }
     if (event.button !== 0) {
-      this._blockNonPrimaryClick(event);
+      event.preventDefault();
       return;
     }
 
     const windowElement = event.target.closest?.(".window-overview-window");
     if (windowElement) {
       event.preventDefault();
-      event.stopPropagation();
       const entry = this._entries.find(
         ({ element }) => element === windowElement,
       );
@@ -506,7 +476,6 @@ export default class WindowOverview {
       }
     } else if (event.target === this._backdrop) {
       event.preventDefault();
-      event.stopPropagation();
       this.hide();
     }
   }
@@ -515,19 +484,19 @@ export default class WindowOverview {
     if (!this.isOpen()) {
       return;
     }
-    if (this._contextMenu.isOpen()) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        this._contextMenu.close();
-        this._contextEntry?.element.focus({ preventScroll: true });
-      }
+    if (event.defaultPrevented) {
       return;
     }
     if (event.key === "Escape") {
       event.preventDefault();
       event.stopPropagation();
       this.hide();
+      return;
+    }
+    const focusedEntry = this._entries.find(
+      ({ element }) => element === document.activeElement,
+    );
+    if (!focusedEntry) {
       return;
     }
     if (
@@ -538,10 +507,7 @@ export default class WindowOverview {
     ) {
       event.preventDefault();
       event.stopPropagation();
-      const currentEntry =
-        this._entries.find(
-          ({ element }) => element === document.activeElement,
-        ) ?? this._entries[0];
+      const currentEntry = focusedEntry;
       const nextEntry = findDirectionalEntry(
         this._entries,
         currentEntry,

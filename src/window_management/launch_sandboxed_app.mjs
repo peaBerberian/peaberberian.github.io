@@ -85,9 +85,18 @@ export function launchSandboxedApp(
   });
   // Closing before the wrapper is installed can precede the launcher's await.
   ready.catch(() => {});
-  abortSignal.addEventListener("abort", () => {
-    rejectReady(new DOMException("Application closed during initialization.", "AbortError"));
-  }, { once: true });
+  abortSignal.addEventListener(
+    "abort",
+    () => {
+      rejectReady(
+        new DOMException(
+          "Application closed during initialization.",
+          "AbortError",
+        ),
+      );
+    },
+    { once: true },
+  );
   const backgroundColor = parseAppDefaultBackground(appData.defaultBackground);
   const wrapperElt = document.createElement("div");
   applyStyle(wrapperElt, {
@@ -231,7 +240,12 @@ export function launchSandboxedApp(
         eventName,
         abortSignal,
         function (event) {
-          if (!isActivated || !iframe.contentWindow) {
+          // Forwarding bypasses native event targeting, so honor inert content.
+          if (
+            !isActivated ||
+            !iframe.contentWindow ||
+            iframe.closest("[inert]")
+          ) {
             return;
           }
           iframe.contentWindow.postMessage(

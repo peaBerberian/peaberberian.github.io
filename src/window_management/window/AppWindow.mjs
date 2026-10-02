@@ -26,7 +26,7 @@ import {
 } from "./position_utils.mjs";
 import { handleResizeAndMove } from "./resize_and_move.mjs";
 import { keepWindowActiveInCurrentEventLoopIteration } from "./utils.mjs";
-import setUpContextMenu from "../context-menu.mjs";
+import setUpContextMenu from "../../components/context-menu.mjs";
 
 const {
   WINDOW_MIN_WIDTH,

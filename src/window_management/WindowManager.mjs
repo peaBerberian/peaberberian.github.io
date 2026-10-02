@@ -1,7 +1,7 @@
 import * as CONSTANTS from "../constants.mjs";
 import { SETTINGS } from "../settings.mjs";
 import filesystem, { getName } from "../filesystem/filesystem.mjs";
-import AppWindow from "../components/window/AppWindow.mjs";
+import AppWindow from "./window/AppWindow.mjs";
 import notificationEmitter from "../components/notification_emitter.mjs";
 import {
   dispatchSandboxWindowInteractionStart,

@@ -1,8 +1,4 @@
 import {
-  DEFAULT_WINDOW_HEIGHT,
-  DEFAULT_WINDOW_WIDTH,
-} from "../../constants.mjs";
-import {
   setLeftPositioning,
   setTopPositioning,
   setWindowHeight,

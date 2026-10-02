@@ -212,10 +212,6 @@ export default class Taskbar {
       event.preventDefault();
       event.stopPropagation();
     });
-    button.addEventListener("contextmenu", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-    });
     return button;
   }
 

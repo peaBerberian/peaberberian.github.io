@@ -77,8 +77,10 @@ export default class WindowManager {
      * @private
      */
     this._windows = [];
-    this._windowOverview = new WindowOverview(this._desktopElt, () =>
-      this._windows.map(({ appWindow }) => appWindow),
+    this._windowOverview = new WindowOverview(
+      this._desktopElt,
+      () => this._windows.map(({ appWindow }) => appWindow),
+      (appWindow) => this._closeWindow(appWindow),
     );
     this.bus = new Bus();
 
@@ -257,7 +259,7 @@ export default class WindowManager {
         this._windowOverview.hide({ animate: false });
         appWindow.activate();
       },
-      closeWindow: () => appWindow.close(),
+      closeWindow: () => this._closeWindow(appWindow),
     });
 
     appWindow.addEventListener("closing", () => {
@@ -505,6 +507,14 @@ export default class WindowManager {
     if (currentWindowWithMaxZIndex) {
       currentWindowWithMaxZIndex.activate();
     }
+  }
+
+  /**
+   * @private
+   * @param {AppWindow} appWindow
+   */
+  _closeWindow(appWindow) {
+    appWindow.close({ animate: !this._windowOverview.isOpen() });
   }
 
   /**
@@ -854,7 +864,7 @@ export default class WindowManager {
         appWindow.updateTitle(newIcon, newTitle);
         this._taskbarManager.updateTitle(appWindow, newIcon, newTitle);
       },
-      closeApp: () => appWindow.close(),
+      closeApp: () => this._closeWindow(appWindow),
       STYLE: constructAppStyleObject(),
     };
 

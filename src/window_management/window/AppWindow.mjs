@@ -168,11 +168,19 @@ export default class AppWindow extends EventEmitter {
   }
 
   /**
-   * Run animation for the closing window and removes it from the DOM.
+   * Close the window, optionally animating its removal from the DOM.
    * Might activate the next visible window as a side-effect.
+   * @param {Object} [options]
+   * @param {boolean} [options.animate=true]
    */
-  close() {
-    this._performWindowTransition("close");
+  close({ animate = true } = {}) {
+    if (animate) {
+      this._performWindowTransition("close");
+    } else {
+      this._cancelCurrentTransition();
+      this.element.dataset.state = "close";
+      this.element.remove();
+    }
     this._abortController.abort();
     this.trigger("closing");
     this.removeEventListener();

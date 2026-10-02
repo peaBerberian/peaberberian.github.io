@@ -147,8 +147,7 @@ export default function setUpContextMenu({
     } else {
       contextMenuElt.style.top = e.pageY + 3 + "px";
     }
-    contextMenuElt.style.transformOrigin =
-      `${verticalTransformOrigin} ${horizontalTransformOrigin}`;
+    contextMenuElt.style.transformOrigin = `${verticalTransformOrigin} ${horizontalTransformOrigin}`;
     requestAnimationFrame(() => {
       contextMenuElt.classList.add("show");
     });
@@ -162,15 +161,20 @@ export default function setUpContextMenu({
     }
   });
 
-  addAbortableEventListener(document, "keydown", abortSignal, (e) => {
-    // The displayed context menu is a direct child of the shared wrapper.
-    // Detached context menus must not consume Escape.
-    if (e.key === "Escape" && contextMenuElt.parentElement === contextMenuWrapper) {
-      e.preventDefault();
-      e.stopPropagation();
-      closeContextMenu();
-    }
-  }, { capture: true });
+  addAbortableEventListener(
+    document,
+    "keydown",
+    abortSignal,
+    (e) => {
+      // Detached context menus must not consume Escape.
+      if (e.key === "Escape" && contextMenuWrapper.contains(contextMenuElt)) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeContextMenu();
+      }
+    },
+    { capture: true },
+  );
   addAbortableEventListener(document, "mousedown", abortSignal, (e) => {
     if (!contextMenuWrapper.contains(e.target)) {
       closeContextMenu();
@@ -179,19 +183,17 @@ export default function setUpContextMenu({
   addAbortableDesktopClickListener(abortSignal, closeContextMenu);
   addAbortableEventListener(window, "resize", abortSignal, closeContextMenu);
   function closeContextMenu() {
+    const isDisplayed = contextMenuWrapper.contains(contextMenuElt);
     contextMenuElt.classList.remove("show");
     contextMenuElt.remove();
     contextMenuElt.style.left = "";
     contextMenuElt.style.top = "";
     contextMenuElt.style.transformOrigin = "";
-    contextMenuWrapper.innerHTML = "";
-    contextMenuWrapper.style.display = "none";
-  }
-  abortSignal?.addEventListener("abort", () => {
-    if (contextMenuElt.parentElement === contextMenuWrapper) {
-      closeContextMenu();
+    if (isDisplayed) {
+      contextMenuWrapper.style.display = "none";
     }
-  });
+  }
+  abortSignal?.addEventListener("abort", closeContextMenu);
 }
 
 function getSvg(svg) {

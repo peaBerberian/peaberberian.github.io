@@ -19,6 +19,7 @@ const OVERVIEW_WINDOW_Z_INDEX = 610;
  * @property {Function} restoreAccessibility
  * @property {Function} resumeInteraction
  * @property {HTMLElement} label
+ * @property {AbortController} contextMenuAbortCtrl
  * @property {{transform: string, center: {x: number, y: number}}|null} target
  */
 
@@ -29,10 +30,12 @@ export default class WindowOverview {
   /**
    * @param {HTMLElement} desktopElt
    * @param {Function} getWindows - Returns the current AppWindow instances.
+   * @param {Function} closeWindow - Closes an AppWindow through the manager.
    */
-  constructor(desktopElt, getWindows) {
+  constructor(desktopElt, getWindows, closeWindow) {
     this._desktopElt = desktopElt;
     this._getWindows = getWindows;
+    this._closeWindow = closeWindow;
     this._entries = [];
     this._state = "closed";
     this._animationFrame = null;
@@ -47,9 +50,7 @@ export default class WindowOverview {
 
     desktopElt.addEventListener("pointerover", (event) => {
       if (this._state === "opening" || this._state === "opened") {
-        const windowElement = event.target.closest?.(
-          ".window-overview-window",
-        );
+        const windowElement = event.target.closest?.(".window-overview-window");
         windowElement?.focus({ preventScroll: true });
       }
     });
@@ -63,10 +64,7 @@ export default class WindowOverview {
       (event) => this._onAuxClick(event),
       true,
     );
-    desktopElt.addEventListener(
-      "keydown",
-      (event) => this._onKeyDown(event),
-    );
+    desktopElt.addEventListener("keydown", (event) => this._onKeyDown(event));
     window.addEventListener("resize", () => {
       if (this.isOpen()) {
         this.hide({ animate: false });
@@ -74,56 +72,58 @@ export default class WindowOverview {
     });
   }
 
-  _setUpContextMenu() {
-    this._contextMenuAbortCtrl = new AbortController();
-    setUpContextMenu({
-      element: this._desktopElt,
-      abortSignal: this._contextMenuAbortCtrl.signal,
-      filter: (event) => {
-        if (!this.isOpen()) {
-          return false;
-        }
-        event.preventDefault();
-        const element = event.target.closest?.(".window-overview-window");
-        this._contextEntry = this._entries.find((entry) => entry.element === element);
-        return this._state !== "closing" &&
-          (!!this._contextEntry || event.target === this._backdrop);
-      },
-      actions: [
+  _setUpWindowContextMenu(entry) {
+    this._setUpContextMenu(
+      entry.element,
+      [
         {
           name: "activate",
           title: "Switch to window",
           height: "1.4rem",
           svg: `<svg aria-hidden="true" viewBox="0 -0.5 21 21" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" d="M0 0h21v20H0V0Zm2.1 2v3h16.8V2H2.1Zm0 5v11h16.8V7H2.1Z"/>
-          </svg>`,
-          filter: () => !!this._contextEntry,
-          onClick: () => {
-            if (this._entries.includes(this._contextEntry)) {
-              this._select(this._contextEntry);
-            }
-          },
+          <path fill-rule="evenodd" d="M0 0h21v20H0V0Zm2.1 2v3h16.8V2H2.1Zm0 5v11h16.8V7H2.1Z"/>
+        </svg>`,
+          onClick: () => this._select(entry),
         },
         {
           name: "close",
           title: "Close window",
-          filter: () => !!this._contextEntry,
-          onClick: () => {
-            if (this._entries.includes(this._contextEntry)) {
-              this._contextEntry.appWindow.close();
-            }
-          },
+          onClick: () => this._closeWindow(entry.appWindow),
         },
+      ],
+      entry.contextMenuAbortCtrl.signal,
+    );
+  }
+
+  _setUpBackdropContextMenu() {
+    this._backdropMenuAbortCtrl = new AbortController();
+    this._setUpContextMenu(
+      this._backdrop,
+      [
         {
           name: "close",
           title: "Close all windows",
-          filter: () => !this._contextEntry,
           onClick: () => {
-            for (const { appWindow } of [...this._entries]) {
-              appWindow.close();
+            for (const { appWindow } of this._entries.slice()) {
+              this._closeWindow(appWindow);
             }
           },
         },
+      ],
+      this._backdropMenuAbortCtrl.signal,
+    );
+  }
+
+  _setUpContextMenu(element, actions, abortSignal) {
+    setUpContextMenu({
+      element,
+      abortSignal,
+      filter: (event) => {
+        event.preventDefault();
+        return this._state === "opening" || this._state === "opened";
+      },
+      actions: [
+        ...actions,
         { name: "separator" },
         {
           name: "exit-overview",
@@ -159,7 +159,6 @@ export default class WindowOverview {
     }
 
     this._state = "opening";
-    this._setUpContextMenu();
     this._desktopElt.classList.remove("window-overview-closing");
     this._desktopElt.classList.add("window-overview-active");
 
@@ -212,9 +211,14 @@ export default class WindowOverview {
         restoreAccessibility,
         resumeInteraction,
         label,
+        contextMenuAbortCtrl: new AbortController(),
         target: null,
       };
     });
+    this._setUpBackdropContextMenu();
+    for (const entry of this._entries) {
+      this._setUpWindowContextMenu(entry);
+    }
     this._applyOverviewStacking();
 
     for (const entry of this._entries) {
@@ -281,24 +285,18 @@ export default class WindowOverview {
       this.hide({ animate: false });
       return;
     }
-    const index = this._entries.findIndex((entry) => entry.appWindow === appWindow);
+    const index = this._entries.findIndex(
+      (entry) => entry.appWindow === appWindow,
+    );
     if (index === -1) {
       return;
     }
     const [entry] = this._entries.splice(index, 1);
-    const removedContextEntry = entry === this._contextEntry;
     const hadFocus = entry.element.contains(document.activeElement);
-    if (removedContextEntry) {
-      this._contextMenuAbortCtrl.abort();
-      this._contextEntry = null;
-    }
     restoreEntry(entry);
     if (this._entries.length === 0) {
       this.hide({ animate: false });
       return;
-    }
-    if (removedContextEntry) {
-      this._setUpContextMenu();
     }
     this._applyOverviewStacking();
     this._layoutEntries();
@@ -311,7 +309,8 @@ export default class WindowOverview {
       }
     }
     if (hadFocus) {
-      const nextEntry = this._entries[Math.min(index, this._entries.length - 1)];
+      const nextEntry =
+        this._entries[Math.min(index, this._entries.length - 1)];
       nextEntry.element.focus({ preventScroll: true });
     }
   }
@@ -326,7 +325,9 @@ export default class WindowOverview {
     }
     const element = event.target.closest?.(".window-overview-window");
     const entry = this._entries.find((entry) => entry.element === element);
-    entry?.appWindow.close();
+    if (entry) {
+      this._closeWindow(entry.appWindow);
+    }
   }
 
   /**
@@ -352,8 +353,10 @@ export default class WindowOverview {
    * @returns {Promise<void>}
    */
   hide({ animate = true } = {}) {
-    this._contextMenuAbortCtrl?.abort();
-    this._contextEntry = null;
+    this._backdropMenuAbortCtrl?.abort();
+    for (const entry of this._entries) {
+      entry.contextMenuAbortCtrl.abort();
+    }
     if (this._state === "closed") {
       return Promise.resolve();
     }
@@ -587,6 +590,7 @@ function findDirectionalEntry(entries, currentEntry, key) {
 }
 
 function restoreEntry(entry) {
+  entry.contextMenuAbortCtrl.abort();
   const { element, restoreAccessibility, resumeInteraction } = entry;
   element.classList.remove("window-overview-window");
   element.style.removeProperty("--window-overview-transform");

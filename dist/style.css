@@ -244,11 +244,14 @@ html {
 }
 
 #window-overview-button {
+  box-sizing: border-box;
   width: var(--taskbar-size);
   height: var(--taskbar-size);
-  min-width: var(--taskbar-size);
-  min-height: var(--taskbar-size);
-  padding: calc(var(--taskbar-size) * 0.24);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   border: 0;
   border-radius: 5px;
   color: var(--taskbar-text);
@@ -271,12 +274,19 @@ html {
 
 #window-overview-button svg {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: min(calc(var(--taskbar-size) * 0.52), 24px);
+  height: min(calc(var(--taskbar-size) * 0.52), 24px);
   fill: none;
   stroke: currentColor;
   stroke-width: 1;
   opacity: 0.8;
+}
+
+.left-taskbar #window-overview-button,
+.right-taskbar #window-overview-button {
+  width: var(--taskbar-size);
+  height: auto;
+  padding: 10px 0;
 }
 
 #window-overview-button:hover,
@@ -289,11 +299,6 @@ html {
   opacity: 0.38;
   background: transparent;
   cursor: default;
-}
-
-.left-taskbar #window-overview-button,
-.right-taskbar #window-overview-button {
-  flex-shrink: 0;
 }
 
 #start-menu {

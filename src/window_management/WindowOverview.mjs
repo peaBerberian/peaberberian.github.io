@@ -1,3 +1,5 @@
+import setUpContextMenu from "../components/context-menu.mjs";
+
 const OVERVIEW_ANIMATION_DURATION = 240;
 const OVERVIEW_PADDING_MIN = 12;
 const OVERVIEW_PADDING_MAX = 40;
@@ -12,6 +14,7 @@ const OVERVIEW_WINDOW_Z_INDEX = 610;
  * @property {HTMLElement} element
  * @property {boolean} wasMinimized
  * @property {{transform: string, opacity: string}} returnTo
+ * @property {DOMRect} rect
  * @property {number} stackingOrder
  * @property {Function} restoreAccessibility
  * @property {Function} resumeInteraction
@@ -72,14 +75,69 @@ export default class WindowOverview {
     );
     desktopElt.addEventListener(
       "auxclick",
-      (event) => this._blockNonPrimaryClick(event),
+      (event) => this._onAuxClick(event),
       true,
     );
-    desktopElt.addEventListener(
-      "contextmenu",
-      (event) => this._blockNonPrimaryClick(event),
-      true,
-    );
+    this._contextMenu = setUpContextMenu({
+      element: desktopElt,
+      capture: true,
+      filter: (event) => {
+        if (!this.isOpen()) {
+          return false;
+        }
+        this._blockNonPrimaryClick(event);
+        const element = event.target.closest?.(".window-overview-window");
+        this._contextEntry = this._entries.find((entry) => entry.element === element);
+        return this._state !== "closing" &&
+          (!!this._contextEntry || event.target === this._backdrop);
+      },
+      actions: [
+        {
+          name: "activate",
+          title: "Switch to window",
+          height: "1.4rem",
+          svg: `<svg aria-hidden="true" viewBox="0 -0.5 21 21" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M0 0h21v20H0V0Zm2.1 2v3h16.8V2H2.1Zm0 5v11h16.8V7H2.1Z"/>
+          </svg>`,
+          filter: () => !!this._contextEntry,
+          onClick: () => {
+            if (this._entries.includes(this._contextEntry)) {
+              this._select(this._contextEntry);
+            }
+          },
+        },
+        {
+          name: "close",
+          title: "Close window",
+          filter: () => !!this._contextEntry,
+          onClick: () => {
+            if (this._entries.includes(this._contextEntry)) {
+              this._contextEntry.appWindow.close();
+            }
+          },
+        },
+        {
+          name: "close",
+          title: "Close all windows",
+          filter: () => !this._contextEntry,
+          onClick: () => {
+            for (const { appWindow } of [...this._entries]) {
+              appWindow.close();
+            }
+          },
+        },
+        { name: "separator" },
+        {
+          name: "exit-overview",
+          title: "Exit overview",
+          height: "1.4rem",
+          svg: `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 4H3v16h7M8 12h13m-5-5 5 5-5 5"/>
+          </svg>`,
+          onClick: () => this.hide(),
+        },
+      ],
+    });
     document.addEventListener(
       "keydown",
       (event) => this._onKeyDown(event),
@@ -122,7 +180,6 @@ export default class WindowOverview {
     this._desktopElt.appendChild(backdrop);
     this._backdrop = backdrop;
 
-    const desktopRect = this._desktopElt.getBoundingClientRect();
     this._entries = appWindows.map((appWindow) => {
       const element = appWindow.element;
       const title = appWindow.getTitle() || "Untitled window";
@@ -171,32 +228,10 @@ export default class WindowOverview {
     });
     this._applyOverviewStacking();
 
-    const windowRects = this._entries.map((entry) =>
-      entry.element.getBoundingClientRect(),
-    );
-    const layout = calculateOverviewLayout(
-      windowRects,
-      desktopRect.width,
-      desktopRect.height,
-    );
-
-    this._entries.forEach((entry, index) => {
-      const rect = windowRects[index];
-      const target = layout[index];
-      const translateX = desktopRect.left + target.left - rect.left;
-      const translateY = desktopRect.top + target.top - rect.top;
-      entry.target = {
-        transform: `translate(${translateX}px, ${translateY}px) scale(${target.scale})`,
-        center: {
-          x: target.left + target.width / 2,
-          y: target.top + target.height / 2,
-        },
-      };
-      entry.label.style.left = `${entry.target.center.x}px`;
-      entry.label.style.top = `${target.top + target.height + 7}px`;
-      entry.label.style.maxWidth = `${target.width}px`;
-    });
-
+    for (const entry of this._entries) {
+      entry.rect = entry.element.getBoundingClientRect();
+    }
+    this._layoutEntries();
     const openingEntries = this._entries;
     this._animationFrame = requestAnimationFrame(() => {
       this._animationFrame = null;
@@ -224,6 +259,83 @@ export default class WindowOverview {
     return true;
   }
 
+  _layoutEntries() {
+    const desktopRect = this._desktopElt.getBoundingClientRect();
+    const windowRects = this._entries.map((entry) => entry.rect);
+    const layout = calculateOverviewLayout(
+      windowRects,
+      desktopRect.width,
+      desktopRect.height,
+    );
+
+    this._entries.forEach((entry, index) => {
+      const rect = entry.rect;
+      const target = layout[index];
+      const translateX = desktopRect.left + target.left - rect.left;
+      const translateY = desktopRect.top + target.top - rect.top;
+      entry.target = {
+        transform: `translate(${translateX}px, ${translateY}px) scale(${target.scale})`,
+        center: {
+          x: target.left + target.width / 2,
+          y: target.top + target.height / 2,
+        },
+      };
+      entry.label.style.left = `${entry.target.center.x}px`;
+      entry.label.style.top = `${target.top + target.height + 7}px`;
+      entry.label.style.maxWidth = `${target.width}px`;
+    });
+  }
+
+  /** Remove a closing window while keeping the remaining previews open. */
+  removeWindow(appWindow) {
+    if (this._state !== "opening" && this._state !== "opened") {
+      this.hide({ animate: false });
+      return;
+    }
+    const index = this._entries.findIndex((entry) => entry.appWindow === appWindow);
+    if (index === -1) {
+      return;
+    }
+    const [entry] = this._entries.splice(index, 1);
+    if (entry === this._contextEntry) {
+      this._contextMenu.close();
+      this._contextEntry = null;
+    }
+    const hadFocus = entry.element.contains(document.activeElement);
+    restoreEntry(entry);
+    if (this._entries.length === 0) {
+      this.hide({ animate: false });
+      return;
+    }
+    this._applyOverviewStacking();
+    this._layoutEntries();
+    if (this._state === "opened") {
+      for (const remaining of this._entries) {
+        remaining.element.style.setProperty(
+          "--window-overview-transform",
+          remaining.target.transform,
+        );
+      }
+    }
+    if (hadFocus) {
+      const nextEntry = this._entries[Math.min(index, this._entries.length - 1)];
+      nextEntry.element.focus({ preventScroll: true });
+    }
+  }
+
+  _onAuxClick(event) {
+    if (!this.isOpen()) {
+      return;
+    }
+    this._blockNonPrimaryClick(event);
+    if (event.button !== 1 || this._state === "closing") {
+      return;
+    }
+    const element = event.target.closest?.(".window-overview-window");
+    const entry = this._entries.find((entry) => entry.element === element);
+    entry?.appWindow.close();
+  }
+
   /**
    * Toggle the overview without changing the selected window.
    * @returns {boolean} `true` if the overview was opened.
@@ -247,6 +359,8 @@ export default class WindowOverview {
    * @returns {Promise<void>}
    */
   hide({ animate = true } = {}) {
+    this._contextMenu.close();
+    this._contextEntry = null;
     if (this._state === "closed") {
       return Promise.resolve();
     }
@@ -399,6 +513,15 @@ export default class WindowOverview {
 
   _onKeyDown(event) {
     if (!this.isOpen()) {
+      return;
+    }
+    if (this._contextMenu.isOpen()) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        this._contextMenu.close();
+        this._contextEntry?.element.focus({ preventScroll: true });
+      }
       return;
     }
     if (event.key === "Escape") {

@@ -264,7 +264,7 @@ export default class WindowManager {
     });
 
     appWindow.addEventListener("closing", () => {
-      this._windowOverview.hide({ animate: false });
+      this._windowOverview.removeWindow(appWindow);
       applicationAbortCtrl.abort();
       const windowIndex = this._windows.findIndex(
         (elt) => elt.appWindow === appWindow,

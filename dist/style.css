@@ -430,6 +430,26 @@ html {
 #desktop.window-overview-active .window-overview-window {
   cursor: pointer;
   z-index: var(--window-overview-z-index) !important;
+  transform: var(--window-overview-transform, none) !important;
+  transform-origin: top left !important;
+  opacity: var(--window-overview-opacity, 1) !important;
+  transition: none !important;
+}
+
+#desktop.window-overview-active.window-overview-opened
+  .window-overview-window {
+  transition:
+    transform var(--window-overview-duration)
+      cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity var(--window-overview-duration) ease !important;
+}
+
+#desktop.window-overview-active.window-overview-closing
+  .window-overview-window {
+  transition:
+    transform var(--window-overview-duration)
+      cubic-bezier(0.4, 0, 0.2, 1),
+    opacity var(--window-overview-duration) ease !important;
 }
 
 #desktop.window-overview-active .window-overview-window > * {

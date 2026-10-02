@@ -13,6 +13,7 @@ export default function setUpContextMenu({
   element,
   filter,
   abortSignal,
+  capture = false,
 }) {
   const contextMenuElt = document.createElement("div");
   contextMenuElt.className = "context-menu";
@@ -151,7 +152,7 @@ export default function setUpContextMenu({
     requestAnimationFrame(() => {
       contextMenuElt.classList.add("show");
     });
-  });
+  }, { capture });
 
   contextMenuElt.addEventListener("click", (e) => {
     const action = e.target.dataset.action;
@@ -184,6 +185,14 @@ export default function setUpContextMenu({
     contextMenuWrapper.innerHTML = "";
     contextMenuWrapper.display = "none";
   }
+  return {
+    close: () => {
+      if (contextMenuElt.parentElement === contextMenuWrapper) {
+        closeContextMenu();
+      }
+    },
+    isOpen: () => contextMenuElt.parentElement === contextMenuWrapper,
+  };
 }
 
 function getSvg(svg) {

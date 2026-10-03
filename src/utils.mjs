@@ -58,6 +58,34 @@ export function applyStyle(element, style) {
 }
 
 /**
+ * Install or update an application's stylesheet in the current document.
+ * Calling this function again with the same identifier reuses the existing
+ * `style` element.
+ * @param {string} id - Stable identifier for the stylesheet.
+ * @param {string} css - Stylesheet contents.
+ * @returns {HTMLStyleElement}
+ */
+export function installAppStyles(id, css) {
+  const installedStyles = document.head.querySelectorAll(
+    "style[data-app-style]",
+  );
+  for (const styleElt of installedStyles) {
+    if (styleElt.dataset.appStyle === id) {
+      if (styleElt.textContent !== css) {
+        styleElt.textContent = css;
+      }
+      return styleElt;
+    }
+  }
+
+  const styleElt = document.createElement("style");
+  styleElt.dataset.appStyle = id;
+  styleElt.textContent = css;
+  document.head.appendChild(styleElt);
+  return styleElt;
+}
+
+/**
  * Register a callback for interactions that should behave like a desktop
  * click, including equivalent interactions coming from sandboxed apps.
  * @param {AbortSignal} abortSignal

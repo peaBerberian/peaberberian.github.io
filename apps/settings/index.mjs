@@ -7,6 +7,7 @@ import createApplicationsSection from "./Applications.mjs";
 import createDesktopIconsSection from "./DesktopIcons.mjs";
 import createStorageSection from "./Storage.mjs";
 import strHtml from "./str-html.mjs";
+import { SETTINGS_CSS } from "./styles.mjs";
 
 /**
  * Generate content of the "System Settings" application.
@@ -19,6 +20,8 @@ import strHtml from "./str-html.mjs";
  * @returns {Object}
  */
 export function create(_args, env, abortSignal) {
+  env.appUtils.installAppStyles("settings", SETTINGS_CSS);
+
   const taskbarDimensions = {
     minHorizontalSize: env.CONSTANTS.TASKBAR_MIN_HORIZONTAL_SIZE,
     maxHorizontalSize: env.CONSTANTS.TASKBAR_MAX_HORIZONTAL_SIZE,
@@ -73,6 +76,7 @@ export function create(_args, env, abortSignal) {
     content: contentElt,
     sidebar: sidebarElt,
   } = constructAppWithSidebar(sidebarItems, onSidebarSelectionChange);
+  containerElt.classList.add("settings-app");
   onSidebarSelectionChange("wallpaper");
 
   let lastSidebarElemnt = sidebarElt;

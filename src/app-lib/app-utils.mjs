@@ -1,6 +1,10 @@
 import setUpContextMenu from "../components/context-menu.mjs";
 import { codeImgSvg, demoImgSvg, docImgSvg } from "../constants.mjs";
-import { constructSidebarElt, createExternalIframe } from "../utils.mjs";
+import {
+  constructSidebarElt,
+  createExternalIframe,
+  installAppStyles,
+} from "../utils.mjs";
 import { constructAppHeaderLine } from "./header-line.mjs";
 
 export function getAppUtils() {
@@ -14,6 +18,7 @@ export function getAppUtils() {
     createExternalIframe,
     createAppTitle,
     createFullscreenButton,
+    installAppStyles,
   };
 }
 

@@ -81,6 +81,12 @@ style.textContent = `
   50%  { box-shadow: 0 0 20px 6px currentColor; }
   100% { box-shadow: 0 0 8px 2px currentColor; }
 }
+@keyframes superPowerupGlow {
+  0%   { box-shadow: 0 0 10px 3px #ffd700; filter: hue-rotate(0deg); }
+  33%  { box-shadow: 0 0 18px 6px #00ffff; filter: hue-rotate(120deg); }
+  66%  { box-shadow: 0 0 18px 6px #ff4dff; filter: hue-rotate(240deg); }
+  100% { box-shadow: 0 0 10px 3px #ffd700; filter: hue-rotate(360deg); }
+}
 @keyframes comboFade {
   0%   { opacity: 1; }
   100% { opacity: 0; }
@@ -334,6 +340,8 @@ export function create(_args, env, abortSignal) {
       comboTimeout: null,
       waveReadyAt: 0,
       lastPowerupSpawnTs: -Infinity,
+      powerupSpawnFailures: 0,
+      hasSpawnedFirstPowerup: false,
       lastEnemyShotTs: -Infinity,
       nextBonusShipTs: performance.now() + 10000 + Math.random() * 8000,
     };
@@ -363,6 +371,7 @@ export function create(_args, env, abortSignal) {
       shieldSize: Math.max(50, 0.06 * gameState.gameWidth),
       powerupSize: Math.max(24, 0.04 * gameState.gameWidth),
       powerupSpeed: 0.0085 * gameState.gameHeight,
+      bonusShipSpeed: 0.0045 * gameState.gameWidth,
       comboWindow: 900, // ms between kills to maintain combo
       diveSpeed: 0.0065 * gameState.gameHeight,
     };
@@ -827,18 +836,36 @@ export function create(_args, env, abortSignal) {
     const now = performance.now();
     const maxActivePowerups = 3;
     const minSpawnDelay = 650;
-    const spawnChance = 0.16;
     if (
       gameState.powerups.length >= maxActivePowerups ||
-      now - gameState.lastPowerupSpawnTs < minSpawnDelay ||
-      Math.random() > spawnChance
+      now - gameState.lastPowerupSpawnTs < minSpawnDelay
     ) {
       return;
     }
+
+    const failures = gameState.powerupSpawnFailures;
+    const spawnChance = gameState.hasSpawnedFirstPowerup
+      ? Math.min(0.09 + failures * 0.02, 0.24)
+      : failures >= 4
+        ? 1
+        : 0.2 + failures * 0.05;
+    if (Math.random() > spawnChance) {
+      gameState.powerupSpawnFailures++;
+      return;
+    }
+
+    spawnPowerup(x, y, false);
+    gameState.hasSpawnedFirstPowerup = true;
+    gameState.powerupSpawnFailures = 0;
+  }
+
+  function spawnPowerup(x, y, isSuper) {
+    const now = performance.now();
     const keys = Object.keys(POWERUP_TYPES).filter(
       (type) =>
-        (type !== "EXTRALIFE" || gameState.player.lives < 3) &&
+        (type !== "EXTRALIFE" || gameState.player.lives < (isSuper ? 5 : 3)) &&
         (type !== "REBUILDSHIELDS" ||
+          isSuper ||
           gameState.shields.length < maxShieldBlocks()),
     );
     const type = keys[Math.floor(Math.random() * keys.length)];
@@ -851,6 +878,7 @@ export function create(_args, env, abortSignal) {
       height: size,
       type,
       def,
+      isSuper,
     };
     const elt = document.createElement("div");
     applyStyle(elt, {
@@ -863,12 +891,16 @@ export function create(_args, env, abortSignal) {
       lineHeight: size + "px",
       textAlign: "center",
       borderRadius: "50%",
-      border: `2px solid ${env.STYLE.windowActiveHeaderText}`,
+      border: isSuper
+        ? "3px solid #ffd700"
+        : `2px solid ${env.STYLE.windowActiveHeaderText}`,
       color: env.STYLE.windowActiveHeaderText,
       backgroundColor: env.STYLE.windowActiveHeader,
       userSelect: "none",
       zIndex: "50",
-      animation: "powerupFloat 1.5s infinite ease-in-out",
+      animation: isSuper
+        ? "powerupFloat 1.5s infinite ease-in-out, superPowerupGlow 1.2s infinite linear"
+        : "powerupFloat 1.5s infinite ease-in-out",
       cursor: "default",
     });
     elt.textContent = def.emoji;
@@ -895,7 +927,7 @@ export function create(_args, env, abortSignal) {
         p.y < gameState.player.y + gameState.player.height &&
         p.y + p.height > gameState.player.y
       ) {
-        activatePowerup(p.type, p.def);
+        activatePowerup(p.type, p.def, p.isSuper);
         p.element.remove();
         return false;
       }
@@ -904,7 +936,8 @@ export function create(_args, env, abortSignal) {
   }
 
   function scheduleNextBonusShip() {
-    gameState.nextBonusShipTs = performance.now() + 12000 + Math.random() * 10000;
+    gameState.nextBonusShipTs =
+      performance.now() + 12000 + Math.random() * 10000;
   }
 
   function trySpawnBonusShip() {
@@ -922,7 +955,7 @@ export function create(_args, env, abortSignal) {
     const bonusShip = {
       x: direction === 1 ? -size : gameState.gameWidth + size,
       y: Math.max(config.hudSize * 2, gameState.gameHeight * 0.08),
-      vx: direction * (config.enemyBaseSpeed * 4.5 + config.enemySuppSpeed),
+      vx: direction * config.bonusShipSpeed,
       width: size,
       height: size,
       element: document.createElement("div"),
@@ -952,7 +985,10 @@ export function create(_args, env, abortSignal) {
       return;
     }
     ship.x += ship.vx;
-    if (ship.x < -ship.width * 2 || ship.x > gameState.gameWidth + ship.width * 2) {
+    if (
+      ship.x < -ship.width * 2 ||
+      ship.x > gameState.gameWidth + ship.width * 2
+    ) {
       clearBonusShip();
       scheduleNextBonusShip();
       return;
@@ -961,17 +997,33 @@ export function create(_args, env, abortSignal) {
     ship.element.style.top = ship.y + "px";
   }
 
-  function activatePowerup(type, def) {
+  function activatePowerup(type, def, isSuper = false) {
     const now = performance.now();
-    showPowerupLabel(def.label);
+    let label = def.label;
+    if (isSuper) {
+      label = type === "EXTRALIFE" ? "+2 LIVES" : `SUPER ${label}`;
+    }
+    showPowerupLabel(label);
     audio.playSound("powerup");
 
     if (type === "EXTRALIFE") {
-      gameState.player.lives = Math.min(gameState.player.lives + 1, 5);
+      gameState.player.lives = Math.min(
+        gameState.player.lives + (isSuper ? 2 : 1),
+        5,
+      );
     } else if (type === "REBUILDSHIELDS") {
       rebuildShields();
+      if (isSuper) {
+        gameState.activePowerups.SHIELD = Math.max(
+          gameState.activePowerups.SHIELD,
+          now + POWERUP_TYPES.SHIELD.duration,
+        );
+      }
     } else {
-      gameState.activePowerups[type] = now + def.duration;
+      gameState.activePowerups[type] = Math.max(
+        gameState.activePowerups[type],
+        now + def.duration * (isSuper ? 2 : 1),
+      );
       if (type === "JAMMER") {
         clearEnemyBullets();
       }
@@ -1273,7 +1325,11 @@ export function create(_args, env, abortSignal) {
       (0.0009 + Math.max(gameState.level - 2, 0) * 0.00115) *
         gameState.enemies.reduce((sum, enemy) => sum + enemy.shotWeight, 0),
     );
-    if (canShoot && gameState.enemies.length > 0 && Math.random() < shootChance) {
+    if (
+      canShoot &&
+      gameState.enemies.length > 0 &&
+      Math.random() < shootChance
+    ) {
       const shooter = pickWeightedEnemy("shotWeight");
       if (shooter.isBoss) {
         const bossNumber = Math.floor(gameState.level / 3);
@@ -1359,6 +1415,11 @@ export function create(_args, env, abortSignal) {
       let hit = false;
 
       if (gameState.bonusShip && rectsOverlap(bullet, gameState.bonusShip)) {
+        const bonusX =
+          gameState.bonusShip.x +
+          gameState.bonusShip.width / 2 -
+          config.powerupSize / 2;
+        const bonusY = gameState.bonusShip.y;
         bullet.element.remove();
         gameState.bullets.splice(i, 1);
         spawnParticles(
@@ -1368,6 +1429,7 @@ export function create(_args, env, abortSignal) {
         );
         clearBonusShip();
         scheduleNextBonusShip();
+        spawnPowerup(bonusX, bonusY, true);
         gameState.score += 75 + gameState.level * 10;
         audio.playSound("powerup");
         hit = true;
@@ -1425,6 +1487,10 @@ export function create(_args, env, abortSignal) {
               diver.x + diver.width / 2,
               diver.y + diver.height / 2,
               env.STYLE.windowActiveHeaderText,
+            );
+            trySpawnPowerup(
+              diver.x + diver.width / 2 - config.powerupSize / 2,
+              diver.y,
             );
             diver.element.remove();
             gameState.divers.splice(j, 1);
@@ -1568,6 +1634,10 @@ export function create(_args, env, abortSignal) {
         diver.x + diver.width / 2,
         diver.y + diver.height / 2,
         env.STYLE.windowActiveHeaderText,
+      );
+      trySpawnPowerup(
+        diver.x + diver.width / 2 - config.powerupSize / 2,
+        diver.y,
       );
       diver.element.remove();
       gameState.divers.splice(j, 1);

@@ -5,8 +5,6 @@
 // I think it's a more general issue where a proper abstraction distributing
 // keyboard events to the right context (e.g. a desktop-global stack) would be
 // useful.
-// TODO: In context menu on taskbar: Minimize all windows / Restore all
-// windows -> If already the case the WindowOverview does not close.
 // TODO:When closing a window in this WindowOverview, I see a brief flash at its
 // place first. Like maybe a full background for a sub 100ms time on e.g.
 // Chrome. Not sure what it is yet.

@@ -241,10 +241,7 @@ export default class Taskbar {
           title: "Minimize all windows",
           onClick: () => {
             for (const elt of this._taskbarItemsElt.children) {
-              const cbs = this._appCallbacksPerElt.get(elt);
-              if (!cbs?.isWindowMinimized()) {
-                cbs.minimizeWindow();
-              }
+              this._appCallbacksPerElt.get(elt)?.minimizeWindow();
             }
           },
         },
@@ -256,10 +253,7 @@ export default class Taskbar {
     <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><g transform="translate(-220.000000, -6919.000000)" fill="currentColor"><g transform="translate(56.000000, 160.000000)"><path d="M172,6769.586 L176.586,6765 L172,6765 L172,6763 L180,6763 L180,6771 L178,6771 L178,6766.414 L173.414,6771 L172,6769.586 Z M166,6761 L182,6761 L182,6777 L172,6777 L172,6771 L166,6771 L166,6761 Z M164,6779 L184,6779 L184,6759 L164,6759 L164,6779 Z"></path></g></g></g></svg>`,
           onClick: () => {
             for (const elt of this._taskbarItemsElt.children) {
-              const cbs = this._appCallbacksPerElt.get(elt);
-              if (cbs?.isWindowMinimized()) {
-                cbs.restoreWindow();
-              }
+              this._appCallbacksPerElt.get(elt)?.restoreWindow();
             }
           },
         },

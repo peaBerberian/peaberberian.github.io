@@ -249,11 +249,15 @@ export default class WindowManager {
       isWindowMinimized: () => appWindow.isMinimizedOrMinimizing(),
       minimizeWindow: () => {
         this._windowOverview.hide({ animate: false });
-        appWindow.minimize();
+        if (!appWindow.isMinimizedOrMinimizing()) {
+          appWindow.minimize();
+        }
       },
       restoreWindow: () => {
         this._windowOverview.hide({ animate: false });
-        appWindow.deminimize();
+        if (appWindow.isMinimizedOrMinimizing()) {
+          appWindow.deminimize();
+        }
       },
       activateWindow: () => {
         this._windowOverview.hide({ animate: false });

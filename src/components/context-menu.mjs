@@ -54,6 +54,7 @@ export default function setUpContextMenu({
         return;
       }
       if (e.key === " " || e.key === "Enter") {
+        e.stopPropagation();
         return onClick(e);
       }
     };
@@ -98,7 +99,7 @@ export default function setUpContextMenu({
     }
   });
 
-  element.addEventListener("contextmenu", (e) => {
+  addAbortableEventListener(element, "contextmenu", abortSignal, (e) => {
     if (filter && !filter(e)) {
       return;
     }
@@ -146,8 +147,7 @@ export default function setUpContextMenu({
     } else {
       contextMenuElt.style.top = e.pageY + 3 + "px";
     }
-    contextMenuElt.style.transformOrigin =
-      `${verticalTransformOrigin} ${horizontalTransformOrigin}`;
+    contextMenuElt.style.transformOrigin = `${verticalTransformOrigin} ${horizontalTransformOrigin}`;
     requestAnimationFrame(() => {
       contextMenuElt.classList.add("show");
     });
@@ -161,13 +161,20 @@ export default function setUpContextMenu({
     }
   });
 
-  addAbortableEventListener(document, "keydown", abortSignal, (e) => {
-    if (e.key === "Escape") {
-      if (contextMenuElt.classList.contains("show")) {
+  addAbortableEventListener(
+    document,
+    "keydown",
+    abortSignal,
+    (e) => {
+      // Detached context menus must not consume Escape.
+      if (e.key === "Escape" && contextMenuWrapper.contains(contextMenuElt)) {
+        e.preventDefault();
+        e.stopPropagation();
         closeContextMenu();
       }
-    }
-  });
+    },
+    { capture: true },
+  );
   addAbortableEventListener(document, "mousedown", abortSignal, (e) => {
     if (!contextMenuWrapper.contains(e.target)) {
       closeContextMenu();
@@ -176,14 +183,17 @@ export default function setUpContextMenu({
   addAbortableDesktopClickListener(abortSignal, closeContextMenu);
   addAbortableEventListener(window, "resize", abortSignal, closeContextMenu);
   function closeContextMenu() {
+    const isDisplayed = contextMenuWrapper.contains(contextMenuElt);
     contextMenuElt.classList.remove("show");
     contextMenuElt.remove();
     contextMenuElt.style.left = "";
     contextMenuElt.style.top = "";
     contextMenuElt.style.transformOrigin = "";
-    contextMenuWrapper.innerHTML = "";
-    contextMenuWrapper.display = "none";
+    if (isDisplayed) {
+      contextMenuWrapper.style.display = "none";
+    }
   }
+  abortSignal?.addEventListener("abort", closeContextMenu);
 }
 
 function getSvg(svg) {

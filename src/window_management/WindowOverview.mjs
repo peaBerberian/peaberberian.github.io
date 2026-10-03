@@ -1,3 +1,5 @@
+import setUpContextMenu from "../components/context-menu.mjs";
+
 const OVERVIEW_ANIMATION_DURATION = 240;
 const OVERVIEW_PADDING_MIN = 12;
 const OVERVIEW_PADDING_MAX = 40;
@@ -12,10 +14,12 @@ const OVERVIEW_WINDOW_Z_INDEX = 610;
  * @property {HTMLElement} element
  * @property {boolean} wasMinimized
  * @property {{transform: string, opacity: string}} returnTo
+ * @property {DOMRect} rect
  * @property {number} stackingOrder
  * @property {Function} restoreAccessibility
  * @property {Function} resumeInteraction
  * @property {HTMLElement} label
+ * @property {AbortController} contextMenuAbortCtrl
  * @property {{transform: string, center: {x: number, y: number}}|null} target
  */
 
@@ -26,10 +30,12 @@ export default class WindowOverview {
   /**
    * @param {HTMLElement} desktopElt
    * @param {Function} getWindows - Returns the current AppWindow instances.
+   * @param {Function} closeWindow - Closes an AppWindow through the manager.
    */
-  constructor(desktopElt, getWindows) {
+  constructor(desktopElt, getWindows, closeWindow) {
     this._desktopElt = desktopElt;
     this._getWindows = getWindows;
+    this._closeWindow = closeWindow;
     this._entries = [];
     this._state = "closed";
     this._animationFrame = null;
@@ -44,27 +50,10 @@ export default class WindowOverview {
 
     desktopElt.addEventListener("pointerover", (event) => {
       if (this._state === "opening" || this._state === "opened") {
-        const windowElement = event.target.closest?.(
-          ".window-overview-window",
-        );
+        const windowElement = event.target.closest?.(".window-overview-window");
         windowElement?.focus({ preventScroll: true });
       }
     });
-    desktopElt.addEventListener(
-      "mousedown",
-      (event) => this._blockWindowInteraction(event),
-      true,
-    );
-    desktopElt.addEventListener(
-      "mouseup",
-      (event) => this._blockWindowInteraction(event),
-      true,
-    );
-    desktopElt.addEventListener(
-      "touchstart",
-      (event) => this._blockWindowInteraction(event),
-      { capture: true, passive: true },
-    );
     desktopElt.addEventListener(
       "click",
       (event) => this._onDesktopClick(event),
@@ -72,23 +61,80 @@ export default class WindowOverview {
     );
     desktopElt.addEventListener(
       "auxclick",
-      (event) => this._blockNonPrimaryClick(event),
+      (event) => this._onAuxClick(event),
       true,
     );
-    desktopElt.addEventListener(
-      "contextmenu",
-      (event) => this._blockNonPrimaryClick(event),
-      true,
-    );
-    document.addEventListener(
-      "keydown",
-      (event) => this._onKeyDown(event),
-      true,
-    );
+    desktopElt.addEventListener("keydown", (event) => this._onKeyDown(event));
     window.addEventListener("resize", () => {
       if (this.isOpen()) {
         this.hide({ animate: false });
       }
+    });
+  }
+
+  _setUpWindowContextMenu(entry) {
+    this._setUpContextMenu(
+      entry.element,
+      [
+        {
+          name: "activate",
+          title: "Switch to window",
+          height: "1.4rem",
+          svg: `<svg aria-hidden="true" viewBox="0 -0.5 21 21" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" d="M0 0h21v20H0V0Zm2.1 2v3h16.8V2H2.1Zm0 5v11h16.8V7H2.1Z"/>
+        </svg>`,
+          onClick: () => this._select(entry),
+        },
+        {
+          name: "close",
+          title: "Close window",
+          onClick: () => this._closeWindow(entry.appWindow),
+        },
+      ],
+      entry.contextMenuAbortCtrl.signal,
+    );
+  }
+
+  _setUpBackdropContextMenu() {
+    this._backdropMenuAbortCtrl = new AbortController();
+    this._setUpContextMenu(
+      this._backdrop,
+      [
+        {
+          name: "close",
+          title: "Close all windows",
+          onClick: () => {
+            for (const { appWindow } of this._entries.slice()) {
+              this._closeWindow(appWindow);
+            }
+          },
+        },
+      ],
+      this._backdropMenuAbortCtrl.signal,
+    );
+  }
+
+  _setUpContextMenu(element, actions, abortSignal) {
+    setUpContextMenu({
+      element,
+      abortSignal,
+      filter: (event) => {
+        event.preventDefault();
+        return this._state === "opening" || this._state === "opened";
+      },
+      actions: [
+        ...actions,
+        { name: "separator" },
+        {
+          name: "exit-overview",
+          title: "Exit overview",
+          height: "1.4rem",
+          svg: `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 4H3v16h7M8 12h13m-5-5 5 5-5 5"/>
+          </svg>`,
+          onClick: () => this.hide(),
+        },
+      ],
     });
   }
 
@@ -122,7 +168,6 @@ export default class WindowOverview {
     this._desktopElt.appendChild(backdrop);
     this._backdrop = backdrop;
 
-    const desktopRect = this._desktopElt.getBoundingClientRect();
     this._entries = appWindows.map((appWindow) => {
       const element = appWindow.element;
       const title = appWindow.getTitle() || "Untitled window";
@@ -166,37 +211,20 @@ export default class WindowOverview {
         restoreAccessibility,
         resumeInteraction,
         label,
+        contextMenuAbortCtrl: new AbortController(),
         target: null,
       };
     });
+    this._setUpBackdropContextMenu();
+    for (const entry of this._entries) {
+      this._setUpWindowContextMenu(entry);
+    }
     this._applyOverviewStacking();
 
-    const windowRects = this._entries.map((entry) =>
-      entry.element.getBoundingClientRect(),
-    );
-    const layout = calculateOverviewLayout(
-      windowRects,
-      desktopRect.width,
-      desktopRect.height,
-    );
-
-    this._entries.forEach((entry, index) => {
-      const rect = windowRects[index];
-      const target = layout[index];
-      const translateX = desktopRect.left + target.left - rect.left;
-      const translateY = desktopRect.top + target.top - rect.top;
-      entry.target = {
-        transform: `translate(${translateX}px, ${translateY}px) scale(${target.scale})`,
-        center: {
-          x: target.left + target.width / 2,
-          y: target.top + target.height / 2,
-        },
-      };
-      entry.label.style.left = `${entry.target.center.x}px`;
-      entry.label.style.top = `${target.top + target.height + 7}px`;
-      entry.label.style.maxWidth = `${target.width}px`;
-    });
-
+    for (const entry of this._entries) {
+      entry.rect = entry.element.getBoundingClientRect();
+    }
+    this._layoutEntries();
     const openingEntries = this._entries;
     this._animationFrame = requestAnimationFrame(() => {
       this._animationFrame = null;
@@ -224,6 +252,84 @@ export default class WindowOverview {
     return true;
   }
 
+  _layoutEntries() {
+    const desktopRect = this._desktopElt.getBoundingClientRect();
+    const windowRects = this._entries.map((entry) => entry.rect);
+    const layout = calculateOverviewLayout(
+      windowRects,
+      desktopRect.width,
+      desktopRect.height,
+    );
+
+    this._entries.forEach((entry, index) => {
+      const rect = entry.rect;
+      const target = layout[index];
+      const translateX = desktopRect.left + target.left - rect.left;
+      const translateY = desktopRect.top + target.top - rect.top;
+      entry.target = {
+        transform: `translate(${translateX}px, ${translateY}px) scale(${target.scale})`,
+        center: {
+          x: target.left + target.width / 2,
+          y: target.top + target.height / 2,
+        },
+      };
+      entry.label.style.left = `${entry.target.center.x}px`;
+      entry.label.style.top = `${target.top + target.height + 7}px`;
+      entry.label.style.maxWidth = `${target.width}px`;
+    });
+  }
+
+  /** Remove a closing window while keeping the remaining previews open. */
+  removeWindow(appWindow) {
+    if (this._state !== "opening" && this._state !== "opened") {
+      this.hide({ animate: false });
+      return;
+    }
+    const index = this._entries.findIndex(
+      (entry) => entry.appWindow === appWindow,
+    );
+    if (index === -1) {
+      return;
+    }
+    const [entry] = this._entries.splice(index, 1);
+    const hadFocus = entry.element.contains(document.activeElement);
+    restoreEntry(entry);
+    if (this._entries.length === 0) {
+      this.hide({ animate: false });
+      return;
+    }
+    this._applyOverviewStacking();
+    this._layoutEntries();
+    if (this._state === "opened") {
+      for (const remaining of this._entries) {
+        remaining.element.style.setProperty(
+          "--window-overview-transform",
+          remaining.target.transform,
+        );
+      }
+    }
+    if (hadFocus) {
+      const nextEntry =
+        this._entries[Math.min(index, this._entries.length - 1)];
+      nextEntry.element.focus({ preventScroll: true });
+    }
+  }
+
+  _onAuxClick(event) {
+    if (!this.isOpen()) {
+      return;
+    }
+    event.preventDefault();
+    if (event.button !== 1 || this._state === "closing") {
+      return;
+    }
+    const element = event.target.closest?.(".window-overview-window");
+    const entry = this._entries.find((entry) => entry.element === element);
+    if (entry) {
+      this._closeWindow(entry.appWindow);
+    }
+  }
+
   /**
    * Toggle the overview without changing the selected window.
    * @returns {boolean} `true` if the overview was opened.
@@ -247,6 +353,10 @@ export default class WindowOverview {
    * @returns {Promise<void>}
    */
   hide({ animate = true } = {}) {
+    this._backdropMenuAbortCtrl?.abort();
+    for (const entry of this._entries) {
+      entry.contextMenuAbortCtrl.abort();
+    }
     if (this._state === "closed") {
       return Promise.resolve();
     }
@@ -333,20 +443,6 @@ export default class WindowOverview {
     return hidePromise;
   }
 
-  _blockWindowInteraction(event) {
-    if (!this.isOpen()) {
-      return;
-    }
-    if ("button" in event && event.button !== 0) {
-      this._blockNonPrimaryClick(event);
-      return;
-    }
-    const windowElement = event.target.closest?.(".window-overview-window");
-    if (windowElement) {
-      event.stopPropagation();
-    }
-  }
-
   _applyOverviewStacking() {
     this._entries
       .map((entry, index) => ({
@@ -363,27 +459,18 @@ export default class WindowOverview {
       });
   }
 
-  _blockNonPrimaryClick(event) {
-    if (!this.isOpen()) {
-      return;
-    }
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
   _onDesktopClick(event) {
     if (!this.isOpen()) {
       return;
     }
     if (event.button !== 0) {
-      this._blockNonPrimaryClick(event);
+      event.preventDefault();
       return;
     }
 
     const windowElement = event.target.closest?.(".window-overview-window");
     if (windowElement) {
       event.preventDefault();
-      event.stopPropagation();
       const entry = this._entries.find(
         ({ element }) => element === windowElement,
       );
@@ -392,7 +479,6 @@ export default class WindowOverview {
       }
     } else if (event.target === this._backdrop) {
       event.preventDefault();
-      event.stopPropagation();
       this.hide();
     }
   }
@@ -401,10 +487,19 @@ export default class WindowOverview {
     if (!this.isOpen()) {
       return;
     }
+    if (event.defaultPrevented) {
+      return;
+    }
     if (event.key === "Escape") {
       event.preventDefault();
       event.stopPropagation();
       this.hide();
+      return;
+    }
+    const focusedEntry = this._entries.find(
+      ({ element }) => element === document.activeElement,
+    );
+    if (!focusedEntry) {
       return;
     }
     if (
@@ -415,10 +510,7 @@ export default class WindowOverview {
     ) {
       event.preventDefault();
       event.stopPropagation();
-      const currentEntry =
-        this._entries.find(
-          ({ element }) => element === document.activeElement,
-        ) ?? this._entries[0];
+      const currentEntry = focusedEntry;
       const nextEntry = findDirectionalEntry(
         this._entries,
         currentEntry,
@@ -498,6 +590,7 @@ function findDirectionalEntry(entries, currentEntry, key) {
 }
 
 function restoreEntry(entry) {
+  entry.contextMenuAbortCtrl.abort();
   const { element, restoreAccessibility, resumeInteraction } = entry;
   element.classList.remove("window-overview-window");
   element.style.removeProperty("--window-overview-transform");

@@ -77,8 +77,10 @@ export default class WindowManager {
      * @private
      */
     this._windows = [];
-    this._windowOverview = new WindowOverview(this._desktopElt, () =>
-      this._windows.map(({ appWindow }) => appWindow),
+    this._windowOverview = new WindowOverview(
+      this._desktopElt,
+      () => this._windows.map(({ appWindow }) => appWindow),
+      (appWindow) => this._closeWindow(appWindow),
     );
     this.bus = new Bus();
 
@@ -107,7 +109,7 @@ export default class WindowManager {
     });
 
     this._desktopElt.addEventListener("click", (e) => {
-      if (e.target === this._desktopElt) {
+      if (e.target === this._desktopElt && !this._windowOverview.isOpen()) {
         // deactivate all windows
         this._windows.forEach(({ appWindow }) => {
           if (
@@ -257,14 +259,11 @@ export default class WindowManager {
         this._windowOverview.hide({ animate: false });
         appWindow.activate();
       },
-      closeWindow: () => {
-        this._windowOverview.hide({ animate: false });
-        appWindow.close();
-      },
+      closeWindow: () => this._closeWindow(appWindow),
     });
 
     appWindow.addEventListener("closing", () => {
-      this._windowOverview.hide({ animate: false });
+      this._windowOverview.removeWindow(appWindow);
       applicationAbortCtrl.abort();
       const windowIndex = this._windows.findIndex(
         (elt) => elt.appWindow === appWindow,
@@ -508,6 +507,14 @@ export default class WindowManager {
     if (currentWindowWithMaxZIndex) {
       currentWindowWithMaxZIndex.activate();
     }
+  }
+
+  /**
+   * @private
+   * @param {AppWindow} appWindow
+   */
+  _closeWindow(appWindow) {
+    appWindow.close({ animate: !this._windowOverview.isOpen() });
   }
 
   /**
@@ -857,7 +864,7 @@ export default class WindowManager {
         appWindow.updateTitle(newIcon, newTitle);
         this._taskbarManager.updateTitle(appWindow, newIcon, newTitle);
       },
-      closeApp: () => appWindow.close(),
+      closeApp: () => this._closeWindow(appWindow),
       STYLE: constructAppStyleObject(),
     };
 

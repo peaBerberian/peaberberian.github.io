@@ -49,6 +49,7 @@ import { keepWindowActiveInCurrentEventLoopIteration } from "./utils.mjs";
  * @param {number} minDimensions.minWidth - The minimum width in pixels the
  * window can be resized to.
  * @param {Object} callbacks
+ * @param {Function} callbacks.isInteractionSuspended - Whether interaction is suspended.
  * @param {Function} callbacks.activateWindow - Callback to activate that
  * window on the desktop.
  * @param {Function} callbacks.getOobDistances - Callback to obtain the
@@ -84,6 +85,7 @@ export function handleResizeAndMove(
  * @param {number} minDimensions.minWidth - The minimum width in pixels the
  * window can be resized to.
  * @param {Object} callbacks
+ * @param {Function} callbacks.isInteractionSuspended - Whether interaction is suspended.
  * @param {Function} callbacks.activateWindow - Callback to activate that
  * window on the desktop.
  * @param {Function} callbacks.updateOobDistances - Callback allowing to update
@@ -105,6 +107,7 @@ function handleMoveOnWindow(
     updateOobDistances,
     exitFullScreen,
     saveCurrentCoordinates,
+    isInteractionSuspended,
   },
   abortSignal,
 ) {
@@ -200,6 +203,9 @@ function handleMoveOnWindow(
       "touchstart",
       abortSignal,
       (e) => {
+        if (isInteractionSuspended()) {
+          return;
+        }
         const touch = e.touches[0];
         startDraggingWindow(touch.clientX, touch.clientY);
       },
@@ -231,7 +237,7 @@ function handleMoveOnWindow(
     });
 
     addAbortableEventListener(header, "mousedown", abortSignal, (e) => {
-      if (e.button !== 0) {
+      if (e.button !== 0 || isInteractionSuspended()) {
         // not left click
         return;
       }
@@ -295,6 +301,9 @@ function handleMoveOnWindow(
   }
 
   function moveDraggedWindow(clientX, clientY) {
+    if (!isDragging || isInteractionSuspended()) {
+      return;
+    }
     const newX = clientX - offsetX;
     const newY = clientY - offsetY;
     const { minX, minY, minXBound, minYBound } =
@@ -448,6 +457,7 @@ function handleMoveOnWindow(
  * @param {number} minDimensions.minWidth - The minimum width in pixels the
  * window can be resized to.
  * @param {Object} callbacks
+ * @param {Function} callbacks.isInteractionSuspended - Whether interaction is suspended.
  * @param {Function} callbacks.activateWindow - Callback to activate that
  * window on the desktop.
  * @param {Function} callbacks.getOobDistances - Callback to obtain the
@@ -466,7 +476,7 @@ function handleMoveOnWindow(
 function handleResizeOnWindow(
   windowElt,
   { minHeight, minWidth },
-  { activateWindow, getOobDistances, exitFullScreen, saveCurrentCoordinates },
+  { activateWindow, getOobDistances, exitFullScreen, saveCurrentCoordinates, isInteractionSuspended },
   abortSignal,
 ) {
   // Add resize handles
@@ -526,7 +536,7 @@ function handleResizeOnWindow(
       unblockElementsFromTakingPointerEvents();
     });
     addAbortableEventListener(handle, "mousedown", abortSignal, (e) => {
-      if (e.button) {
+      if (e.button || isInteractionSuspended()) {
         // not left click
         return;
       }
@@ -594,6 +604,9 @@ function handleResizeOnWindow(
 
     const resize = (e) => {
       requestAnimationFrame(() => {
+        if (isInteractionSuspended()) {
+          return;
+        }
         const deltaX = e.clientX - startX;
         const deltaY = e.clientY - startY;
 

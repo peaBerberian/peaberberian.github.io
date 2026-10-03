@@ -27,7 +27,10 @@ export function getAppUtils() {
 function createAppTitle(title, ql) {
   const h2Elt = document.createElement("h2");
   h2Elt.className = "app-titl";
-  h2Elt.appendChild(document.createTextNode(title));
+  const titleElt = document.createElement("span");
+  titleElt.className = "app-title-label";
+  titleElt.textContent = title;
+  h2Elt.appendChild(titleElt);
   h2Elt.appendChild(constructQuicklinks(ql ?? {}));
   return h2Elt;
 }
@@ -50,6 +53,7 @@ function constructQuicklinks(ql) {
     aElt.href = ql.demo;
     aElt.target = "_blank";
     aElt.appendChild(imgWrapper);
+    aElt.appendChild(createQuicklinkLabel("Demo"));
     links.push(aElt);
   }
   if (ql.github) {
@@ -63,6 +67,7 @@ function constructQuicklinks(ql) {
     aElt.href = ql.github;
     aElt.target = "_blank";
     aElt.appendChild(imgWrapper);
+    aElt.appendChild(createQuicklinkLabel("Source"));
     links.push(aElt);
   }
   if (ql.doc) {
@@ -76,6 +81,7 @@ function constructQuicklinks(ql) {
     aElt.href = ql.doc;
     aElt.target = "_blank";
     aElt.appendChild(imgWrapper);
+    aElt.appendChild(createQuicklinkLabel("Docs"));
     links.push(aElt);
   }
   const quickLinksElt = document.createElement("span");
@@ -84,6 +90,13 @@ function constructQuicklinks(ql) {
     quickLinksElt.appendChild(lnk);
   }
   return quickLinksElt;
+}
+
+function createQuicklinkLabel(text) {
+  const labelElt = document.createElement("span");
+  labelElt.className = "quicklink-label";
+  labelElt.textContent = text;
+  return labelElt;
 }
 
 /**

@@ -165,19 +165,65 @@ ol {
   border-bottom: 1px solid var(--window-line-color);
 }
 
+.app-titl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  column-gap: 24px;
+  row-gap: 8px;
+}
+.app-title-label {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.app-titl > .quickLinks {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-top: 0;
+}
+.app-titl > .quickLinks .quicklink-link {
+  margin: 0;
+}
+
 .quickLinks {
   margin-top: 17px;
 }
 .quicklink-link {
-  margin: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 7px;
+  vertical-align: middle;
+  font-size: 0.6em;
+  font-weight: normal;
+  text-decoration: none;
 }
 .quicklink-link:hover {
   color: var(--app-primary-color);
+}
+.quicklink-link:hover .quicklink-label,
+.quicklink-link:focus-visible .quicklink-label {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 .quicklink-img,
 .quicklink-img svg {
   height: 22px;
   width: auto;
+}
+.quicklink-img {
+  display: inline-block;
+  vertical-align: middle;
+}
+.quicklink-img svg {
+  display: block;
+}
+.app-titl .quicklink-img,
+.app-titl .quicklink-img svg {
+  height: 19px;
 }
 .about-external-link {
   display: inline-flex;

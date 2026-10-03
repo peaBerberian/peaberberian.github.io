@@ -82,11 +82,28 @@ export default class WindowOverview {
       true,
     );
     desktopElt.addEventListener("keydown", (event) => this._onKeyDown(event));
-    window.addEventListener("resize", () => {
+
+    let desktopWidth = desktopElt.clientWidth;
+    let desktopHeight = desktopElt.clientHeight;
+    // The overview layout is a snapshot of the desktop's available space.
+    // Observe that space directly so every layout source (taskbar, viewport,
+    // or a future desktop component) invalidates the snapshot consistently.
+    this._desktopResizeObserver = new ResizeObserver(() => {
+      const newDesktopWidth = desktopElt.clientWidth;
+      const newDesktopHeight = desktopElt.clientHeight;
+      if (
+        newDesktopWidth === desktopWidth &&
+        newDesktopHeight === desktopHeight
+      ) {
+        return;
+      }
+      desktopWidth = newDesktopWidth;
+      desktopHeight = newDesktopHeight;
       if (!this.isClosed()) {
         this.hide({ animate: false });
       }
     });
+    this._desktopResizeObserver.observe(desktopElt);
   }
 
   /**

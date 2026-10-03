@@ -109,7 +109,7 @@ export default class WindowManager {
     });
 
     this._desktopElt.addEventListener("click", (e) => {
-      if (e.target === this._desktopElt && !this._windowOverview.isOpen()) {
+      if (e.target === this._desktopElt && this._windowOverview.isClosed()) {
         // deactivate all windows
         this._windows.forEach(({ appWindow }) => {
           if (
@@ -514,7 +514,7 @@ export default class WindowManager {
    * @param {AppWindow} appWindow
    */
   _closeWindow(appWindow) {
-    appWindow.close({ animate: !this._windowOverview.isOpen() });
+    appWindow.close({ animate: this._windowOverview.isClosed() });
   }
 
   /**

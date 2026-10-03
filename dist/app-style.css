@@ -516,6 +516,7 @@ ol {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   width: 100%;
   max-width: 450px;
   min-height: 56px;
@@ -523,7 +524,7 @@ ol {
 }
 
 .w-small-opt-desc {
-  padding-right: 10px;
+  min-width: 0;
 }
 
 .w-small-opt.disabled {

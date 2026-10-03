@@ -18,6 +18,9 @@ const OVERVIEW_GAP_MIN = 10;
 const OVERVIEW_GAP_MAX = 28;
 const OVERVIEW_LABEL_HEIGHT = 34;
 const OVERVIEW_WINDOW_Z_INDEX = 610;
+const TOUCH_DRAG_START_DISTANCE = 8;
+const TOUCH_DISMISS_DISTANCE_MIN = 72;
+const TOUCH_DISMISS_DISTANCE_MAX = 160;
 
 /**
  * Arranges application windows into a temporary, selectable overview.
@@ -57,6 +60,8 @@ export default class WindowOverview {
     this._cleanupTimer = null;
     this._hidePromise = null;
     this._finishHide = null;
+    this._touchGesture = null;
+    this._suppressNextClick = false;
 
     desktopElt.style.setProperty(
       "--window-overview-duration",
@@ -77,6 +82,26 @@ export default class WindowOverview {
     desktopElt.addEventListener(
       "auxclick",
       (event) => this._onAuxClick(event),
+      true,
+    );
+    desktopElt.addEventListener(
+      "pointerdown",
+      (event) => this._onTouchPointerDown(event),
+      true,
+    );
+    desktopElt.addEventListener(
+      "pointermove",
+      (event) => this._onTouchPointerMove(event),
+      true,
+    );
+    desktopElt.addEventListener(
+      "pointerup",
+      (event) => this._onTouchPointerUp(event),
+      true,
+    );
+    desktopElt.addEventListener(
+      "pointercancel",
+      (event) => this._onTouchPointerCancel(event),
       true,
     );
     desktopElt.addEventListener("keydown", (event) => this._onKeyDown(event));
@@ -239,6 +264,9 @@ export default class WindowOverview {
       return;
     }
     const [entry] = this._entries.splice(index, 1);
+    if (this._touchGesture?.entry === entry) {
+      this._resetTouchGesture();
+    }
     const hadFocus = entry.element.contains(document.activeElement);
     restoreEntry(entry);
     if (this._entries.length === 0) {
@@ -285,6 +313,7 @@ export default class WindowOverview {
    * @returns {Promise<void>}
    */
   hide({ animate = true } = {}) {
+    this._resetTouchGesture();
     this._backdropMenuAbortCtrl?.abort();
     for (const entry of this._entries) {
       entry.contextMenuAbortCtrl.abort();
@@ -485,6 +514,12 @@ export default class WindowOverview {
   }
 
   _onDesktopClick(event) {
+    if (this._suppressNextClick) {
+      this._suppressNextClick = false;
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     if (this._state !== "opening" && this._state !== "opened") {
       return;
     }
@@ -594,6 +629,130 @@ export default class WindowOverview {
       this._closeWindow(entry.appWindow);
     }
   }
+
+  _onTouchPointerDown(event) {
+    if (
+      this._state !== "opened" ||
+      event.pointerType !== "touch" ||
+      !event.isPrimary ||
+      this._touchGesture !== null
+    ) {
+      return;
+    }
+    const element = event.target.closest?.(".window-overview-window");
+    const entry = this._entries.find((entry) => entry.element === element);
+    if (!entry) {
+      return;
+    }
+
+    this._touchGesture = {
+      pointerId: event.pointerId,
+      entry,
+      startX: event.clientX,
+      startY: event.clientY,
+      deltaX: 0,
+      deltaY: 0,
+      moved: false,
+    };
+    entry.element.classList.add("window-overview-dragging");
+    entry.element.setPointerCapture?.(event.pointerId);
+  }
+
+  _onTouchPointerMove(event) {
+    const gesture = this._touchGesture;
+    if (event.pointerId !== gesture?.pointerId) {
+      return;
+    }
+    const deltaX = event.clientX - gesture.startX;
+    const deltaY = event.clientY - gesture.startY;
+    const distance = Math.hypot(deltaX, deltaY);
+    if (!gesture.moved && distance < TOUCH_DRAG_START_DISTANCE) {
+      return;
+    }
+
+    event.preventDefault();
+    gesture.moved = true;
+    gesture.deltaX = deltaX;
+    gesture.deltaY = deltaY;
+    const dismissDistance = this._getTouchDismissDistance();
+    const opacity = Math.max(0.25, 1 - (distance / dismissDistance) * 0.75);
+    gesture.entry.element.style.setProperty(
+      "--window-overview-transform",
+      `translate(${deltaX}px, ${deltaY}px) ${gesture.entry.target.transform}`,
+    );
+    gesture.entry.element.style.setProperty(
+      "--window-overview-opacity",
+      String(opacity),
+    );
+    gesture.entry.label.style.setProperty(
+      "--window-overview-drag-x",
+      `${deltaX}px`,
+    );
+    gesture.entry.label.style.setProperty(
+      "--window-overview-drag-y",
+      `${deltaY}px`,
+    );
+  }
+
+  _onTouchPointerUp(event) {
+    const gesture = this._touchGesture;
+    if (event.pointerId !== gesture?.pointerId) {
+      return;
+    }
+    const shouldDismiss =
+      gesture.moved &&
+      Math.hypot(gesture.deltaX, gesture.deltaY) >=
+        this._getTouchDismissDistance();
+    this._resetTouchGesture();
+    if (!gesture.moved) {
+      return;
+    }
+
+    event.preventDefault();
+    this._suppressNextClick = true;
+    setTimeout(() => {
+      this._suppressNextClick = false;
+    });
+    if (shouldDismiss && this._entries.includes(gesture.entry)) {
+      this._closeWindow(gesture.entry.appWindow);
+    }
+  }
+
+  _onTouchPointerCancel(event) {
+    if (event.pointerId === this._touchGesture?.pointerId) {
+      this._resetTouchGesture();
+    }
+  }
+
+  _getTouchDismissDistance() {
+    const rect = this._desktopElt.getBoundingClientRect();
+    return Math.max(
+      TOUCH_DISMISS_DISTANCE_MIN,
+      Math.min(
+        TOUCH_DISMISS_DISTANCE_MAX,
+        Math.min(rect.width, rect.height) * 0.2,
+      ),
+    );
+  }
+
+  _resetTouchGesture() {
+    const gesture = this._touchGesture;
+    if (!gesture) {
+      return;
+    }
+    this._touchGesture = null;
+    gesture.entry.element.classList.remove("window-overview-dragging");
+    gesture.entry.element.style.setProperty(
+      "--window-overview-transform",
+      gesture.entry.target.transform,
+    );
+    gesture.entry.element.style.setProperty("--window-overview-opacity", "1");
+    gesture.entry.label.style.removeProperty("--window-overview-drag-x");
+    gesture.entry.label.style.removeProperty("--window-overview-drag-y");
+    if (gesture.entry.element.hasPointerCapture?.(gesture.pointerId)) {
+      gesture.entry.element.releasePointerCapture(gesture.pointerId);
+    }
+  }
 }
 
 function findDirectionalEntry(entries, currentEntry, key) {
@@ -632,12 +791,17 @@ function findDirectionalEntry(entries, currentEntry, key) {
 function restoreEntry(entry) {
   entry.contextMenuAbortCtrl.abort();
   const { element, restoreAccessibility, resumeInteraction } = entry;
-  element.classList.remove("window-overview-window");
+  element.classList.remove(
+    "window-overview-window",
+    "window-overview-dragging",
+  );
   element.style.removeProperty("--window-overview-transform");
   element.style.removeProperty("--window-overview-opacity");
   element.style.removeProperty("--window-overview-z-index");
   restoreAccessibility();
   resumeInteraction();
+  entry.label.style.removeProperty("--window-overview-drag-x");
+  entry.label.style.removeProperty("--window-overview-drag-y");
   entry.label.remove();
 }
 

@@ -439,6 +439,7 @@ html {
 
 #desktop.window-overview-active .window-overview-window {
   cursor: pointer;
+  touch-action: none;
   z-index: var(--window-overview-z-index) !important;
   transform: var(--window-overview-transform, none) !important;
   transform-origin: top left !important;
@@ -450,6 +451,12 @@ html {
   transition:
     transform var(--window-overview-duration) cubic-bezier(0.2, 0.8, 0.2, 1),
     opacity var(--window-overview-duration) ease !important;
+}
+
+#desktop.window-overview-active.window-overview-opened
+  .window-overview-window.window-overview-dragging {
+  cursor: grabbing;
+  transition: none !important;
 }
 
 #desktop.window-overview-active.window-overview-closing .window-overview-window {
@@ -483,7 +490,10 @@ html {
   text-overflow: ellipsis;
   white-space: nowrap;
   pointer-events: none;
-  transform: translateX(-50%);
+  transform: translate(
+    calc(-50% + var(--window-overview-drag-x, 0px)),
+    var(--window-overview-drag-y, 0px)
+  );
   transition: opacity 0.16s ease;
 }
 

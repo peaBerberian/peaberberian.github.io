@@ -103,6 +103,10 @@ export function create(_args, env, abortSignal) {
     lastSidebarElemnt = constructSidebarElt(sidebarItems, onSidebarSelectionChange);
     containerElt.insertBefore(lastSidebarElemnt, contentElt);
     env.requestFocus();
+    lastSidebarElemnt.querySelector(".active").scrollIntoView({
+      block: "nearest",
+      inline: "nearest",
+    });
   });
   return {
     element: containerElt,

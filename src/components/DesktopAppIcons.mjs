@@ -55,8 +55,14 @@ export default async function DesktopAppIcons(
   onSettings,
   parentAbortSignal,
 ) {
+  if (parentAbortSignal?.aborted) {
+    return;
+  }
   const iconWrapperElt = document.createElement("div");
   containerElt.appendChild(iconWrapperElt);
+  parentAbortSignal?.addEventListener("abort", () => iconWrapperElt.remove(), {
+    once: true,
+  });
   let lastAppListMemory;
   let currentAbortController = createLinkedAbortController(parentAbortSignal);
 
@@ -169,6 +175,10 @@ export default async function DesktopAppIcons(
     function recheckUpdate(force) {
       return new Promise((resolve, reject) => {
         requestAnimationFrame(() => {
+          if (abortSignal.aborted) {
+            resolve();
+            return;
+          }
           try {
             // Do a complex check first to see if icons need to be re-rendered.
             // There was a performance ""issue"" (not that much in thruth, but still

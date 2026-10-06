@@ -56,6 +56,7 @@ export default async function DesktopAppIcons(
   parentAbortSignal,
 ) {
   const iconWrapperElt = document.createElement("div");
+  containerElt.appendChild(iconWrapperElt);
   let lastAppListMemory;
   let currentAbortController = createLinkedAbortController(parentAbortSignal);
 
@@ -163,7 +164,6 @@ export default async function DesktopAppIcons(
         window.removeEventListener("resize", recheckUpdate);
       });
     }
-    containerElt.appendChild(iconWrapperElt);
     return recheckUpdate();
 
     function recheckUpdate(force) {

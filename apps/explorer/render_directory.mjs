@@ -92,7 +92,14 @@ export default function renderDirectory({
   setUpContextMenu({
     element: directoryWrapperElt,
     filter: (e) => {
-      return directoryWrapperElt === e.target || itemsParentElt === e.target;
+      let target = e.target;
+      while (target && target !== directoryWrapperElt) {
+        if (itemsMap.has(target)) {
+          return false;
+        }
+        target = target.parentElement;
+      }
+      return target === directoryWrapperElt;
     },
     abortSignal,
     actions: contextMenuBase,

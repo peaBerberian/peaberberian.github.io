@@ -40,6 +40,15 @@
   --icon-active-bg: rgba(255, 255, 255, 0.3);
 
   --window-border-size: 0px;
+
+  /* Updated from the VisualViewport API when pinch zoom makes the visible
+   * viewport differ from the layout viewport. */
+  --visual-viewport-left: 0px;
+  --visual-viewport-top: 0px;
+  --visual-viewport-right-gap: 0px;
+  --visual-viewport-bottom-gap: 0px;
+  --visual-viewport-width: 100vw;
+  --visual-viewport-height: 100%;
 }
 
 * {
@@ -93,6 +102,7 @@ html {
   align-items: center;
   justify-content: flex-start;
   cursor: pointer;
+  touch-action: none;
   transition: background-color 0.2s;
   border-radius: 5px;
   color: var(--icon-inactive-text);
@@ -144,37 +154,41 @@ html {
 }
 
 #taskbar {
-  width: 100vw;
+  width: var(--visual-viewport-width);
   height: var(--taskbar-size);
   color: var(--taskbar-text);
   background-color: var(--taskbar-bg);
   position: fixed;
-  bottom: 0;
+  left: var(--visual-viewport-left);
+  bottom: var(--visual-viewport-bottom-gap);
   display: flex;
   justify-content: space-between;
   align-items: center;
   z-index: 900;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+  touch-action: none;
 }
 
 .top-taskbar #taskbar {
-  top: 0;
+  top: var(--visual-viewport-top);
   bottom: auto;
 }
 
 .left-taskbar #taskbar {
-  top: 0;
+  top: var(--visual-viewport-top);
   bottom: auto;
-  height: 100%;
+  left: var(--visual-viewport-left);
+  height: var(--visual-viewport-height);
   width: var(--taskbar-size);
   flex-direction: column;
 }
 
 .right-taskbar #taskbar {
-  top: 0;
+  top: var(--visual-viewport-top);
   bottom: auto;
-  right: 0;
-  height: 100%;
+  right: var(--visual-viewport-right-gap);
+  left: auto;
+  height: var(--visual-viewport-height);
   width: var(--taskbar-size);
   flex-direction: column;
 }
@@ -298,16 +312,20 @@ html {
 }
 
 #start-menu {
-  position: absolute;
-  bottom: var(--taskbar-size);
-  left: 10px;
-  width: 250px;
+  position: fixed;
+  bottom: calc(
+    var(--visual-viewport-bottom-gap) + var(--taskbar-size)
+  );
+  left: calc(var(--visual-viewport-left) + 10px);
+  width: min(250px, calc(var(--visual-viewport-width) - 10px));
   color: var(--start-menu-text);
   background-color: var(--start-menu-bg);
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
   display: none;
   z-index: 1000;
-  max-height: calc(100% - var(--taskbar-size));
+  max-height: calc(
+    var(--visual-viewport-height) - var(--taskbar-size)
+  );
   border-radius: 10px 10px 0px 0px;
   flex-direction: column;
   scrollbar-color: var(--start-menu-active-bg) var(--start-menu-bg);
@@ -318,25 +336,35 @@ html {
 }
 
 .top-taskbar #start-menu {
-  top: var(--taskbar-size);
+  top: calc(var(--visual-viewport-top) + var(--taskbar-size));
   bottom: auto;
   border-radius: 0px 0px 10px 10px;
 }
 
 .left-taskbar #start-menu {
-  top: 10px;
+  top: calc(var(--visual-viewport-top) + 10px);
   bottom: auto;
-  left: var(--taskbar-size);
-  max-height: calc(100% - 10px);
+  left: calc(var(--visual-viewport-left) + var(--taskbar-size));
+  width: min(
+    250px,
+    calc(var(--visual-viewport-width) - var(--taskbar-size))
+  );
+  max-height: calc(var(--visual-viewport-height) - 10px);
   border-radius: 0px 10px 10px 0px;
 }
 
 .right-taskbar #start-menu {
-  top: 10px;
+  top: calc(var(--visual-viewport-top) + 10px);
   bottom: auto;
-  right: var(--taskbar-size);
+  right: calc(
+    var(--visual-viewport-right-gap) + var(--taskbar-size)
+  );
   left: auto;
-  max-height: calc(100% - 10px);
+  width: min(
+    250px,
+    calc(var(--visual-viewport-width) - var(--taskbar-size))
+  );
+  max-height: calc(var(--visual-viewport-height) - 10px);
   border-radius: 10px 0px 0px 10px;
 }
 
@@ -685,6 +713,7 @@ html {
   color: var(--window-inactive-header-text);
   padding: 5px max(0px, calc(10px - var(--window-border-size)));
   cursor: move;
+  touch-action: none;
   user-select: none;
   overflow: hidden;
   display: grid;

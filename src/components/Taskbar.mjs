@@ -428,11 +428,14 @@ function handleTaskbarMove(taskbarElt, abortSignal) {
     abortSignal,
     (e) => {
       if (e.touches.length === 1) {
+        // This surface implements its own drag gesture. Do not let the same
+        // movement pan the page or toggle mobile browser chrome.
+        e.preventDefault();
         const touch = e.touches[0];
         moveDraggedTaskbar(touch.clientX, touch.clientY);
       }
     },
-    { passive: true },
+    { passive: false },
   );
 
   // Safari just selects all over the place like some maniac without this

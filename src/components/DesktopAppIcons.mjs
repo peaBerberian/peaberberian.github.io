@@ -625,11 +625,14 @@ function addMovingAroundListeners(
         if (e.touches.length !== 1) {
           return;
         }
+        // Icon movement is a desktop drag, not a request to pan the page or
+        // toggle mobile browser chrome.
+        e.preventDefault();
         const touch = e.touches[0];
         onMove(iconElt, touch);
       },
       {
-        passive: true,
+        passive: false,
       },
     );
 

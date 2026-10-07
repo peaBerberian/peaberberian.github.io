@@ -73,6 +73,8 @@ console.log(
   PROJECT_REPO,
 );
 
+trackVisualViewport();
+
 async function start() {
   const desktopElt = document.getElementById("desktop");
 
@@ -170,3 +172,47 @@ document.addEventListener("DOMContentLoaded", function () {
     /* noop for now */
   });
 });
+
+/** Keep desktop chrome attached to the part of a zoomed page that is visible. */
+function trackVisualViewport() {
+  const viewport = window.visualViewport;
+  if (!viewport) {
+    return;
+  }
+
+  const rootStyle = document.documentElement.style;
+  let animationFrame = null;
+  const update = () => {
+    animationFrame = null;
+    const layoutWidth = document.documentElement.clientWidth;
+    const layoutHeight = document.documentElement.clientHeight;
+    rootStyle.setProperty(
+      "--visual-viewport-left",
+      `${viewport.offsetLeft}px`,
+    );
+    rootStyle.setProperty(
+      "--visual-viewport-top",
+      `${viewport.offsetTop}px`,
+    );
+    rootStyle.setProperty(
+      "--visual-viewport-right-gap",
+      `${Math.max(0, layoutWidth - viewport.offsetLeft - viewport.width)}px`,
+    );
+    rootStyle.setProperty(
+      "--visual-viewport-bottom-gap",
+      `${Math.max(0, layoutHeight - viewport.offsetTop - viewport.height)}px`,
+    );
+    rootStyle.setProperty("--visual-viewport-width", `${viewport.width}px`);
+    rootStyle.setProperty("--visual-viewport-height", `${viewport.height}px`);
+  };
+  const scheduleUpdate = () => {
+    if (animationFrame === null) {
+      animationFrame = requestAnimationFrame(update);
+    }
+  };
+
+  viewport.addEventListener("resize", scheduleUpdate);
+  viewport.addEventListener("scroll", scheduleUpdate);
+  window.addEventListener("resize", scheduleUpdate);
+  update();
+}

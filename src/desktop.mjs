@@ -53,7 +53,6 @@ import DesktopAppIcons from "./components/DesktopAppIcons.mjs";
 import StartMenu from "./components/StartMenu.mjs";
 import Taskbar from "./components/Taskbar.mjs";
 import WindowManager from "./window_management/WindowManager.mjs";
-import builtInApps from "./__generated_apps.mjs";
 import notificationEmitter from "./components/notification_emitter.mjs";
 import initializeClockApplet from "./clock_applet.mjs";
 import { SETTINGS } from "./settings.mjs";
@@ -128,8 +127,7 @@ async function start() {
 
   async function showSettings(section) {
     try {
-      const settingsApp = builtInApps.find((app) => app.id === "settings");
-      await windowManager.openApp(settingsApp, [], { background: true });
+      await windowManager.openApp("/apps/settings.run", [], { background: true });
       const results = await windowManager.bus.call(
         "settings",
         "showSection",

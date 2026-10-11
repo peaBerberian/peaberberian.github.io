@@ -2,6 +2,14 @@
   "version": 1,
   "apps": [
     {
+      "id": "app-trust",
+      "title": "App trust",
+      "icon": "🛡️",
+      "defaultHeight": 480,
+      "defaultWidth": 480,
+      "dependencies": []
+    },
+    {
       "id": "about",
       "title": "About Me",
       "icon": "🙋🏻‍♂️",

@@ -20,6 +20,8 @@ import { launchSandboxedApp } from "./launch_sandboxed_app.mjs";
 import Bus from "./bus.mjs";
 import PathTokenCreator from "./path_token_creator.mjs";
 import WindowOverview from "./WindowOverview.mjs";
+import apps from "../__generated_apps.mjs";
+import AppTrust, { AppTrustError } from "./app_trust.mjs";
 
 const { BASE_WINDOW_Z_INDEX, IMAGE_ROOT_PATH, __VERSION__ } = CONSTANTS;
 
@@ -83,6 +85,16 @@ export default class WindowManager {
       (appWindow) => this._closeWindow(appWindow),
     );
     this.bus = new Bus();
+    this._appTrust = new AppTrust(
+      filesystem,
+      apps,
+      (approvalRequest, setApproval, signal) =>
+        this.openApp("/apps/app-trust.run", [
+          approvalRequest,
+          setApproval,
+          signal,
+        ]),
+    );
 
     /**
      * Allows to add and remove tasks to the taskbar.
@@ -170,8 +182,6 @@ export default class WindowManager {
       throw err;
     }
 
-    // TODO: check app format here
-
     if (!app) {
       notificationEmitter.error(
         "Invalid app",
@@ -179,6 +189,11 @@ export default class WindowManager {
       );
       throw new Error("Invalid app");
     }
+
+    app = await this._checkAppTrust(
+      app,
+      typeof appPath === "string" ? appPath : undefined,
+    );
 
     if (app.onlyOne) {
       // If only instance of the app can be created, check if this window already
@@ -648,6 +663,32 @@ export default class WindowManager {
     return { element, onActivate, onDeactivate, onClose };
   }
 
+  /**
+   * Check trust before creating a window or starting a provider in an existing
+   * window. Failures are notified here; cancellation needs no extra message.
+   * Keep rejecting so callers cannot continue launching after a failed check.
+   * @param {Object} app - Executable to check.
+   * @param {string} [path] - Executable's filesystem location.
+   * @param {AbortSignal} [signal] - Cancellation of the requesting launch.
+   * @returns {Promise.<Object>} - Executable whose trust has been checked.
+   * @private
+   */
+  async _checkAppTrust(app, path, signal) {
+    try {
+      return await this._appTrust.checkTrust(app, path, signal);
+    } catch (error) {
+      if (error.name !== "AbortError" && !signal?.aborted) {
+        notificationEmitter.error(
+          "Cannot start app",
+          error instanceof AppTrustError
+            ? error.message
+            : "Trust could not be checked. The app was not started.",
+        );
+      }
+      throw error;
+    }
+  }
+
   _createFilePickerOpen(config, appStack, appWindow, appAbortSignal) {
     return new Promise(async (resolveFilePicker, rejectFilePicker) => {
       let filePickerElt;
@@ -666,9 +707,11 @@ export default class WindowManager {
           );
           return;
         }
-        const filePickerApp = await filesystem.readFile(
-          providers.filePickerOpen[0],
-          "object",
+        const filePickerPath = providers.filePickerOpen[0];
+        const filePickerApp = await this._checkAppTrust(
+          await filesystem.readFile(filePickerPath, "object"),
+          filePickerPath,
+          fileOpenerAbortCtrl.signal,
         );
 
         const onFilesOpened = (files) => {
@@ -723,9 +766,11 @@ export default class WindowManager {
           );
           return;
         }
-        const filePickerApp = await filesystem.readFile(
-          providers.filePickerSave[0],
-          "object",
+        const filePickerPath = providers.filePickerSave[0];
+        const filePickerApp = await this._checkAppTrust(
+          await filesystem.readFile(filePickerPath, "object"),
+          filePickerPath,
+          fileSaverAbortCtrl.signal,
         );
 
         const onFileSaved = (fileInfo) => {

@@ -178,6 +178,11 @@ The following properties can be set for each application:
 
   - `"busHandle"`: Allows registering handlers on the [desktop bus](#desktop-bus).
 
+  - `"appStorage"`: Gives the application read/write access to its own
+    persistent application data directory only. Paths are relative to that
+    per-app directory and are validated by the desktop before any filesystem
+    operation is performed.
+
 - `"provider"` (`Array.<string>`, optional): The supplementary features the
   application can provide.
 

@@ -22,6 +22,7 @@ import PathTokenCreator from "./path_token_creator.mjs";
 import WindowOverview from "./WindowOverview.mjs";
 import apps from "../__generated_apps.mjs";
 import AppTrust, { AppTrustError } from "./app_trust.mjs";
+import { createAppStorage } from "./app_storage.mjs";
 
 const { BASE_WINDOW_Z_INDEX, IMAGE_ROOT_PATH, __VERSION__ } = CONSTANTS;
 
@@ -947,6 +948,9 @@ export default class WindowManager {
           }
           return filesystem.writeFile(filePath, content);
         };
+      }
+      if (dependencies.includes("appStorage")) {
+        env.appStorage = createAppStorage(appId);
       }
       if (dependencies.includes("open")) {
         env.open = (path) => {

@@ -883,15 +883,8 @@ class DesktopFileSystem {
     const name = getName(path);
     const directoryPath = getDirPath(path);
 
-    const list = await this._readDirEntries(directoryPath);
-    if (overwrite) {
-      // Delete first previous file if one.
-      for (const entry of list) {
-        if (entry.name === name) {
-          await this._rmFileUnchecked(directoryPath + entry.name);
-        }
-      }
-    }
+    // Reading the parent directory also checks that it exists.
+    const entries = await this._readDirEntries(directoryPath);
 
     const db = await this._dbProm;
     const tx = db.transaction([METADATA_STORE, CONTENT_STORE], "readwrite");
@@ -909,6 +902,12 @@ class DesktopFileSystem {
       modified: now,
     };
     if (overwrite) {
+      for (const entry of entries) {
+        if (entry.name === name) {
+          metadataStore.delete(entry.id);
+          contentStore.delete(entry.id);
+        }
+      }
       metadataStore.put(metadata);
       contentStore.put({ id, content: contentAb });
     } else {

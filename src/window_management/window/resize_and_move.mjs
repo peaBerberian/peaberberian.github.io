@@ -168,6 +168,7 @@ function handleMoveOnWindow(
   // Reset some state on abort, just to be sure we're not left in an unwanted state
   abortSignal.addEventListener("abort", () => {
     isDragging = false;
+    windowElt.classList.remove("dragging");
     disableSnappingZones();
     unblockElementsFromTakingPointerEvents();
   });
@@ -176,6 +177,7 @@ function handleMoveOnWindow(
   if (header) {
     const stopDragging = () => {
       isDragging = false;
+      windowElt.classList.remove("dragging");
       if (!isFullscreen(windowElt)) {
         saveCurrentCoordinates();
       }
@@ -278,6 +280,7 @@ function handleMoveOnWindow(
 
   function startDraggingWindow(clientX, clientY) {
     isDragging = true;
+    windowElt.classList.add("dragging");
     if (!isFullscreen(windowElt)) {
       saveCurrentCoordinates();
     }

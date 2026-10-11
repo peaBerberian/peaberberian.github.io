@@ -716,13 +716,17 @@ html {
   background-color: var(--window-inactive-header);
   color: var(--window-inactive-header-text);
   padding: 5px max(0px, calc(10px - var(--window-border-size)));
-  cursor: move;
+  cursor: grab;
   user-select: none;
   overflow: hidden;
   display: grid;
   grid-template-columns: auto auto 1fr;
   grid-auto-flow: dense;
   /* transition: background-color 0.2s ease; */
+}
+
+.window.dragging .w-header {
+  cursor: grabbing;
 }
 
 .window.active .w-header {

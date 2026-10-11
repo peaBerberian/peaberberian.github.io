@@ -102,7 +102,7 @@ async function start() {
   });
 
   DesktopAppIcons(desktopElt, openPath, showSettings, undefined);
-  StartMenu(openPath);
+  StartMenu(openPath, showSettings);
 
   // Open default app or asked one
   let wantedApp;

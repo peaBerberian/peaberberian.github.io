@@ -2,10 +2,15 @@ import {
   START_ITEM_HEIGHT,
   START_MENU_OPEN_ANIM_TIMER,
   CLOSE_MENU_OPEN_ANIM_TIMER,
+  settingsSvg,
 } from "../constants.mjs";
 import fs from "../filesystem/filesystem.mjs";
 import { SETTINGS } from "../settings.mjs";
-import { addAbortableDesktopClickListener } from "../utils.mjs";
+import {
+  addAbortableDesktopClickListener,
+  createLinkedAbortController,
+} from "../utils.mjs";
+import setUpContextMenu from "./context-menu.mjs";
 
 const PREDEFINED_SUBLISTS = {
   Games: "🎮",
@@ -55,10 +60,11 @@ const startMenuElt = document.getElementById("start-menu");
  * @param {Function} onOpen - Callback that will be called when/if an app is
  * launched through its start menu entry, with the corresponding application
  * path.
+ * @param {Function} openSettings - Opens a specific Settings section.
  * @param {AbortSignal} [abortSignal] - AbortSignal allowing to free
  * all resources taken by this component.
  */
-export default async function StartMenu(openApp, abortSignal) {
+export default async function StartMenu(openApp, openSettings, abortSignal) {
   const startMenuApps = await fs.readFile(
     "/system32/start_menu.config.json",
     "object",
@@ -70,11 +76,19 @@ export default async function StartMenu(openApp, abortSignal) {
    * @type {Array.<StartMenuAppObject>}
    */
   const apps = startMenuApps.list;
+  let itemMenusController = createLinkedAbortController(abortSignal);
 
-  refreshStartMenu(startMenuElt, apps, openApp, {
-    clientHeight: document.documentElement.clientHeight,
-    clientWidth: document.documentElement.clientWidth,
-  });
+  refreshStartMenu(
+    startMenuElt,
+    apps,
+    openApp,
+    openSettings,
+    {
+      clientHeight: document.documentElement.clientHeight,
+      clientWidth: document.documentElement.clientWidth,
+    },
+    itemMenusController.signal,
+  );
 
   const onDocumentClick = (evt) => {
     if (
@@ -105,10 +119,19 @@ export default async function StartMenu(openApp, abortSignal) {
 
   const scheduleRefresh = () => {
     requestAnimationFrame(() => {
-      refreshStartMenu(startMenuElt, apps, openApp, {
-        clientHeight: document.documentElement.clientHeight,
-        clientWidth: document.documentElement.clientWidth,
-      });
+      itemMenusController.abort();
+      itemMenusController = createLinkedAbortController(abortSignal);
+      refreshStartMenu(
+        startMenuElt,
+        apps,
+        openApp,
+        openSettings,
+        {
+          clientHeight: document.documentElement.clientHeight,
+          clientWidth: document.documentElement.clientWidth,
+        },
+        itemMenusController.signal,
+      );
     });
   };
 
@@ -234,16 +257,20 @@ function closeStartMenu(startMenuElt) {
  * that should be inserted in the start menu.
  * @param {Function} openApp - Callback allowing to open an app on which the
  * user would have clicked through the start menu.
+ * @param {Function} openSettings - Opens a specific Settings section.
  * @param {Object} params
  * @param {number} params.clientHeight - Total available height in pixels.
  * @param {number} params.clientWidth - Total available width in pixels.
  * @param {boolean} params.dependentSubLists
+ * @param {AbortSignal} itemMenusSignal - Cleans up context menus on refresh.
  */
 function refreshStartMenu(
   startMenuElt,
   apps,
   openApp,
+  openSettings,
   { clientHeight, clientWidth, dependentSubLists },
+  itemMenusSignal,
 ) {
   startMenuElt.innerHTML = "";
 
@@ -270,6 +297,22 @@ function refreshStartMenu(
         250 /* start menu width */ +
         200; /* s-list width */
 
+  if (
+    separatedSublists &&
+    (doesTaskbarInfluencesMaxHeight ? SETTINGS.taskbarSize.getValue() : 0) +
+      apps.length * START_ITEM_HEIGHT >
+      clientHeight
+  ) {
+    return refreshStartMenu(
+      startMenuElt,
+      apps,
+      openApp,
+      openSettings,
+      { clientHeight, clientWidth, dependentSubLists: true },
+      itemMenusSignal,
+    );
+  }
+
   const itemsWrapperElt = document.createElement("div");
   itemsWrapperElt.appendChild(startMenuItemsElt);
   itemsWrapperElt.style.overflow = "auto";
@@ -277,6 +320,11 @@ function refreshStartMenu(
     startMenuElt.appendChild(startMenuHeaderElt);
   }
   startMenuElt.appendChild(itemsWrapperElt);
+
+  const openTaskbarSettings = () => {
+    closeStartMenu(startMenuElt);
+    openSettings("taskbar");
+  };
 
   for (let currentIdx = 0; currentIdx < apps.length; currentIdx++) {
     const appObj = apps[currentIdx];
@@ -405,18 +453,6 @@ function refreshStartMenu(
     }
   }
 
-  if (
-    separatedSublists &&
-    (doesTaskbarInfluencesMaxHeight ? SETTINGS.taskbarSize.getValue() : 0) +
-      apps.length * START_ITEM_HEIGHT >
-      clientHeight
-  ) {
-    return refreshStartMenu(startMenuElt, apps, openApp, {
-      clientHeight,
-      clientWidth,
-      dependentSubLists: true,
-    });
-  }
   if (SETTINGS.taskbarLocation.getValue() === "top") {
     startMenuElt.appendChild(startMenuHeaderElt);
   }
@@ -436,6 +472,27 @@ function refreshStartMenu(
 
     startItemElt.appendChild(startIconElt);
     startItemElt.appendChild(startTitleElt);
+
+    setUpContextMenu({
+      element: startItemElt,
+      abortSignal: itemMenusSignal,
+      actions: [
+        {
+          name: "open",
+          title: "Open",
+          onClick: () => {
+            closeStartMenu(startMenuElt);
+            openApp(appObj.run, appObj.args);
+          },
+        },
+        {
+          name: "settings",
+          title: "Taskbar settings",
+          svg: settingsSvg,
+          onClick: openTaskbarSettings,
+        },
+      ],
+    });
 
     startItemElt.addEventListener("click", () => {
       closeStartMenu(startMenuElt);

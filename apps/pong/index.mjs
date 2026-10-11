@@ -5,6 +5,8 @@ import { createAudioEngine } from "./audio.mjs";
 const PADDLE_WIDTH = 10;
 const PADDLE_HEIGHT = 80;
 const BALL_RADIUS = 10;
+const GAME_WIDTH = 600;
+const GAME_HEIGHT = 400;
 const TARGET_FPS = 60;
 const FRAME_DURATION = 1000 / TARGET_FPS; // ~16.67ms
 
@@ -15,7 +17,9 @@ export function create(_args, env, abortSignal) {
     color: env.STYLE.windowActiveHeaderText,
     height: "100%",
     width: "100%",
-    overflowY: "auto",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     margin: "0",
     padding: "0",
     overflow: "hidden",
@@ -24,36 +28,24 @@ export function create(_args, env, abortSignal) {
   let frameId;
   let lastFrameTime = 0;
   let canvasGeneration = 0;
+  let resizeCanvas;
+  let gameHeight = GAME_HEIGHT;
 
-  // Redo the canvas on resize, after some delay
-
-  let debounceTimer = null;
-  const resizeObserver = new ResizeObserver((entries) => {
-    for (const entry of entries) {
-      if (entry.contentRect) {
-        if (debounceTimer !== null) {
-          clearTimeout(debounceTimer);
-        }
-        debounceTimer = setTimeout(() => {
-          debounceTimer = null;
-          containerElt.innerHTML = "";
-          resizeAndRestartCanvas(entry.contentRect);
-        }, 50);
-      }
-    }
+  // Keep game state while resizing the arena and its physical-pixel bitmap.
+  const resizeObserver = new ResizeObserver(([entry]) => {
+    resizeCanvas(entry.contentRect);
   });
   resizeObserver.observe(containerElt);
   abortSignal.addEventListener("abort", () => {
-    resizeObserver.unobserve(containerElt);
+    resizeObserver.disconnect();
+    window.removeEventListener("resize", onWindowResize);
     canvasGeneration++;
     if (frameId !== undefined) {
       window.cancelAnimationFrame(frameId);
       frameId = undefined;
     }
-    if (debounceTimer !== null) {
-      clearTimeout(debounceTimer);
-      debounceTimer = null;
-    }
+    document.removeEventListener("keydown", onKeyDown);
+    document.removeEventListener("keyup", onKeyUp);
   });
 
   let canvas;
@@ -63,7 +55,9 @@ export function create(_args, env, abortSignal) {
   let isTopPressed = false;
   let isDownPressed = false;
 
-  resizeAndRestartCanvas(containerElt.getBoundingClientRect());
+  containerElt.appendChild(constructCanvas(++canvasGeneration));
+  resizeCanvas(containerElt.getBoundingClientRect());
+  window.addEventListener("resize", onWindowResize);
   containerElt.addEventListener("mousemove", onMouseMove, { passive: false });
   containerElt.addEventListener("touchmove", onTouchMove, { passive: false });
 
@@ -85,18 +79,8 @@ export function create(_args, env, abortSignal) {
     },
   };
 
-  function resizeAndRestartCanvas(rect) {
-    const generation = ++canvasGeneration;
-    if (frameId !== undefined) {
-      window.cancelAnimationFrame(frameId);
-      frameId = undefined;
-    }
-    containerElt.innerHTML = "";
-    if (rect.width > 0 && rect.height > 0) {
-      containerElt.appendChild(contructCanvas(rect, generation));
-    } else {
-      canvas = undefined;
-    }
+  function onWindowResize() {
+    resizeCanvas(containerElt.getBoundingClientRect());
   }
 
   /**
@@ -136,59 +120,56 @@ export function create(_args, env, abortSignal) {
 
   function onTouchMove(e) {
     if (e.touches.length === 1) {
-      const touch = e.touches[0];
-      const canvasRect = containerElt.getBoundingClientRect();
-      const relativeY = touch.clientY - canvasRect.top;
-      userPaddle.y = Math.max(
-        0,
-        Math.min(relativeY - PADDLE_HEIGHT / 2, canvas.height - PADDLE_HEIGHT),
-      );
+      e.preventDefault();
+      movePaddle(e.touches[0].clientY);
     }
   }
+
   function onMouseMove(e) {
-    if (!canvas) {
+    movePaddle(e.clientY);
+  }
+
+  function movePaddle(clientY) {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.height <= 0) {
       return;
     }
-    const canvasRect = canvas.getBoundingClientRect();
-    const relativeY = e.clientY - canvasRect.top;
+    const relativeY = (clientY - rect.top) * gameHeight / rect.height;
     userPaddle.y = Math.max(
       0,
-      Math.min(relativeY - PADDLE_HEIGHT / 2, canvas.height - PADDLE_HEIGHT),
+      Math.min(relativeY - PADDLE_HEIGHT / 2, gameHeight - PADDLE_HEIGHT),
     );
   }
 
-  /**
-   * @param {DOMRect} containerRect
-   */
-  function contructCanvas(containerRect, generation) {
+  function constructCanvas(generation) {
     canvas = document.createElement("canvas");
-    canvas.width = containerRect.width;
-    canvas.height = containerRect.height;
+    let gameWidth = GAME_WIDTH;
     applyStyle(canvas, {
-      height: "100%",
-      width: "100%",
+      display: "block",
+      flexShrink: "0",
+      touchAction: "none",
       backgroundColor: env.STYLE.windowActiveHeader,
     });
     const ctx = canvas.getContext("2d");
 
     const ball = {
-      x: canvas.width / 2,
-      y: canvas.height / 2,
+      x: gameWidth / 2,
+      y: gameHeight / 2,
       radius: BALL_RADIUS,
       dx: 5,
       dy: 5,
-      prevX: canvas.width / 2,
-      prevY: canvas.height / 2,
+      prevX: gameWidth / 2,
+      prevY: gameHeight / 2,
     };
 
     const enemyPaddle = {
       x: 0,
-      y: canvas.height / 2 - PADDLE_HEIGHT / 2,
+      y: gameHeight / 2 - PADDLE_HEIGHT / 2,
     };
 
     userPaddle = {
-      x: canvas.width - PADDLE_WIDTH,
-      y: canvas.height / 2 - PADDLE_HEIGHT / 2,
+      x: gameWidth - PADDLE_WIDTH,
+      y: gameHeight / 2 - PADDLE_HEIGHT / 2,
     };
 
     hasStarted = false;
@@ -199,6 +180,38 @@ export function create(_args, env, abortSignal) {
     // speed each collision with the user
     // This may be totally nonsensical, I'm not too used to that type of dev.
     let currEnemySpeed = 8;
+
+    resizeCanvas = (rect) => {
+      const viewport = getGameViewport(rect.width, rect.height, GAME_WIDTH, GAME_HEIGHT);
+      if (!viewport) {
+        canvas.style.visibility = "hidden";
+        return;
+      }
+      canvas.style.visibility = "visible";
+      const nextWidth = viewport.width;
+      const nextHeight = viewport.height;
+      // Keep the ball away from walls/paddles when changing the arena shape.
+      ball.x = PADDLE_WIDTH + ball.radius +
+        (ball.x - PADDLE_WIDTH - ball.radius) *
+        (nextWidth - 2 * (PADDLE_WIDTH + ball.radius)) /
+        (gameWidth - 2 * (PADDLE_WIDTH + ball.radius));
+      ball.y = ball.radius + (ball.y - ball.radius) *
+        (nextHeight - 2 * ball.radius) / (gameHeight - 2 * ball.radius);
+      enemyPaddle.y *= (nextHeight - PADDLE_HEIGHT) / (gameHeight - PADDLE_HEIGHT);
+      userPaddle.y *= (nextHeight - PADDLE_HEIGHT) / (gameHeight - PADDLE_HEIGHT);
+      gameWidth = nextWidth;
+      gameHeight = nextHeight;
+      userPaddle.x = gameWidth - PADDLE_WIDTH;
+      ball.prevX = ball.x;
+      ball.prevY = ball.y;
+      // The backing bitmap matches physical pixels, independently of physics.
+      const pixelRatio = window.devicePixelRatio || 1;
+      canvas.style.width = rect.width + "px";
+      canvas.style.height = rect.height + "px";
+      canvas.width = Math.max(1, Math.round(rect.width * pixelRatio));
+      canvas.height = Math.max(1, Math.round(rect.height * pixelRatio));
+      drawFrame();
+    };
 
     // Draw the initial frame before returning the canvas to prevent black flash
     drawTheObjects(false, false);
@@ -235,19 +248,15 @@ export function create(_args, env, abortSignal) {
         userPaddle.y = Math.max(0, userPaddle.y - 5);
       } else if (isDownPressed) {
         userPaddle.y = Math.min(
-          canvas.height - PADDLE_HEIGHT,
+          gameHeight - PADDLE_HEIGHT,
           userPaddle.y + 5,
         );
       }
 
+      drawFrame();
       if (!hasStarted) {
-        drawTheObjects(false, false);
-        ctx.font = "32px monospace";
-        ctx.fillText("Click to start a game", 10, 50);
         return;
       }
-
-      drawTheObjects(true, true);
 
       // Move the enemy paddle
       // TODO: Stop iterating with insane logic and find a good smart one :D
@@ -268,7 +277,7 @@ export function create(_args, env, abortSignal) {
 
       enemyPaddle.y = Math.max(
         0,
-        Math.min(enemyPaddle.y, canvas.height - PADDLE_HEIGHT),
+        Math.min(enemyPaddle.y, gameHeight - PADDLE_HEIGHT),
       );
 
       // Move the ball
@@ -278,7 +287,7 @@ export function create(_args, env, abortSignal) {
       ball.y += ball.dy;
 
       // Top/bottom walls collision
-      if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+      if (ball.y + ball.radius > gameHeight || ball.y - ball.radius < 0) {
         ball.dy = -ball.dy;
         audio.playSound("wall");
       }
@@ -306,7 +315,7 @@ export function create(_args, env, abortSignal) {
           }
         }
       }
-      if (ball.x + ball.radius > canvas.width) {
+      if (ball.x + ball.radius > gameWidth) {
         leftScore++;
         audio.playSound("score");
         resetBall();
@@ -318,16 +327,27 @@ export function create(_args, env, abortSignal) {
       }
     }
 
+    function drawFrame() {
+      drawTheObjects(hasStarted, hasStarted);
+      if (!hasStarted) {
+        ctx.font = "32px monospace";
+        ctx.fillText("Click to start a game", 10, 50, gameWidth - 20);
+      }
+    }
+
     function drawTheObjects(withScore, withLine) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.setTransform(canvas.width / gameWidth, 0, 0, canvas.height / gameHeight, 0, 0);
+      ctx.clearRect(0, 0, gameWidth, gameHeight);
+      // Resizing the backing bitmap resets fillStyle to black.
+      ctx.fillStyle = "#ffffff";
 
       if (withLine) {
         // NOTE: This one is also not "bordered" with black.
         // As this is not required for the game, I did not care much
         ctx.setLineDash([10, 5]);
         ctx.beginPath();
-        ctx.moveTo(canvas.width / 2, 0);
-        ctx.lineTo(canvas.width / 2, canvas.height);
+        ctx.moveTo(gameWidth / 2, 0);
+        ctx.lineTo(gameWidth / 2, gameHeight);
         ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 3;
         ctx.stroke();
@@ -340,8 +360,8 @@ export function create(_args, env, abortSignal) {
         // NOTE: This text is not "bordered" with black meaning it won't be
         // visible if the background is white.
         // Maybe TODO?
-        ctx.fillText(leftScore, canvas.width / 4, 50);
-        ctx.fillText(rightScore, (3 * canvas.width) / 4, 50);
+        ctx.fillText(leftScore, gameWidth / 4, 50);
+        ctx.fillText(rightScore, (3 * gameWidth) / 4, 50);
       }
 
       // Ball
@@ -379,8 +399,8 @@ export function create(_args, env, abortSignal) {
 
     function resetBall() {
       currEnemySpeed = 8;
-      ball.x = canvas.width / 2;
-      ball.y = canvas.height / 2;
+      ball.x = gameWidth / 2;
+      ball.y = gameHeight / 2;
       ball.prevX = ball.x;
       ball.prevY = ball.y;
       ball.dx = ball.dx < 0 ? 5 : -5;
@@ -434,4 +454,17 @@ function applyStyle(element, style) {
   for (const key of Object.keys(style)) {
     element.style[key] = style[key];
   }
+}
+
+/** Fit a logical playfield to the whole window while keeping small-screen
+ * sprites readable. Only very small windows need to scale below native size. */
+function getGameViewport(width, height, defaultWidth, defaultHeight) {
+  if (width <= 0 || height <= 0) {
+    return null;
+  }
+  const scale = Math.max(
+    Math.min(1, width / 480, height / 360),
+    Math.min(width / defaultWidth, height / defaultHeight),
+  );
+  return { width: width / scale, height: height / scale, scale };
 }

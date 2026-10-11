@@ -365,6 +365,38 @@ function refreshStartMenu(
         list.appendChild(listItemsWrapper);
         startMenuElt.appendChild(list);
 
+        setUpContextMenu({
+          element: startItemListElt,
+          abortSignal: itemMenusSignal,
+          actions: [
+            {
+              name: "open",
+              title: "Open in a window",
+              onClick: () => {
+                closeStartMenu(startMenuElt);
+                openApp("/apps/app-group.run", [
+                  {
+                    type: "options",
+                    icon: listIconElt.textContent,
+                    title: appObj.name,
+                    apps: appObj.list.map(({ run, title, icon }) => ({
+                      path: run,
+                      title,
+                      icon,
+                    })),
+                  },
+                ]);
+              },
+            },
+            {
+              name: "settings",
+              title: "Taskbar settings",
+              svg: settingsSvg,
+              onClick: openTaskbarSettings,
+            },
+          ],
+        });
+
         for (const subAppObj of appObj.list) {
           listItemsWrapper.appendChild(constructAppItem(subAppObj));
         }

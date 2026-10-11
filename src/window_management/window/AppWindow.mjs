@@ -25,7 +25,7 @@ import {
   setWindowWidth,
 } from "./position_utils.mjs";
 import { handleResizeAndMove } from "./resize_and_move.mjs";
-import { keepWindowActiveInCurrentEventLoopIteration } from "./utils.mjs";
+import { escapeHtmlText, keepWindowActiveInCurrentEventLoopIteration } from "./utils.mjs";
 import setUpContextMenu from "../../components/context-menu.mjs";
 
 const {
@@ -949,8 +949,8 @@ function constructVisibleWindowScaffolding(icon, title) {
   visibleElt.className = "w-visible";
   visibleElt.innerHTML = `<div class="w-header">
   <div class="w-title">
-    <span class="w-title-icon">${icon ?? ""}</span>
-    <span class="w-title-title">${title ?? ""}</span>
+    <span class="w-title-icon">${escapeHtmlText(icon)}</span>
+    <span class="w-title-title">${escapeHtmlText(title)}</span>
   </div>
   <div class="w-controls">
     <div class="w-button w-minimize" aria-label="Minimize window" title="Minimize" tabindex="0"><span class="w-button-icon"></span></div>

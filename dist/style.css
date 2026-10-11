@@ -587,6 +587,38 @@ html {
   cursor: ew-resize;
 }
 
+.w-resize-size {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 120ms ease-out, visibility 0s linear 120ms;
+  position: absolute;
+  z-index: 301;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: rgba(35, 35, 35, 0.6);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+.window.resizing > .w-resize-size {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .w-resize-size {
+    transition: none;
+  }
+}
+
 .w-res-bord {
   position: absolute;
   z-index: 300;

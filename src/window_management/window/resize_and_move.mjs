@@ -479,6 +479,15 @@ function handleResizeOnWindow(
   { activateWindow, getOobDistances, exitFullScreen, saveCurrentCoordinates, isInteractionSuspended },
   abortSignal,
 ) {
+  const sizeIndicator = document.createElement("div");
+  sizeIndicator.className = "w-resize-size";
+  sizeIndicator.setAttribute("aria-hidden", "true");
+  windowElt.appendChild(sizeIndicator);
+
+  function updateSizeIndicator() {
+    sizeIndicator.textContent = `${Math.round(getWindowWidth(windowElt))} × ${Math.round(getWindowHeight(windowElt))}`;
+  }
+
   // Add resize handles
   for (const dir of ["n", "e", "s", "w", "ne", "nw", "se", "sw"]) {
     const handle = document.createElement("div");
@@ -496,6 +505,7 @@ function handleResizeOnWindow(
    * direction's initial: "n", "s", "e", "w", "ne", "nw", "se" or "sw".
    */
   function setupResizeEvent(handle, direction) {
+    let isResizing = false;
     /**
      * When a user began resizing: the initial mouse X position at which the
      * resize was started.
@@ -533,6 +543,7 @@ function handleResizeOnWindow(
     let containerHeight;
 
     abortSignal.addEventListener("abort", () => {
+      stopResize();
       unblockElementsFromTakingPointerEvents();
     });
     addAbortableEventListener(handle, "mousedown", abortSignal, (e) => {
@@ -544,6 +555,8 @@ function handleResizeOnWindow(
         return;
       }
       windowElt.classList.add("resizing");
+      isResizing = true;
+      updateSizeIndicator();
       e.stopPropagation();
       e.preventDefault();
 
@@ -571,10 +584,14 @@ function handleResizeOnWindow(
       document.addEventListener("mousemove", resize);
       document.addEventListener("mouseup", validateAndStopResize);
       document.addEventListener("click", validateAndStopResize);
-      document.addEventListener("resize", validateAndStopResize);
+      window.addEventListener("resize", validateAndStopResize);
+      window.addEventListener("blur", validateAndStopResize);
     });
 
     const validateAndStopResize = () => {
+      if (!isResizing) {
+        return;
+      }
       if (!isFullscreen(windowElt)) {
         saveCurrentCoordinates();
       } else if (isFullscreenLeft(windowElt)) {
@@ -594,17 +611,26 @@ function handleResizeOnWindow(
           exitFullScreen(true);
         }
       }
+      stopResize();
+    };
+
+    function stopResize() {
+      if (!isResizing) {
+        return;
+      }
+      isResizing = false;
       unblockElementsFromTakingPointerEvents();
       windowElt.classList.remove("resizing");
       document.removeEventListener("mousemove", resize);
       document.removeEventListener("mouseup", validateAndStopResize);
       document.removeEventListener("click", validateAndStopResize);
-      document.removeEventListener("resize", validateAndStopResize);
-    };
+      window.removeEventListener("resize", validateAndStopResize);
+      window.removeEventListener("blur", validateAndStopResize);
+    }
 
     const resize = (e) => {
       requestAnimationFrame(() => {
-        if (isInteractionSuspended()) {
+        if (!isResizing || isInteractionSuspended()) {
           return;
         }
         const deltaX = e.clientX - startX;
@@ -673,6 +699,7 @@ function handleResizeOnWindow(
               : deltaY;
           setTopPositioning(windowElt, Math.max(startTop + deltaTop, 0));
         }
+        updateSizeIndicator();
       });
     };
   }

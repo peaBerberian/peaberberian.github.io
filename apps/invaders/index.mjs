@@ -1937,19 +1937,26 @@ export function create(_args, env, abortSignal) {
       return;
     }
     try {
+      highScore = Math.max(highScore, await readSavedHighScore());
+    } catch (err) {
+      console.warn("Cannot load Invaders high score:", err);
+    }
+  }
+
+  async function readSavedHighScore() {
+    try {
       const savedData = await env.appStorage.readFile(HIGH_SCORE_FILE, "object");
-      if (
-        typeof savedData === "object" &&
+      return typeof savedData === "object" &&
         savedData !== null &&
         Number.isInteger(savedData.highScore) &&
         savedData.highScore >= 0
-      ) {
-        highScore = savedData.highScore;
-      }
+        ? savedData.highScore
+        : 0;
     } catch (err) {
-      if (err?.code !== "NoEntryError") {
-        console.warn("Cannot load Invaders high score:", err);
+      if (err?.code === "NoEntryError") {
+        return 0;
       }
+      throw err;
     }
   }
 
@@ -1957,14 +1964,18 @@ export function create(_args, env, abortSignal) {
     await highScoreLoadedProm;
     if (score > highScore) {
       highScore = score;
-    if (!env.appStorage) {
-      return;
-    }
-    try {
-      await env.appStorage.writeFile(HIGH_SCORE_FILE, { highScore: score });
-    } catch (err) {
-      console.warn("Cannot save Invaders high score:", err);
-    }
+      if (!env.appStorage) {
+        return;
+      }
+      try {
+        const savedHighScore = await readSavedHighScore();
+        highScore = Math.max(highScore, savedHighScore);
+        if (score > savedHighScore) {
+          await env.appStorage.writeFile(HIGH_SCORE_FILE, { highScore: score });
+        }
+      } catch (err) {
+        console.warn("Cannot save Invaders high score:", err);
+      }
     }
   }
 }

@@ -2,6 +2,8 @@ import { createAudioEngine } from "./audio.mjs";
 
 // TODO: rewritten as canvas for better perfs?
 
+const GAME_WIDTH = 800;
+const GAME_HEIGHT = 600;
 const TARGET_FPS = 60;
 const FRAME_DURATION = 1000 / TARGET_FPS; // ~16.67ms
 const LEFT_KEYS = ["a", "arrowleft"];
@@ -142,7 +144,9 @@ export function create(_args, env, abortSignal) {
     // width: "100%",
     // height: "100%",
     position: "relative",
-    overflow: "visible",
+    overflow: "hidden",
+    flexShrink: "0",
+    touchAction: "none",
   });
   gameWrapper.appendChild(gameArea);
 
@@ -176,6 +180,8 @@ export function create(_args, env, abortSignal) {
     fontSize: Math.max(12, gameState.gameWidth * 0.025) + "px",
     zIndex: "1000",
     fontWeight: "bold",
+    right: "10px",
+    overflowWrap: "anywhere",
   });
   gameArea.appendChild(hud);
 
@@ -254,7 +260,10 @@ export function create(_args, env, abortSignal) {
     textAlign: "center",
     display: "none",
     zIndex: "1001",
-    padding: "20px",
+    padding: "16px",
+    width: "max-content",
+    maxWidth: "calc(100% - 24px)",
+    boxSizing: "border-box",
     borderRadius: "10px",
   });
   gameArea.appendChild(startScreen);
@@ -275,7 +284,10 @@ export function create(_args, env, abortSignal) {
     textAlign: "center",
     display: "none",
     zIndex: "1001",
-    padding: "20px",
+    padding: "16px",
+    width: "max-content",
+    maxWidth: "calc(100% - 24px)",
+    boxSizing: "border-box",
     borderRadius: "10px",
   });
   gameOverScreen.innerHTML =
@@ -285,7 +297,13 @@ export function create(_args, env, abortSignal) {
   const now = performance.now();
   lastFrameTime = now;
   tick(now);
-  abortSignal?.addEventListener("abort", onDeactivate, { once: true });
+  const resizeObserver = new ResizeObserver(resizeGameArea);
+  resizeObserver.observe(gameWrapper);
+  resizeGameArea();
+  abortSignal?.addEventListener("abort", () => {
+    resizeObserver.disconnect();
+    onDeactivate();
+  }, { once: true });
   return {
     element: gameWrapper,
     onActivate,
@@ -350,11 +368,90 @@ export function create(_args, env, abortSignal) {
     }
   }
 
+  function resizeGameArea() {
+    const viewport = getGameViewport(
+      gameWrapper.clientWidth, gameWrapper.clientHeight, GAME_WIDTH, GAME_HEIGHT,
+    );
+    if (!viewport) {
+      gameArea.style.visibility = "hidden";
+      return;
+    }
+    gameArea.style.visibility = "visible";
+    // Resize positions without replacing enemies, shields, or active effects.
+    if (gameState.gameWidth > 0 && gameState.gameHeight > 0) {
+      const ratioX = viewport.width / gameState.gameWidth;
+      const ratioY = viewport.height / gameState.gameHeight;
+      const objects = [gameState.player, ...gameState.bullets, ...gameState.enemyBullets,
+        ...gameState.powerups, ...gameState.particles, ...gameState.divers];
+      if (gameState.bonusShip) objects.push(gameState.bonusShip);
+      for (const object of objects) {
+        object.x *= ratioX;
+        object.y *= ratioY;
+        if (object.targetX !== undefined) object.targetX *= ratioX;
+        if (object.vx !== undefined) object.vx *= ratioX;
+        if (object.vy !== undefined) object.vy *= ratioY;
+        if (object.speed !== undefined) {
+          object.speed *= gameState.divers.includes(object) ? ratioY : ratioX;
+        }
+      }
+      // Keep formation spacing and bunker blocks intact rather than squeezing
+      // their fixed-size sprites together on a desktop-to-phone resize.
+      for (const isUfo of [false, true]) {
+        const formation = gameState.enemies.filter(enemy => enemy.isUfo === isUfo);
+        if (formation.length === 0) continue;
+        const left = Math.min(...formation.map(enemy => enemy.x));
+        const right = Math.max(...formation.map(enemy => enemy.x + enemy.width));
+        const span = right - left;
+        const widest = Math.max(...formation.map(enemy => enemy.width));
+        const spacingScale = Math.min(1,
+          (viewport.width - widest) / Math.max(1, span - widest),
+        );
+        const nextSpan = (span - widest) * spacingScale + widest;
+        const nextLeft = Math.max(0, Math.min(1,
+          left / Math.max(1, gameState.gameWidth - span),
+        )) * Math.max(0, viewport.width - nextSpan);
+        for (const enemy of formation) {
+          enemy.x = nextLeft + (enemy.x - left) * spacingScale;
+          enemy.y *= ratioY;
+          enemy.speed *= ratioX;
+        }
+      }
+      for (const shield of gameState.shields) {
+        const slotWidth = viewport.width / 4;
+        const blockSize = shield.width;
+        shield.x = (slotWidth - blockSize * 5) / 2 +
+          shield.shieldIndex * slotWidth + shield.col * blockSize;
+        shield.y = viewport.height * 0.75 + shield.row * blockSize;
+      }
+      if (playerMouseX !== null) playerMouseX *= ratioX;
+      for (const key of ["playerSpeed", "enemyBaseSpeed", "enemySuppSpeed", "bonusShipSpeed"]) {
+        config[key] *= ratioX;
+      }
+      for (const key of ["bulletSpeed", "enemyBulletSpeed", "enemyDropDistance", "powerupSpeed", "diveSpeed"]) {
+        config[key] *= ratioY;
+      }
+      gameState.gameWidth = viewport.width;
+      gameState.gameHeight = viewport.height;
+      gameState.player.x = Math.max(0, Math.min(gameState.player.x, viewport.width - gameState.player.width));
+      gameState.player.y = viewport.height - gameState.player.height - 20;
+      render();
+    }
+    gameArea.style.width = viewport.width + "px";
+    gameArea.style.height = viewport.height + "px";
+    // Individual scale composes with the screen-shake transform animation.
+    gameArea.style.scale = String(viewport.scale);
+  }
+
   function recheckGameStartupSize() {
-    gameState.gameWidth = gameWrapper.offsetWidth;
-    gameState.gameHeight = gameWrapper.offsetHeight;
-    gameArea.style.height = gameWrapper.offsetHeight + "px";
-    gameArea.style.width = gameWrapper.offsetWidth + "px";
+    const viewport = getGameViewport(
+      gameWrapper.clientWidth, gameWrapper.clientHeight, GAME_WIDTH, GAME_HEIGHT,
+    );
+    if (!viewport) return;
+    gameState.gameWidth = viewport.width;
+    gameState.gameHeight = viewport.height;
+    gameArea.style.height = viewport.height + "px";
+    gameArea.style.width = viewport.width + "px";
+    gameArea.style.scale = String(viewport.scale);
     config = {
       playerSpeed: 0.008 * gameState.gameWidth,
       bulletSpeed: 0.015 * gameState.gameHeight,
@@ -363,11 +460,11 @@ export function create(_args, env, abortSignal) {
       enemySuppSpeed: 0,
       enemyDropDistance: 0.05 * gameState.gameHeight,
       fireRate: 170,
-      playerSize: Math.max(20, 0.04 * gameState.gameWidth),
-      enemySize: Math.max(16, 0.035 * gameState.gameWidth),
+      playerSize: Math.max(36, 0.04 * gameState.gameWidth),
+      enemySize: Math.min(48, Math.max(32, 0.035 * gameState.gameWidth)),
       bulletSize: Math.max(18, 0.018 * gameState.gameWidth),
       playerBulletSize: Math.max(7, 0.008 * gameState.gameWidth),
-      hudSize: Math.max(12, 0.025 * gameState.gameWidth),
+      hudSize: Math.max(18, 0.025 * gameState.gameWidth),
       shieldSize: Math.max(50, 0.06 * gameState.gameWidth),
       powerupSize: Math.max(24, 0.04 * gameState.gameWidth),
       powerupSpeed: 0.0085 * gameState.gameHeight,
@@ -501,7 +598,7 @@ export function create(_args, env, abortSignal) {
     const enemySize = config.enemySize || 25;
     const bossSize = enemySize * 2;
     const bossFormationOffset = bossWave ? bossSize * 1.65 : 0;
-    const spacing = enemySize * 1.4;
+    const spacing = Math.min(enemySize * 1.4, (gameState.gameWidth - enemySize) / cols);
     const totalWidth = cols * spacing;
     const startX = (gameState.gameWidth - totalWidth) / 2;
     const startY = gameState.gameHeight * 0.1;
@@ -629,8 +726,8 @@ export function create(_args, env, abortSignal) {
 
     const numShields = 4;
     const shieldSize = config.shieldSize || 40;
-    const totalWidth = numShields * shieldSize * 2;
-    const startX = (gameState.gameWidth - totalWidth) / 4;
+    const slotWidth = gameState.gameWidth / numShields;
+    const startX = (slotWidth - shieldSize * 5 / 6) / 2;
     const shieldY = gameState.gameHeight * 0.75;
     const pattern = [
       [1, 1, 1, 1, 1],
@@ -640,7 +737,7 @@ export function create(_args, env, abortSignal) {
     ];
     const blockSize = shieldSize / 6;
     for (let i = 0; i < numShields; i++) {
-      const baseX = startX + i * (shieldSize * 4);
+      const baseX = startX + i * slotWidth;
       for (let row = 0; row < pattern.length; row++) {
         for (let col = 0; col < pattern[row].length; col++) {
           if (pattern[row][col] === 1) {
@@ -688,8 +785,8 @@ export function create(_args, env, abortSignal) {
   function rebuildShields() {
     const numShields = 4;
     const shieldSize = config.shieldSize || 40;
-    const totalWidth = numShields * shieldSize * 2;
-    const startX = (gameState.gameWidth - totalWidth) / 4;
+    const slotWidth = gameState.gameWidth / numShields;
+    const startX = (slotWidth - shieldSize * 5 / 6) / 2;
     const shieldY = gameState.gameHeight * 0.75;
     const pattern = [
       [1, 1, 1, 1, 1],
@@ -706,7 +803,7 @@ export function create(_args, env, abortSignal) {
     );
 
     for (let i = 0; i < numShields; i++) {
-      const baseX = startX + i * (shieldSize * 4);
+      const baseX = startX + i * slotWidth;
       for (let row = 0; row < pattern.length; row++) {
         for (let col = 0; col < pattern[row].length; col++) {
           const key = `${i}:${row}:${col}`;
@@ -1729,7 +1826,7 @@ export function create(_args, env, abortSignal) {
 
     // Active power-up strip
     powerupHud.innerHTML = "";
-    powerupHud.style.top = 10 + config.hudSize * 1.7 + "px";
+    powerupHud.style.top = 16 + Math.max(hud.offsetHeight, config.hudSize * 1.7) + "px";
     const nowTs = performance.now();
     for (const [type, expiry] of Object.entries(gameState.activePowerups)) {
       if (expiry > nowTs) {
@@ -1792,19 +1889,11 @@ export function create(_args, env, abortSignal) {
   }
 
   function updateGame() {
-    if (!gameState.started) {
-      if (
-        gameState.gameWidth !== gameWrapper.offsetWidth ||
-        gameState.gameHeight !== gameWrapper.offsetHeight
-      ) {
+    if (gameState.gameWidth === 0 || gameState.gameHeight === 0) {
+      if (gameWrapper.offsetWidth > 0 && gameWrapper.offsetHeight > 0) {
         recheckGameStartupSize();
       }
-    } else if (
-      gameState.gameWidth > gameWrapper.offsetWidth ||
-      gameState.gameHeight > gameWrapper.offsetHeight
-    ) {
-      resetGameState();
-    } else if (!gameState.gameOver) {
+    } else if (gameState.started && !gameState.gameOver) {
       updatePlayer();
       updateBullets();
       updateEnemies();
@@ -1847,10 +1936,6 @@ export function create(_args, env, abortSignal) {
     gameWrapper.removeEventListener("click", onClick);
     cancelAnimationFrame(animationId);
     animationId = null;
-    //
-    // if (resizeObserver) {
-    //   resizeObserver.disconnect();
-    // }
   }
 
   function onKeyDown(e) {
@@ -1894,12 +1979,18 @@ export function create(_args, env, abortSignal) {
       clientX = e.clientX;
     }
     const rect = gameArea.getBoundingClientRect();
-    playerMouseX = clientX - rect.left;
+    if (rect.width <= 0) {
+      return;
+    }
+    if (e.touches?.length) {
+      e.preventDefault();
+    }
+    playerMouseX = (clientX - rect.left) * gameState.gameWidth / rect.width;
     if (playerMouseX < 0) {
       playerMouseX = 0;
     }
-    if (playerMouseX > rect.width) {
-      playerMouseX = rect.width;
+    if (playerMouseX > gameState.gameWidth) {
+      playerMouseX = gameState.gameWidth;
     }
   }
 
@@ -1951,4 +2042,17 @@ function applyStyle(element, style) {
   for (const key of Object.keys(style)) {
     element.style[key] = style[key];
   }
+}
+
+/** Fit a logical playfield to the whole window while keeping small-screen
+ * sprites readable. Only very small windows need to scale below native size. */
+function getGameViewport(width, height, defaultWidth, defaultHeight) {
+  if (width <= 0 || height <= 0) {
+    return null;
+  }
+  const scale = Math.max(
+    Math.min(1, width / 480, height / 360),
+    Math.min(width / defaultWidth, height / defaultHeight),
+  );
+  return { width: width / scale, height: height / scale, scale };
 }

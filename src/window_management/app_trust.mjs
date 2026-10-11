@@ -4,6 +4,11 @@ export const TRUST_REGISTRY_PATH = "/userconfig/trusted-apps.json";
 /** A trust failure whose message can be displayed by the launcher. */
 export class AppTrustError extends Error {}
 
+const cryptoDigest =
+  typeof crypto !== "undefined" && typeof crypto.subtle?.digest === "function"
+    ? crypto.subtle.digest.bind(crypto.subtle)
+    : undefined;
+
 /**
  * Check whether an executable can run under its declared app id.
  *
@@ -46,12 +51,21 @@ export default class AppTrust {
      */
     this._writes = Promise.resolve();
     /**
-     * Built-in hashes, captured before any executable can be launched.
-     * @type {Map.<string, Promise.<string>>}
+     * Built-in hashes, or serialized executables when Web Crypto is unavailable.
+     * @type {Map.<string, Promise.<string>|string>}
      */
     this._builtins = new Map();
     for (const app of builtins) {
-      this._builtins.set(app.id, hashExecutable(serializeExecutable(app)));
+      const serialized = serializeExecutable(app);
+      if (cryptoDigest) {
+        const hash = hashExecutable(serialized);
+        // Hashing starts before anyone awaits it. Keep failures observable to
+        // launches without an unhandled rejection during startup.
+        hash.catch(() => {});
+        this._builtins.set(app.id, hash);
+      } else {
+        this._builtins.set(app.id, serialized);
+      }
     }
     filesystem.watch(TRUST_REGISTRY_PATH, () => {
       // A missing or invalid registry must not release pending launches.
@@ -69,6 +83,7 @@ export default class AppTrust {
    * @param {Object} executable
    * @param {string} [path] - Filesystem location, displayed in the approval app.
    * It does not participate in the hash, so moving an executable preserves trust.
+   * Without Web Crypto, only unchanged built-ins at their canonical paths run.
    * Paths inside the executable itself (such as `lazyLoad`) are still hashed.
    * @param {AbortSignal} [signal] - Cancels this launch and its approval window.
    * Used e.g. when a file picker is requested by a window which then closes.
@@ -99,6 +114,19 @@ export default class AppTrust {
     ) {
       throw new AppTrustError(
         "This executable is invalid. The app was not started.",
+      );
+    }
+    signal?.throwIfAborted();
+    if (!cryptoDigest) {
+      // The path alone is insufficient: filesystem reads return mutable objects.
+      if (
+        path === `/apps/${app.id}.run` &&
+        this._builtins.get(app.id) === serialized
+      ) {
+        return app;
+      }
+      throw new AppTrustError(
+        "Web Crypto is unavailable. Use HTTPS and a supported browser to run this app.",
       );
     }
     const hash = await hashExecutable(serialized);
@@ -383,7 +411,7 @@ export function serializeExecutable(value, ancestors = new Set()) {
  * @returns {Promise.<string>} - Hexadecimal hash prefixed with "sha256:".
  */
 export async function hashExecutable(serialized) {
-  const digest = await crypto.subtle.digest(
+  const digest = await cryptoDigest(
     "SHA-256",
     new TextEncoder().encode(serialized),
   );

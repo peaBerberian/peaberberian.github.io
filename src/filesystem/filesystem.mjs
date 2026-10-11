@@ -105,7 +105,7 @@ class DesktopFileSystem {
     });
   }
 
-  async writeFile(path, content) {
+  async writeFile(path, content, { overwrite = true } = {}) {
     if (!SETTINGS.storeNewDataInIndexedDB.getValue()) {
       throw new FileSystemError(
         "UserSettingsError",
@@ -116,7 +116,7 @@ class DesktopFileSystem {
     checkWrittenFilePath(path);
     const contentAb = formatWrittenFileContent(content);
     return this._scheduleLockingOperation(() =>
-      this._writeFileUnchecked(path, contentAb).then(() =>
+      this._writeFileUnchecked(path, contentAb, overwrite).then(() =>
         this._triggerWatchers([path]),
       ),
     );
@@ -575,7 +575,7 @@ class DesktopFileSystem {
       for (const entry of list) {
         if (entry.name === name) {
           throw new FileSystemError(
-            "IllegalOperation",
+            "AlreadyExistsError",
             "An item with that name already exists in this directory.",
           );
         }
@@ -585,18 +585,22 @@ class DesktopFileSystem {
       const tx = db.transaction(METADATA_STORE, "readwrite");
       const store = tx.objectStore(METADATA_STORE);
       return new Promise((resolve, reject) => {
-        tx.onerror = () =>
+        tx.onerror = (event) => {
+          const error = tx.error ?? event.target?.error;
           reject(
             new FileSystemError(
-              "TransactionError",
-              tx?.error?.toString?.() ?? "Unknown transaction error",
+              error?.name === "ConstraintError"
+                ? "AlreadyExistsError"
+                : "TransactionError",
+              error?.toString?.() ?? "Unknown transaction error",
             ),
           );
+        };
         tx.oncomplete = () => resolve();
 
         const fullPath = normalizedPath.substring(0, normalizedPath.length - 1);
         const now = Date.now();
-        store.put({
+        store.add({
           id: pathToId(fullPath),
           fullPath,
           directory: parentDir,
@@ -609,6 +613,8 @@ class DesktopFileSystem {
         // Simple fake file for now to always have at least one file in dirs
         // TODO: Remove the need for this
         const systemFile = normalizedPath + DIR_CONFIG_FILENAME;
+        // Keep the directory's add() collision check, but replace a leftover
+        // marker if the directory entry was missing from an inconsistent DB.
         store.put({
           id: pathToId(systemFile),
           fullPath: systemFile,
@@ -810,7 +816,7 @@ class DesktopFileSystem {
     const range = IDBKeyRange.only(dirPath);
 
     return new Promise((resolve, reject) => {
-      const request = metadataStore.index("directory").getAll(range, 100);
+      const request = metadataStore.index("directory").getAll(range);
       request.onerror = () =>
         reject(
           new FileSystemError(
@@ -873,15 +879,17 @@ class DesktopFileSystem {
     });
   }
 
-  async _writeFileUnchecked(path, contentAb) {
+  async _writeFileUnchecked(path, contentAb, overwrite = true) {
     const name = getName(path);
     const directoryPath = getDirPath(path);
 
-    // Delete first previous file if one
     const list = await this._readDirEntries(directoryPath);
-    for (const entry of list) {
-      if (entry.name === name) {
-        await this._rmFileUnchecked(directoryPath + entry.name);
+    if (overwrite) {
+      // Delete first previous file if one.
+      for (const entry of list) {
+        if (entry.name === name) {
+          await this._rmFileUnchecked(directoryPath + entry.name);
+        }
       }
     }
 
@@ -891,7 +899,7 @@ class DesktopFileSystem {
     const contentStore = tx.objectStore(CONTENT_STORE);
     const now = Date.now();
     const id = pathToId(path);
-    metadataStore.put({
+    const metadata = {
       id,
       fullPath: path,
       directory: directoryPath,
@@ -899,17 +907,27 @@ class DesktopFileSystem {
       size: contentAb.byteLength,
       type: "file",
       modified: now,
-    });
-    contentStore.put({ id, content: contentAb });
+    };
+    if (overwrite) {
+      metadataStore.put(metadata);
+      contentStore.put({ id, content: contentAb });
+    } else {
+      metadataStore.add(metadata);
+      contentStore.add({ id, content: contentAb });
+    }
 
     return new Promise((resolve, reject) => {
-      tx.onerror = () =>
+      tx.onerror = (event) => {
+        const error = tx.error ?? event.target?.error;
         reject(
           new FileSystemError(
-            "TransactionError",
-            tx?.error?.toString?.() ?? "Unknown transaction error",
+            !overwrite && error?.name === "ConstraintError"
+              ? "AlreadyExistsError"
+              : "TransactionError",
+            error?.toString?.() ?? "Unknown transaction error",
           ),
         );
+      };
       tx.oncomplete = () => resolve();
     });
   }

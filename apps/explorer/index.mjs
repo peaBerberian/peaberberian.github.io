@@ -20,6 +20,7 @@ import {
   showAppMessage,
   renameSvg,
   cutSvg,
+  copySvg,
   pasteSvg,
 } from "./utils.mjs";
 import {
@@ -116,10 +117,9 @@ function createExplorer(explorerType, args, env, abortSignal) {
   let pathBarElt = constructPathBarElement(currentPath, navigateToPath);
   explorerElt.appendChild(pathBarElt);
 
-  /**
-   * The "clipboard", basically, allowing to move around files.
-   */
-  let cuttedSelection = [];
+  /** Explorer-local clipboard of paths, either copied or cut. */
+  let clipboard = { action: null, items: [] };
+  let isPasting = false;
 
   /**
    * The currently visually-selected items in the directory part.
@@ -213,6 +213,13 @@ function createExplorer(explorerType, args, env, abortSignal) {
       title: "Cut (selection)",
       svg: cutSvg,
       onClick: () => cutItems(selectedItems),
+    },
+    {
+      name: "copy",
+      height: "1em",
+      title: "Copy (selection)",
+      svg: copySvg,
+      onClick: () => copyItems(selectedItems),
     },
     {
       name: "paste",
@@ -441,6 +448,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
           escape: onDirectoryEscape,
           deleteItems,
           cutItems,
+          copyItems,
           pasteItems,
           onSelectionChange: (items) => {
             selectedItems = items;
@@ -451,8 +459,8 @@ function createExplorer(explorerType, args, env, abortSignal) {
         },
         abortSignal: currentDirectoryAbortController.signal,
       });
-      if (cuttedSelection.length > 0) {
-        currentDirectoryComponent.signalCutAction(cuttedSelection);
+      if (clipboard.action === "cut") {
+        currentDirectoryComponent.signalCutAction(clipboard.items);
       }
       currentDirectoryElt.innerHTML = "";
       currentDirectoryElt.appendChild(currentDirectoryComponent.element);
@@ -592,33 +600,81 @@ function createExplorer(explorerType, args, env, abortSignal) {
   }
 
   function cutItems(cuttedItems) {
-    cuttedSelection = [...cuttedItems];
-    enableToolButton("paste");
-    currentDirectoryComponent?.signalCutAction(cuttedSelection);
+    if (cuttedItems.length === 0) {
+      return;
+    }
+    clipboard = { action: "cut", items: [...cuttedItems] };
+    updatePasteButton();
+    currentDirectoryComponent?.signalCutAction(clipboard.items);
   }
 
-  function pasteItems() {
-    disableToolButton("paste");
+  function copyItems(items) {
+    if (items.length === 0) {
+      return;
+    }
+    clipboard = { action: "copy", items: [...items] };
+    updatePasteButton();
+    currentDirectoryComponent?.signalCutAction([]);
+  }
+
+  function updatePasteButton() {
+    if (
+      clipboard.items.length > 0 &&
+      isUserDirectory(currentPath) &&
+      !isPasting
+    ) {
+      enableToolButton("paste");
+    } else {
+      disableToolButton("paste");
+    }
+  }
+
+  async function pasteItems() {
+    if (
+      isPasting ||
+      clipboard.items.length === 0 ||
+      !isUserDirectory(currentPath)
+    ) {
+      return;
+    }
+    const pastedClipboard = clipboard;
+    const destPath = currentPath;
+    isPasting = true;
+    updatePasteButton();
     currentDirectoryComponent?.onDeactivate();
-    performMoveOperation(
-      filesystem,
-      cuttedSelection,
-      currentPath,
-      directoryZoneElt,
-    ).then(
-      () => {
-        cuttedSelection = [];
-        currentDirectoryComponent?.signalCutAction(cuttedSelection);
-        currentDirectoryComponent?.onActivate();
-      },
-      (err) => {
-        currentDirectoryComponent?.onActivate();
-        if (cuttedSelection.length > 0) {
-          enableToolButton("paste");
+    try {
+      if (pastedClipboard.action === "copy") {
+        await performCopyOperation(filesystem, pastedClipboard.items, destPath);
+        showAppMessage(directoryZoneElt, "Items copied successfully");
+      } else {
+        // Move cut items one at a time so a failure leaves the rest to retry.
+        const normalizedDest = destPath.endsWith("/")
+          ? destPath
+          : destPath + "/";
+        for (const item of pastedClipboard.items.slice()) {
+          const source = item.isDirectory ? item.path + "/" : item.path;
+          const destination = item.isDirectory
+            ? normalizedDest + item.name
+            : normalizedDest;
+          await filesystem.mv(source, destination);
+          // A new cut or copy action may have replaced the clipboard meanwhile.
+          if (clipboard === pastedClipboard) {
+            pastedClipboard.items.shift();
+            if (pastedClipboard.items.length === 0) {
+              pastedClipboard.action = null;
+            }
+            currentDirectoryComponent?.signalCutAction(pastedClipboard.items);
+          }
         }
-        showError(directoryZoneElt, `Failed to create paste: ${err.message}`);
-      },
-    );
+        showAppMessage(directoryZoneElt, "Files moved successfully");
+      }
+    } catch (err) {
+      showError(directoryZoneElt, `Failed to paste items: ${err.message}`);
+    } finally {
+      isPasting = false;
+      updatePasteButton();
+      if (isAppActivated) currentDirectoryComponent?.onActivate();
+    }
   }
 
   function updateButtons(currentPath, selectedItems) {
@@ -631,10 +687,12 @@ function createExplorer(explorerType, args, env, abortSignal) {
     }
     if (selectedItems.length === 0) {
       disableToolButton("cut");
+      disableToolButton("copy");
       disableToolButton("clear");
       disableToolButton("rename");
       disableToolButton("download");
     } else if (selectedItems.length === 1) {
+      enableToolButton("copy");
       if (isUserDirectory(currentPath)) {
         enableToolButton("cut");
         enableToolButton("rename");
@@ -650,6 +708,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
         disableToolButton("download");
       }
     } else {
+      enableToolButton("copy");
       if (isUserDirectory(currentPath)) {
         enableToolButton("cut");
         enableToolButton("clear");
@@ -697,6 +756,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
         }
       }
     }
+    updatePasteButton();
   }
 
   function onDirectoryEscape() {
@@ -807,18 +867,29 @@ function createExplorer(explorerType, args, env, abortSignal) {
         svg: cutSvg,
         height: "1.4em",
         title: "Cut current selection",
-        filter: () => selectedItems.length > 0,
+        filter: () => selectedItems.length > 0 && isUserDirectory(currentPath),
         onClick: () => {
           cutItems(selectedItems);
         },
+      },
+      {
+        name: "copy",
+        svg: copySvg,
+        height: "1em",
+        title: "Copy current selection",
+        filter: () => selectedItems.length > 0,
+        onClick: () => copyItems(selectedItems),
       },
       { name: "separator", filter: () => selectedItems.length > 0 },
       {
         name: "paste",
         svg: pasteSvg,
-        title: "Paste cut items",
+        title: "Paste items",
         height: "1em",
-        filter: () => cuttedSelection.length > 0,
+        filter: () =>
+          clipboard.items.length > 0 &&
+          isUserDirectory(currentPath) &&
+          !isPasting,
         onClick: () => {
           pasteItems();
         },
@@ -937,22 +1008,74 @@ async function renameItem(
   }
 }
 
-async function performMoveOperation(fs, items, destDir, msgContainerElt) {
+async function performCopyOperation(fs, items, destDir) {
   const normalizedDest = destDir.endsWith("/") ? destDir : destDir + "/";
-  try {
-    for (const item of items) {
-      if (item.isDirectory) {
-        const normalizedPath = !item.path.endsWith("/")
-          ? item.path + "/"
-          : item.path;
-        await fs.mv(normalizedPath, normalizedDest + item.name);
-      } else {
-        await fs.mv(item.path, normalizedDest);
+  for (const item of items) {
+    if (item.isDirectory && normalizedDest.startsWith(item.path + "/")) {
+      throw new Error(`Cannot copy "${item.name}" into itself`);
+    }
+  }
+
+  const names = new Set(
+    (await fs.readDir(normalizedDest)).map((entry) => entry.name),
+  );
+  for (const item of items) {
+    while (true) {
+      const destName = getCopyName(item.name, item.isDirectory, names);
+      const destPath = pathJoin(normalizedDest, destName);
+      try {
+        await copyItem(fs, item.path, destPath, item.isDirectory);
+        names.add(destName);
+        break;
+      } catch (error) {
+        // TODO: Retry only when this destination name collided. A conflict in
+        // a child currently retries the whole directory under another name.
+        if (error.code !== "AlreadyExistsError") {
+          throw error;
+        }
+        names.add(destName);
       }
     }
-    showAppMessage(msgContainerElt, `Files moved successfully`);
-  } catch (error) {
-    showError(msgContainerElt, `Failed to move files: ${error.message}`);
+  }
+}
+
+function getCopyName(name, isDirectory, existingNames) {
+  if (!existingNames.has(name)) return name;
+  const dot = isDirectory ? -1 : name.lastIndexOf(".");
+  const stem = dot > 0 ? name.slice(0, dot) : name;
+  const extension = dot > 0 ? name.slice(dot) : "";
+  for (let index = 1; ; index++) {
+    const candidate = `${stem} (copy${index === 1 ? "" : ` ${index}`})${extension}`;
+    if (!existingNames.has(candidate)) return candidate;
+  }
+}
+
+async function copyItem(fs, srcPath, destPath, isDirectory) {
+  if (isDirectory) {
+    const children = await fs.readDir(srcPath);
+    await fs.mkdir(destPath);
+    try {
+      for (const child of children) {
+        await copyItem(
+          fs,
+          pathJoin(srcPath, child.name),
+          pathJoin(destPath, child.name),
+          child.type === "directory",
+        );
+      }
+    } catch (error) {
+      try {
+        // TODO: Another window may have added files here after mkdir. Track
+        // which entries this copy owns before deleting the whole directory.
+        await fs.rmDir(destPath);
+      } catch {
+        // Keep the original copy error.
+      }
+      throw error;
+    }
+  } else {
+    const data = await fs.readFile(srcPath, "arraybuffer");
+    await fs.writeFile(destPath, data, { overwrite: false });
   }
 }
 

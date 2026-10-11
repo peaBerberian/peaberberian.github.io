@@ -4,6 +4,7 @@ import {
   pathJoin,
   getFileExtension,
   cutSvg,
+  copySvg,
 } from "./utils.mjs";
 
 export default function renderDirectory({
@@ -18,6 +19,7 @@ export default function renderDirectory({
     escape,
     deleteItems,
     cutItems,
+    copyItems,
     pasteItems,
   },
   abortSignal,
@@ -109,15 +111,6 @@ export default function renderDirectory({
   if (items.length === 0) {
     const emptyMessage = createEmptyDirMessage(path);
     directoryWrapperElt.appendChild(emptyMessage);
-    return {
-      element: directoryWrapperElt,
-      onActivate,
-      onDeactivate,
-      signalCutAction,
-      selectItems: () => {
-        /* noop */
-      },
-    };
   }
 
   for (const item of items) {
@@ -181,8 +174,19 @@ export default function renderDirectory({
           height: "1.4em",
           svg: cutSvg,
           title: "Cut " + (item.isDirectory ? "directory" : "file"),
+          filter: () =>
+            path.startsWith("/userdata/") || path.startsWith("/userconfig/"),
           onClick: () => {
             cutItems([item]);
+          },
+        },
+        {
+          name: "copy",
+          height: "1em",
+          svg: copySvg,
+          title: "Copy " + (item.isDirectory ? "directory" : "file"),
+          onClick: () => {
+            copyItems([item]);
           },
         },
         { name: "separator" },
@@ -626,13 +630,17 @@ export default function renderDirectory({
       case "x":
         if (e.ctrlKey) {
           e.preventDefault();
-          e.preventDefault();
           cutItems(selectedElts.items);
+        }
+        break;
+      case "c":
+        if (e.ctrlKey) {
+          e.preventDefault();
+          copyItems(selectedElts.items);
         }
         break;
       case "v":
         if (e.ctrlKey) {
-          e.preventDefault();
           e.preventDefault();
           pasteItems();
         }

@@ -1,3 +1,4 @@
+import { renderAppIcon } from "../components/app-icon.mjs";
 import * as CONSTANTS from "../constants.mjs";
 import { SETTINGS } from "../settings.mjs";
 import filesystem, { getName } from "../filesystem/filesystem.mjs";
@@ -234,6 +235,7 @@ export default class WindowManager {
       defaultHeight: app.data.defaultHeight,
       defaultWidth: app.data.defaultWidth,
       defaultIcon: app.icon,
+      defaultIconImage: app.iconImage,
       defaultTitle: app.title,
     });
 
@@ -571,6 +573,9 @@ export default class WindowManager {
     appWindow,
     abortSignal,
   ) {
+    if (appData.sandboxed && method !== "create") {
+      throw new Error("Sandboxed applications cannot run native provider entry points.");
+    }
     if (appData.website) {
       if (method !== "create") {
         console.warn('Not calling "create" on an i-frame application.');
@@ -919,6 +924,17 @@ export default class WindowManager {
 
     if (Array.isArray(dependencies)) {
       Object.assign(env, this.bus.getAPIsFor(appId, dependencies, abortSignal));
+      if (dependencies.includes("renderAppIcon")) {
+        env.renderAppIcon = (
+          element,
+          icon,
+          iconImage,
+          size,
+          signal = abortSignal,
+        ) => {
+          renderAppIcon(element, icon, iconImage, size, signal);
+        };
+      }
       if (dependencies.includes("requestFocus")) {
         env.requestFocus = () => {
           if (abortSignal.aborted) return;

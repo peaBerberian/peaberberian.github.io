@@ -11,6 +11,7 @@
  * right options.
  */
 
+import { isAppIconImage } from "./src/app_image_sources.mjs";
 import * as fs from "fs";
 import * as path from "path";
 import { pathToFileURL, fileURLToPath } from "url";
@@ -272,6 +273,22 @@ async function produceBundle(inputFile, outfile, options) {
     const esbuildStepsPlugin = {
       name: "bundler-steps",
       setup(build) {
+        if (inputFile.startsWith(APPS_SRC_DIR + path.sep)) {
+          build.onLoad({ filter: /.*/, namespace: "file" }, (args) => {
+            const resolvedPath = fs.realpathSync(args.path);
+            if (resolvedPath.startsWith(DESKTOP_SRC_DIR + path.sep)) {
+              return {
+                errors: [
+                  {
+                    text:
+                      "Apps must not import desktop source: " + args.path +
+                      ". Use APIs provided through env instead.",
+                  },
+                ],
+              };
+            }
+          });
+        }
         build.onStart(() => {
           if (!isSilent) {
             logWarning(`Bundling of "${relativeInFile}" started.`);
@@ -603,6 +620,17 @@ export default [`;
           // Already checked
           break;
 
+        case "iconImage":
+          if (!isAppIconImage(app.iconImage)) {
+            throw new Error(
+              `Error in app "${app.id}". Invalid "iconImage": ` +
+                "expected { repository, path } with a relative asset path.",
+            );
+          }
+          uglyHandWrittenJsObject +=
+            "    iconImage: " + JSON.stringify(app.iconImage) + ",\n";
+          break;
+
         case "icon":
           if (typeof app.icon !== "string") {
             throw new Error(
@@ -680,7 +708,13 @@ export default [`;
           if (Array.isArray(app.dependencies)) {
             for (const dep of app.dependencies) {
               if (
-                ["CONSTANTS", "settings", "fileSystems", "open"].includes(dep) ||
+                [
+                  "CONSTANTS",
+                  "settings",
+                  "filesystem",
+                  "open",
+                  "renderAppIcon",
+                ].includes(dep) ||
                 ["busCall", "busHandle"].includes(dep)
               ) {
                 throw new Error(
@@ -760,6 +794,7 @@ export default [`;
                 "busCall",
                 "busHandle",
                 "requestFocus",
+                "renderAppIcon",
               ].includes(dep)
             ) {
               throw new Error(

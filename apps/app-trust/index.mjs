@@ -25,6 +25,7 @@ export function create([approvalRequest, setApproval, decisionSignal], env, abor
     title = id,
     icon,
     path,
+    sourceUrl,
     dependencies = [],
     reason = "new",
   } = approvalRequest;
@@ -65,6 +66,7 @@ export function create([approvalRequest, setApproval, decisionSignal], env, abor
   for (const [label, value] of [
     ["App ID", id],
     ["Executable", path ?? "Executable object"],
+    ["Source URL", sourceUrl ?? "Unknown"],
     ["Requested permissions", dependencies.join(", ") || "None"],
   ]) {
     const term = document.createElement("dt");
@@ -82,7 +84,15 @@ export function create([approvalRequest, setApproval, decisionSignal], env, abor
   cancel.className = "btn";
   cancel.textContent = blocked ? "Close" : "Cancel";
   actions.append(cancel);
-  element.append(identity, message, details, errorMessage, actions);
+  element.append(identity, message, details);
+  if (!blocked) {
+    const scope = document.createElement("p");
+    scope.textContent =
+      "Approval also trusts future code updates from this source. " +
+      "Changes to the executable configuration require approval again.";
+    element.appendChild(scope);
+  }
+  element.append(errorMessage, actions);
 
   const style = document.createElement("style");
   style.textContent = styles;

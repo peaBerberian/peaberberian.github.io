@@ -9,7 +9,7 @@
  * @param {Function} env.open - API allowing to open new files and applications.
  * @returns {Promise.<Object>}
  */
-export async function create(args = [], env) {
+export async function create(args = [], env, abortSignal) {
   let apps = [];
   for (const opt of args) {
     if (opt.type === "options" && opt.icon && opt.title) {
@@ -77,7 +77,13 @@ export async function create(args = [], env) {
       fontSize: "30px",
       margin: "5px 0px",
     });
-    iconImgElt.textContent = app.icon;
+    env.renderAppIcon(
+      iconImgElt,
+      app.icon,
+      app.iconImage,
+      "40px",
+      abortSignal,
+    );
     const iconTextElt = document.createElement("span");
     applyStyle(iconTextElt, {
       fontSize: env.STYLE.fontSize,

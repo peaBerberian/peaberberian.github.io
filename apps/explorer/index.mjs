@@ -14,6 +14,7 @@ import {
   formatSize,
   showError,
   pathJoin,
+  readDirectoryEntries,
   homeDirSvg,
   newDirectorySvg,
   linkAbortControllerToSignal,
@@ -411,7 +412,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
   async function navigateToPath(path, keepScroll) {
     try {
       const normalizedPath = path.endsWith("/") ? path : path + "/";
-      const entries = await filesystem.readDir(normalizedPath);
+      const entries = await readDirectoryEntries(filesystem, normalizedPath);
       if (currentDirectoryAbortController.signal.aborted) {
         return;
       }
@@ -444,6 +445,7 @@ function createExplorer(explorerType, args, env, abortSignal) {
         contextMenuBase: constructContextMenu(),
         callbacks: {
           setUpContextMenu: appUtils.setUpContextMenu,
+          renderAppIcon: env.renderAppIcon,
           navigateTo: navigateToPath,
           escape: onDirectoryEscape,
           deleteItems,

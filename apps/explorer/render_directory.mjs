@@ -13,6 +13,7 @@ export default function renderDirectory({
   contextMenuBase,
   callbacks: {
     setUpContextMenu,
+    renderAppIcon,
     navigateTo,
     openFiles,
     onSelectionChange,
@@ -196,9 +197,20 @@ export default function renderDirectory({
 
     // TODO: For images, read and load preview?
     const icon = document.createElement("div");
-    icon.innerHTML = item.isDirectory ? "📁" : getFileIcon(item);
+    renderAppIcon(
+      icon,
+      item.isDirectory ? "📁" : getFileIcon(item),
+      item.iconImage,
+      "48px",
+      abortSignal,
+    );
     applyStyle(icon, {
       fontSize: "3em",
+      width: "48px",
+      height: "48px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
       marginBottom: "5px",
     });
 
@@ -695,6 +707,7 @@ function formatDirectoryEntries(dirEntries, path) {
     return {
       name: item.name,
       icon: item.type === "directory" ? "📁" : item.icon,
+      iconImage: item.type === "directory" ? undefined : item.iconImage,
       path: filePath,
       isDirectory: item.type === "directory",
       size: item.size,

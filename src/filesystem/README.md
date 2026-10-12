@@ -33,7 +33,9 @@ Each returned object will have the following properties:
 - Its `name` property is the actual application's `id` property, followed by
   the extension `.run` (e.g. `paint.run`)
 
-- Its `icon` property wll correspond to the application's `icon` property.
+- Its `icon` property will correspond to the application's `icon` property.
+- Its optional `iconImage` property is a `{repository, path}` artwork reference. `stat` also
+  returns it; renderers keep `icon` as the loading and failure fallback.
 
 - Its `type` property set to `file`.
 
@@ -76,7 +78,9 @@ can be discovered through `readDir`, but they should be always there:
   - `title` (`string`): The `title` of the application to show on the
     desktop.
 
-  - `icon` (`string|undefined`): The icon to show for the application.
+  - `icon` (`string|undefined`): The text/emoji fallback for the application.
+
+  - `iconImage` (`{repository: string, path: string}|undefined`): Optional artwork reference.
 
     There's also a `version` property in that file, derived from the original
     application list file.
@@ -108,7 +112,9 @@ can be discovered through `readDir`, but they should be always there:
   - `title` (`string`): The `title` of the application to show on the
     start menu.
 
-  - `icon` (`string|undefined`): The icon to show for the application.
+  - `icon` (`string|undefined`): The text/emoji fallback for the application.
+
+  - `iconImage` (`{repository: string, path: string}|undefined`): Optional artwork reference.
 
   Sublists have the following properties:
   - `type` (`string`): Set to `"sublist"`.

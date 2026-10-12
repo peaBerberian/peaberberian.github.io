@@ -9,6 +9,7 @@
 // place first. Like maybe a full background for a sub 100ms time on e.g.
 // Chrome. Not sure what it is yet.
 
+import { renderAppIcon } from "../components/app-icon.mjs";
 import setUpContextMenu from "../components/context-menu.mjs";
 
 const OVERVIEW_ANIMATION_DURATION = 240;
@@ -198,7 +199,16 @@ export default class WindowOverview {
 
       const label = document.createElement("div");
       label.className = "window-overview-label";
-      label.textContent = `${icon ? icon + " " : ""}${title}`;
+      const labelIcon = document.createElement("span");
+      const contextMenuAbortCtrl = new AbortController();
+      renderAppIcon(
+        labelIcon,
+        icon,
+        appWindow.getIconImage(),
+        "1.2em",
+        contextMenuAbortCtrl.signal,
+      );
+      label.append(labelIcon, document.createTextNode(` ${title}`));
       this._desktopElt.appendChild(label);
 
       return {
@@ -210,7 +220,7 @@ export default class WindowOverview {
         restoreAccessibility,
         resumeInteraction,
         label,
-        contextMenuAbortCtrl: new AbortController(),
+        contextMenuAbortCtrl,
         target: null,
       };
     });

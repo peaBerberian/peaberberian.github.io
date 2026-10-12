@@ -142,6 +142,7 @@ export function generateDesktopConfig() {
           path: `/apps/${app.id}.run`,
           title: app.title,
           icon: app.icon,
+          iconImage: app.iconImage,
         };
         if (existingGroupList) {
           existingGroupList.push(appArg);
@@ -165,6 +166,7 @@ export function generateDesktopConfig() {
           args: [],
           title: app.title,
           icon: app.icon,
+          iconImage: app.iconImage,
         });
       }
       return acc;
@@ -188,6 +190,7 @@ export function generateStartMenuConfig() {
         args: [],
         title: app.title,
         icon: app.icon,
+        iconImage: app.iconImage,
       };
       if (
         typeof app.startMenu?.list === "string" &&

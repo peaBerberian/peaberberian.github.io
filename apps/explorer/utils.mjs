@@ -30,6 +30,41 @@ export function getFileExtension(filename) {
   return dotIndex === -1 ? "" : filename.slice(dotIndex + 1).toLowerCase();
 }
 
+/** Read icon metadata from stored executables without loading application code. */
+export async function readDirectoryEntries(filesystem, path) {
+  const entries = await filesystem.readDir(path);
+  await Promise.all(
+    entries.map(async (entry) => {
+      if (
+        entry.type !== "file" ||
+        !entry.name.endsWith(".run") ||
+        entry.icon !== undefined
+      ) {
+        return;
+      }
+      try {
+        const executable = await filesystem.readFile(
+          pathJoin(path, entry.name),
+          "object",
+        );
+        if (typeof executable?.icon === "string") {
+          entry.icon = executable.icon;
+        }
+        if (
+          executable?.iconImage &&
+          typeof executable.iconImage === "object" &&
+          !Array.isArray(executable.iconImage)
+        ) {
+          entry.iconImage = executable.iconImage;
+        }
+      } catch (_) {
+        // Invalid executables retain the generic extension fallback.
+      }
+    }),
+  );
+  return entries;
+}
+
 export function getFileIcon({ extension, icon }) {
   if (icon) {
     return icon;

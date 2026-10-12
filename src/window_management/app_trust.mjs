@@ -117,6 +117,24 @@ export default class AppTrust {
       );
     }
     signal?.throwIfAborted();
+    if (
+      app.data.sandboxed &&
+      app.data.dependencies?.includes("renderAppIcon")
+    ) {
+      throw new AppTrustError(
+        "Sandboxed applications cannot request the renderAppIcon API.",
+      );
+    }
+    if (
+      app.data.lazyLoad &&
+      app.data.sandboxed !== true &&
+      !this._builtins.has(app.id)
+    ) {
+      throw new AppTrustError(
+        "External applications must be sandboxed. " +
+          "Only built-in applications can run in the desktop context.",
+      );
+    }
     if (!cryptoDigest) {
       // The path alone is insufficient: filesystem reads return mutable objects.
       if (
@@ -141,6 +159,12 @@ export default class AppTrust {
       path,
       dependencies: app.data.dependencies,
     };
+    // Display the source selected by the launcher's website/script branch.
+    if (app.data.website) {
+      approvalRequest.sourceUrl = app.data.website;
+    } else {
+      approvalRequest.sourceUrl = app.data.lazyLoad;
+    }
     // Check built-in ids before even reading the user registry. A modified
     // executable claiming one of those ids cannot be approved as that app.
     if (this._builtins.has(app.id)) {

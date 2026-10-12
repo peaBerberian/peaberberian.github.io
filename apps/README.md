@@ -59,6 +59,33 @@ The following properties can be set for each application:
 - `"icon"` (`string`, mandatory): An emoji that will be used as an application
   icon in the desktop.
 
+- `"iconImage"` (`{repository: string, path: string}`, optional): Repository
+  artwork displayed in place of `icon` once loaded. The emoji remains visible
+  while loading and on failure. This is the only supported format:
+
+  ```json
+  "iconImage": { "repository": "desktop", "path": "assets/app-icons/paint.v1.svg" }
+  ```
+
+  `repository` selects a desktop-configured repository; `path` is a non-empty
+  relative asset path within its base directory. URL strings, absolute paths,
+  and manifest-supplied base URLs are not supported. Unknown repositories retain
+  the emoji without sending a request.
+
+  Currently `desktop` is the only repository, with the current desktop page's
+  directory as its base. Its allowed mirror origins are
+  `https://peaberberian.github.io` and `https://paulswebdesktop.netlify.app`.
+  Thus the same executable and asset reference work on either mirror. Other
+  origins (including localhost), subdomains, non-default ports, and credentials
+  in URLs retain the fallback without sending a request.
+
+  Artwork loading does not check executable IDs, hashes, or launch approvals.
+  Requests omit credentials/referrers and reject redirects. Cross-origin hosts
+  must support CORS. Downloads require an image MIME type and are limited to
+  256 KiB; decoded images over 1024 pixels per side retain the fallback.
+  Future enabled repositories can extend the desktop-owned location/authorization
+  registry. An executable cannot authorize a repository or origin itself.
+
 - `"website"`: (`string`, optional): If set, this object does not represent an
   actual application stored here but will launch an "i-frame" to that website.
 
@@ -140,6 +167,16 @@ The following properties can be set for each application:
   This is close to a permission system.
 
   For now the following dependencies are handled:
+
+  - `"renderAppIcon"`: Non-sandboxed apps only. Supplies
+    `env.renderAppIcon(element, iconText, iconImage, size, signal)` to render an
+    app's icon with an immediate emoji/text `iconText` fallback.
+
+    `size` defaults to `"1.2em"`; `signal` defaults to the application's
+    lifetime, and may be replaced with a directory/view lifetime.
+    Replacing an icon or aborting its lifetime cancels a pending image.
+    Failed loads retain the fallback.
+
   - `"settings"`: Read and write access to the Desktop's core settings.
     Very few applications will need that.
 

@@ -49,6 +49,7 @@ export function create(_args, env) {
                 args: [],
                 title: data.title,
                 icon: data.icon,
+                iconImage: data.iconImage,
               });
             } else {
               // Regular file: don't bother with icon and title for now

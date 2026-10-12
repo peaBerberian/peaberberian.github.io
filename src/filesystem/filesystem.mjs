@@ -131,6 +131,7 @@ class DesktopFileSystem {
           name: d.name,
           type: d.type,
           icon: d.icon,
+          iconImage: d.iconImage,
           modified: d.modified,
           size: d.size,
         };
@@ -159,6 +160,7 @@ class DesktopFileSystem {
         name: result.name,
         type: result.type,
         icon: result.icon,
+        iconImage: result.iconImage,
         modified: result.modified,
         size: result.size,
       };
@@ -771,6 +773,7 @@ class DesktopFileSystem {
             name,
             type: "file",
             icon: app.icon,
+            iconImage: app.iconImage,
             modified: DEFAULT_MODIFIED_DATE,
             size: 0,
           };

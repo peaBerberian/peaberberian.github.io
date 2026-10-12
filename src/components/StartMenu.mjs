@@ -1,3 +1,4 @@
+import { renderAppIcon } from "./app-icon.mjs";
 import {
   START_ITEM_HEIGHT,
   START_MENU_OPEN_ANIM_TIMER,
@@ -27,7 +28,9 @@ const PREDEFINED_SUBLISTS = {
  * @property {string} run - The path to the application to run.
  * @property {Array.<string>} args - The arguments with which this app should be
  * run.
- * @property {string} icon` - The icon representing that application.
+ * @property {string} icon - Text/emoji fallback for that application.
+ * @property {import("../app_image_sources.mjs").AppIconImage} [iconImage]
+ * Optional artwork reference.
  * @property {string} title - The title for that application.
  */
 
@@ -379,10 +382,11 @@ function refreshStartMenu(
                     type: "options",
                     icon: listIconElt.textContent,
                     title: appObj.name,
-                    apps: appObj.list.map(({ run, title, icon }) => ({
+                    apps: appObj.list.map(({ run, title, icon, iconImage }) => ({
                       path: run,
                       title,
                       icon,
+                      iconImage,
                     })),
                   },
                 ]);
@@ -497,7 +501,13 @@ function refreshStartMenu(
 
     const startIconElt = document.createElement("div");
     startIconElt.className = "start-icon";
-    startIconElt.textContent = appObj.icon;
+    renderAppIcon(
+      startIconElt,
+      appObj.icon,
+      appObj.iconImage,
+      "20px",
+      itemMenusSignal,
+    );
     const startTitleElt = document.createElement("div");
     startTitleElt.className = "start-title";
     startTitleElt.textContent = appObj.title;

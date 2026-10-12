@@ -1,3 +1,6 @@
+import { escapeHtmlText } from "../html_utils.mjs";
+import { renderAppIcon } from "./app-icon.mjs";
+import builtInApps from "../__generated_apps.mjs";
 // TODO: Rename icon?
 
 import fs from "../filesystem/filesystem.mjs";
@@ -37,7 +40,8 @@ const USER_DESKTOP_CONFIG = "/userconfig/desktop.config.json";
  * only the first objects of that array will be displayed.
  * Each of those objects should have at least three properties:
  *   - `run` (`string`): The path to the application to run.
- *   - `icon` (`string`): The icon representing that application.
+ *   - `icon` (`string`): The text/emoji fallback for that application.
+ *   - `iconImage` (`{repository: string, path: string}|undefined`): Optional artwork reference.
  *   - `title` (`string`): The title for that application.
  *   - `args` (`Args`): The optional arguments for that application.
  * @param {Function} onOpen - Callback that will be called when/if an app is
@@ -305,9 +309,17 @@ export default async function DesktopAppIcons(
       nextIconPosition.y += iconHeight + ICON_MARGIN;
 
       iconElt.innerHTML = `
-<div class="icon-img">${app.icon}</div>
-<div class="icon-text">${app.title}</div>
+<div class="icon-img"></div>
+<div class="icon-text">${escapeHtmlText(app.title)}</div>
 `;
+
+      renderAppIcon(
+        iconElt.getElementsByClassName("icon-img")[0],
+        app.icon,
+        getDesktopIconImage(app),
+        "40px",
+        abortSignal,
+      );
 
       let clickCount = 0;
       let lastClickTs = -Infinity;
@@ -864,4 +876,15 @@ function getBasicContextMenuActions(onOpen, onSettings) {
       onClick: () => window.open(PROJECT_REPO, "_blank"),
     },
   ];
+}
+
+/** Use default artwork for desktop shortcuts saved before image support. */
+function getDesktopIconImage(app) {
+  if (app.iconImage !== undefined) {
+    return app.iconImage;
+  }
+  const builtIn = builtInApps.find((candidate) => {
+    return app.run === `/apps/${candidate.id}.run`;
+  });
+  return builtIn?.iconImage;
 }

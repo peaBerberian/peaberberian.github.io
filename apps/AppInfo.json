@@ -28,6 +28,10 @@
       "id": "settings",
       "title": "Settings",
       "icon": "⚙️",
+      "iconImage": {
+        "repository": "desktop",
+        "path": "assets/app-icons/settings.v1.svg"
+      },
       "defaultHeight": 700,
       "defaultWidth": 1000,
       "preload": {
@@ -55,12 +59,16 @@
       "icon": "💽",
       "defaultHeight": 400,
       "defaultWidth": 460,
-      "dependencies": ["open"]
+      "dependencies": ["open", "renderAppIcon"]
     },
     {
       "id": "explorer",
       "title": "File Explorer",
       "icon": "🐋",
+      "iconImage": {
+        "repository": "desktop",
+        "path": "assets/app-icons/explorer.v1.svg"
+      },
       "defaultHeight": 500,
       "defaultWidth": 700,
       "startMenu": {
@@ -69,13 +77,17 @@
       "desktop": {
         "display": true
       },
-      "dependencies": ["filesystem", "open"],
+      "dependencies": ["filesystem", "open", "renderAppIcon"],
       "provider": ["filePickerOpen", "filePickerSave"]
     },
     {
       "id": "paint",
       "title": "Paint",
       "icon": "🖌️",
+      "iconImage": {
+        "repository": "desktop",
+        "path": "assets/app-icons/paint.v1.svg"
+      },
       "defaultHeight": 950,
       "defaultWidth": 1000,
       "sandboxed": true,
@@ -91,6 +103,10 @@
       "id": "notes",
       "title": "Notes",
       "icon": "📝",
+      "iconImage": {
+        "repository": "desktop",
+        "path": "assets/app-icons/notes.v1.svg"
+      },
       "defaultHeight": 700,
       "defaultWidth": 700,
       "sandboxed": true,
@@ -127,6 +143,10 @@
       "id": "table",
       "title": "Sheets",
       "icon": "📏",
+      "iconImage": {
+        "repository": "desktop",
+        "path": "assets/app-icons/table.v1.svg"
+      },
       "sandboxed": true,
       "startMenu": {
         "list": "Desktop Apps"
@@ -139,6 +159,10 @@
       "id": "image-viewer",
       "title": "Image Viewer",
       "icon": "🏞️",
+      "iconImage": {
+        "repository": "desktop",
+        "path": "assets/app-icons/image-viewer.v1.svg"
+      },
       "sandboxed": true,
       "dependencies": ["filePickerOpen"],
       "defaultHeight": 600,
@@ -156,6 +180,10 @@
       "id": "calculator",
       "title": "Calculator",
       "icon": "🧮",
+      "iconImage": {
+        "repository": "desktop",
+        "path": "assets/app-icons/calculator.v1.svg"
+      },
       "defaultHeight": 400,
       "defaultWidth": 300,
       "dependencies": [],

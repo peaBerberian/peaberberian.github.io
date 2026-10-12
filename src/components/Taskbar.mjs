@@ -1,3 +1,4 @@
+import { renderAppIcon, cancelAppIcon } from "./app-icon.mjs";
 import {
   TASKBAR_MIN_HORIZONTAL_SIZE,
   TASKBAR_MAX_HORIZONTAL_SIZE,
@@ -46,6 +47,7 @@ export default class Taskbar {
     handleTaskbarMove(taskbarElt, this._abortController.signal);
     this._eltPerHandle = new WeakMap();
     this._appCallbacksPerElt = new WeakMap();
+    this._iconPerElt = new WeakMap();
     this._setupContextMenu(opts.onSettings);
   }
 
@@ -56,11 +58,13 @@ export default class Taskbar {
    * @param {Object} appText - Strings to write for the task.
    * @param {string} appText.icon - Icon of the application, as an unicode
    * emoji probably.
+   * @param {import("../app_image_sources.mjs").AppIconImage} [appText.iconImage]
+   * Optional artwork reference.
    * @param {string} appText.title - Title of the application.
    * @param {Object} callbacks - Callbacks to interact with the window from the
    * taskbar.
    */
-  addWindow(windowHandle, { icon, title }, callbacks) {
+  addWindow(windowHandle, { icon, iconImage, title }, callbacks) {
     const itemElt = document.createElement("div");
     this._appCallbacksPerElt.set(itemElt, callbacks);
     itemElt.className = "taskbar-item";
@@ -95,7 +99,14 @@ export default class Taskbar {
     });
     const iconElt = document.createElement("span");
     iconElt.className = "taskbar-item-text taskbar-item-icon";
-    iconElt.textContent = icon;
+    renderAppIcon(
+      iconElt,
+      icon,
+      iconImage,
+      "1.2em",
+      this._abortController.signal,
+    );
+    this._iconPerElt.set(iconElt, { icon, iconImage });
     const titleElt = document.createElement("span");
     titleElt.className = "taskbar-item-text taskbar-item-title";
     titleElt.textContent = title;
@@ -122,7 +133,17 @@ export default class Taskbar {
 
     const iconElt = itemElt.getElementsByClassName("taskbar-item-icon");
     if (icon !== null && iconElt.length) {
-      iconElt[0].textContent = icon;
+      const element = iconElt[0];
+      const previous = this._iconPerElt.get(element);
+      const image = previous?.icon === icon ? previous.iconImage : undefined;
+      this._iconPerElt.set(element, { icon, iconImage: image });
+      renderAppIcon(
+        element,
+        icon,
+        image,
+        "1.2em",
+        this._abortController.signal,
+      );
     }
     const titleElt = itemElt.getElementsByClassName("taskbar-item-title");
     if (titleElt.length) {
@@ -180,6 +201,7 @@ export default class Taskbar {
   remove(windowHandle) {
     const itemElt = this._eltPerHandle.get(windowHandle);
     if (itemElt) {
+      cancelAppIcon(itemElt.getElementsByClassName("taskbar-item-icon")[0]);
       itemElt.remove();
       this._updateWindowOverviewButton();
     }

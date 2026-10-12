@@ -3,9 +3,7 @@
  * listed in arguments.
  * @param {Array.<Object>} args - The application arguments,
  * @param {Object} env - Util functions coming from the environment
- * @param {function(string, string):undefined} env.updateTitle - Update the
- * title of the current application. First argument is the icon, second is the
- * title.
+ * @param {Function} env.updateTitle - Update the window title and optional icon.
  * @param {Function} env.open - API allowing to open new files and applications.
  * @returns {Promise.<Object>}
  */
@@ -13,7 +11,10 @@ export async function create(args = [], env, abortSignal) {
   let apps = [];
   for (const opt of args) {
     if (opt.type === "options" && opt.icon && opt.title) {
-      env.updateTitle(opt.icon, "Apps: " + opt.title);
+      env.updateTitle("Apps: " + opt.title, {
+        icon: opt.icon,
+        iconImage: opt.iconImage,
+      });
       apps = opt.apps;
       break;
     }

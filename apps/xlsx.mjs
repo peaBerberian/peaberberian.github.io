@@ -65,10 +65,7 @@ export function create(args, env) {
 
           const reader = new FileReader();
           const file = files[0];
-          env.updateTitle(
-            null /* keep same icon */,
-            file.name + " - Xslx Reader (xslx.js)",
-          );
+          env.updateTitle(file.name + " - Xslx Reader (xslx.js)");
           reader.onload = (event) => {
             openFile(file.name, event.target.result);
             containerElt.removeAttribute("inert");
@@ -231,7 +228,7 @@ function forwardEvent(eventType, originalEvent) {
   return { element: containerElt };
 
   function openFile(name, data) {
-    env.updateTitle(null, name + " - Xslsx Reader (xlsx.js)");
+    env.updateTitle(name + " - Xslsx Reader (xlsx.js)");
     iframeInfo.pendingFile = data;
     if (iframeInfo.isLoaded) {
       // Remnant of older logic:

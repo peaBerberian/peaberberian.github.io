@@ -1,3 +1,4 @@
+import { isAppIconImage } from "../app_image_sources.mjs";
 import { APP_STYLE } from "../constants.mjs";
 import { APP_STYLE_SETTINGS, SETTINGS } from "../settings.mjs";
 import notificationEmitter from "../components/notification_emitter.mjs";
@@ -356,7 +357,7 @@ function processEventsFromIframe(
 
       case "__pwd__update-title":
         checkUpdateTitleMessageData(e.data.data);
-        cbs.updateTitle(e.data.data.icon ?? null, e.data.data.title);
+        cbs.updateTitle(e.data.data.title, e.data.data.icon);
         break;
 
       case "__pwd__request-focus":
@@ -484,10 +485,21 @@ function checkUpdateTitleMessageData(data) {
   if (
     typeof data !== "object" ||
     data === null ||
-    (typeof data.icon !== "string" && data.icon !== undefined) ||
+    Array.isArray(data) ||
     typeof data.title !== "string"
   ) {
     throw new Error("Cannot update title: wrong data format");
+  }
+  if (data.icon != null) {
+    const icon = data.icon;
+    if (
+      typeof icon !== "object" ||
+      Array.isArray(icon) ||
+      typeof icon.icon !== "string" ||
+      (icon.iconImage !== undefined && !isAppIconImage(icon.iconImage))
+    ) {
+      throw new Error("Cannot update title: invalid icon");
+    }
   }
 }
 

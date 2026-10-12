@@ -234,8 +234,7 @@ export default class WindowManager {
       ...options,
       defaultHeight: app.data.defaultHeight,
       defaultWidth: app.data.defaultWidth,
-      defaultIcon: app.icon,
-      defaultIconImage: app.iconImage,
+      defaultIcon: { icon: app.icon, iconImage: app.iconImage },
       defaultTitle: app.title,
     });
 
@@ -573,6 +572,8 @@ export default class WindowManager {
     appWindow,
     abortSignal,
   ) {
+    // TODO: Validate executable configuration before launch, including
+    // dependencies unavailable to sandboxed applications.
     if (appData.sandboxed && method !== "create") {
       throw new Error("Sandboxed applications cannot run native provider entry points.");
     }
@@ -914,9 +915,9 @@ export default class WindowManager {
       // TODO: With imediately-updating titles, it can look quite jumpy to first
       // update it to its initial title and then potentially update it once the
       // app is loaded... Find a solution.
-      updateTitle: (newIcon, newTitle) => {
-        appWindow.updateTitle(newIcon, newTitle);
-        this._taskbarManager.updateTitle(appWindow, newIcon, newTitle);
+      updateTitle: (newTitle, newIcon) => {
+        appWindow.updateTitle(newTitle, newIcon);
+        this._taskbarManager.updateTitle(appWindow, newTitle, newIcon);
       },
       closeApp: () => this._closeWindow(appWindow),
       STYLE: constructAppStyleObject(),

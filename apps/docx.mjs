@@ -65,10 +65,7 @@ export function create(args, env) {
 
           const reader = new FileReader();
           const file = files[0];
-          env.updateTitle(
-            null /* keep same icon */,
-            file.name + " - Docx Reader (docx.js)",
-          );
+          env.updateTitle(file.name + " - Docx Reader (docx.js)");
           reader.onload = (event) => {
             openFile(file.name, event.target.result);
             containerElt.removeAttribute("inert");
@@ -220,10 +217,7 @@ function forwardEvent(eventType, originalEvent) {
   return { element: containerElt };
 
   function openFile(name, data) {
-    env.updateTitle(
-      null /* keep same icon */,
-      name + " - Docx Reader (docx.js)",
-    );
+    env.updateTitle(name + " - Docx Reader (docx.js)");
     iframeInfo.pendingFile = data;
     if (iframeInfo.isLoaded) {
       // Remnant of older logic:

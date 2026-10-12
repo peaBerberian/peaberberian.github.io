@@ -203,8 +203,8 @@ export default class WindowOverview {
       const contextMenuAbortCtrl = new AbortController();
       renderAppIcon(
         labelIcon,
-        icon,
-        appWindow.getIconImage(),
+        icon.icon,
+        icon.iconImage,
         "1.2em",
         contextMenuAbortCtrl.signal,
       );

@@ -5,7 +5,7 @@ export function create(_args, env) {
   const { createAppTitle } = env.appUtils;
 
   // Indicate more clearly that this app only talks about another project
-  env.updateTitle(null /* keep same icon */, "Other Projects: bif-inspector");
+  env.updateTitle("Other Projects: bif-inspector");
   return {
     sidebar: [
       {

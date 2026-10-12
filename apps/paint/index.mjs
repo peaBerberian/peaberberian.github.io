@@ -340,9 +340,9 @@ export function create(_args, env, abortSignal) {
     disableButton("clear");
     disableButton("quick-save");
     if (name) {
-      env.updateTitle(null, name + " - Image Viewer");
+      env.updateTitle(name + " - Image Viewer");
     } else {
-      env.updateTitle(null, "Image Viewer");
+      env.updateTitle("Image Viewer");
     }
     applyStyle(canvasAreaElt, {
       width: String(img.width + 30) + "px",
@@ -802,12 +802,9 @@ export function create(_args, env, abortSignal) {
           name: saveData.filename ?? null,
         };
         if (saveData.filename) {
-          env.updateTitle(
-            null /* keep same icon */,
-            saveData.filename + " - Image Viewer",
-          );
+          env.updateTitle(saveData.filename + " - Image Viewer");
         } else {
-          env.updateTitle(null /* keep same icon */, "Image Viewer");
+          env.updateTitle("Image Viewer");
         }
         disableButton("quick-save");
       } catch (err) {

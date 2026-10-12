@@ -322,6 +322,11 @@ depending on the application's needs:
 
     - The `closeApp` function, allowing to close the current application.
 
+    - The `updateTitle(title, icon)` function, updating the window title.
+      Omit `icon` to keep it, or pass `{ icon, iconImage }` to replace it.
+      `icon` is the text fallback; `iconImage` is an optional repository
+      reference. Without `iconImage`, only the text is displayed.
+
     - Optionally, there may be the `dependencies` asked for the App in the
       `AppInfo.json` file (e.g. asking for the `settings` dependency will provide
       a `settings` object etc.).

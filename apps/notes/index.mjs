@@ -344,13 +344,10 @@ export function create(args, env) {
   function updateFilename(name) {
     if (name == null) {
       currentFilename = null;
-      env.updateTitle(null /* keep same icon */, "Notes");
+      env.updateTitle("Notes");
     } else {
       currentFilename = name;
-      env.updateTitle(
-        null /* keep same icon */,
-        String(name) + " - " + "Notes",
-      );
+      env.updateTitle(String(name) + " - " + "Notes");
     }
   }
 

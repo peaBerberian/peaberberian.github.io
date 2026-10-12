@@ -60,12 +60,10 @@ export default class AppWindow extends EventEmitter {
    * @param {number} [options.defaultWidth] - Default width of the window in
    * CSS pixels without counting the window decorations (like borders).
    * If not set, the general default will be used instead.
-   * @param {string} [options.defaultIcon] - Default "icon" representing the
-   * application in that window.
+   * @param {{icon: string, iconImage?: import("../../app_image_sources.mjs").AppIconImage}} [options.defaultIcon]
+   * Default icon representing the application in that window.
    * Can be updated at any time through the `updateTitle` method.
    * If not set the window won't show an icon for now.
-   * @param {import("../../app_image_sources.mjs").AppIconImage} [options.defaultIconImage]
-   * Optional artwork reference; falls back to defaultIcon.
    * @param {Function} options.onSettings - Opens a specific Settings section.
    * @param {string} [options.defaultTitle] - Default "title" for the
    * application in that window.
@@ -81,11 +79,9 @@ export default class AppWindow extends EventEmitter {
       defaultHeight,
       defaultWidth,
       defaultIcon,
-      defaultIconImage,
       defaultTitle,
     } = options;
-    this._icon = defaultIcon ?? "";
-    this._iconImage = defaultIconImage;
+    this._icon = defaultIcon ?? { icon: "" };
     this._title = defaultTitle ?? "";
 
     /**
@@ -116,13 +112,13 @@ export default class AppWindow extends EventEmitter {
      * @type {HTMLElement}
      */
     const appContainer = constructVisibleWindowScaffolding(
-      this._icon,
+      this._icon.icon,
       this._title,
     );
     renderAppIcon(
       appContainer.getElementsByClassName("w-title-icon")[0],
-      this._icon,
-      this._iconImage,
+      this._icon.icon,
+      this._icon.iconImage,
       "1.2em",
       this._abortController.signal,
     );
@@ -207,18 +203,20 @@ export default class AppWindow extends EventEmitter {
     return this.element.classList.contains("active");
   }
 
-  updateTitle(newIcon, newTitle) {
-    if (newIcon !== null) {
-      if (newIcon !== this._icon) {
-        this._iconImage = undefined;
-      }
+  /**
+   * @param {string} newTitle
+   * @param {{icon: string, iconImage?: import("../../app_image_sources.mjs").AppIconImage}|null} [newIcon]
+   * Omit the icon to preserve it. An icon without artwork uses only its text.
+   */
+  updateTitle(newTitle, newIcon) {
+    if (newIcon != null) {
       this._icon = newIcon;
       const iconElt = this.element.getElementsByClassName("w-title-icon")[0];
       if (iconElt) {
         renderAppIcon(
           iconElt,
-          newIcon,
-          this._iconImage,
+          newIcon.icon,
+          newIcon.iconImage,
           "1.2em",
           this._abortController.signal,
         );
@@ -231,14 +229,11 @@ export default class AppWindow extends EventEmitter {
     }
   }
 
-  getIconImage() {
-    return this._iconImage;
-  }
-
   getTitle() {
     return this._title;
   }
 
+  /** @returns {{icon: string, iconImage?: import("../../app_image_sources.mjs").AppIconImage}} */
   getIcon() {
     return this._icon;
   }

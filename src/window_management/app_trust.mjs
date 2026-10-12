@@ -118,14 +118,6 @@ export default class AppTrust {
     }
     signal?.throwIfAborted();
     if (
-      app.data.sandboxed &&
-      app.data.dependencies?.includes("renderAppIcon")
-    ) {
-      throw new AppTrustError(
-        "Sandboxed applications cannot request the renderAppIcon API.",
-      );
-    }
-    if (
       app.data.lazyLoad &&
       app.data.sandboxed !== true &&
       !this._builtins.has(app.id)

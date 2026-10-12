@@ -5,7 +5,7 @@ export function create(_args, env) {
   const { createAppTitle, createExternalIframe } = env.appUtils;
 
   // Indicate more clearly that this app only talks about another project
-  env.updateTitle(null /* keep same icon */, "Other Projects: gif-renderer.rs");
+  env.updateTitle("Other Projects: gif-renderer.rs");
   return {
     sidebar: [
       {

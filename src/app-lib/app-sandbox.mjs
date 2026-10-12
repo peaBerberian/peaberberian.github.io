@@ -95,7 +95,7 @@ const appEnv = {
   appUtils: getAppUtils(),
   getImageRootPath: () => IMAGE_ROOT_PATH,
   getVersion: () => __VERSION__,
-  updateTitle: (icon, title) => {
+  updateTitle: (title, icon) => {
     parent.postMessage(
       {
         type: "__pwd__update-title",

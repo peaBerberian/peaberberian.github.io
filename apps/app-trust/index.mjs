@@ -32,7 +32,9 @@ export function create([approvalRequest, setApproval, decisionSignal], env, abor
   const blocked = reason === "builtin";
   // Keep the desktop's shield in the title bar. The executable's own icon and
   // name provide context inside the window, but are not evidence of trust.
-  env.updateTitle("🛡️", blocked ? `Cannot run ${title}` : `Trust ${title}?`);
+  env.updateTitle(blocked ? `Cannot run ${title}` : `Trust ${title}?`, {
+    icon: "🛡️",
+  });
   const element = document.createElement("div");
   element.className = "app-approval";
   const identity = document.createElement("div");
